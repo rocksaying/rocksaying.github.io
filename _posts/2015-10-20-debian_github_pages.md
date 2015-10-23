@@ -10,7 +10,7 @@ required package: ruby2.1 ruby ruby2.1-dev ruby-dev bundler rubygems-integration
 
 jekyllrb issue: required package nodejs.
 
-Installing Jekyll: reference https://help.github.com/articles/using-jekyll-with-pages/
+Installing Jekyll: reference [Using Jekyll with Pages](https://help.github.com/articles/using-jekyll-with-pages/)
 
 create Gemfile in the root of your github pages working copy.
 
