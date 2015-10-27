@@ -4,14 +4,13 @@
 <body>
 {% include header.html %}
 
-<article>
+<section class="post">
 <a name="page_top"></a>
 
-<div class="post_date">
-<div class="post_date_month">{{ page.date | date: "%m" }}月</div>
-<div class="post_date_day">{{ page.date | date: "%d" }}</div>
-<div class="post_date_year">{{ page.date | date: "%Y" }}</div>
-</div>
+<article>
+{% assign post=page %}
+{% include post_date.html %}
+
 <header class="post_header">
 <div class="post_category">
 <span class="icon icon-category"></span>
@@ -19,7 +18,7 @@
 分類: <div class="tag"><a href="{{ site.baseurl }}/categories/{{ cid }}.html">{{ site.cname[cid] }}</a></div>
 </div>
 
-<footer class="post_tags">
+<div class="post_tags">
 <span class="icon icon-tags"></span>
 標籤:
 {% for tag in page.tags %}
@@ -46,7 +45,8 @@
 {{ content }}
 </div>
 
-<footer class="page_footer">
+<footer class="post_footer">
+
 <div class="share">
 <a href="https://twitter.com/share" class="twitter-share-button"
 data-via="{{ site.author.twitter }}"
@@ -54,9 +54,9 @@ data-hashtags="{{ page.tags | join: ',' }}">Tweet</a>
 
 <script src="//connect.facebook.net/zh_TW/sdk.js#xfbml=1&version=v2.5"></script>
 <div class="fb-like" data-href="{{ page.url }}" data-share="true"></div>
-</div>
+</div><!--share-->
 
-<div>
+<div class="pagination">
 {% if page.previous %}
 <span class="page_nav_previous">
 <a href="{{ page.previous.url }}" title="{{ page.previous.title }}">
@@ -66,12 +66,7 @@ data-hashtags="{{ page.tags | join: ',' }}">Tweet</a>
 </span>
 {% endif %}
 
-<span class="page_nav_top">
-<a href="{{ page.url }}#page_top">
-<span class="icon icon-top"></span>
-卷頭
-</a>
-</span>
+{% include page_top.html %}
 
 {% if page.next %}
 <span class="page_nav_next">
@@ -81,10 +76,12 @@ data-hashtags="{{ page.tags | join: ',' }}">Tweet</a>
 </a>
 </span>
 {% endif %}
-</div>
-</footer>
+</div><!--pagination-->
 
+</footer>
 </article>
+
+</section><!--post-->
 
 {% include footer.html %}
 </body>

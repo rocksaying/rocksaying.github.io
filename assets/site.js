@@ -47,12 +47,13 @@ var categories = [
 {'name':'經濟學/奧地利經濟學派', 'url':'/categories/economics.html'},
 {'name':'哲學/老子', 'url':'/categories/philosophy.html'},
 {'name':'閱讀隨筆', 'url':'/categories/reading.html'},
-{'name':'生活記事', 'url':'/categories/events.html'}
+{'name':'休閒生活', 'url':'/categories/life.html'},
+{'name':'快報記事', 'url':'/categories/events.html'}
 ];
 
 var cl=[];
 categories.forEach(function(c, i){
-cl.push('<div class="category"><a href="',
+cl.push('<div class="item"><a href="',
   c.url,'">', c.name,'</a></div>');
 });
 document.getElementById('site_categories').innerHTML=cl.join('');
