@@ -3,24 +3,44 @@ document.addEventListener("DOMContentLoaded", function(){
 
 //** start adjust image
 function setImageWithTitle() {
+  var p;
+  if (this.parentElement.tagName == 'P' || this.parentElement.tagName == 'p') {
+    p = this.parentElement;
+  }
+  else {
+    p = document.createElement('p');
+    this.parentElement.insertBefore(p, this);
+    p.appendChild(this);
+  }
+  p.style.textIndent = '0em';
+  p.style.textAlign = 'center';
   this.insertAdjacentHTML('afterend',
-    '<div><span class="icon icon-image"></span>'.concat(this.title.substr(1), '</div>'));
+    '<div class="img_title"><span class="icon icon-image"></span>'.concat(this.title.substr(1), '</div>'));
   this.setAttribute('data-width', this.width);
-  this.style.maxWidth = '97%';
-  this.nextElementSibling.style.marginTop = '-26px';
+  this.setAttribute('data-fullsize', 0);
+  this.style.maxWidth = '100%';
+  p = false;
 }
 
 function toggleResizeImage() {
-  //console.log("%s, %s, %s", this.width, this.style.width, this.style.maxWidth);
-  if (this.style.maxWidth != '97%') {  console.log('down size');
-    this.style.maxWidth = '97%';
+  var dw = parseInt(this.getAttribute('data-width'));
+  var fs = parseInt(this.getAttribute('data-fullsize'));
+  //console.log(dw);
+
+  if (dw <= parseInt(this.clientWidth) && fs == 0) {
+    //console.log('small image');
+    return;
   }
-  else {  console.log('full size');
-    var dw = this.getAttribute('data-width');
+  if (this.style.maxWidth != '100%') {  console.log('down size');
+    this.setAttribute('data-fullsize', 0);
+    this.style.maxWidth = '100%';
+  }
+  else {  console.log('full size:' + dw);
+    this.setAttribute('data-fullsize', 1);
     this.style.maxWidth = (dw ? dw + 'px' : '100%');
   }
   //console.log("width: %s", this.width);
-  this.nextElementSibling.style.width = this.width+'px';
+  //this.nextElementSibling.style.width = this.width+'px';
 }
 
 var imgs=document.querySelectorAll('article img');
