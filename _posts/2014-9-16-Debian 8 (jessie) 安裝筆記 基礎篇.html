@@ -1,0 +1,343 @@
+---
+title: Debian 8 (jessie) 安裝筆記 基礎篇
+category: computer
+old-category: 電腦技術
+tags: [debian,kde]
+---
+<p><em>Debian 8 於 2015 年 4 月 25 日正式釋出。</em></p>
+
+<p>我習慣安裝簡單環境，所以總是先安裝基礎套件，並設定預設語系為 en_US 或 C 。安裝完成後，再利用套件安裝工具，安裝視窗與桌面環境。所以我會仔細列出我裝了什麼工具及其用途。一般人或初學者就按預設方式安裝吧。</p>
+
+<p>安裝基礎套件，並完成第一次系統啟動工作後，在 apt repository 中加入 contrib 和 non-free 組別。</p>
+
+<p>本篇說明與安裝下列項目:</p>
+
+<ul>
+<li>KDE 與 GNOME3 的外觀風格</li>
+<li>安裝精簡型 KDE 
+<ul>
+<li>必要套件</li>
+<li>選用套件 (2015-05-12 更新)</li>
+</ul></li>
+<li>Flashplayer 音效輸出</li>
+<li>Firefox 與 Iceweasel (2015-05-12 更新)</li>
+<li>手機與 MTP</li>
+<li>gnome-commander 與 konsole</li>
+</ul>
+
+<p><em>最近更新日期: 2015-05-12 。</em></p>
+
+<p>其他安裝筆記:</p>
+
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20%E4%B8%AD%E6%96%87%E7%92%B0%E5%A2%83%E7%AF%87.html">中文環境篇</a> 。</li>
+<li><a href="{{ site.baseurl }}/archives/2015/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20Firefox%20%E8%88%87%20Iceweasel.html">Firefox 與 Iceweasel</a> 。</li>
+<li>視訊加速篇 - VAAPI 與 VDPAU (編輯中) 。</li>
+</ul>
+
+<!--more-->
+<img src="https://pvtzjq.dm2302.livefilestore.com/y2pVTISLqFaQIIXjP0-CpOcXsJ8GoFuQxZCmJmomrpAXty-e0qFSRatMaU-veOkrmMrQu78oDYM1GY6nqbCPjjNdi_VvmdHUGeJsGs5joNVzQw/Debian8_kde%20desktop.jpg" alt="我的工作桌面，Debian 8 與 KDE" />
+
+<h4>Install KDE (minimal)</h4>
+
+<p>因為我現在用 KDE 桌面環境，所以我安裝的慣用套件中，會先列出 KDE 系列的，然後列出 GNOME 系列的同樣用途套件。</p>
+
+<p>以下是安裝 KDE 精簡環境的必要套件:</p>
+
+<p>xorg kdm plasma-desktop plasma-nm ksnapshot konsole apper dolphin kdesudo kdepasswd desktop-file-utils</p>
+
+<p>安裝 kdepasswd ，在 KDE 系統設定的帳號詳細資料項中，才會有「密碼與帳號資訊」頁。</p>
+
+<img src="https://pvtzjq.dm2302.livefilestore.com/y2pIYcPw4Q5B7Ru8ZyE3X8PTHv-hjA4fDsE3tHrXuSZSxB_R7a0fXilEO9ucHgew_0UhIWcynDQ0qsAVcfdskKDf7d9t2fMrzTuhOjmrkQdQB4/Debian8_kde-%E5%AF%86%E7%A2%BC%E8%88%87%E5%B8%B3%E8%99%9F%E8%B3%87%E8%A8%8A.png" alt="密碼與帳號資訊"/>
+
+<h5>sudo</h5>
+
+<p>如果你不能使用 sudo 指令，首先你要先把你現在的一般使用者帳號，加到 'sudo' 群組中。先改變身份為 root ，再執行 <code>root$ adduser ??? sudo</code> 。或者執行 <code>vigr</code> 與 <code>vigr -s</code> 手動修改 group 檔案。</p>
+
+<p>此外，如果你直接在視窗環境以 sudo 執行 GUI 程式，你可能會碰到 <code>could not connect to X server</code> 的錯誤。你應該使用 kdesudo 或 gksudo 指令。或者調整 /etc/sudoers 的設置，加入 <code>DISPLAY XAUTHORITY</code> ，如下所示:</p>
+
+<pre class="language-text">
+Defaults  env_keep = "DISPLAY XAUTHORITY"
+# or
+Defaults  env_keep += "DISPLAY XAUTHORITY"
+</pre>
+
+<h5>KDE 與 GNOME3 的外觀風格</h5>
+
+<p>雖然我使用 KDE 桌面環境，但偶爾也會混用 GTK 的應用軟體(如 GNOME 系軟體)。但在此環境， GTK 應用軟體只能套用預設的 GTK 主題風格，所以外觀主題可能和 KDE 應用軟體不一致。不過我們可以安裝下列套件，讓 GTK 應用軟體在 KDE 環境的外觀主題接近 KDE 軟體。</p>
+
+<ul>
+<li>gtk2-engines-oxygen</li>
+<li>gtk3-engines-oxygen</li>
+<li>kde-config-gtk-style</li>
+</ul>
+
+<p>然後設定「系統設定 -> 應用程式外觀 -> GTK -> GTK 主題」(System Settings -> Application Appearance -> GTK -> GTK Themes)。參考 <a href="https://wiki.archlinux.org/index.php/Uniform_Look_for_Qt_and_GTK_Applications">Uniform Look for Qt and GTK Applications</a>。</p>
+
+<p>但是上述的外觀風格調整方式，可能不適用於被收錄在 GNOME3 桌面環境組別的套件軟體。</p>
+
+<p>隨著 GNOME3 的外觀風格走向黑白扁平化， GNOME 的應用軟體最近也陸續在更動外觀。 Debian 8 還在測試階段，在正式釋出前會持續更新這些軟體版本，因此很可能原本看習慣的 GNOME 軟體在一次小更新之後，就突然改變了外觀。目前我經歷過更新後外觀改變的就有 nautilus, file-roller, eog, gthumb, gedit 。</p>
+
+<p>雖然功能不變，但運行在其他桌面環境時 (如 KDE) ，畫面多少會有些突兀感。風格對比如下圖。右側的 gedit 就變成扁平外觀，且沒有傳統的標題列和最大化、最小化按鈕。</p>
+
+<img src="https://pvtzjq.dm2302.livefilestore.com/y2pVf9bKUhxle9CLB4KUmapASAx_QPUS7pl_0Lg32QlTneYrvOOr-QESbrXNHu0rbWANOsUGYNWKWoSh85usrxrXIjYByzUNcgEYwflYifMxpk/Debian8_kde-gnome3-%E9%A2%A8%E6%A0%BC%E5%B0%8D%E6%AF%94.png" alt="KDE與GNOME3的風格對比"/>
+
+<p>所幸 MATE 桌面環境也被 Debian 8 正式收錄了。用不慣 GNOME3 風格介面的人，也可以用 MATE 。有些 MATE 的工具在 KDE 環境中也很好用，例如以 MATE 的 engrampa 取代 KDE 的 ark 。</p>
+
+<h4>主要選用套件</h4>
+
+<p>系統工具</p>
+
+<ul>
+<li>synaptic
+<ul>
+<li>雖然 KDE 預設的 apper 也是套件管理程式，但我還是習慣 synaptic 的呈現方式。</li>
+</ul></li>
+<li>apper
+<ul>
+<li>在升級過程中， apper 有時會發生無法開啟資料庫的臭蟲(Unable to open database)，導致使用者不能執行 apper 。這時需要使用者手動刪除 /var/lib/listaller/db/ 的內容: <code>rm -r /var/lib/listaller/db/</code> 。參考 <a href="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=762592">Debian bug report #762592</a>。</li>
+</ul></li>
+<li>virtualbox</li>
+<li>gnome-commander meld
+<ul>
+<li>個人偏好的左右並列版型的傳統檔案管理工具。</li>
+</ul></li>
+<li>print-manager
+<ul>
+<li>如果有印表機的話，這個套件提供 KDE 系統設定印表機模組。</li>
+</ul></li>
+<li>p7zip-full</li>
+<li>engrampa 或 ark, file-roller, xarchiver
+<ul>
+<li>壓縮檔工具，詳細後述。</li>
+</ul></li>
+<li>ntpdate
+<ul>
+<li>NTP 網路時間查詢工具。有這套件， KDE 桌面設定才能啟用「自動設定日期與時刻」功能。</li>
+</ul></li>
+</ul>
+
+<p>多媒體</p>
+
+<ul>
+<li>i965-va-driver vainfo 
+<ul>
+<li>我使用 Intel 內建顯示晶卡，安裝這個驅動程式以便啟用 VAAPI 視訊加速功能。</li>
+</ul></li>
+<li>pulseaudio </li>
+<li>pavucontrol 或 plasma-widget-veromix
+<ul>
+<li>PulseAudio 專屬控制器，詳細後述。</li>
+</ul></li>
+<li>vlc vlc-plugin-pulse libav-tools mpv
+<ul>
+<li>Debian 8 提供的 vlc 和 mpv 都同時支援 VAAPI 和 VDPAU 。反而 mplayer 仍只支援 VDPAU ，且與 libav 之間有不少相容性問題，故我不用 mplayer 了。</li>
+</ul></li>
+<li>gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+<ul>
+<li>這三個套件是 gstreamer 的影音解碼器。如 Iceweasel 要用 HTML5 模式播放 Youtube 影片，就需要這些解碼器。</li>
+</ul></li>
+<li>audacious </li>
+<li>gwenview 或 gpicview, gthumb
+<ul>
+<li>圖片處理，詳細後述。</li>
+</ul></li>
+<li>kolourpaint4 或 pinta</li>
+</ul>
+
+<p>網路</p>
+
+<ul>
+<li>iceweasel 或 firefox
+<ul>
+<li>iceweasel 是 firefox 的純 GPL 版。 Debian 套件庫只提供 iceweasel 。 firefox 要自己動手去 Mozilla 下載安裝。詳細請看「<a href="{{ site.baseurl }}/archives/2015/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20Firefox%20%E8%88%87%20Iceweasel.html">安裝筆記 - Firefox 與 Iceweasel</a>」。</li>
+</ul></li>
+<li>flashplugin-nonfree 或 klash</li>
+<li>uget 配 aria2 ，或者用 kget
+<ul>
+<li>下載管理員，詳細後述。</li>
+</ul></li>
+</ul>
+
+<p>辦公</p>
+
+<ul>
+<li>kate 或 pluma, gedit
+<ul>
+<li>文字編輯，詳細後述。</li>
+</ul></li>
+<li>gnumeric</li>
+<li>kcalc 或 gcalctool
+<ul>
+<li>「數值系統模式」對程式設計者很方便。還有位元編輯功能，可以讓我用點燈的方式操作位元計算。 </li>
+</ul></li>
+<li>goldendict
+<ul>
+<li>字典，詳細後述。</li>
+</ul></li>
+<li>okular okular-extra-backends kchmviewer
+<ul>
+<li>電子書，詳細後述。</li>
+</ul></li>
+<li>kdesdk-dolphin-plugins svn-workbench
+<ul>
+<li>身為一個程式開發人員，裝一套 SVN 工具是很合理的。 git 的話，我目前用命令列工具。</li>
+<li>我原本安裝 kdesvn ，但後來發現它和 dolphin 的整合不好，沒有顯示不同圖像的行為。而 SVN 的操作介面也不太直覺。所以改用 kdesdk-dolphin-plugins 和 svn-workbench 。</li>
+</ul></li>
+</ul>
+
+<h5>壓縮檔工具</h5>
+
+<p>file-roller 是 GNOME 套件，但功能性也是最完整的。只是它的外觀也黑白扁平化了。不習慣的就用 engrampa 吧。 engrampa 是衍生自 file-roller 的 MATE 套件，保留了 file-roller 完整功能和 GNOME2 的介面風格。</p>
+
+<p>ark 是 KDE 套件。但它竟然沒有壓縮檔測試功能，實在奇怪。除此之外倒沒什麼大缺點。</p>
+
+<p>xarchiver 很好用，只是介面還不提供中文語系。還有個功能缺點，不支援密碼保護的 rar 檔案。要處理有密碼保護的 rar 檔案時，還是要用 unrar-nonfree 或上述工具。</p>
+
+<h5>下載管理員</h5>
+
+<p>我習慣在 Firefox 中安裝 flashgot 擴充套件，然後再配上 uget 或 kget 作為下載管理員。</p>
+
+<p>uget 加上 aria2 後，才能在插件設定啟用 arai2 插件，使用分段下載功能(multi-segment download)。 kget 則預設便已啟用外掛程式「多段式 KIO」，實現分段下載功能。以上兩種都可以配合 fireofox 的 flashgot 擴充套件使用。 </p>
+
+<p>uget 和 kget 大部份功能都一樣。 kget 因為是 KDE 的一個子項目，所以和 KDE 的整合性更好。但我目前使用 uget 。因為 uget 在解析網路硬碟的檔案名稱時，處理的比較好。例如我下載 rapidgator.net 的檔案時， uget 會正確地解析將要下載儲存的檔名， kget 則是把長長的網址路徑當成檔名。</p>
+
+<h5>圖片處理</h5>
+
+<p>我使用過下列看圖器，目前在 KDE 下用 gwenview 。</p>
+
+<ul>
+<li>gwenview -
+KDE 預設看圖器。包含一些基本編輯功能，如縮放、裁剪。支援鍵盤方向鍵操作。</li>
+<li>gpicview -
+只限看圖，但是開檔最快。 LXDE 預設看圖器。支援鍵盤方向鍵操作。</li>
+<li>gthumb -
+GNOME 看圖器，功能和 gwenview 相似。但不支援鍵盤方向鍵操作，外觀也黑白扁平化了。</li>
+</ul>
+
+<p>圖片編輯工具部份，因為我只會在圖片上塗幾條線、加幾個字而已，我不需要 gimp 。我選擇 kolourpaint4 (KDE) 或 gpaint (GNOME) 或 pinta 。</p>
+
+<h5>電子書</h5>
+
+<p>電子書是指 PDF 和 CHM 。 okular 配上 okular-extra-backends 基本上可以閱讀 PDF/ePub/CHM 等各種開放規格的電子書。</p>
+
+<p>只是 okular 雖然可以看 CHM ，但速度太慢。開啟上百頁的CHM文件更像是死掉一般。看 CHM 還是用 kchmviewer 比較方便。</p>
+
+<h5>Office</h5>
+
+<p>我基本上不裝 libre-office/open-office 套裝。一般文書，我慣用 HTML 或純文字，簡報也用 HTML ，都用文字編輯器處理。</p>
+
+<p>只有試算表需要另裝套件，而我選擇用 gnumeric 。</p>
+
+<h5>文字編輯</h5>
+
+<p>我原本使用 gedit ，但在某次更新後， jessie 的 gedit 外觀風格改版了，變成 GNOME3 的黑白扁平化風格。我覺得這個外觀改版不好用。更麻煩的是，它還會和 ibus 衝突，就像 <a href="http://askubuntu.com/questions/456739/cant-get-mouse-back-in-gedit-after-shift-key-is-pressed">can't get mouse back in gedit after shift key is pressed</a> 描述的情形。雖然我在任意一處按一下滑鼠右鍵或切換到其他程式視窗再切回 gedit 就可以消除這個 bug 狀況，但很麻煩。而且也不是每一種機器配置都會發生這個 bug 。我有兩台安裝 Debian 8 的電腦，版本都維持在最近更新狀態。但一台的 gedit + ibus 有 bug ，另一台卻沒有。</p>
+
+<p>總之，我現在改用 kate 作為文字編輯器。其他推薦項目是 geany 或 MATE 套件中的 pluma (gedit2 的衍生版本) 。另外，改用 gcin 或 hime 輸入法引擎也可以避免滑鼠指標在 gedit 內忽隱忽現的遲頓毛病。</p>
+
+<h5>文件比對工具</h5>
+
+<p>我比較了 meld, diffuse, kompare, kdiff3 這四套文件比對工具。我最後只用 meld 。而且它也是 gnome-commander 必要的目錄與檔案比對工具。</p>
+
+<p>meld 和 diffuse 感覺很像，但是 diffuse 的介面缺少中文語系，而且 meld 差異編輯(copy to left/right)這方面的操作比較直覺。</p>
+
+<p>kdiff3 沒有差異編輯功能， kompare 的差異編輯只有左到右，而且不提供直接修改編輯的功能。在檔案總管中選取兩個檔案或資料夾時，可以用 meld 開啟比對，但用 kompare 開啟時，卻不會比對。</p>
+
+<p><em>在某次改版後的 meld 配色出現大問題。在 KDE 下使用時，文字和底色都是黑色，什麼都看不見。我不得不強制安裝 Debian 7 提供的 1.6.1-1 版 (Synaptic 可以鎖定套件版本)。</em></p>
+
+<h5>字典</h5>
+
+<p>stardict 停止更新很久了。我現在用 goldendict ，支援的字典檔種類也很多 (包括 stardict 的字典檔)。而且 goldendict 也有 Windows 版。讓我在兩種桌面上都有相同的離線字典可用。</p>
+
+<p>goldendict 維基詞典的設定:</p>
+
+<ul>
+<li>中文: http://zh.wiktionary.org/w</li>
+<li>日文: http://ja.wiktionary.org/w</li>
+</ul>
+
+<h5>混音器</h5>
+
+<p>現在 Linux 桌面環境常用的音效架構有兩種， ALSA 和 PulseAudio 。如果用 Windows 的音效架構來類比的話， ALSA 相當於 Kernel Streaming ， PulseAudio 則相當於 DirectShow Audio 。 想要打造專業音樂工作站的使用者，則會選擇 JACK 。</p>
+
+<p>ALSA 是獨佔式架構，延遲低、音質較 PulseAudio 佳。但只要有一個軟體開啟音效裝置，其他軟體則無法發聲了。例如下節說的網頁 Flashplayer 佔住音效裝置的狀況。除非你是要 DIY 一台媒體播放專用機，或者電腦有兩個以上的音效裝置時，才建議使用 ALSA 。電腦有兩個以上的音效裝置時，可以指定不同的軟體走不同的音效裝置，以免爭搶音效裝置的使用權。麻煩的是有些軟體不能指定輸出的 ALSA 音效裝置。</p>
+
+<p>PulseAudio 基本上是現在 Linux 桌面環境的預設音效架構了。它可以混合不同軟體送出的音源輸出到單一裝置上，便利性較高。不過延遲也較高，音質略差。在公司的工作電腦上，我選擇 PulseAudio 。</p>
+
+<p>配合 PulseAudio ，我通常會再裝 pavucontrol 或 plasma-widget-veromix 這兩個 PulseAudio 專屬控制器，後者是放在工作列的。</p>
+
+<p>因為我的電腦通常裝有兩個以上的音效裝置，我需要這類控制器控制音訊流向，調整應用軟體走什麼音效裝置送出聲音。PulseAudio 的特點之一，就是可在軟體播放音訊的過程中，直接切換軟體音訊的輸出裝置。但我不用它們控制音量。因為它們是數位音量控制，透過訊號衰減方式降低音量，對音質的破壞力太大。我習慣用音響擴大機(一般人的情況是電腦喇叭)的類比式音量轉鈕調整音量。</p>
+
+<h4>Flashplayer 音效輸出</h4>
+
+<p>Flashplayer 只用 ALSA 輸出音效。但 ALSA 是獨佔式架構，flashplayer 開啟後，其他媒體設備就不能輸出音效了。所以常常會碰到在網頁上看了影片後，再執行 vlc 或其他影音應用時，會跳出無法開啟音效裝置，沒聲音的狀況。</p>
+
+<p>這是一個老問題，我在「<a href="{{ site.baseurl }}/archives/2012/Debian%206%20%E8%88%87%20PulseAudio%20~%20%E8%AE%93%E7%80%8F%E8%A6%BD%E5%99%A8%E7%9A%84%20flash%20%E5%9C%A8%E6%AD%A3%E7%A2%BA%E7%9A%84%E9%9F%B3%E6%95%88%E8%A8%AD%E5%82%99%E4%B8%8A%E7%99%BC%E8%81%B2.html">Debian 6 與 PulseAudio ~ 讓瀏覽器的 flash 在正確的音效設備上發聲</a>」就說過這件事。解決方式是設定 ALSA 改走 PulseAudio 的虛擬音效設備而不要直接走實體音效設備，這樣就可以統一由 PulseAudio 混音了。編輯 /etc/asoundrc 或 $HOME/.asoundrc :</p>
+
+<pre class="language-text">
+pcm.pulse {
+type pulse
+}
+
+ctl.pulse {
+type pulse
+}
+
+pcm.!default {
+type pulse
+}
+
+ctl.!default {
+type pulse
+}
+</pre>
+
+<h4>Firefox 與 Iceweasel</h4>
+
+<p>此節獨立一篇，請看「<a href="{{ site.baseurl }}/archives/2015/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20Firefox%20%E8%88%87%20Iceweasel.html">安裝筆記 - Firefox 與 Iceweasel</a>」。</p>
+
+<h4>手機與 MTP</h4>
+
+<p>我的手機是 Nokia Lumia 720 (Windows phone)。這個系統透過 MTP 途徑和電腦交換資料。我必須安裝下列套件:</p>
+
+<p>libmtp9 libmtp-common libmtp-runtime mtp-tools jmtpfs kio-mtp</p>
+
+<p>KDE 利用 kio-mtp 整合 MTP 的支援能力。理論上 dolphin 檔案管理員或任何 KDE 應用軟體都可將 MTP 設備當成一個外接式磁碟使用。但實際上，這一部份仍然有一些相容性問題。我便不能在 dolphin 中開啟我的 Lumia 手機。</p>
+
+<p>但是我可以用 jmtpfs 將 Lumia 手機當成一個外接式磁碟掛載到檔案系統上。雖然 jmtpfs 是一個命令列工具，聊勝於無。</p>
+
+<h4>gnome-commander 與 konsole</h4>
+
+<p>gnome-commander 的工具列上有一個「Open terminal」的按鈕。但依預設設置，在 KDE 下按下那工具鈕只會得到無法開啟 gnome-terminal 的錯誤訊息。就算用 xterm 或 konsole 建了一個名為 gnome-terimal 的符號連結也無用，因為 gnome-commander 還添加了一個不適用於 xterm 或 konsole 的參數。正確作法是改變 GNOME Desktop 的偏好程式設置。我是用 gconftool 這個工具。</p>
+
+<p>我提供一個設置文件，如下:</p>
+
+<pre class="highlight"><code>
+<span class="nt">&lt;gconfentryfile&gt;</span>
+  <span class="nt">&lt;entrylist</span> <span class="na">base=</span><span class="s">"/desktop/gnome/applications/terminal"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;entry&gt;</span>
+      <span class="nt">&lt;key&gt;</span>exec<span class="nt">&lt;/key&gt;</span>
+      <span class="nt">&lt;schema_key&gt;</span>/schemas/desktop/gnome/applications/terminal/exec<span class="nt">&lt;/schema_key&gt;</span>
+      <span class="nt">&lt;value&gt;</span>
+        <span class="nt">&lt;string&gt;</span>konsole<span class="nt">&lt;/string&gt;</span>
+      <span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;/entry&gt;</span>
+    <span class="nt">&lt;entry&gt;</span>
+      <span class="nt">&lt;key&gt;</span>exec_arg<span class="nt">&lt;/key&gt;</span>
+      <span class="nt">&lt;schema_key&gt;</span>/schemas/desktop/gnome/applications/terminal/exec_arg<span class="nt">&lt;/schema_key&gt;</span>
+      <span class="nt">&lt;value&gt;</span>
+        <span class="nt">&lt;string&gt;</span>--separate <span class="nt">&lt;/string&gt;</span>
+      <span class="nt">&lt;/value&gt;</span>
+    <span class="nt">&lt;/entry&gt;</span>
+  <span class="nt">&lt;/entrylist&gt;</span>
+<span class="nt">&lt;/gconfentryfile&gt;</span>
+</code></pre>
+
+
+<p>複製上述設置內容，儲存為檔案。例如儲存為 /tmp/gnome-terminal.xml 。然後用 gconftool 匯入這份檔案: <code>gconftool --load gnome-terimal.xml</code> 。如此一來， gnome-commander 的「Open terminal」工具鈕就會用正確的參數啟動 konsole 終端機。</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20%E4%B8%AD%E6%96%87%E7%92%B0%E5%A2%83%E7%AF%87.html">Debian 8 (jessie) 安裝筆記 中文環境篇</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20Firefox%20%E8%88%87%20Iceweasel.html">Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/31064659.html">http://blog.roodo.com/rocksaying/archives/31064659.html</a></div>

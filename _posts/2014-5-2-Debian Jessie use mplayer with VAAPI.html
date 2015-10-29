@@ -1,0 +1,130 @@
+---
+title: Debian Jessie use mplayer with VAAPI
+category: computer
+old-category: 電腦技術
+tags: [debian,mplayer,vaapi]
+---
+<p>
+VAAPI (<a href="http://en.wikipedia.org/wiki/Video_Acceleration_API">Video Acceleration API</a>) 是 Linux 環境下的其中一種利用 GPU 加速視訊播放(硬解播放)的程式介面。在 Linux 常見的影像播放程式中， vlc 是很早(v1.1)就支援 VAAPI ，反倒是 mplayer 遲未正式支援。本文記錄我在 Debian jessie 上安裝 mplayer 支援 VAAPI 之事。
+</p>
+
+<!--more-->
+<h4>
+使用 VAAPI 前的準備
+</h4>
+
+<p>
+首先，你的電腦系統的顯示晶片必須支援 VAAPI 。例如 Intel GAM/HD Graphics ，以及 AMD/ATI Radeon GPU 。基本上， Intel 自 2012 年以後內建的顯示晶片都可用； AMT/ATI 自 2009 年以後推出的顯示晶片都可用。至於 NVidia 顯示晶片使用 mplayer 時，用 VDPAU 就好了，參考「<a href="{{ site.baseurl }}/archives/2012/Debian_Ubuntu%20and%20NVIDIA%20driver%27s%20video%20hardware%20acceleration.html">Debian/Ubuntu and NVIDIA driver's video hardware acceleration </a>」。
+</p>
+
+<p>
+接著你還要打通驅動程式的環節。 進行視訊加速播放，必須先安裝顯示晶片專屬驅動程式，以及 VAAPI 執行函數庫。需要下列套件。
+</p>
+
+<h5>
+顯示晶片驅動程式: (視訊加速用)
+</h5>
+
+<p>
+AMD/ATI Radeon GPU 驅動程式套件: <em>fglrx-driver fglrx-modules-dkms libva-glx1 xvba-va-driver</em>
+</p>
+
+<p>
+Intel GMA/HD Graphics 驅動程式套件: <em>i965-va-driver</em>
+</p>
+
+<h5>
+VAAPI 執行函數庫與檢測工具
+</h5>
+
+<p>
+套件: <em>libva1 libva-x11-1 vainfo</em>
+</p>
+
+<p>
+以 AMD/ATI 顯示卡為例，執行 <kbd>vainfo</kbd> 檢測的結果中， <q>VA API Supported entrypoints</q> 至少要一個以上才算可用。如下所示:
+</p>
+
+<pre class="language-term">
+$ vainfo
+vainfo: VA_API Version: 0.35 (libva 1.3.0)
+vainfo: Driver version: Splitted-Desktop Systems XvBA backend for VA-API 0.8.0
+vainfo: Supported profile and entrypoints
+      VAProfileH264High               : VAEntrypointVLD
+      VAProfileVC1Advanced            : VAEntrypointVLD
+</pre>
+
+<h4>
+我的安裝過程
+</h4>
+
+<p>
+我嘗試按照「<a href="http://moto.debian.tw/viewtopic.php?f=11&t=17206">
+mplayer 以 vaapi 使用 ATI提供的 XvBA 硬體加速播放影片</a>」的說明，以源碼編譯，但總是失敗。
+</p>
+
+<p>
+後來在「<a href="https://launchpad.net/~sander-vangrieken/+archive/vaapi/+packages">
+Sander van Grieken - mplayer VA-API enabled builds</a>」找到了編譯好的 deb 套件。
+但有個小麻煩。這是在 Ubuntu 下建置的套件，我試著直接安裝時， Debian 套件管理程式抱怨我還沒安裝 libvorbisidec1 ，還有 libpulse0 的需求版本不符。
+</p>
+
+<p>
+我查看了一下 mplayer-vaapi deb 的檔案內容，發現裡面只有一個 usr/bin/mplayer 的執行檔，其他都是一般的資料文件。所以我跳過安裝工作，直接解開 deb 檔，把它包含的 usr/bin/mplayer 拿出來，順便改名成 <kbd>mplayer-vaapi</kbd> 以免和已經安裝的 mplayer 衝突。而實際使用時很順利，沒有問題。執行參數加上 <kbd>-vo vaapi</kbd> 即可。
+</p>
+
+<pre class="language-term">
+# 先安裝 Debian jessie 提供的 mplayer 套件，把 mplayer 相關的函數庫也一併裝進。
+$ sudo apt-get install mplayer
+
+# 安裝 mplayer-vaapi 需要的套件。
+$ sudo apt-get install libvorbisidec1
+
+# 解壓 mplayer-vaapi deb 檔到 mplayer-vaapi 目錄。
+$ dpkg -x mplayer-vaapi_1.1.1+svn36265-2~saucy0_amd64.deb ~/mplayer-vaapi
+
+# 將 mplayer-vaapi/usr/bin/mplayer 複製到家目錄的 bin 目錄中，
+# 並改名 mplayer-vaapi 。
+$ cp ~/mplayer-vaapi/usr/bin/mplayer ~/bin/mplayer-vaapi
+
+# 使用時，加上 "-vo vaapi" 的參數即可。
+$ ~/bin/mplayer-vaapi -vo vaapi big_buck_bunny_1080p.mov
+</pre>
+
+<div class="note">
+h264 格式的測試影片，取自「<a href="http://www.bigbuckbunny.org/">Big Buck Bunny</a>」。
+</div>
+
+<h4>
+播放效果記錄
+</h4>
+
+<p>
+我以 AMD G-T56N 晶片，分別測試下列影像播放程式使用 VAAPI 播放 1080P 影片的效果。
+</p>
+
+<ul>
+    <li>
+    gstream-vaapi <br/>
+    CPU 使用率 90% ，效果非常不明顯。
+
+    <li>
+    vlc <br/>
+    CPU 使用率 50~60% 左右，看得出 GPU 的加速效果，但仍然與預期有所落差。
+
+    <li>
+    mplayer-vaapi <br/>
+    CPU 使用率介於 15~20% 之間，加速效果卓越，這才是我預期的效果(參考「<a href="{{ site.baseurl }}/archives/2012/Debian_Ubuntu%20and%20NVIDIA%20driver%27s%20video%20hardware%20acceleration.html">Debian/Ubuntu and NVIDIA driver's video hardware acceleration </a>」)。
+
+</ul>
+
+<p>
+雖然同樣透過 VAAPI 處理視訊加速播放，但效果天差地遠。這其中奧妙，我懶得深究。如果想要配合 smplayer 使用的話，可以用 mplayer-vaapi 替代 /usr/bin 目錄下原本的 mplayer 。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2012/Debian_Ubuntu%20and%20NVIDIA%20driver%27s%20video%20hardware%20acceleration.html">Debian/Ubuntu and NVIDIA driver's video hardware acceleration</a></li>
+<li><a href="{{ site.baseurl }}/archives/2014/apache-session%20-%20startup%20apache%20server%20on%20X%20Window.html">apache-session - startup apache server under X Window</a></li>
+<li><a href="{{ site.baseurl }}/archives/2014/Kiosk%20Designing%20%E7%BA%8C%E7%AF%87%20-%20%E5%9C%A8%20x86%20PC%20%E4%B8%8A%EF%BC%8C%E4%BB%A5%20mplayer%20%E6%9B%BF%E4%BB%A3%20omxplayer.html">Kiosk Designing 續篇 - 在 x86 PC 上，以 mplayer 替代 omxplayer</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/27830035.html">http://blog.roodo.com/rocksaying/archives/27830035.html</a></div>

@@ -1,0 +1,173 @@
+---
+title: Kiosk Designing 續篇 - 在 x86 PC 上，以 mplayer 替代 omxplayer
+category: programming
+old-category: Programming
+tags: [linux,php,apache,debian,html5,xulrunner,dbus,raspberry pi,omxplayer]
+---
+<p>
+在前文「<a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a>」中，我曾提到在 x86 PC 上也實作了一個相同設計的替代品。其實我一開始就是在 x86 PC 上實踐這個設計想法。
+</p>
+
+<p>
+在 x86 PC 上，我使用 mplayer 作為 omxplayer 的替代品，除此之外的所有條件都一樣。由於 Raspberry Pi 的執行效能並不好，在上面直接開發產品會浪費不少執行等待時間，所以我將此替代品視為在 Raspberry Pi 開發 Kiosk 產品的模擬器。當然將此設計方案作為正式產品對待也無不可。可以搭配 Intel Atom 或 AMD APU 的廉價組合，而且 HTML5 介面的操作流暢度遠勝 Raspberry Pi。
+</p>
+
+<!--more-->
+<h4>
+mplayer 視訊硬體加速
+</h4>
+
+<p>
+首先，我們需要打通 mplayer 的視訊硬體加速功能 (video acceleration)。
+</p>
+
+<p>
+搭配 Intel Atom 系統時，如果內建的顯示晶片不是 Intel HD Graphics 系列的話，不足以支撐 1080P 視訊播放需求，需另外搭配低階的 NVidia 或 AMD/ATI Radeon 顯示卡。而 AMD APU 原本就是內建 ATI Radeon 顯示晶片，提供 1080P 視訊硬體加速功能。
+</p>
+
+<p>
+搭配 NVidia 顯示晶片時，走 mplayer + VDPAU 路線，請參考「<a href="{{ site.baseurl }}/archives/2012/Debian_Ubuntu%20and%20NVIDIA%20driver%27s%20video%20hardware%20acceleration.html">Debian and NVIDIA driver's video hardware acceleration</a>」，並建立 <dfn>$HOME/.mplayer/config</dfn> 檔案，加入下列設置。
+</p>
+
+<pre class="language-text">
+vo=vdpau
+vc=ffmpeg12vdpau,ffwmv3vdpau,ffvc1vdpau,ffh264vdpau,ffodivxvdpau
+</pre>
+
+<p>
+搭配 AMD/ATI Radeon 顯示晶片或 Intel HD Graphics 顯示晶片時，走 mplayer + VAAPI 路線，請參考「<a href="{{ site.baseurl }}/archives/2014/Debian%20Jessie%20use%20mplayer%20with%20VAAPI.html">Debian Jessie use mplayer with VAAPI</a>」，並建立 <dfn>$HOME/.mplayer/config</dfn> 檔案，加入下列設置。
+</p>
+
+<pre class="language-text">
+vo=vaapi
+</pre>
+
+
+<h4>
+mplayer-dbus
+</h4>
+
+<p>
+接著，安裝我提供的 <a href="http://code.google.com/p/rocksources/wiki/Download">mplayer-dbus deb 套件</a>；或者以 svn 工具取出「<a href="https://rocksources.googlecode.com/svn/trunk/linux/mplayer-dbus">mpalyer-dbus - rocksources</a>」源碼，自行安裝。另外，有些選擇自行從源碼安裝 dbus 服務的人，誤以為要自己啟動服務程式。其實不需要這麼做。在源碼中都有包含一份 .service 文件，把這份文件放在正確的位置， dbus daemon 就會在使用者需要時啟動指定的 dbus 服務。不了解 DBus 服務如何啟動的人，請參考「<a href="{{ site.baseurl }}/archives/2010/D-Bus%20service%20activation.html">D-Bus service activation</a>」。
+</p>
+
+<p>
+由於 mplayer-dbus 是作為 omxplayer-dbus 的替代品所設計，故其 DBus 服務與介面名稱和 omxplayer-dbus 都叫 raspberry.pi.OMXPlayer ，不是我搞錯。但是我只實作了設計 kiosk 時需要的內容。又因 mplayer 必須在 X session 下運作，故只提供 dbus session 型態。以下是 mplayer-dbus 可用的 DBus 內容:
+</p>
+
+<p>
+raspberry.pi.OMXPlayerList:
+</p>
+
+<ul>
+    <li>Play()</li>
+    <li>List()</li>
+    <li>Event 信號: 只會回報 playing, pause, resume, closed 四種狀態。</li>
+</ul>
+
+<p>
+raspberry.pi.OMXPlayer:
+</p>
+
+<ul>
+    <li>Stop()</li>
+    <li>Pause()</li>
+    <li>Resume()</li>
+    <li>MRL</li>
+    <li>videoWidth</li>
+    <li>videoHeight</li>
+</ul>
+
+<p>
+omxplayer-dbus 完整的實作內容足以應付多媒體播放系統的設計需求，但我在此僅針對 kiosk 設計，懶得完實整作 mplayer-dbus 。
+</p>
+
+<h4>
+安裝 evideo 和 apache-session
+</h4>
+
+<p>
+最後，參考「<a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a>」安裝 evideo 相關內容 (evideo-mplayer.js, mplayer.php, mplayer_close.php, config.php) 和 apache-session 就搞定了。除了 mplayer 的部份，在 x86 PC 上的設計方式都一樣。按照上述操作並執行範例內容，你應該就會看到類似下圖的執行效果:
+</p>
+
+<img src="https://zscojq.dm2304.livefilestore.com/y2pjjY7IXXk_ba4sjf1Z5jBTxlEQBRdG0V8ulzQE0eCAS7F396AIHAa5ykpOhhWT_lion-jdT4EcqiXoaRj1ocfDEFJ1tQvZV_CvLygfawyRqs/pi-kiosk-demo.jpg" alt="x86 PC 執行範例"/>
+
+<div class="note">
+你需要先修改 video.html 中的影片名稱，畢竟你的電腦中的影片內容和名稱不可能和我一樣。
+</div>
+
+<p>
+在只有觸控螢幕的裝置上， mplayer 模擬的效果和 omxplayer 幾乎相同。但如果你配上鍵盤和滑鼠的話，就不一樣了。 mplayer 本身會佔一個視窗，所以在某些視窗管理程式中，你可以用滑鼠拖曳影像內容(通常是按住鍵盤的 Alt 再用滑鼠拖曳)。故在正式產品中，記得關掉視窗管理程式的視窗拖曳功能。
+</p>
+
+<p>
+此外，mplayer 視窗出現時，也會變成焦點視窗，所以你可以用鍵盤控制 mplayer 的播放動作。例如按 p 暫停，按 q 結束。這我無法取消，不過這行為在測試時很方便。例如你要測試廣告輪播時，可以直接按 q 結束現在廣告，觸發 <dfn>ended</dfn> 事件。
+</p>
+
+<h4>
+XULRunner App
+</h4>
+
+<p>
+在前文「<a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a>」中，我提到了 Firefox 可以安裝 auto-hide 或 r-kiosk 這類擴充套件達成最大化並去除工具列的效果。其實 Firefox 還有一個執行模式可以做到這一點，那就是 XULRunner App 模式。不過隨著 FirefoxOS 日漸成熟，這個模式似乎有些被遺忘了。
+</p>
+
+<p>
+總之，有興趣的人，可以參考「<a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a>」或是 Mozilla 開發者網站的「<a href="https://developer.mozilla.org/en-US/docs/Mozilla/Projects/XULRunner/Getting_started_with_XULRunner">Getting started with XULRunner</a>」了解 XULRunner 是什麼東西。
+</p>
+
+<p>
+我在 rocksources r139 中，為 evideo 增加了一個 <var>EVideo.playerPath</var> 的欄位。這個欄位是為了讓開發者可以將 evideo-mplayer.js, mplayer*.php 放在不同的路徑而設。當你想用 XULRunner App 模式啟動 kiosk 時，你會用到這個欄位。
+</p>
+
+<p>
+我在 <a href="https://rocksources.googlecode.com/svn/trunk/linux/kiosk">kiosk 源碼</a> 中，增加了 xulapp 資料夾，其中包含了本文的 kiosk 範例以 XULRunner App 模式執行時需要的所有文件:
+</p>
+
+<ul>
+    <li><a href="http://code.google.com/p/rocksources/source/browse/trunk/linux/kiosk/xulapp/application.ini">application.ini</a></li>
+    <li><a href="http://code.google.com/p/rocksources/source/browse/trunk/linux/kiosk/xulapp/chrome.manifest">chrome.manifest</a><br/>
+    很久之前， chrome.manifest 的位置改到和 application.ini 在一起了。</li>
+    <li><a href="http://code.google.com/p/rocksources/source/browse/trunk/linux/kiosk/xulapp/defaults/preferences/prefs.js">defaults/preferences/prefs.js</a></li>
+    <li><a href="http://code.google.com/p/rocksources/source/browse/trunk/linux/kiosk/xulapp/chrome/content/index.html">chrome/content/index.html</a></li>
+    <li><a href="http://code.google.com/p/rocksources/source/browse/trunk/linux/kiosk/xulapp/chrome/content/video.html">chrome/content/video.html</a></li>
+</ul>
+
+<p>
+在 XULRunner App 模式中，文件的 URL 根基目錄是由 Firefox 內部提供(chrome://...)，而不是走 Apache httpd ，自然也不可能調用 mplayer*.php 。所以你必須用絕對路徑 URL 指示 mplayer*.php 所在位置。在本例的 video.html 中，我就在載入 evideo-mplayer.js 後，又用 <var>EVideo.playerPath</var> 指示 Firefox 去 http://localhost:1080/kiosk/ 找 mplayer*.php 。如下所示:
+</p>
+
+<pre class="highlight"><code>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"http://localhost:1080/kiosk/evideo-mplayer.js"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/script&gt;</span>
+.
+.
+.
+<span class="nt">&lt;script&gt;</span>
+<span class="nx">EVideo</span><span class="p">.</span><span class="nx">playerPath</span> <span class="o">=</span> <span class="s1">'http://localhost:1080/kiosk/'</span><span class="p">;</span>
+
+<span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+
+<p>
+在前文的範例中，因為 html 和 js, php 等文件都放在同一個目錄下，所以都用相對路徑表示。但是在 XULRunner App 中，因為 evideo-mplayer.js 和 mplayer*.php 都放在 App 主資料夾之外 (<var>chrome/content</var>)，所以必須以絕對路徑表示。不過 evideo-mplayer.js 其實可以放在 <var>chrome/content</var> 資料夾中。
+</p>
+
+<p>
+接著，你需要視實際情況修改 <var>defaults/preferences/prefs.js</var> 中的 <var>outerWidth</var> 和 <var>outerHeight</var> 之值，這是 XULRunner App 執行時的視窗大小。按 kiosk 的需求，這個視窗大小應該等於你的螢幕大小。
+</p>
+
+<p>
+至於 application.ini, chrome.manifest 和 prefs.js 中的其他內容，請自行參考 XULRunner 文件。
+</p>
+
+<p>
+最後，怎麼用 Firefox 啟動 XULRunner App 執行模式呢？很簡單，加上 <kbd>-app [path to application.ini]</kbd> 參數就可以了。以本文範例的預設路徑來說，就是執行 <kbd>firefox -app $HOME/Public/kiosk/xulapp/application.ini</kbd>。例如:
+</p>
+
+<img src="https://w2voja.dm2303.livefilestore.com/y2prEi7MhSMlQhw5L0aT1xtFk6qZD2wrn67DPCDFxnkAnMHgMGRATjJOKPrO3Z_WxJp3s3nISG6zJ2z3ZTMsxowoq5nPdfKeJxY0wNbsuA7grA/kiosk-snap-3.jpg" alt="Kiosk XULRunner App 模式例圖"/>
+
+<p>
+嗯？你說上面這張圖怎麼看都是在 Windows 上跑的啊。你沒看錯，這張圖是我在 Windows 上跑的範例。至於怎麼在 Windows 上做到這件事，這又是另一個故事了 (煙~~~)
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/28212965.html">http://blog.roodo.com/rocksaying/archives/28212965.html</a></div>

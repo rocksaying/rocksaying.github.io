@@ -1,0 +1,113 @@
+---
+title: PHP curl post file
+category: programming
+old-category: PHP
+tags: [curl,restful]
+---
+<p>日前跑一個 RESTful 服務舊案以 PHPUnit 設計的測試案例，發現有一些上傳檔案到 RESTful 服務的測試項目總是失敗。檢查程式後，發現問題出在測試案例的 curl 程式碼。</p>
+
+<p>一直以來，用 PHP 的 curl 函數上傳檔案時，只需要啟用 <code>CURLOPT_POST</code> 選項，再於 <code>CURLOPT_POSTFIELDS</code> 的欄位值中，以 <code>@</code> 標示檔案路徑， curl 就會自動幫我們處理讀取檔案內容並上傳給遠端的工作。參考 <a href="{{ site.baseurl }}/archives/2012/PHP%20%E9%80%8F%E9%81%8E%20HTTP%20POST%20%E6%96%B9%E6%B3%95%E4%B8%8A%E5%82%B3%E8%B3%87%E6%96%99%E8%88%87%E6%AA%94%E6%A1%88%E7%B5%A6%20RESTful%20%E6%9C%8D%E5%8B%99.html">PHP 透過 HTTP POST 方法上傳資料與檔案給 RESTful 服務</a> 。</p>
+
+<p>但根據 PHP 線上使用手冊的記載，在 PHP 5.5 版之後，基於安全理由關閉了這項功能。要改用函數 <code>curl_file_create()</code> ，參考 <a href="http://php.net/manual/en/function.curl-file-create.php">PHP Manual: <code>curl_file_create</code></a>。原因很簡單，因為 curl 並不能區分你是真的要上傳檔案或是剛好輸入了一個開頭是 <code>@</code> 字元的字串。如果你設計了一個用 curl POST 上傳資料的程式，又允許使用者輸入資料欄位，那麼駭客就可以故意填上 <code>@/etc/passwd</code> 讓 curl 將主機上的帳號清單傳出去。</p>
+
+<!--more-->
+<p>像下面的程式碼範例，你設計欄位 <code>field1</code> 是一個字串欄位，讓使用者輸入文字，例如 <code>hello world</code>。若駭客抓住這一點，故意輸入 <code>@/etc/passwd</code> ，那麼 curl 就會認為這是要上傳檔案，而去讀取 /etc/passwd 的內容並將之送出。</p>
+
+<pre class="highlight"><code>
+$fields =array(
+    'field1' =&gt; $input_string
+);
+$opts = array(
+    CURLOPT_POST    =&gt; true,
+    CURLOPT_POSTFIELDS =&gt; $fields
+);
+
+curl_setopt_array($hr, $opts);
+</code></pre>
+
+
+<p>為了修正這個安全問題， PHP 5.5 之後關閉了這個上傳檔案的捷徑(<span class="Onote">有組態項目可以開啟這功能，但基於安全理由，我不建議這麼做</span>)。如果要上傳的表單欄位中包含檔案型態，那麼設計者必須明確地使用 <code>curl_file_create()</code> 函數處理這個資料欄位。當然，設計者有必要檢查檔案路徑是否安全。幸好這項調整工作很容易修改。如下所示:</p>
+
+<pre class="highlight"><code>
+$fields =array(
+    // 'field1' =&gt; '@' . $file_path # INSECURITY!
+    'field1' =&gt; curl_file_create($file_path) # Good.
+);
+$opts = array(
+    CURLOPT_POST    =&gt; true,
+    CURLOPT_POSTFIELDS =&gt; $fields
+);
+
+curl_setopt_array($hr, $opts);
+</code></pre>
+
+
+<p>對於 PHP 5.4 及其以前的舊版用戶，可以參考網友分享的偷懶替代法，在程式碼中加入下列定義。</p>
+
+<pre class="highlight"><code>
+# For PHP <span class="nt">&lt; 5</span><span class="err">.</span><span class="na">5:</span>
+<span class="err">#</span> <span class="na">See</span> <span class="na">also:</span> <span class="na">http:</span><span class="err">//</span><span class="na">php</span><span class="err">.</span><span class="na">net</span><span class="err">/</span><span class="na">manual</span><span class="err">/</span><span class="na">en</span><span class="err">/</span><span class="na">function</span><span class="err">.</span><span class="na">curl-file-create</span><span class="err">.</span><span class="na">php</span>
+<span class="na">if</span> <span class="err">(!</span><span class="na">function_exists</span><span class="err">('</span><span class="na">curl_file_create</span><span class="err">'))</span> <span class="err">{</span>
+    <span class="na">function</span> <span class="na">curl_file_create</span><span class="err">($</span><span class="na">filename</span><span class="err">,</span> <span class="err">$</span><span class="na">mimetype =</span><span class="err"> </span><span class="s">''</span><span class="err">,</span> <span class="err">$</span><span class="na">postname =</span><span class="err"> </span><span class="s">''</span><span class="err">)</span> <span class="err">{</span>
+        <span class="na">return</span> <span class="err">"@$</span><span class="na">filename</span><span class="err">;</span><span class="na">filename=</span><span class="s">"
+            . ($postname ?: basename($filename))
+            . ($mimetype ? "</span><span class="err">;</span><span class="na">type=</span><span class="s">$mimetype"</span> <span class="na">:</span> <span class="err">'');</span>
+    <span class="err">}</span>
+<span class="err">}</span>
+</code></pre>
+
+
+<p>這個偷懶法就是定義一個 <code>curl_file_create()</code> ，但內容只是回傳一個以 <code>@</code> 標示的字串。在舊版 PHP 中，它仍然會交給 curl 去自動載入檔案並上傳。但在新版 PHP 中，就會調用內建的 <code>curl_file_create()</code> 函數處理檔案的載入工作。</p>
+
+<p>最後，提供一個無視 PHP 版本也不透過 curl 的方法，即下列的 <code>do_post_request()</code> 函數。</p>
+
+<pre class="highlight"><code>
+function do_post_request($url, $postdata = false, $files = false)
+{
+    $destination = $url;
+
+    $eol = "\r\n";
+    $data = '';
+
+    $mime_boundary=md5(time());
+
+    $data .= '--' . $mime_boundary . $eol;
+
+    //Collect Postdata
+    if ($postdata) {
+        foreach($postdata as $key =&gt; $val) {
+            $data .= "--$mime_boundary\n";
+            $data .= "Content-Disposition: form-data; name="".$key.""\n\n".$val."\n";
+        }
+    }
+    $data .= "--$mime_boundary\n";
+
+    if ($files) {
+        foreach ($files as $key =&gt; $content) {
+            $data .= 'Content-Disposition: form-data; name="' . 
+                      $key . '"; filename="' . $key . '"' . $eol;
+            $data .= 'Content-Type: application/octet-stream' . $eol;
+            $data .= 'Content-Transfer-Encoding: binary' . $eol . $eol;
+            $data .= $content . $eol;
+        }
+    }
+
+    $data .= "--" . $mime_boundary . "--" . $eol . $eol; // finish with two eol's!!
+
+    $params = array(
+        'http' =&gt; array(
+            'method' =&gt; 'POST',
+            'header' =&gt; 'Content-Type: multipart/form-data; boundary=' . 
+                $mime_boundary . $eol,
+            'content' =&gt; $data
+        )
+    );
+
+    $ctx = stream_context_create($params);
+    $response = @file_get_contents($destination, FILE_TEXT, $ctx);
+    return $response;
+}         
+</code></pre>
+
+
+<p>不過這方法假設所有表單欄位都是檔案型態。如果你要上傳的表單混雜了一般文字欄位和檔案型態欄位的話，你要自己區分處理。</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/35970791.html">http://blog.roodo.com/rocksaying/archives/35970791.html</a></div>

@@ -1,0 +1,218 @@
+---
+title: Debian 8 (jessie) 安裝筆記 中文環境篇
+category: computer
+old-category: 電腦技術
+tags: [debian,ibus,hime,kde,ime]
+---
+<p>我在「<a href="{{ site.baseurl }}/archives/2014/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20%E5%9F%BA%E7%A4%8E%E7%AF%87.html">基礎安裝篇</a>」就提到我安裝 Debian 時，預設的 LANG 是 C 或 en_US 。就算裝了桌面軟體套件，也全是英文訊息介面，也沒有中文輸入法。所以接下來就要說明如何安裝正體中文語系環境。包含下列項目:</p>
+
+<ul>
+<li>中文語系基本套件</li>
+<li>選擇語系環境</li>
+<li>中文輸入法: ibus 和 hime</li>
+<li>字型字體</li>
+</ul>
+
+<p><em>在 Debian 8 已於 2015-04-25 正式釋出。本文內容最近更新日期: 2015-05-15 。</em></p>
+
+<!--more-->
+<h4>中文語系所需套件</h4>
+
+<p>安裝時選擇預設英文語系的話，則安裝後，首先需要執行 <code>dpkg-reconfigure locales</code> 加選正體中文語系(zh_TW) 。然後再安裝下列選用性的軟體套件:</p>
+
+<ul>
+<li>xfonts-wqy 
+<ul>
+<li>文泉驛 X11 字體。</li>
+</ul></li>
+<li>fonts-wqy-zenhei
+<ul>
+<li>文泉驛正黑體 (TrueType)。套件舊名 ttf-wqy-zenhei 。</li>
+</ul></li>
+<li>fonts-wqy-microhei
+<ul>
+<li>文泉驛微米黑體 (TrueType)。套件舊名 ttf-wqy-microhei 。</li>
+</ul></li>
+<li>fonts-arphic-ukai
+<ul>
+<li>文鼎楷書體 (TrueType)。套件舊名 ttf-arphic-ukai 。</li>
+</ul></li>
+<li>fonts-arphic-uming 
+<ul>
+<li>文鼎明體 (TrueType) 。套件舊名 ttf-arphic-uming 。</li>
+</ul></li>
+<li>kde-l10n-zhtw
+<ul>
+<li>KDE 的中文語系訊息套件。</li>
+</ul></li>
+<li>hime hime-data hime-gtk3-immodule hime-qt4-immodule
+<ul>
+<li>hime-tables 常用中文輸入法表格。包含行列30、詞音等。</li>
+<li>hime-anthy 日文輸入。</li>
+</ul></li>
+<li>ibus ibus-qt4 ibus-gtk
+<ul>
+<li>ibus-array 行列30，這是我的慣用輸入法。</li>
+<li>ibus-table-array 通用表格式行列30，不好用，缺簡碼、符號。</li>
+<li>ibus-pinyin 拼音與注音兩種。</li>
+<li>ibus-anthy 日文輸入。</li>
+</ul></li>
+<li>iceweasel-l10n-zh-tw
+<ul>
+<li>iceweasel 的中文語系訊息套件。</li>
+</ul></li>
+</ul>
+
+<h4>選擇語系環境</h4>
+
+<p>首先，以 KDE 系統工具調整個人的桌面語系環境。從「系統設定 -> 地域 -> 國家/地區與語言」(System Settings -> Locale -> Country/Region &amp; Language) 。</p>
+
+<img src="https://pvtzjq.dm2302.livefilestore.com/y2pH0UGCnmBEiRHDAwWLFKoDRoMdg8NorQN7FT_PKWqjMIOLB-5RahpHKqZOrsPkmVgWqQgRxwhLo67CCrwE6FHhi1Dpjm3VBzppVweoHlePqg/Debian8_language.png" alt="System Settings : Locale" />
+
+<p>最後，編輯 $HOME/.xsessionrc ，加入下列兩行可以得到更好的中文語系支援效果。</p>
+
+<pre class="language-text">
+export LANG=zh_TW.utf8
+export LANGUAGE=zh_TW
+</pre>
+
+<p>詳細原因請參考「<a href="{{ site.baseurl }}/archives/2013/Debian%20%E5%A6%82%E4%BD%95%E9%81%B8%E6%93%87%E7%99%BB%E5%85%A5%E6%A1%8C%E9%9D%A2%E5%BE%8C%E7%9A%84%E8%AA%9E%E7%B3%BB%E7%92%B0%E5%A2%83%EF%BC%8C%E8%88%87%20AccountsService%20%E6%9C%89%E9%97%9C.html">Debian 如何選擇登入桌面後的語系環境</a>」。</p>
+
+<h4>中文輸入</h4>
+
+<p>中文輸入法框架有很多種，如 ibus, gcin, hime, scim, fctix 。我個人目前使用 hime 。我原先是用 ibus ，但後來改用 hime 輸入法框架，因為 ibus 在 KDE 環境似乎有些適應不良。</p>
+
+<h5>ibus</h5>
+
+<p>在某次更新後，我的 KDE 突然發生啟動任何應用程式，都會當掉的情形，具體來說是應用程式啟動時突然整個桌面都失去反應，但滑鼠指標還是可以移動。我試著重裝 xorg 和 kde 都無法解決。但移除 ibus 後就正常了。後來試了 scim 和 fcitx 也都會出現這種情形。</p>
+
+<p>接著，我嘗試不要啟動 KDE 時自動載入輸入法，而是啟動後再手動載入輸入法引擎。此時也正常。</p>
+
+<p>我懷疑是自動載入輸入法引擎的指令稿有問題。所以我移除 im-config 套件，並手動刪除以下檔案，就解決問題了。</p>
+
+<ul>
+<li>$HOME/.xinputrc</li>
+<li>/etc/X11/xinit/xinput.d/*</li>
+<li>/etc/X11/Xsession.d/70im-config_launch</li>
+</ul>
+
+<p>再自己編輯啟動指令稿 $HOME/.xsessionrc 加入下列設置</p>
+
+<pre class="language-text">
+export LANG=zh_TW.utf8
+export LANGUAGE=zh_TW
+
+export GTK_IM_MODULE=ibus
+export XMODIFIERS=@im=ibus
+export QT_IM_MODULE=ibus
+</pre>
+
+<p>最後，我要用 KDE 的「系統設定 -> 啟動與關閉 -> 自動啟動」的設定功能，增加一個桌面程式，程式名稱處直接輸入「ibus-daemon -d -x」，以便在進入 KDE 桌面後，自動啟動 ibus 。</p>
+
+<p>我之所以要這麼麻煩地指示 ibus-daemon 的啟動方式，皆因在我的系統中，如果 ibus-daemon 的執行順序在 kwin 之前的話， firefox 就不能輸入中文 (其他桌面應用程式倒是正常)。如果我把 ibus-daemon 啟動指令寫在 /etc/X11/Xsession.d/ 或是 ~/.xsessionrc 中，則 ibus-daemon 的執行順序都會排在 kwin 之前。</p>
+
+<p>參考 <a href="https://wiki.debian.org/I18n/ibus">I18n/ibus - Debian Wiki</a> 和 <a href="http://userbase.kde.org/Tutorials/Kimpanel/zh-tw">Kimpanel - KDE UserBase Wiki</a> 。</p>
+
+<h5>hime</h5>
+
+<p>在「<a href="{{ site.baseurl }}/archives/2014/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20%E5%9F%BA%E7%A4%8E%E7%AF%87.html">基礎安裝篇</a>」中，我提到 ibus 和 gedit 互衝的狀況。因此我最後改用 hime 輸入法框架了。使用時非常順暢，甚至可說非常接近 Windows XP/7 上的中文輸入體驗。</p>
+
+<p>我移除 ibus 後，再安裝下列套件 hime hime-data hime-gtk3-immodule hime-qt4-immodule hime-tables 。我另外還需要日文輸入 hime-anthy 。注意，選取安裝 hime ，可能會連帶選取 im-config 套件。但基於上節 ibus 的設置經驗，我懷疑 im-config 有 Bug ，所以我手動移除了 im-config 。反正我也不需要切換輸入法。</p>
+
+<p>如果你有安裝 im-config ，那麼可以用它的工具設定載入輸入法引擎的動作，而不需要自己編輯 .xsessionrc 。但我選擇自己動手做。手動設定時，只要在 $HOME/.xsessionrc 加入下列設置，就可以在登入 KDE 後自動載入 hime 輸入法。不需要像 ibus 那樣還要額外安排 ibus-daemon 的啟動步驟。</p>
+
+<pre class="language-text">
+export LANG=zh_TW.utf8
+export LANGUAGE=zh_TW
+
+export GTK_IM_MODULE=hime
+export XMODIFIERS=@im=hime
+export QT_IM_MODULE=hime
+</pre> 
+
+<h4>字型字體</h4>
+
+<p>文鼎楷書體和文鼎明體的字體不符合教育部頒標準字體 (某些字的筆劃不一樣)。如果你需要一個符合標準字體的印刷字型，可以考慮行政院主計處全字庫字體，有正宋體和正楷體。參見「<a href="{{ site.baseurl }}/archives/2010/%E5%88%A9%E7%94%A8%20X%20%E5%AD%97%E9%AB%94%E5%88%A5%E5%90%8D%EF%BC%8C%E8%AE%93%20Linux%20%E6%A1%8C%E9%9D%A2%E7%92%B0%E5%A2%83%E9%A1%AF%E7%A4%BA%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84%E6%A8%99%E6%A5%B7%E9%AB%94%E3%80%81%E7%B4%B0%E6%98%8E%E9%AB%94%E8%88%87%E9%BB%91%E9%AB%94.html">利用 X 字體別名，讓 Linux 桌面環境顯示文件中的標楷體、細明體</a>」關於全字庫正楷體與正宋體的說明。</p>
+
+<p>文泉驛和文鼎的字體都按 Unicode 規範提供了超過六萬字的中、日、韓字碼(CJK)，足以應付大部份人的需求。如果你遇到需要細明體或微軟黑體的文件，可參考「<a href="{{ site.baseurl }}/archives/2010/%E5%88%A9%E7%94%A8%20X%20%E5%AD%97%E9%AB%94%E5%88%A5%E5%90%8D%EF%BC%8C%E8%AE%93%20Linux%20%E6%A1%8C%E9%9D%A2%E7%92%B0%E5%A2%83%E9%A1%AF%E7%A4%BA%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84%E6%A8%99%E6%A5%B7%E9%AB%94%E3%80%81%E7%B4%B0%E6%98%8E%E9%AB%94%E8%88%87%E9%BB%91%E9%AB%94.html">利用 X 字體別名，讓 Linux 桌面環境顯示文件中的標楷體、細明體</a>」的說明。但 Debian 沒有參考文件中提到的 30-cjk-aliases.conf 文件。我在此提供一份完整的字體設置文件，請放在 /etc/fonts/conf.d/90-chinese-aliases.conf 。</p>
+
+<pre class="highlight"><code>
+<span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="cp">&lt;!DOCTYPE fontconfig SYSTEM "fonts.dtd"&gt;</span>
+<span class="nt">&lt;fontconfig&gt;</span>
+<span class="c">&lt;!-- /etc/fonts/conf.d/90-chinese-aliases.conf --&gt;</span>
+
+<span class="c">&lt;!-- 設定正體中文視窗明體字的替代品 --&gt;</span>
+    <span class="nt">&lt;alias&gt;</span>
+        <span class="nt">&lt;family&gt;</span>MingLiU<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>細明體<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>PMingLiU<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>新細明體<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>AR MingtiM BIG-5<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;accept&gt;</span>
+            <span class="c">&lt;!-- 若有全字庫宋體，就用宋體；否則用文鼎明體 --&gt;</span>
+            <span class="nt">&lt;family&gt;</span>TW-Sung<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>全字庫正宋體<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL UMing TW<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ShanHeiSun Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+    <span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!-- 设定简体中文视窗宋体字的替代品 --&gt;</span>
+    <span class="nt">&lt;alias&gt;</span>
+        <span class="nt">&lt;family&gt;</span>SimSun<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>NSimSun<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>SimSun-18030<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>NSimSun-18030<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>宋体<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>AR MingtiM GB<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL UMing CN<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ShanHeiSun Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+    <span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!-- 指定「文泉驛正黑(WenQuanYi Zen Hei)」作為 SimHei 的替代品 --&gt;</span>
+    <span class="nt">&lt;alias&gt;</span>
+        <span class="nt">&lt;family&gt;</span>SimHei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>WenQuanYi Zen Hei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+    <span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!-- 指定「文泉驛正黑」作為「微軟雅黑體」的替代品 --&gt;</span>
+    <span class="nt">&lt;alias&gt;</span>
+        <span class="nt">&lt;family&gt;</span>Microsoft YaHei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>微软雅黑<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>WenQuanYi Zen Hei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+    <span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!-- 指定「文泉驛正黑」為「微軟正黑體」的替代品 --&gt;</span>
+    <span class="nt">&lt;alias&gt;</span>
+        <span class="nt">&lt;family&gt;</span>Microsoft JhengHei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>微軟正黑體<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>WenQuanYi Zen Hei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+    <span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!-- 指定「文鼎楷書體」為「標楷體」的替代品 --&gt;</span>
+    <span class="nt">&lt;alias&gt;</span>
+        <span class="nt">&lt;family&gt;</span>DFKai-SB<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;family&gt;</span>標楷體<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;accept&gt;</span>
+            <span class="c">&lt;!-- 若有全字庫正楷體，就用正楷體；否則用文鼎楷書體 --&gt;</span>
+            <span class="nt">&lt;family&gt;</span>TW-Kai<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>全字庫正楷體<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL UKai TW<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ZenKai Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+    <span class="nt">&lt;/alias&gt;</span>
+
+<span class="nt">&lt;/fontconfig&gt;</span>
+</code></pre>
+
+
+<p>Google 最近也釋出了一組字體，叫「思源黑體」。這套字型是開源軟體字型，但不是自由軟體字型。因為它不是 GPL 授權，可以預見它不會被收錄到 Debian main 套件群組。</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/31556973.html">http://blog.roodo.com/rocksaying/archives/31556973.html</a></div>

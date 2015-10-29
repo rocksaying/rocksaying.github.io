@@ -1,0 +1,331 @@
+---
+title: Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer
+category: programming
+old-category: Programming
+tags: [linux,php,apache,debian,html5,dbus,raspberry pi,ime,omxplayer]
+---
+<p>
+大約半年前，我發佈了「<a href="{{ site.baseurl }}/archives/2013/omxplayer-dbus%20for%20Raspberry%20Pi.html">omxplayer-dbus</a>」套件，以便在 Raspberry Pi 上控制 <dfn>OMXPlayer</dfn> 播放高畫質影片。我最初的目的，是想結合基於 HTML5 的 UI 引擎設計在 Raspberry Pi 運作的嵌入式桌面環境，更具體的說法，就是一套 Kiosk 環境。我中間去做了工作上的一件軟體專案後，又有時間繼續了。在經過一陣比較後，我覺得用 <dfn>iceweasel</dfn> (Firefox 的 Debian 分支) 就足夠實現我的目的。所以我就用它結合 omxplayer 實作了一個具備 kiosk 要素的簡單範例。本文設計架構之宗旨，就是要無縫地銜接瀏覽器與 omxplayer 的協同合作，讓設計者可以像使用 HTML5 的 <dfn>video</dfn> 標記一樣地輕鬆處理影片播放工作。
+</p>
+
+<p>
+我在 Raspberry Pi 上安裝的作業系統是 Raspbian 7 ，就是 Debian 的 Pi 分支。它提供的 iceweasel 版本足夠支撐我的實作需求。至於它上面的 webkit 引擎，則略顯老舊，有些 HTML5 規格的支援度不如 iceweasel ，故被我捨去了。此外， FirefoxOS 也有 Pi 的版本，我想此文的實作概念也能應用在 FirefoxOS for Pi 。
+</p>
+
+<!--more-->
+<p>
+圖一是 Raspberry Pi 接上 LCD 電視螢幕的示範畫面。我設計的方式，是讓影像播放內容像嵌在 UI 中。
+</p>
+
+<img src="https://zsch3g.dm1.livefilestore.com/y2pRrKy26PS1eZMIpPq51jkHW80k2ZkW5JpfT3kOzBEAnyu5zFxfQ1t6_Ry9KqWZYrHt4O0RR8ngL87blpaEnILK8mvnKjhQRlvPxa4R3SuOpI/WP_20140506_15_25_55_Pro.jpg" alt="Pi 執行範例"/>
+
+<h4>
+軟硬體需求
+</h4>
+
+<h5>
+基礎硬體與作業系統
+</h5>
+
+<p>
+首先，你需要一塊 Raspberry Pi 的機板。你要用 x86 PC 也行，因為我有在 x86 PC 上實作相同設計的替代品。不過那預計是那下一篇才要說的事，在本篇需要 Raspberry Pi 。
+</p>
+
+<p>
+你必須完成 Raspbian 的安裝動作，確保它能運作。本文還認為使用者的家目錄下，應該備有 <dfn>Public</dfn> 和 <dfn>Videos</dfn> 子目錄，分別放置 kiosk 需要的網頁文件(UI介面)與影像文件(mp4)。在你初次啟動並登入 Raspbian 的桌面後，通常需要手動建立這兩個目錄。作業系統搞定後，再安裝 iceweasel 套件。
+</p>
+
+<p>
+你要用其他 Linux 散佈版本也行。只是你必須自行從源碼安裝下列軟體項目，並清楚如何調整部份設置文件在不同散佈版本間的差異。
+</p>
+
+<p>
+接著，你需要下列軟體項目。這些項目都可以在我的源碼庫取得: 「<a href="https://rocksources.googlecode.com">遊手好閒的石頭成的程式源碼</a>」。
+</p>
+
+<h5>
+kiosk
+</h5>
+
+<p>
+我將本文的主要源碼放置於「<a href="http://code.google.com/p/rocksources/source/browse/#svn%2Ftrunk%2Flinux%2Fkiosk">kiosk - rocksources</a>」。請取回它們，並將它們放置在 $HOME/Public/kiosk 目錄。這是本文默認的位置。當然，若你了解如何設置 Apache httpd 服務，你也可以放在其他地方。記得修改其中 config.php 內的 <dfn>VIDEO_ROOT</dfn> 的路徑，指向你放置影像文件的目錄。預設的 <dfn>VIDEO_ROOT</dfn> 是 <var>/home/rock/Videos</var> ，這自然是我的家目錄設置，所以你一定要修改這一行，除非你的帳號名稱也是 rock 。
+</p>
+
+<p>
+主要的程式碼是下列內容。基本上，這些東西像是函式庫，你不需要修改它們。
+</p>
+
+<ul>
+    <li>mplayer.php
+    <li>mplayer_close.php
+    <li>evideo-mplayer.js
+    <li>config.php<br/>
+    這是唯一需要修改調整的內容。
+</ul>
+
+<h5>
+omxplayer-dbus
+</h5>
+
+<p>
+參考「<a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">PHP DBus</a>」和「<a href="{{ site.baseurl }}/archives/2013/omxplayer-dbus%20for%20Raspberry%20Pi.html">omxplayer-dbus</a>」兩篇文章，完成 omxplayer-dbus 的安裝工作。可以在「<a href="https://code.google.com/p/rocksources/wiki/Download">Download - rocksources</a>」取得 deb 包。
+</p>
+
+<p>
+還要安裝 libapache2-mod-php5 套件。
+</p>
+
+<h5>
+apache-session
+</h5>
+
+<p>
+omxplayer-dbus 自版本 0.1.5 起，增加了 dbus session 模式。而本文預設使用的設計方式，也是讓 php 透過 dbus session 調用 omxplayer-dbus 。為了讓 apache + php 可以連接 dbus session ，還需要安裝「<a href="{{ site.baseurl }}/archives/2014/apache-session%20-%20startup%20apache%20server%20on%20X%20Window.html">apache-session</a>」。apache-session 默認家目錄應該要有 Public 和 log 目錄，請建立它們。apache-session 內定的設置方式，剛好符合本文需求，你只需要啟動它就好。
+</p>
+
+<p>
+當然，你也可以使用系統的 apache 服務。因為 omxplayer-dbus 本身就提供 dbus system 模式，而 php 透過 dbus system 時，不會有身份或期間限制。只是此時你需要修改本文的 mplayer.php 和 mplayer_close.php 兩個程式各一行內容，將它們連接的 dbus 模式從 <dfn>BUS_SESSION</dfn> 改成 <dfn>BUS_SYSTEM</dfn> 。
+</p>
+
+<h5>
+確認安裝項目
+</h5>
+
+<p>
+當你按照本文預設的方式安裝上述內容後，請執行 iceweasel 瀏覽器，然後開啟網址 http://localhost:1080/kiosk/ 。如果一切順利，你應該會看到一個網頁，內容只有一個連結。如果瀏覽器說無法連線，又或者是看到 Apache 丟出的錯誤訊息，都表示你目前的設置方式不能滿足本文的設計需求。請自行參考上述各項目的說明文章，按照你的系統配置狀況調整。
+</p>
+
+<p>
+接著，請你複製一些 mp4 或 h264 mov 的影片到 Pi 的 $HOME/Videos 上。嗯，文件名稱最好改成用英數字。然後編輯 $HOME/Public/kiosk 中的 video.html 和 video-basic.html ，搜尋 mp4 與 mov ，將裡面用到的影片名稱與路徑，換成你的影片名稱。
+</p>
+
+<h4>
+基本架構
+</h4>
+
+<p>
+我利用 iceweasel 瀏覽器作為使用者介面引擎，而使用者介面設計語言，自然就是 HTML5 。用 HTML5 設計使用者介面的文章很多，本文不說明。本文主要解決的問題在於影片播放，因為影片播放通常是 Kiosk 設計的必要項目。 Raspberry Pi 的 CPU 效能並不好，單純使用 CPU 處理影像內容時，根本播不動影片。而 iceweasel 碰到 HTML5 的 video 標記時，就是透過 gstream API 利用 CPU 去運算播放，所以播不動影片。最可行的方式就是用它專屬的 omxplayer 播放影片。本文設計架構之宗旨，就是要無縫地銜接瀏覽器與 omxplayer 的協同合作，讓設計者可以像使用 HTML5 的 <dfn>video</dfn> 標記一樣地輕鬆處理影片播放工作。基於 kiosk 的工作特性，我在此設定影片總是自動播放，不提供媒體控制列，也沒有跳轉暫停這些動作。
+</p>
+
+<p>
+首先，我寫了一個 mplayer.php 利用 dbus 去調用 omxplayer 播放影片。這個 mplayer.php 是準備給瀏覽器透過 apache 叫起的，算是一個 REST 程式。
+</p>
+
+<p>
+我先規劃了一個叫 ID 是 <dfn>video</dfn> 的 div 標記，它用 <dfn>src</dfn> 屬性指定影片路徑(在此當然僅限本機影片)，用 <dfn>width</dfn> 和 <dfn>height</dfn> 屬性或 CSS 樣式指定播放區域的長寬尺寸。我寫了一段 JavaScript 程式，在 HTML 文件載入後，自動抓出這個 div 節點並計算播放區域的座標位置，最後用 XmlHttpRequest 執行 mplayer.php ，叫出 omxplayer 播放影片。
+</p>
+
+<p>
+流程簡示如: 瀏覽器載入 HTML -> JavaScript 分析標記內容 -> JavaScript 根據分析結果向本機的 apache 請求 mplayer.php -> mplayer.php 調用 omxplayer-dbus -> omxplayer-dbus 調用 omxplayer 在指定的區域播放影片。
+</p>
+
+<p>
+load html -> javascript parse evideo tag -> javascript request mplayer.php -> mplayer.php invoke omxplayer-dbus -> omxplayer-dbus invoke omxplayer play video.
+</p>
+
+<p>
+按照我的作法，影片內容將覆蓋在瀏覽器指定的顯示區域上，看起來就像是嵌在頁面一樣。在多視窗桌面模式中，這種作法有個很糟的問題：當使用者拖動瀏覽器視窗的位置時，影片仍然固定在原處播放。但在 Kiosk 模式，瀏覽器就是最大化的單一視窗，根本不會移動位置，所以不必顧慮影片播放位置不會跟著移動的問題。
+</p>
+
+<p>
+video-basic.html 展示了上述流程的基本運作方式:
+</p>
+
+<pre class="highlight"><code>
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;meta</span> <span class="na">charset=</span><span class="s">"UTF-8"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;style </span><span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+<span class="nf">#video</span> <span class="p">{</span>
+    <span class="nl">border</span><span class="p">:</span> <span class="m">3px</span> <span class="nb">outset</span> <span class="no">red</span><span class="p">;</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">70%</span><span class="p">;</span>
+    <span class="nl">height</span><span class="p">:</span> <span class="m">60%</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nt">&lt;/style&gt;</span>
+
+<span class="nt">&lt;script&gt;</span>
+<span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'DOMContentLoaded'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'video'</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">video_src</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s1">'src'</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">xhr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">overrideMimeType</span><span class="p">)</span>
+        <span class="nx">xhr</span><span class="p">.</span><span class="nx">overrideMimeType</span><span class="p">(</span><span class="s1">'text/plain'</span><span class="p">);</span>
+
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//console.info(this.status);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">&gt;=</span> <span class="mi">300</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Could not load file'</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// DONE</span>
+            <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'video ended'</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+
+    <span class="kd">var</span> <span class="nx">screen_top</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">screen_left</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">mozInnerScreenY</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// Firefox only.</span>
+        <span class="nx">screen_top</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">mozInnerScreenY</span><span class="p">;</span>
+        <span class="nx">screen_left</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">mozInnerScreenX</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="kd">var</span> <span class="nx">mrl</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">'mplayer.php'</span><span class="p">,</span>
+        <span class="s1">'?src='</span><span class="p">,</span> <span class="nx">video_src</span><span class="p">,</span>
+        <span class="s1">'&amp;width='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientWidth</span><span class="p">,</span> 
+        <span class="s1">'&amp;height='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientHeight</span><span class="p">,</span> 
+        <span class="s1">'&amp;top='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">offsetTop</span> <span class="o">+</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientTop</span> <span class="o">+</span> <span class="nx">screen_top</span><span class="p">,</span>
+        <span class="s1">'&amp;left='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">offsetLeft</span> <span class="o">+</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientLeft</span> <span class="o">+</span> <span class="nx">screen_left</span><span class="p">,</span>
+        <span class="s1">'&amp;keep_aspect=true'</span>
+    <span class="p">].</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">debug</span><span class="p">(</span><span class="nx">mrl</span><span class="p">);</span>
+
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">,</span> <span class="nx">mrl</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span> <span class="c1">// async call</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">send</span><span class="p">();</span>
+<span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+<span class="nt">&lt;/script&gt;</span>
+
+<span class="nt">&lt;body&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>
+OMXPlayer play video.
+<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">'video'</span> <span class="na">src=</span><span class="s">'1080p/big_buck_bunny_1080p_h264.mov'</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>
+用 iceweasel 開啟 http://localhost:1080/kiosk/video-basic.html ，如果一切順利(記得修改其中的影片路徑)，在文件開啟後就會在指定的位置自動播放影片。我測試時， Pi 是從 SD 卡讀取影片，基於 I/O 效能，文件開啟後大概要等2,3秒才會出現影片。如果用硬碟的話，應該會快一些。
+</p>
+
+<h4>
+evideo 封裝
+</h4>
+
+<p>
+video-basic.html 示範了播放影片的基本流程，但還有一些事沒做。例如影片結束的事件，使用者在影片結束前就跳到其他頁面怎麼辦？這些都需要處理。
+</p>
+
+<p>
+為了包裝上述動作，我規劃了一個叫 <dfn>evideo</dfn> 的標記，它模仿了 HTML5 的 <dfn>video</dfn> 標記，可用 <dfn>src</dfn> 屬性指定影片路徑(在此當然僅限本機影片)，用 <dfn>width</dfn> 和 <dfn>height</dfn> 屬性或 CSS 樣式指定播放區域的長寬尺寸。接著我把載入 HTML 文件後分析 <dfn>evideo</dfn> 標記內容並調用 mplayer.php 的程式碼包裝在 evideo-mplayer.js 中，並包裝成一個叫 <dfn>EVideo</dfn> 的類別。 
+</p>
+
+<p>
+evideo 標記可用下列屬性標示:
+</p>
+<ul>
+    <li>src<br/>
+    影片路徑。僅限本機相對路徑，實際上會由 config.php 中的 VIDEO_ROOT 決定路徑從哪裡開始算起。
+    <li>width
+    <li>height
+    <li>onplay
+    <li>onended
+    <li>onerror
+    <li>poster
+    <li>keepaspect<br/>
+    這是我自定的屬性，而不是 HTML5 video 的標記屬性。用途為指示是否保持影片的原始長寬比例。預設為不保持，此時會縮放影片內容，讓影片內容填滿顯示區域。如果你指定的顯示區域的長寬比例與影片原始的長寬比例差異太大的話，使用者會看得出影片明顯變形。 UI 設計者要注意。
+</ul>
+
+<p>
+keepaspect 以外的屬性，用途都和 HTML5 的 video 標記屬性相同，不另說明。
+</p>
+
+<p>
+當你在 html 文件中使用 evideo 標記時，evideo-mplayer.js 會在載入文件後自動根據 evideo 的內容播放影片。如果你不想用 evideo 標記，或者是想用 JavaScript 控制播放時機，那麼你需要用 EVideo 類別。
+</p>
+
+<p>
+EVideo 類別提供下列內容:
+</p>
+
+<ul>
+    <li>EVideo(node, src=false)<br/>
+    建構方法。第一個參數 node 表示影片顯示區域的 DOM 節點，就像是 video-basic.html 用 div 也行。第二個參數 src 表示影片路徑，可以省略。省略 src 參數時，會去找 node 的 src 屬性。
+    <li>play() 方法<br/>
+    開始播放影片。
+    <li>stop() 方法<br/>
+    停止播放影片。
+    <li>play 事件<br/>
+    當影片開始播放時。
+    <li>ended 事件<br/>
+    當影片結束時。
+    <li>error 事件<br/>
+    發生錯誤時。
+</ul>
+
+<p>
+evideo-mplayer.js 除了可在載入 html 後自動播放影片，也會在使用者換頁時自動結束所有正在播放的影片，不需要設計者處理。
+</p>
+
+<p>
+$HOME/Public/kiosk 下的文件 index.html 和 video.html 是完整的示範文件。 index.html 是首頁，點擊它唯一一個連結後，載入 video.html 。 <a href="https://code.google.com/p/rocksources/source/browse/trunk/linux/kiosk/video.html">video.html</a> 用了一個 <dfn>evideo</dfn> 標記，並掛上 <dfn>onended</dfn> 事件，以便在影片結束後，繼續播放下一個影片。 <code>play_next_1()</code> 示範如何用 JavaScript 配置新的 EVideo 實體以播放下一個影片。
+</p>
+
+<p>
+你可以在影片播放時按上一頁退回 index.html 。這時 evideo-mplayer.js 會負責關閉影片播放。從 video.html 的內容中可以看出，設計者只需要載入 evideo-mplayer.js ，不需要管 evideo 標記怎麼播放、怎麼關閉影片的事。
+</p>
+
+<p>
+圖二是 x86 PC 的替代品執行時的畫面。在 x86 PC 上使用了完全相同的 mplayer.php, evideo-mplayer.js 。
+</p>
+
+<img src="https://zscojq.dm2304.livefilestore.com/y2pjjY7IXXk_ba4sjf1Z5jBTxlEQBRdG0V8ulzQE0eCAS7F396AIHAa5ykpOhhWT_lion-jdT4EcqiXoaRj1ocfDEFJ1tQvZV_CvLygfawyRqs/pi-kiosk-demo.jpg" alt="x86 PC 執行範例"/>
+
+<p>
+Raspberry Pi 由於 I/O 效能的問題，在切換影片時，會有明顯的時間落差。當上一影片結束要載入下一影片時，會有2,3秒的間隔。也許用硬碟會改善這問題。
+</p>
+
+<h4>
+關於 Kiosk 
+</h4>
+
+<p>
+Kiosk 的工作模式，基本上就是單一視窗無邊框最大化狀態。用 X Window 設計一個 Kiosk 系統時，你只需要最小功能的視窗管理程式(window manager)，例如 matchbox 。 openbox 也可以。你不需要桌面管理程式(desktop manager)或工作列(taskbar)、工作面板(panel)，因為 Kiosk 程式本身就是使用者看得到的畫面全部，它就是桌面。
+</p>
+
+<p>
+注意，不要將全螢幕狀態(full screen)與無邊框最大化狀態混為一談，雖然看起來很像，但實際上差別很大。在一般桌面環境中，當程式狀態為無邊框最大化時，畫面上仍然會保留工作列與其他工作面板；但全螢幕時，會連工作列與其他面板的位置都蓋過去。此外，一個全螢幕狀態的程式，還具備保持在最上層(on-top)的特性；但一個作為桌面的程式，則必須保持在最下層。
+</p>
+
+<p>
+iceweasel 與 firefox 瀏覽器可以安裝一些插件來實現啟動時最大化而且隱藏所有工具列的需求，這類插件有 r-kiosk, autohide 等。
+</p>
+
+<p>
+改造訂製 Linux X Window 環境的方法，請參考「<a href="{{ site.baseurl }}/archives/2012/%E5%A6%82%E4%BD%95%E8%A8%82%E8%A3%BD%20Linux%20X%20%E8%A6%96%E7%AA%97%E7%92%B0%E5%A2%83.html">如何訂製 Linux X 視窗環境</a>」。若你還需要提供使用者輸入一些簡單文字，可以考慮安裝 matchbox-keyboard 這類螢幕虛擬鍵盤(on-screen keyboard)。或者使用我設計的「<a href="{{ site.baseurl }}/archives/2013/Touch%20%E8%BC%B8%E5%85%A5%E6%B3%95%20%28HTML5%20%E8%A7%B8%E6%8E%A7%E5%BC%8F%E8%BC%B8%E5%85%A5%E6%B3%95%29.html">Touch 輸入法 (HTML5 觸控式輸入法) </a>」、「<a href="{{ site.baseurl }}/archives/2013/Touch%20%E8%BC%B8%E5%85%A5%E6%B3%95%E9%99%84%E5%8A%A0%20On%20Screen%20Keyboard.html">Touch 輸入法附加 On Screen Keyboard </a>」。
+</p>
+
+<p>
+當接在電視螢幕上，而你覺得畫面解析度與 omxplayer 播放影片的座標不對時，請參考「<a href="{{ site.baseurl }}/archives/2014/Rasbperry%20Pi%20%E9%9B%BB%E8%A6%96%E8%A7%A3%E6%9E%90%E5%BA%A6%E8%A8%AD%E7%BD%AE%E8%88%87%20omxplayer%20%E9%A1%AF%E7%A4%BA%E5%BA%A7%E6%A8%99%E6%A0%A1%E6%AD%A3.html">Raspberry Pi 電視解析度設置與 omxplayer 顯示座標校正</a>」。
+</p>
+
+<h4>
+參考文章
+</h4>
+
+<p>
+本文參考了很多我早先發佈的文章，整理條列於下:
+</p>
+
+<ul>
+    <li><a href="https://rocksources.googlecode.com">遊手好閒的石頭成的程式源碼</a>
+    <li><a href="{{ site.baseurl }}/archives/2013/omxplayer-dbus%20for%20Raspberry%20Pi.html">omxplayer-dbus for Raspberry Pi</a>
+    <li><a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">Write a PHP DBus client</a>
+    <li><a href="{{ site.baseurl }}/archives/2014/apache-session%20-%20startup%20apache%20server%20on%20X%20Window.html">apache-session - startup apache server on X Window</a>
+    <li><a href="{{ site.baseurl }}/archives/2012/%E5%A6%82%E4%BD%95%E8%A8%82%E8%A3%BD%20Linux%20X%20%E8%A6%96%E7%AA%97%E7%92%B0%E5%A2%83.html">如何訂製 Linux X 視窗環境</a>
+    <li><a href="{{ site.baseurl }}/archives/2013/Touch%20%E8%BC%B8%E5%85%A5%E6%B3%95%20%28HTML5%20%E8%A7%B8%E6%8E%A7%E5%BC%8F%E8%BC%B8%E5%85%A5%E6%B3%95%29.html">Touch 輸入法 (HTML5 觸控式輸入法) </a>
+    <li><a href="{{ site.baseurl }}/archives/2013/Touch%20%E8%BC%B8%E5%85%A5%E6%B3%95%E9%99%84%E5%8A%A0%20On%20Screen%20Keyboard.html">Touch 輸入法附加 On Screen Keyboard </a>
+    <li><a href="{{ site.baseurl }}/archives/2014/Rasbperry%20Pi%20%E9%9B%BB%E8%A6%96%E8%A7%A3%E6%9E%90%E5%BA%A6%E8%A8%AD%E7%BD%AE%E8%88%87%20omxplayer%20%E9%A1%AF%E7%A4%BA%E5%BA%A7%E6%A8%99%E6%A0%A1%E6%AD%A3.html">Raspberry Pi 電視解析度設置與 omxplayer 顯示座標校正</a>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Kiosk%20Designing%20%E7%BA%8C%E7%AF%87%20-%20%E5%9C%A8%20x86%20PC%20%E4%B8%8A%EF%BC%8C%E4%BB%A5%20mplayer%20%E6%9B%BF%E4%BB%A3%20omxplayer.html">Kiosk Designing 續篇 - 在 x86 PC 上，以 mplayer 替代 omxplayer</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/27973451.html">http://blog.roodo.com/rocksaying/archives/27973451.html</a></div>

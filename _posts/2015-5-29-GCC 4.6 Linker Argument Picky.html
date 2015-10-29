@@ -1,0 +1,141 @@
+---
+title: GCC 4.6 Linker Argument Picky
+category: programming
+old-category: Programming
+tags: [gcc]
+---
+<p>最近公司有一些 C 程式碼在 Ubuntu 12.04 上編譯時發生目標參照錯誤。原因在於 Ubuntu 12.04 採用的 gcc 4.6 有一項特殊的參數順序要求(argument picky)，這個中間版本一定要把 linker 參數放最後面。這項要求在舊版沒有(~ 4.4)，後來的 gcc 新版(4.8, 4.9)也拿掉了。所以 gcc 4.6 以外的版本， linker 參數順序怎麼放都行。</p>
+
+<p>gcc 常見的 linker 參數有 -l, -L, -Wl 。</p>
+
+<p>Debian gcc list: https://packages.debian.org/search?keywords=gcc</p>
+
+<ul>
+<li>squeeze (v6): 4.4.5</li>
+<li>wheezy (v7): 4.7.2 (x86 arch)</li>
+<li>jessie (v8): 4.9.2</li>
+</ul>
+
+<p>Ubuntu gcc list:</p>
+
+<ul>
+<li>lucid (10.04): 4.4.3</li>
+<li>precise (12.04): 4.6.3</li>
+<li>trusty (14.04): 4.8.2</li>
+</ul>
+
+<p>我這幾年的主要開發環境是在 Debian 上，剛好跳過 gcc 4.6 。現在想想，2011,2012 年時，確實有不少 gcc 用家抱怨過這件事。所以後來才又取消了這項限制吧。</p>
+
+<!--more-->
+<p>我做了一些測試確認 gcc 參數順序限制:</p>
+
+<pre class="highlight"><code>
+<span class="c1">// test.c
+</span><span class="cp">#include &lt;glib.h&gt;
+#include &lt;stdio.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="n">g_strdup_printf</span><span class="p">(</span><span class="s">"test %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="s">"hello"</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+    <span class="n">g_free</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h5>Ubuntu 10.04</h5>
+
+<pre class="language-text">
+ubuntu-lucid-vm:~$ gcc -v
+Using built-in specs.
+Target: i486-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 4.4.3-4ubuntu5.1'
+Thread model: posix
+gcc version 4.4.3 (Ubuntu 4.4.3-4ubuntu5.1) 
+
+ubuntu-lucid-vm:~$ ld -v
+GNU ld (GNU Binutils for Ubuntu) 2.20.1-system.20100303
+
+# Work
+ubuntu-lucid-vm:~$ gcc `pkg-config --cflags --libs glib-2.0` -o test test.c
+
+# Work
+ubuntu-lucid-vm:~$ gcc `pkg-config --cflags glib-2.0` -o test test.c \
+  `pkg-config --libs glib-2.0`
+</pre>
+
+<h5>Ubuntu 12.04</h5>
+
+<pre class="language-text">
+ubuntu12-vm:~$ gcc -v
+Using built-in specs.
+COLLECT_GCC=gcc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/i686-linux-gnu/4.6/lto-wrapper
+Target: i686-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu/Linaro 4.6.3-1ubuntu5'
+Thread model: posix
+gcc version 4.6.3 (Ubuntu/Linaro 4.6.3-1ubuntu5) 
+
+ubuntu12-vm:~$ ld -v
+GNU ld (GNU Binutils for Ubuntu) 2.22
+
+# Failed. You should put linker arguments in last part.
+ubuntu12-vm:~$ gcc `pkg-config --cflags --libs glib-2.0` -o test test.c
+/tmp/cc5BM90K.o: In function `main':
+test.c:(.text+0x19): undefined reference to `g_strdup_printf'
+test.c:(.text+0x35): undefined reference to `g_free'
+collect2: ld returned 1 exit status
+
+# Work
+ubuntu12-vm:~$ gcc `pkg-config --cflags glib-2.0` -o test test.c \
+  `pkg-config --libs glib-2.0`
+
+</pre>
+
+<h5>Debian 6</h5>
+
+<pre class="language-text">
+debian6-vm:~$ gcc -v
+Using built-in specs.
+Target: i486-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Debian 4.4.5-8'
+Thread model: posix
+gcc version 4.4.5 (Debian 4.4.5-8) 
+
+debian6-vm:~$ ld -v
+GNU ld (GNU Binutils for Debian) 2.20.1-system.20100303
+
+# Work
+debian6-vm:~$ gcc `pkg-config --cflags --libs glib-2.0` -o test test.c
+
+# Work
+debian6-vm:~$ gcc `pkg-config --cflags glib-2.0` -o test test.c \
+  `pkg-config --libs glib-2.0`
+
+</pre>
+
+<h5>Debian 8</h5>
+
+<pre class="language-text">
+desktop:~$ gcc -v
+Using built-in specs.
+COLLECT_GCC=gcc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/4.9/lto-wrapper
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Debian 4.9.2-10'
+Thread model: posix
+gcc version 4.9.2 (Debian 4.9.2-10) 
+
+desktop:~$ ld -v
+GNU ld (GNU Binutils for Debian) 2.25
+
+# Work
+desktop:~$ gcc `pkg-config --cflags --libs glib-2.0` -o test test.c
+
+# Work
+desktop:~$ gcc `pkg-config --cflags glib-2.0` -o test test.c \
+  `pkg-config --libs glib-2.0`
+</pre>
+
+<p>See also: <a href="http://stackoverflow.com/questions/9511422/undefined-reference-to-clock-gettime-gcc-4-6-cmake">Undefined reference gcc 4.6</a></p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/44517666.html">http://blog.roodo.com/rocksaying/archives/44517666.html</a></div>

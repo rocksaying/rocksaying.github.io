@@ -1,0 +1,86 @@
+---
+title: Rasbperry Pi 電視解析度設置與 omxplayer 顯示座標校正
+category: computer
+old-category: 電腦技術
+tags: [raspberry pi,omxplayer]
+---
+<p>
+日前，我將 Raspberry Pi (以下簡稱 Pi) 透過 HDMI 接上一台 LCD 電視時，發現它在 X Window 環境下的解析度錯誤。明明電視的 OSD 顯示目前顯示狀態為 1080p@60 ，但 X Window 中執行 xrandr 時，卻顯示 18??x9?? 這種奇怪的解析度。此外，我還發現使用 omxplayer 播放影片時，影像內容顯示的座標與長寬比例有微妙的偏差。舉個例子來說，我指定 <kbd>--win "10 10 1290 730"</kbd> 的播放座標，預期應該會在 X Window 的範圍內完整顯示。但結果卻是影像內容超出了整個 X Window 範圍，甚至有一部份影像內容被切掉(超過電視可見範圍)。這也讓我發現 X Window 並沒有佔滿整個電視可見範圍，實際上留了一段黑邊。
+</p>
+
+<p>
+我需要設置 Pi 連接電視的正確解析度，以及校正 omxplayer 顯示座標錯誤這兩件事。
+</p>
+
+<!--more-->
+<p>
+首先，啟動 Pi 後，我先執行下列指令查看這台電視提供的解析度資訊。
+</p>
+
+<pre class="language-term">
+$ tvservice -d edid
+$ edidparser edid
+</pre>
+
+<p>
+我需要找評分最高的模式。例如我這台電視就可以找到下列訊息。
+</p>
+
+<pre class="language-term">
+HDMI:EDID best score mode is now CEA (16) 1920x1080p @ 60 Hz with pixel clock 148 MHz (score 5398248)
+</pre>
+
+<p>
+這段訊息的重點是 <em>CEA (16)</em> 。這是說這台電視的 HDMI 顯示模式採用 CEA 規範(<span class="Onote">CEA group 1, DMT group 2</span>)，最適合的模式代號是 16 。對應 /boot/config.txt 的設置項目，就是:
+</p>
+
+<pre class="language-text">
+hdmi_group=1
+hdmi_mode=16
+</pre>
+
+<p>
+重開機後再進入 X Window ，這次 X Window 顯示的解析度就是 1920x1080 了。但是 omxplayer 的顯示座標還是錯誤。這是因為 omxplayer 顯示時參考的座標值和 X Window 不一樣。 omxplayer 的顯示方式是直接透過 Pi 的顯示晶片的硬體功能寫入視訊記憶體中。它不透過 X Window 顯示協定，所以它參考的不是 X Window 所用的座標，而是 frame buffer 的座標。故我還需要再設定 /boot/config.txt 的 frame buffer 解析度，讓兩者匹配。所以我又加上下列設定:
+</p>
+
+<pre class="language-text">
+# 對付黑邊
+disable_overscan=1
+
+# frame buffer 寬高
+framebuffer_width=1920
+framebuffer_height=1080
+</pre>
+
+<p>
+再度重開機使設定生效就校正完成了。我的 X Window 正確地使用 1920x1080 解析度，而 omxplayer 播放時的影像內容座標也剛好匹配 X Window 中的座標位置。
+</p>
+
+<p>
+如果這樣還不能校正 omxplayer 的顯示座標，可以再嘗試加上 <dfn>overscan_scale=1</dfn> 。
+</p>
+
+<p>
+我也順便調整了 GPU 使用的記憶體數量。若按「Raspberry Pi 使用者手冊」所述方法(p.125)，需要改變 start.elf 。不過我現在使用的 OS 版本，可以修改 /boo/config.txt 中的 <dfn>gpu_mem</dfn> 達成目的。我不需要 3D 繪圖，但要求播放 1080p 影片，經我測試後，設為 <dfn>gpu_mem=64</dfn> 即可。
+</p>
+
+<p>
+參考資源:
+</p>
+
+<ul>
+    <li>Raspberry Pi 使用者手冊。ISBN 9789866076701 。Eben Upton 著，曾吉弘譯；馥林文化出版。
+
+    <li><a href="http://weblogs.asp.net/bleroy/archive/2013/04/10/getting-your-raspberry-pi-to-output-the-right-resolution.aspx">
+Getting your Raspberry Pi to output the right resolution</a>
+
+    <li><a href="http://www.raspberrypi.org/forums/viewtopic.php?t=35971&p=306184">
+omxplayer 720p adjust display position</a>
+
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/omxplayer-dbus%20for%20Raspberry%20Pi.html">omxplayer-dbus for Raspberry Pi</a></li>
+<li><a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/27765371.html">http://blog.roodo.com/rocksaying/archives/27765371.html</a></div>

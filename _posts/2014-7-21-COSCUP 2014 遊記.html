@@ -1,0 +1,493 @@
+---
+title: COSCUP 2014 遊記
+category: programming
+old-category: Programming
+tags: [linux,javascript,git,coscup,firefoxos,raspberry pi,qt]
+---
+<p>今年的 COSCUP 2014 ，我照樣用源碼開發者身份提早拿到入場券，不用去推票亭。報到方式又進化，變成四根感應門柱，掛著識別證從門柱中間走過去，再拿過大會手冊小袋子就好。
+</p>
+
+<ul>
+    <li><a href="http://www.ithome.com.tw/news/89509">2014年COSCUP開源人年會直擊 | iThome</a>
+    <li><a href="http://technews.tw/2014/07/20/coscup2014-events/">COSCUP 2014：因為開放而更創新的科技「自造」潮 | TechNews 科技新報</a> 
+    <li><a href="http://technews.tw/2014/07/25/coscup-2014-talk-selected/">開放原始碼盛會－－COSCUP 2014 精選議程 | TechNews 科技新報</a> 
+    <li><a href="https://twitter.com/search?q=%23coscup2014%20%40tw_rocksaying&src=typd">我推特的 COSCUP2014 內容</a>
+</ul>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pGu1O-HbRLVCQaIdCg3WVqRfXcJIy6LtfShnfmF6xNZzuC4vBIxQM7aH7WAYjZ6pkshJ5yOkKEgOoWIZEKiWqaYdPcs7ehAOt0bkwtBq6zrk/CartoonPhoto_jpg%281%29.jpg?psid=1" alt="COSCUP 2014 手冊與識別證"/>
+
+<!--more-->
+<h3>
+COSCUP 2014 第一天
+</h3>
+
+<h4>
+Maker 自造世代
+</h4>
+
+<p>以紀錄片形式，紀錄形形色色的享受 DIY 的 Maker 。並安排電影製作團隊和與會員座談。
+在座談中，製作團隊成員感慨國內技職體系崩潰，讓學生失去了做中學的機會，也失去了接觸開源精神的 maker 精神。
+</p>
+
+<p>我覺得教育部淩遲處死技職體系是國內二十年教改最大的敗筆。當教育體制愈來愈一元化的時候，還指望發展什麼多元性？在這個政策之下，適才適性、免試升學的理想全成了空談。
+</p>
+
+<p>另外，成員又說到在大學教書時，申請專案的共犯結構。明明只要六、七萬元就能做到的事，層層上報後，企劃預算報到教育部時往往變成六、七十萬。這不方便公開講吧，呵呵。
+</p>
+
+<p>但我也不是清高之人，只要吃相不太難看，我也不會反感。預算報得高，那我就做更多東西出來嘛。讓我覺得最煩的，其實是專案必須寫一大堆企劃說明。
+</p>
+
+<img src="https://lmkirw.dm2302.livefilestore.com/y2pKD0KiMX6bM8QXYlYhRLuSl4rnHtbrmZiiHjKDkMtJFdD_8V0udNr793INrtZ4qTgmUiLpaZFFyNetFt8W3EfnwM_7GBXXG1oh6I-TzSaQhg/WP_20140719_09_55_30_Pro.jpg?psid=1" alt="Maker自造世代座談"/>
+
+
+<h4>
+ECMAScript 6 new syntax
+</h4>
+
+<p>othree 介紹 ECMAScript 第 6 版的新語法。我大概列舉一下:
+</p>
+
+<ul>
+    <li>let
+    <li>new type: map and set: key 可以非字串。
+    <li>new loop: for...of
+    <li>rest parameter
+    <li>iterable and yield
+    <li>symbol
+    <li>class
+</ul>
+
+<h5>
+rest parameter
+</h5>
+
+<ul>
+    <li>我說一下， ... 的符號來自是 C 語言，但它用法倒比較像 Python 。
+    <li>declare parameters list: function func(named_argN, ...args){}<br/>
+        rest parameter 必須放在參數清單最後一項。
+    <li>spread parameters: a = [1,2,3]; func(...a); 就是 Python 的擴展參數用法。
+</ul>
+
+<p>我補充一下， rest parameter 在 ECMAScript3 時代，可以用函數內的 <dfn>arguments</dfn> 實現。 <dfn>arguments</dfn> 是語言內建項目，型態名稱為 <dfn>Arguments</dfn> ，只在函數內存在。它以 key/value 形式存放參數清單項目，可用 <code>arguments[n]</code> (n為數值)的方式取得參數。並具有一個 <dfn>length</dfn> 屬性，可得參數清單數目。
+</p>
+
+<p>reset parameter 現在則讓使用者自己命名了。但是 rest parameters 和 <dfn>arguments</dfn> 差別在於 arguments 存有全部參數清單項目，而 rest parameters 只包含了沒有賦名的參數項目。
+</p>
+
+<p>Firefox 30 不允許 rest parameter 和 arugments 同時使用。在一個宣告了 rest parameter 的函數中，若是使用了 arugments 會被視為語法錯誤。
+</p>
+
+<p>舉例來說:
+</p>
+
+<pre class="highlight"><code>
+<span class="kd">function</span> <span class="nx">func1</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">arguments</span><span class="p">,</span> <span class="s1">'count:'</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">func1</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'other'</span><span class="p">,</span> <span class="s1">'parameters'</span><span class="p">);</span>
+
+<span class="c1">//輸出: Arguments {0:1, 1:2, 2:'other', 3:'parameters'} count: 4</span>
+</code></pre>
+
+
+<pre class="highlight"><code>
+<span class="kd">function</span> <span class="nx">func2</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">,</span> <span class="p">...</span><span class="nx">z</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">z</span><span class="p">,</span> <span class="s1">'count:'</span><span class="p">,</span> <span class="nx">z</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">func2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'other'</span><span class="p">,</span> <span class="s1">'parameters'</span><span class="p">);</span>
+
+<span class="c1">//輸出: Array[ 'other', 'parameters' ] count: 2</span>
+</code></pre>
+
+
+
+<p>呼叫函數時的參數擴展(spread)倒是比較好用的改變。
+ECMAScript5 以前，要把一組參數傳入一個已經確定參數清單的函數時，只能用 apply() 。
+但 apply() 同時也有改變函數內部活動目標(<dfn>this</dfn>)的效果，故語意不清晰；對單純想要呼叫函數的人來說，這是個麻煩的副作用。
+</p>
+
+<p>講者略過的 Symbol 功能，我前兩年有寫篇文章介紹(<a href="{{ site.baseurl }}/archives/2012/ECMAScript6%20%E8%8D%89%E6%A1%88%E7%9A%84%20Name%20object.html">ECMAScript6 草案的 Name object</a>)，其實是很有趣的功能。map/set 這兩種新型態容器配上 symbol 的話，更容易實現提高執行效率的目的。
+</p>
+
+<p>不過我還是提醒， ECMA 目前正式定案的 ECMAScript 版本是5.1，現在介紹的內容可能還會調整。ECMAScript 6 的變動納入了更多來自其他語言的內容，例如 Python 的參數擴展，Ruby 的 symbol, yield, iterable 。但主要目的仍然是簡化語法要素。使用者仍然可以用 ECMAScript 5甚至 ECMAScript 3 做到這些事。倒也不必急著使用未定案的內容。
+</p>
+
+<p>話說回來，現在有愈來愈多 Web 前端的程式人員，學得其實是 jQuery 而不是 ECMAScript 。把 jQuery 拿掉的話，他們就不懂如何用純 ECMAScript 做相同的事了。他們對 jQuery 新版本的關注程度，可能還高於 ECMAScript 。
+</p>
+
+<p>投影片: <a href="https://blog.othree.net/log/2014/07/19/ecmascript-6-cosup/">ECMAScript 6 at COSCUP : O3noBLOG</a>
+</p>
+
+
+<h4>
+LXQt
+</h4>
+
+<p>LXDE (我記得主要是用GTK) 和 KDE 的 Razor-qt 合併了，變成 LXQt 。對 widget 或桌面程式的開發者來說，整合介面從 GNOME 式轉成 KDE 式。對我這種 KDE 桌面的使用者來說，則是多了一個精簡的桌面環境可選擇。
+</p>
+
+<p>GTK 和 Qt 都有跨平台的設計目標，不過 Qt 似乎比較積極，跨平台的實際結果比較完整。所以 LXQt 轉向 Qt 的結果，也表示 LXDE 也開始走向跨平台。
+</p>
+
+<p>關於 Qt ，也請參考我去年和前年的 COSCUP 議程記錄。
+</p>
+
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2013/COSCUP%202013%20%E8%88%87%E6%9C%83%E8%A8%98%20-%20%E7%AC%AC%E4%B8%80%E5%A4%A9.html">COSCUP 2013: Qt正夯，GTK+使用者如何跳槽 by PCMan</a>
+    <li><a href="{{ site.baseurl }}/archives/2012/COSCUP2012%20twitter%20%E8%A8%98%E9%8C%84.html">COSCUP 2012: Qt5, Qt Quick 2 。和 Nokia 解散 Qt 團隊的事。</a>
+</ul>
+
+
+<h4>
+Linux container
+</h4>
+
+<p>Linux container (LC) 是介於 toolchain 和 Virtual machine 之間的虛擬機制。
+簡單地說，它讓使用者在一台機器上，同時跑好幾個 Linux 環境 。
+從 VM 的角度來說，就是只能跑 Linux 的虛擬機。
+</p>
+
+<p>如果我沒記錯， LC 是從 kernel 除錯功能中發展出來的。在 Linux 環境上，要對另一個 Linux Kernel 除錯，傳統是用遠端除錯。但這實在太花時間。用 Sandbox 的概念，在系統空間中分割出另一個獨立空間載入另一個核心，這樣就能更快速地除錯了。
+</p>
+
+<p>LC 是輕量化的 VM ，因為它不需隔離出整個硬體環境。基本上，是主機上所有運行的 Linux 環境共用系統空間中的同一個 kernel 。
+</p>
+
+<p>這麼說吧，作業系統概論教各位，作業系統是核心加殻層加應用軟體(kernel+shell+application)。但是一個 kernel 只能配一個 shell + application 嗎？顯然不是。 LC 就在現有的作業環境的空間中，再分割一塊獨立空間載入另一層 shell+application ，且共用同一個kernel。從而實現多個 Linux 環境運行在同一台主機的目的。
+</p>
+
+<p>講者還提到利用 qemu 可以將 Android 的設備驅動模組偷渡回 x86 核心空間，讓 LC 可以使用還不支援 Linux 的設備(<span class="Onote">
+f---ing Android 雖然使用了 Linux kernel ，但目前並未共用主流內容。設備廠商提供給 Android 使用的驅動程式，有些甚至還限制在 arm arch 上。 Linux OS 通常不能直接使用或編譯它們。
+</span>)。不過我看不到投影片，不太清楚實際上是什麼樣子。
+</p>
+
+<p>講者「四元」在 TOSSUG 的議程錄影: <a href="https://www.youtube.com/watch?v=s_-VlOLHkm4">
+[TOSSUG 2014/05/13] $4 - Linux Container (lxc) 與 QEMU 搭配使用心得</a> ，內容應該差不多。
+</p>
+
+<p>活動中心會議室的大小和人文館會議室完全不成比例。活動中心會議室大概就是論文審查會的人員規格，開年會的話，實在太小。<a href="https://twitter.com/tw_rocksaying/status/490344977931579392">Linux container 人爆滿，我的位置甚至看不到投影板。</a>。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pn3go3Wcc8XFHSeH4UwDwOBzgtOU5halsZlyeNjGo6WANmAwukpZKnvFF2KVQ3Shw8emHCAIrE9K7klkRpwR8OQd-ccVsMil3RqViRE0Unig/WP_20140719_001.jpg?psid=1" alt="Linux container 爆滿的會議室"/>
+
+<h4>
+DOIT Taiwan 共創公域
+</h4>
+
+<p>我接著參與的議程，<a href="https://twitter.com/tw_rocksaying/status/490381602929664001">還是在擠到爆的活動中心會議室(H2)，這裡的議程是 DOIT Taiwan 共創公域</a>。因為人太擠不方便移動，所以我這個下午就待在這間會議室了。
+</p>
+
+
+<h5>
+多旋翼機
+</h5>
+
+<p>DOIT 是跨時段的多主題議程。第一個上場的是用 Arduino 機板實作的<a href="https://twitter.com/tw_rocksaying/status/490385968126386176">多旋翼機</a>。這東西還有一場排在第二天議程，而且地點在人文館會議室。
+</p>
+
+<p><a href="https://twitter.com/tw_rocksaying/status/490390779487993856">多旋翼機試飛</a>(照片右上角)，飛起來很有趣。根據講者表示，要推出小型教育套件，預估價格要壓在一千元上下。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pwyay_wCjm7JIoX0klV9wsaL69-lqbY6brPPErWPrevC4jR_4IRwuR91IdPy8hK8ps6AhW_OYszbL4dkf6--n18sG86GSag8N4rf4v4fRPAs/WP_20140719_14_26_32_Pro.jpg?psid=1" alt="多旋翼機外觀"/>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pzt2NkLWVDcg-gVXFXgmdviUa1ahR8MqbTdSA2DyHBShVccx0xvfpmODKgC58_vJy3nTYnq2v3ThrjOlxzFc8sT70mJdPXiBCZkPZfIohfuI/WP_20140719_14_50_28_Pro.jpg?psid=1" alt="多旋翼機試飛"/>
+
+
+<h5>
+OwaNEXT
+</h5>
+
+<p>DOIT 第二個主題， HanGee (蕃薯)機 - 台灣自製手機。基於 Android ，但使用 QML/Qt 自製 UI 。自製 UI 取名 Owa 。我曾經用過 Moblin/Meego 的機器和 SDK ，我看 HanGee 機配 Owa UI，一整個 Meego 感。不意外，畢竟同樣是用 Qt + QML 。
+</p>
+
+<p>Meego 的後代 <a href="http://www.tizen.org/">Tizen</a> 依然可以使用這一套設計方式，但那是兩、三年前的設計哲學。現在 Tizen 和 FirefoxOS 這兩套 Linux OS 的設計哲學已演進到用 HTML+JavaScript 了。在我這個看到 Android 就反感的人眼中，如果 HanGee 沒有什麼特殊的硬體設計，那還不如 Tizen 或 FirefoxOS 。
+</p>
+
+<p>中場休息時間，會議室的門打開通風。我在 H3 會議室內遙望另一間會議室的後面，人擠到後面站好幾排，門都不關了 <a href="https://twitter.com/tw_rocksaying/status/490400125794013185">@tw_rocksaying</a>。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pHg_UCQX1YC5gODrUieNsGzeDPzH5QXDZu8SVuNSZpMfENjaM_Is-z28vRPIgslWMUoSnNauOkO5DH_wQyzLY2AQLu6K26MYcAFKDoaNKIus/WP_20140719_15_33_58_Pro.jpg?psid=1" alt="人滿到門都不關的會議室"/>
+
+
+<h5>
+FunMaker/Wifi switch
+</h5>
+
+<p>搭配 Arduino 等機板，實現可以用遠端控制的方式，控制馬達等家電用品的經驗交流。
+</p>
+
+<p>FunMaker 作者不甩 iPhone/Android 的專屬 APP 模式，<a href="https://twitter.com/tw_rocksaying/status/490407608197459969">堅持純 HTML+HTTP 的 Web App 設計方式</a>。跟我一樣，我欣賞 www 
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pVo8WqawN2DSu4NRLGzMueCHq2C-otMS_ROgT4VnaMcjAhKZosUCJZ2V5pwWkygfikgXDfqSFGnB1PyocTP_miA4v8HAhQH6zmTzsjWL3sGw/WP_20140719_16_04_26_Pro.jpg?psid=1" alt="設計架構"/>
+
+<h4>
+Raspberry Pi 好好玩
+</h4>
+
+<p>這場我暫時跑到 H3 會議室。其實我原本想聽 LLVM 議程的，可是人太多卡不進。剛好 Raspberry Pi 也是我在用的一種設備，就留下來聽了。
+</p>
+
+<p>講者 sosorry 開場就提到 Raspberry Pi 的 FAQ 第一名就是 Arduino 和 Pi 有何不同？看看<a href="https://twitter.com/tw_rocksaying/status/490424329185009664">超級比一比</a>。sosorry 提到的 Raspberry Pi 和 Arduino 的最大差異，就是硬體規格完全不同。這點也是我用 Pi 的原因。我可以直接在 Pi 上編譯執行程式，而不需要透過模擬器或 cross compiler 。寫程式時的順暢感完全不同。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pQ3OhTOZfgWw5f8ZYpgsLnB8nhtU-3HAcmrz3-5MFN-FoGjJERIQ8boDUVmxyfvJzBwElhODS5faqM79NCZQM81dxohVlmAwuoNIVvVJmv0c/WP_20140719_17_10_37_Pro.jpg?psid=1" alt="Arduino 和 Raspberry Pi 超級比一比"/>
+
+<p>sosorry 接著介紹了幾種利用 Raspberry Pi 實作的有趣應用。其中一種是做音樂播放器。sosorry 說他沒玩音響，不清楚到底有什麼差異，只知道朋友說聲音(背景)變得更黑之類的。這我就懂。但嚴格說來，目前 Raspberry Pi 做音樂播放器的效果並不理想。目前最可惜的就是沒有數位輸出端子(光籤或同軸)。用 USB 輸出的話，會牽涉到晶片相容性還有 async 模式的問題 (<span class="Onote">我的 Teac DAC 就不能走 USB 接在 Pi 上，又沒有光纖可接。用 Pi 的類比聲道實在悲劇</span>)。現在看到的實作品，它的音質還是差一等。
+<a href="https://twitter.com/tw_rocksaying/status/490426491008593920">@tw_rocksaying</a>
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2p_7GntaSkTYRw8JUoSw4oX6q261gkjCt62yt_5ZJ20T4hWXxYvW52qXZRzYBAIQTSZvtegdB5AFiqu3a5LKGKVJPFi3h6Aqc4Gp6KXGDLT7E/WP_20140719_17_17_51_Pro.jpg?psid=1" alt="Pi 音樂播放器"/>
+
+<p>最後的高潮，<a href="https://twitter.com/tw_rocksaying/status/490435399248916480">用 Raspberry Pi 作的"大型"掌上電玩 www</a>，用任天堂模擬器跑超級瑪莉。有人問 Pi 跑模擬器會不會跑不動？他一定沒有在 Pentium 133 上玩過任天堂模擬器。用 32 位元 CPU 跑 8 位元模擬器是綽綽有餘，更何況 Pi 的時脈五倍於 Pentium 。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pYyiC14z9LOr4NEckL8W_vZoRKF6V92ECR4mEgmd0bjrIPAfLm4dy3J7DnsFSltlDfraBJMnSEj_e886YJ9Esksnrpk43D2urf2nn02sjWr8/WP_20140719_17_37_58_Pro.jpg?psid=1" alt="Pi 大型掌上電玩"/>
+
+<p>會後有人問 Pi 能不能播 4K 影片及作智慧電視。很遺憾， Pi 的晶片規格不支持 4K 影片，但播放 1080P 影片則完全沒問題。設計智慧電視也可以。可參考我的設計方式「<a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a>」。我曾同時用 Pi 播三個 1080P 影片。
+</p>
+
+<div class="note">
+在本次年會期間，剛好 RS Components 也在台灣發售 Raspberry Pi B+ 模組了。詳情請看本文倒數第二節。
+</div>
+
+
+<h4>
+Open source CMS 導入政府之濫觴與爛傷。
+</h4>
+
+<p>講者在說明澳洲政府如何選擇CMS？抱怨政府在資訊化過程中的種種荒謬。我懂他的感覺。畢竟我待過的資訊公司幾乎都接政府標案。台灣的話，我的看法是長官偏愛決定一切，"專業評估"的結果必須符合長官要求。台灣的數位政府政策，很多地方都跟隨美國政府的作法。但總是有著各種畫虎不成反類犬的地方。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2ps-rZwj3CZ5N7Ovst80a1Xv8hNFqPGjUCdSrnAGZZG3SOjD9WX_-etWWXjNtkEzxOcR3GU42O_monY3WxvMgl9Z-QqJMBSm1zQP1B6VU2UW0/WP_20140719_18_22_22_Pro.jpg?psid=1" alt="政府沒遠景"/>
+
+<p>講者 jimmy 放了一張投影片，顯示某標案的得標廠商。我看了一下，桓基是我待過的，資拓是我現職公司合作過的，這圈子還真小啊 www <a href="https://twitter.com/tw_rocksaying/status/490443121574944769">@tw_rocksaying</a>。其實常常會得標的廠商，也就那麼幾家，例如神T、T同。只是當講者 jimmy 詢問在場者有沒有人是 SI 相關公司的，竟然只有我舉手。有這麼稀少嗎？
+</p>
+
+<p>我後來想了想就想通了。以我待過與接觸過的 SI 公司為例，這些 SI 公司確實在使用開源碼軟體，但是他們的身份是純粹「使用者」，而不是貢獻者或開發者。他們會用 svn, git, eclipse 和各式各樣的開源碼框架，但是他們不貢獻也不開發開源碼。他們寫出的軟體的唯一用戶就是得標的政府機關。 COSCUP 這些開源碼年會活動，對他們來說確實不是需要積極參與的事。和具評審委員資格的大學教授打好關係才重要。
+</p>
+
+
+<h3>
+COSCUP 2014 第二天
+</h3>
+
+<p>鑑於昨天的經驗，且大部份我有興趣的議程都在人文館 R1 會議室，所以我今天整天都在這不動。空間大果然空氣也比較好一些。
+</p>
+
+<h4>
+在豆瓣的这兩年 - CODE 系統開發之旅
+</h4>
+
+<p>CODE 是由豆瓣仿造 GitHub 自行開發的一套專案文件管理系統，也就是源碼版本管理系統。但在現在的軟體工程觀念中，交給版本管理工具維護的文件種類早已不限於程式源碼。在軟體產品生命週期中的一切內容，都應該托管。 CODE 系統現在開源並成立了 gitcafe 平台(<a href="https://gitcafe.com/?locale=zh-TW">https://gitcafe.com/</a>)。不過講者清風在議程中並不是宣傳廣告，而是暢談他們在開發與使用這套系統時的經驗。
+</p>
+
+<p>對於仿造國外軟體服務這件事，清風說他管負責這些事的部門叫「黑科技魔法部門」，cool!
+我說明一點，軟體使用介面或外觀屬於設計專利，而自由軟體基本上反對設計專利。所以我對山寨或仿造國外軟體服務的使用介面這件事並不反感。至於 gitcafe 到底仿得多好，有沒有青出於藍？有興趣的自己去看 gitcafe.com 吧。
+</p>
+
+<p>由於豆瓣和 CODE 都是基於 Web 的服務平臺，所以清風提到了他這些年看到的 Web 設計觀念轉變(特別是美國)，那就是介面設計師的產出物，從 PSD (Photoshop圖檔) 轉變為 HTML + CSS 了。其中一個好處就是更方便交付託管。我這幾年不怎麼跟其他網頁介面設計師打交道，不知道國內現在的觀念轉過來了沒？
+</p>
+
+<p>在他的經驗中，導入 git 等新工具或新流程時，佈道家很重要，尤其在 agile method 中更是必要。幾乎所有工具和觀念，都需要一位"佈道家"推廣引入。工具並不重要，難的是如何在導入工具時改變觀念和流程。我深有同感，在我的 blog 中，也不時提醒這些事。
+</p>
+
+<p>有人提問如何從 CVS 轉到 Git? 我的看法是直接匯出後匯入 git 吧，還轉什麼!? 如今還停留在 CVS 系統的軟體公司，我實在不認為他們會在源碼庫，特別是 commit log 中，留下什麼有用的資訊。把 CVS 庫凍結，現行內容匯入到 git 庫後再繼續新的工作吧。
+</p>
+
+<p>另外，清風提到 code/gitcafe 中的的評論系統有提於提高程序人員的工作動機。這我倒不陌生，因為兩年前在 IBM Innovate 2012 開發者大會上，我就聽到 IBM 以<a href="{{ site.baseurl }}/archives/2012/Innovate%202012%20IBM%20%E9%96%8B%E7%99%BC%E8%80%85%E5%A4%A7%E6%9C%83%E8%A8%98%E4%BA%8B.html">資產管理進化論為題指出這是軟體開發資產管理的社會性行為</a> (<span class="Onote">IBM 用的是自家的 Jazz.net 平臺</span>)。肯定這種行為對於軟體資產管理和激勵創新動機等工作，具有顯著成效。
+</p>
+
+<p>InfoQ 關於 CODE 系統的報導: <a href="http://www.infoq.com/cn/articles/douban-code-2years">豆瓣 CODE 两年历程回顾：git 不是万能的，没有 review 是万万不能的</a>。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2p8iWGrOJvmy7nm9mQ3LKbNWtbH1ebOSFyEtdhDYIIJrQj0A67rWddjdOvSmhgWS6xK3QCSOuXdz1TGC13KAFVJ9WLnuj_icYX0UfyHO3z8yo/WP_20140720_09_53_37_Pro.jpg?psid=1" alt="在豆瓣的这兩年"/>
+
+<h4>
+Skymizer 雲端編譯
+</h4>
+
+<p>雲端服務公司 Skymizer ，提供分散式編譯服務。是的，現在連源碼都可以放到雲端去分散式編譯了。目前看來， Skymizer 只提供 C/C++ 編譯服務。話說回來 Java/C# 程式碼有編譯器最佳化這事嗎？
+只是從實務面來看，目前需要動用分散式編譯的 C/C++ 專案，也就是像 Linux kernel, 整個 OS 或整個 SDK 這種大型專案了吧。
+</p>
+
+<p>講者在提到了 gcc 的優化選項和 LLVM 的比較。關於 gcc 優化選項，有兩大類。
+</p>
+<ul>
+    <li>-m : arch 相關，有就打開。
+    <li>-f : arch 無關，可能產生不是程序人員預期的程式碼，使用時必須一一評估。
+</ul>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pXCguWmAIzO5CJq1LpwA6ij7hWgX_9RWujeZQlOtZUPsWh9ImW1cVasT9s_o4VXzu4dOrDDPZVqQrFCo9VvvvN7hGK4vL5v7Ld27AA1x8qLM/WP_20140720_11_10_19_Pro.jpg?psid=1" alt="GCC vs LLVM，講者穿著恐龍裝 XD"/>
+
+<p>講者舉了幾個程式碼經過編譯器最佳化的預期範例。其中一個大概像下面這樣:
+</p>
+
+<pre class="highlight"><code>
+<span class="c1">// 程序人員手寫碼
+</span><span class="kt">int</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="k">return</span> <span class="o">*</span><span class="n">a</span> <span class="o">+</span> <span class="mi">3</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<pre class="highlight"><code>
+<span class="c1">// 編譯器最佳化後預期的程式碼
+</span><span class="kt">int</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>說真的，我從來都不希望編譯器幫我做這種最佳化。因為在我看來，回傳 *a + 3 和 1 + 3 是兩碼子事。如果是我，我會直接寫成:
+</p>
+
+<pre class="highlight"><code>
+<span class="kt">int</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">result</span><span class="p">;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">result</span> <span class="o">+=</span> <span class="mi">3</span><span class="p">;</span> <span class="c1">// 回傳值是現在值 + 3。
+</span>    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>講者也說這個最佳化有 bug ，因為 *a 和 *b 有可能指向同一個變數。另一個迴圈內部交錯，想像編譯器會利用 CPU pipe 最佳化平行處理的範例。如果是我，至少會用上 <a href="http://en.wikipedia.org/wiki/OpenMP">OpenMP</a> ，而不是預期編譯器可以幫我做什麼。講者舉的其他例子，通常上也是我在 code review 時看到，一定會拉下來的寫法。
+</p>
+
+<p>基本上，我不喜歡仰賴編譯器最佳化(gcc -f 類)。我比較喜歡從語意上改善。從 C/C++ 的語法演進，也看得出這個改變。有不少語法演進都是在改善語意，以便編譯器更容易理解設計者的意圖，進而選擇優化的編譯途徑。像去年 COSCUP 2013 關於 C++11 的議程(<a href="{{ site.baseurl }}/archives/2013/COSCUP%202013%20%E8%88%87%E6%9C%83%E8%A8%98%20-%20%E7%AC%AC%E4%BA%8C%E5%A4%A9.html">C++: 誰說只能硬著來</a>)，提到了各種新式智慧指標飾詞。從計算機的角度來看，再多的飾詞還是指標，搞那麼多幹嘛？其實那些改變就是為了提高語意，並幫助編譯器工作而增加的項目。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pukYjHZhtToUHdASTn14Z9tTbl4yu_3XgBAOdwrhKZEwKnnik8a56s2eM4dCytub3av02xTAMV1ccgoIct-l_RGhmOAu01YUV__gd10BLs3g/WP_20140720_11_16_02_Pro.jpg?psid=1" alt="Skymizer 架構。手拿勇者劍的惡龍，這角色不對吧www"/>
+
+<h4>
+Big Data Analytics Platform with Solr
+</h4>
+
+<p>華碩雲端部門介紹 Solr 這套即時記錄分析平臺。結合了 logstash, kibana, radis 等工具。 logstash 功能看來不錯，可以持續分析，透過 config 的組織設定，還可以做到監視與即時通知。radis 則是一套 in memory key/value database 。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2prTc0aA_LCC-jpeskhxZdzC0bCFRCOKvE9lKDmbl7IqXbr0ceGLemsSiwnkb3Jg7zxkxP0EJ44wkBAwD9bZgpE2nCvE2hMlQXkabgrh3k828/WP_20140720_12_09_24_Pro.jpg?psid=1" alt="Solr架構"/>
+
+<h4>
+MySQL Workbench 6.1 導覽
+</h4>
+
+<p>雖然我本人是 PostgreSQL 的用戶，在 MySQL 被 Oracle 收購之前也不用 MySQL 。不過現在來看 MySQL ，似乎並沒有被放置不管的樣子。在我看了 Workbench 的介紹後，我覺得有了 Oracle 的企業經驗加持， MySQL 的工具愈來愈有企業級資料庫系統的架勢了。企業 MIS 部門的資料庫管理員，其實並不是那麼喜歡和命令列、組態檔打交道。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pgFASFo-RpY0qcdKv8fj530r5RBCrKOBquXpao_KrOfD61eN2mdYitX4QMCeCaUOtz-NgqYEaf2lHohwpKhn0Fff18iMG_DwLSMWEd0NLrj4/WP_20140720_13_18_16_Pro.jpg?psid=1" alt="New Yum & APT Repositories for MySQL"/>
+
+<h4>
+Open Pixnet
+</h4>
+
+<p>Pixnet 痞客邦放出了 Pixnet SDK ，方便大家的 APP 使用痞客邦的資料。目前釋出了 iOS 版和 JavaScript 版 SDK 。
+</p>
+
+<p>雖然我覺得只要公開 RESTful API 就夠了。不過 Pixnet 還是很熱心地多包了一層 SDK 。
+</p>
+
+
+<h4>
+How KKBox use mrjob
+</h4>
+
+<p>交流 KKBox 使用 mrjob 整合 hadoop 和 Amzaon AWS Elastic MapReduce (EMR) 的使用經驗。
+</p>
+
+<p>mrjob, a python library for MapReduce. mrjob 可以讓設計者透過組態設置就會切換運算工作的位置，可以選擇要執行在本地、 hadoop 或 EMR 平台上。不需要設計者改寫程式碼。
+</p>
+
+<p>mrjob audit emr. mrjob 可計算工作在 EMR 上的使用時間，並估算你浪費的租金。讓設計者比較哪一種租用方案較適合自己的案子。(EMR 以小時計費)
+</p>
+
+<p>講者 aaronlin 表示: The money you spent is real. AWS/Hadoop is buzz word. 自己買電腦執行運算工作，長期使用後可能比租用 AWS/Hadoop 服務便宜。使用者應該仔細計算，不是跟著流行就好。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pLOtYk2Otemf4vAexVi13KW1dY728MkqlKBlDeqAqctgRaHQIfruHwdEGBkXFOEqTXKf2HjGtESk0l7I82z10d6LQMYt4ltlP921Rxj23Kcw/WP_20140720_15_09_35_Pro.jpg?psid=1" alt="mrjob and EMR"/>
+
+<h4>
+廠商
+</h4>
+
+<h5>
+RS Components
+</h5>
+
+<p>今年 RS Components 到場設攤。這是一家專門供應電子控制機板和元件的公司。舉凡 Arduino 、 Raspberry Pi 都賣。上面那台 Raspberry Pi 用的 LCD 模組也找得到。
+同時 COSCUP 2014 舉辦時，剛好 <a href="http://www.rs-online.com/designspark/electronics/chn/knowledge-item/content-1278">Raspberry Pi B+</a> 也開賣了。 RS 台灣定價1274元，實際購買價可能 1200 有找。這塊 B+ 模組主要是輸出入端子和佈局改變， SoC 晶片和記憶體還是一樣。
+</p>
+
+<ul>
+    <li>USB 2.0 插座從 2 個增加到 4 個。
+    <li>GPIO 針頭從26針增加到40針，可控制更多的電子元件。
+    <li>從標準 SD 卡插座改成 Micro SD 卡插座。 B 模組插上 SD 卡後會突出一塊，B+ 模組換成 Micro SD 後，卡片可以整個進去，配上外殻時不會突出來。
+    <li>改成交換式電源電路，更省電。
+    <li>所有外接插座都佈到同一側，更容易訂製外殻。
+    <li>拿掉 Video RCA 端子(黃色)，換成一個四合一影音類比輸出端子(左右聲道、中重低音、視訊)。
+</ul>
+
+<p>我個人覺得比較奇怪的改動是那個四合一影音端子。國內一般家電賣場買不到這種四合一連接線(公頭上要有四個環)，這是 RS 現場員工也承認的事。難道這在大不列巔是很常見的影音端子規格？我個人倒是寧願它給我一個左右類比聲道加 SPDIF 光纖數位聲道的三合一端子。
+</p>
+
+
+<h5>
+FirefoxOS
+</h5>
+
+<p>嗯，到現在都還沒有穩定的中文輸入法支援。手寫完全沒有(謀智表示: 等待貢獻者)。
+我如果想在 FirefoxOS 上輸入中文，現在還是要用我自己寫的 <a href="{{ site.baseurl }}/archives/2013/%E5%9C%A8%20Windows%20Phone%208%20%E4%B8%8A%E9%9B%A2%E7%B7%9A%E4%BD%BF%E7%94%A8%20Touch%20IME.html">Touch IME</a> 剪貼複製。
+</p>
+
+<p>雖然已經發出和中華電信簽定的合約備忘錄新聞，但正式在市場上出現中華電信專案機的日子，看來還有得等。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pGAsQc3yg3oieHLbFldThH90zfD48l9M24Xgd5BVcz5G5FZUnesWz3JNvrMyYiBQVFmgfWFtTPvn_K5zqJ38x695PJr2_0Rv91KFqbIYTIlo/WP_20140719_12_49_57_Pro.jpg?psid=1" alt="第一天在會場攤位區遊走的火狐布偶"/>
+
+<h4>雜談
+</h4>
+
+<p>記取去年在世貿國際會議中心沒網路、沒電源插座的教訓，今年又移師回到中研院。只是分成兩個場地，人文館和活動中心。至少有1100人參與。但是，這兩個場地的會議室空間也差太多了。活動中心的會議室標準員額大概不到30人吧，但每場議程幾乎都擠了四、五十人，室內的二氧化碳濃度都要超標了。我第一天聆聽的議程都在活動中心，因為實在沒有空間可以移動，最後我也只能固定駐點，放棄去聽在別的會議室的議程了。可惜今年的議程中間都有安排10分鐘休息時間。
+</p>
+
+<p>另外，今年似乎沒有收集各議程的投影片或錄影？明明在會議室中都有一隻攝影機對著講台。
+</p>
+
+
+<h4>觀光
+</h4>
+
+<p>往年我都是週五半夜搭車北上，早上剛好到台北。不過這樣太累了，所以我今天提前在週五就北上了，把這次活動當成三天兩夜的台北旅遊。我北上參加 COSCUP 等年會或者 IBM 開發者大會，都是自費參加，沒有公費或公假，所以要怎麼安排都是我自己說了算。
+</p>
+
+<p>週五中午時到台北後，又搭上往平溪的莒光號，前往猴硐參觀貓村和礦業紀念館。
+</p>
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2psu1n8ZhpxCwwZyT23oKDDDXmveCFcCnGkbSQ_NQobvH-XVMvVwBTQTxXf5ccpUtOpPJKXTmkzTCVU4IvqljCBB-dxK_tvrvrRD3vieFOums/WP_20140718_11_41_45_Pro.jpg?psid=1" alt="猴硐車站二樓景色"/>
+
+<p>下午回台北後，先去車站旁的背包客棧(品格子旅店) check in 。到了晚上，和在北部的朋友一起去初穗居酒屋聚餐。招牌大阪燒各來一份，再配上小菜。吃飽喝足。這家大阪燒還挺道地的，味道不輸我在大阪吃過的。
+</p>
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2pDu1B2Pa7fR9x1BxTKfpAWZa0B2fjMTkmJvw-IetJlvc3ja4_Y5CHF01ioFL68Qi10uD4ZbXUXvbWhoBmSV1xcMhMsavU2MV0XvYDdeWKI30/WP_20140718_19_41_17_Pro.jpg?psid=1" alt="初穗的招牌大阪燒"/>
+
+<p>週六晚上，到華西街吃晚餐，順便去龍山寺拜拜。
+</p>
+
+<img src="https://ajx3lw.dm2302.livefilestore.com/y2p_rfSBxR4KVolDWHln5hPrCuiptlSGoHY7vYtB-IYAtS-ZqMBmmHkQUKqoH2YqTzo_G9uUQkEBCxwdpP9s2ouOmRPdPHs0l4fuDo1ZPI9LKc/WP_20140719_20_48_44_Pro.jpg?psid=1" alt="台北龍山寺"/>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/2014%20IBM%20%E9%96%8B%E7%99%BC%E8%80%85%E5%A4%A7%E6%9C%83%E9%AB%98%E9%9B%84%E5%A0%B4%E8%A8%98%E4%BA%8B.html">2014 IBM 開發者大會高雄場記事</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/29287370.html">http://blog.roodo.com/rocksaying/archives/29287370.html</a></div>

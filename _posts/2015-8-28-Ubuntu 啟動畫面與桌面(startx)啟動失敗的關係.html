@@ -1,0 +1,60 @@
+---
+title: Ubuntu 啟動畫面與桌面(startx)啟動失敗的關係
+category: computer
+old-category: 電腦技術
+tags: [linux,ubuntu,debian,desktop]
+---
+<p>我任職公司會用 Linux 系統訂製自己的視窗環境，具體作法請參考「<a href="{{ site.baseurl }}/archives/2012/%E5%A6%82%E4%BD%95%E8%A8%82%E8%A3%BD%20Linux%20X%20%E8%A6%96%E7%AA%97%E7%92%B0%E5%A2%83.html">如何訂製 Linux X 視窗環境</a>」。在使用 Ubuntu 訂製環境時，我們將 Ubuntu 的 Display Manager (如 GDM, LigthDM) 拔掉，改為直接執行 <em>startx</em> 的方式，這時經常出現啟動畫面閃爍現象，以及偶爾發生 <em>X</em> 啟動失敗的錯誤，導致系統進入 <em>X Window</em> 的時間變得很長。但改回 <em>DM</em> 啟動模式後就沒事了。在 Debian 之下則很正常。</p>
+
+<p>由於 Ubuntu 的啟動畫面由 <em>plymouth</em> 負責，我初步認為和 <em>plymouth</em> 有關。搜查了一下，可找到其他客製化系統的系統開發者者碰到相同的情況。</p>
+
+<!--more-->
+<p>例如這篇「<a href="sourceforge.net/p/ltsp/mailman/message/24243231/">Important changes to screen_session script</a>」。此作者在 tty7, tty8, tty9 各跑一個 <em>DM</em> ，也出現我碰到的情形。他分析指出這和 <em>X</em> 的執行架構有關，所以系統啟動時，螢幕上的內容會在不同終端機上切換。在我們看來，就是畫面在閃動。此外，我還碰到 <em>X</em> 失敗終止的狀況。我判斷這是 <em>plymouth</em> 和 <em>startx</em> 在爭搶顯示模式切換之故。</p>
+
+<p>首先需要了解我客製的啟動方式改動了 <em>init</em> 的工作內容。而 <em>init</em> 的處理順序是先處理 /etc/init ，再跑 /etc/rc?.d 的內容。我也搜尋到一篇關於 <em>init</em> 啟動過程的除錯操作「<a href="http://handypenguin.blogspot.tw/2010/04/when-recovery-mode-fails-to-boot.html">When recovery mode fails to boot</a>」。</p>
+
+<p>在 Debain 的啟動模式中，它將 <em>DM</em> 的啟動序列安排在 /etc/rc5.d 。這序列安排確保 <em>DM</em> 會在啟動畫面等視覺效果程式執行之後才啟動，故避免了畫面切換終端機(畫面閃爍)以及爭搶顯示模式改變的錯誤。</p>
+
+<p>我訂製的啟動模式將 <em>startx</em> (由 tty7.conf 負責) 安排在 /etc/init 階段，並取消了 <em>DM</em> ，所以不會有問題。</p>
+
+<p>但 Ubuntu 將 <em>plymouth</em> 安排在 /etc/init 階段，且 Ubuntu 的 <em>init</em> 又是再交給 <em>upstarter</em> 按事件依賴機制實行非同步的啟動工作。所以當我用 Ubuntu 客製啟動方式時，等於將 <em>plymouth</em> 和 <em>startx</em> 安排在相同的處理序列上。這有很高的機率令 <em>startx</em> 和 <em>plymouth</em> 在同一時間啟動，使 <em>X</em> 和 <em>plymouth</em> 爭搶顯示模式，導致 <em>X</em> 啟動失敗。當 <em>X</em> 啟動失敗時， <em>init</em> 會重新叫起 <em>startx</em> 。由於背地裡跑了兩次 <em>startx</em> ，所以有進入 X Window 的時間變得很長的表面現象。</p>
+
+<p>所以究其原因，這與 <em>DM</em> 和 <em>plymouth</em> 啟動時的優先序列有關。但 Ubuntu 將 <em>plymouth</em> 和 lightdm 的啟動程序均安排在 /etc/init 階段卻又相安無事，那就來看看 Ubuntu 是如何設置 ligthdm 的啟動工作，其 <em>init</em> 的設置內容如下:</p>
+
+<pre class="language-text">
+description     "LightDM Display Manager"
+
+start on ((filesystem
+           and runlevel [!06]
+           and started dbus
+           and plymouth-ready)
+          or runlevel PREVLEVEL=S)
+
+stop on runlevel [016]
+</pre>
+
+<p>看到了嗎？它設置了一個 <em>plymouth-ready</em> 的條件，要求 upstarter 必須等到 <em>plymouth</em> 準備完成後才執行 lightdm 。這樣就避免 <em>plymouth</em> 與 lightdm 爭搶切換顯示模式的衝突。</p>
+
+<p>所以我們只要參考此設置方式，將 Ubuntu 下的 tty7.conf 設置如下，那麼 <em>startx</em> 與 <em>plymouth</em> 就不會發生衝突了。</p>
+
+<pre class="language-text">
+# tty - openvt startx
+description     "Start X Session"
+
+start on ((filesystem
+           and runlevel [!06]
+           and started dbus
+           and plymouth-ready)
+          or runlevel PREVLEVEL=S)
+
+stop on runlevel [016]
+
+respawn
+exec /bin/openvt -efwc 7 -- /bin/su - xdna -c /usr/bin/startx
+</pre>
+
+<p>補充一點，啟動工作安排在 /etc/init 階段和 /etc/rc?.d 階段時有所不同。</p>
+
+<p>安排在 /etc/init 階段的程式，當它結束或意外終止時， <em>init</em> 會主動再次執行，術語叫 <em>respawn</em>  (re-spawn ，重新生產)。而安排在 /etc/rc?.d 階段的程式終止時，則不會被再次執行。具體地說，按 /etc/init 執行 <em>startx</em> 模式跑進 X Window 時，如果 X Window 結束或意外終止的話， <em>init</em> 會重新跑 <em>startx</em> 回 X Window 。但由 <em>DM</em> 模式跑進 X Window 時，在 X Window 結束後將退回到 <em>DM</em> 的帳號密碼輸入畫面，而不是重新進 X Window 。</p>
+
+<p>我任職公司的產品案例大多是無人值守的電腦設備，故要求視窗環境意外崩潰後也必須重新回復到視窗環境執行客戶應用。所以我們必須將 <em>startx</em> 安排在 <em>init</em> 階段。若是安排在 etc/rc?.d 階段，則視窗環境崩潰後會切回終端機登入的提示畫面 (login:) ，這可就糟糕了。</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/47302757.html">http://blog.roodo.com/rocksaying/archives/47302757.html</a></div>

@@ -1,0 +1,128 @@
+---
+title: 工作記錄：事件迴圈與非同步I/O裝置
+category: programming
+old-category: Programming
+tags: [select,aio,mainloop]
+---
+<p>
+今有一項基於 GUI 的應用軟體，需要整合三個輸出入裝置。其中有兩個看似平常，但卻具有特殊行為的裝置。
+</p>
+
+<p>
+輸入裝置S:
+</p>
+
+<ol>
+    <li>
+    圖像輸入裝置，就是搭配觸控式螢幕或滑鼠的 GUI 介面。
+    </li>
+</ol>
+
+<p>
+輸入裝置K:
+</p>
+
+<ol>
+    <li>
+    接受使用者輸入動作，再將輸入控制碼主動傳送出去，它不理會接收者是否準備接收訊息。
+    可以將它想像成鍵盤。使用者按下鍵盤按鍵後，鍵盤立刻就會發出鍵碼給作業系統(以中斷的形式)，並不管作業系統這端是否有任何軟體準備讀按鍵。
+    </li>
+    <li>
+    但是這個裝置有一個特性，就是它要求即時回饋。
+    它每送出一個指令，就要求接收者在限定時間內回報相對應的控制碼。如果在限定時間內沒有收到回覆，它就認為發生錯誤，轉入它本身的錯誤處理流程。
+    </li>
+</ol>
+
+<p>
+輸出裝置P:
+</p>
+
+<ol>
+    <li>
+    接受一行訊息後列印到報表。可以將它想像為行印表機。
+    </li>
+    <li>
+    但是這個裝置也有一個特性。它像是老式的打字機，應用軟體不能連續送出訊息給它列印。
+    它印完一行訊息後，要回車之後才能再印另一行。
+    所以應用軟體在送出一行訊息後，要等裝置P 回報它已經回車了，才可以再送下一行訊息。否則下一行訊息不會列印在正確的位置上。
+    </li>
+</ol>
+
+<!--more-->
+<p>
+在設計 GUI 應用軟體整合上述三個裝置時，碰到了即時回應問題。
+</p>
+
+<p>
+大部份的 GUI 函數庫的設計模式，採用事件迴圈(event loop)。由於整個應用軟體都環繞著這一個迴圈運作，故一般又稱為主迴圈(main loop)。例如 GTK、 Qt 甚至是 Web 瀏覽器內部也是。事件迴圈模式，其運作方式類似我在「<a href="{{ site.baseurl }}/archives/2006/select%28%29%20-%20I_O%20Multiplexer.html">select() - I/O Multiplexer</a>」所敘內容；又或是「<a href="http://davidz25.blogspot.tw/2011/06/writing-c-library-part-2.html">Event handling and the main loop</a>」所說: <q>The truth is that a main-loop is really a well-known concept with a different name: it's basically an abstraction of OS primitives such as select(2)</q>。例如 GTK 的 gtk_main()/Gtk.main() 函數，其內部就是一類似 select() 的分工器。設計者先註冊每個元件的事件交由哪個函數處理。分工器則查看最近有什麼工作在等待處理，然後調用註冊的處理函數。等待處理函數結束後，再繼續查看下一個工作，不斷循環。虛擬碼如下所示。
+</p>
+
+<pre class="highlight"><code>
+<span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">event_source</span> <span class="o">=</span> <span class="n">select</span><span class="p">();</span>
+    <span class="n">event_handler</span> <span class="o">=</span> <span class="n">event_handler_table</span><span class="p">[</span><span class="n">event_source</span><span class="p">];</span>
+    <span class="n">invoke</span> <span class="n">event_handler</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+我們不難看出事件迴圈模式基本上還是單線運作。當程式流程轉入事件處理函數時，其他工作就要在分工器處等待。整合前述三台裝置時就出問題了。顯而易見的情境如：應用分工器收到列印訊息的工作，流程轉入交給列印事件處理函數。而列印事件處理函數又必須配合裝置P 的特性一行一行慢慢送，不可能馬上返回。說時遲那時快，使用者按下裝置K ，於是裝置K 不看場合地送出控制碼給應用軟體。在列印函數返回之前，回饋控制碼給裝置K 的工作只能在分工器排隊。排隊時間超過裝置K 的限定時間，於是等不到應用軟體回報控制碼的裝置K 就認定發生錯誤，自行進入錯誤處理流程。
+</p>
+
+<h5>
+多執行緒
+</h5>
+
+<p>
+針對上述情形，比較直觀的做法是將會耗時等待的事件處理函數，改寫成執行緒模式。
+</p>
+
+<pre class="highlight"><code>
+<span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">event_source</span> <span class="o">=</span> <span class="n">select</span><span class="p">();</span>
+    <span class="n">event_handler</span> <span class="o">=</span> <span class="n">event_handler_table</span><span class="p">[</span><span class="n">event_source</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">event_handler</span> <span class="n">is</span> <span class="n">thread_able</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">handler_thread</span> <span class="o">=</span> <span class="n">new</span> <span class="kr">thread</span><span class="p">(</span><span class="n">event_handler</span><span class="p">);</span>
+        <span class="n">start</span> <span class="n">handler_thread</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">invoke</span> <span class="n">event_handler</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+但是，如果有多種這類型裝置整合在一起，或者是有很多會耗時的事件處理函數，針對它們一一改寫就是一項大成本的工作。
+</p>
+
+<h5>
+多個事件迴圈
+</h5>
+
+<p>
+還有一個解法，就是專線專用。應用軟體內建立至少兩個執行緒各跑一個事件迴圈，一個負責非即時需求的事件迴圈，另一個負責即時需求的事件迴圈。在 GLib 中， g_main_context_get_thread_default() / g_main_context_push_thread_default() 就是用來做這件事的。
+</p>
+
+<blockquote>
+g_main_context_get_thread_default()<br/>
+
+Asynchronous operations that want to be able to be run in contexts other than the default one should call this method to get a GMainContext to add their GSources to.
+</blockquote>
+
+<p>
+關於 g_main_context_get_thread_default() / g_main_context_push_thread_default() 的使用方式，可以參考 <a href="https://github.com/bratsche/glib/blob/master/gio/tests/gdbus-threading.c">gdbus-threading.c@github</a> 或 <a href="http://svn.netlabs.org/repos/ports/glib/trunk/gio/tests/gdbus-threading.c">gdbus-threading.c@netlabs</a> 。
+</p>
+
+<h5>
+緩衝抽象層
+</h5>
+
+<p>
+另外，裝置P 的接口也有可重構之處。可以在應用軟體和裝置P 之間加上一個緩衝抽象層，消解應用軟體進行列印工作時的等待時間。這個緩衝抽象層需要配置一個訊息佇列用於堆放應用軟體要列印的訊息，再配置兩個檔案管道與執行緒。一個管道接收應用軟體要列印的訊息，堆放到訊息佇列，然後直接返回，讓應用軟體不必等待裝置P 的回車動作。另一個管道則負責實際的列印工作：等待裝置回車、檢查訊息佇列、取出等待中的訊息送給裝置列印。
+</p>
+
+<p>
+儘管改變了上述設計，仍然有力所未逮之處。裝置K 的工作規格原本是針對即時系統(real-time)設計，它是透過中斷機制(interrupt)發送控制碼給接收端。在 Linux 平台中，應用軟體應該使用針對即時系統所規劃的 <a href="http://man7.org/linux/man-pages/man7/aio.7.html">POSIX asynchronous I/O (AIO) API</a> 接收中斷機制所發送的訊息。不過我們選擇的程式語言與開發工具不提供如此低階的 API 操作，故只能透過訊息匯流排(message bus)再轉遞給應用軟體，而不是直接中斷應用軟體處理。因此，在轉遞過程中就已經出現延遲了。故而就算沒有其他工作在分派器排隊，也有一成機率延誤回饋控制碼給裝置K 而讓裝置K 判定錯誤。上述所說的解法，對這種情形不具明顯消解效果。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/26050676.html">http://blog.roodo.com/rocksaying/archives/26050676.html</a></div>

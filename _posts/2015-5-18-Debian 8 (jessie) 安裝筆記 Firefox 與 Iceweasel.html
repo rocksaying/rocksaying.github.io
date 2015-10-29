@@ -1,0 +1,90 @@
+---
+title: Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel
+category: computer
+old-category: 電腦技術
+tags: [debian,kde]
+---
+<h4>Firefox 與 Iceweasel</h4>
+
+<p><em>最近更新日期: 2015-05-26 。隨著 Debian Jessic 轉為 stable 版本，Debian Mozilla 團隊調整了儲藏位置。</em></p>
+
+<p>Mozilla 將 Firefox 的圖標註冊為商標，並附帶了一些使用限制。而 Debian 團隊為了擺脫商標使用限制，選擇自行維護一個衍生版本，此即 Iceweasel 。參考 「<a href="https://wiki.debian.org/Iceweasel">Iceweasel - Debian wiki</a>」。</p>
+
+<p>對一般使用者來說， Iceweasel 和 Firefox 除了應用程式的圖示不同外，兩者並無差異。所有的擴充插件或主題全部一致，連使用者偏好同步(Sync)功能都用相同的伺服器。</p>
+
+<p><em>Debian 8 於 2015 年 4 月 25 日正式釋出。 Debian 8 安裝筆記請看「<a href="{{ site.baseurl }}/archives/2014/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20%E5%9F%BA%E7%A4%8E%E7%AF%87.html">基礎篇</a>」。</em></p>
+
+<!--more-->
+<h5>Iceweasel</h5>
+
+<p>Debian 提供的 Iceweasel 是 Firefox 的純 GPL 版兄弟。如果你不是非要 Firefox 不可的使用者，用 iceweasel 即可。</p>
+
+<p>同時建議安裝 gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good 這三個套件。這讓你的 Iceweasel 支援 Youtube HTML5 播放模式。</p>
+
+<p>Debian 8 的 Iceweasel 主版本固定在 31.0 ，不過 Debian Iceweasel 團體會配合 Mozilla 的安全性更新內容釋出安全性更新小版本。</p>
+
+<p>如果你仍然對這安全性更新頻率感到疑慮， Debian Mozilla 小隊也提供了和 Firefox 最新正式版本同步的 Iceweasel ，但被放在 Debian Jessie Backports 套件庫 <del>experimental 實驗性套件庫</del>。如果你想讓 Iceweasel 的版本緊跟著 Firefox 最新正式版本，可以按下列步驟操作:</p>
+
+<p>首先，在 /etc/apt/sources.list.d 下新增一個設定檔(檔名可取為 iceweasel-release.list)，內容是:</p>
+
+<pre class="language-text">
+deb http://mozilla.debian.net/ jessie-backports iceweasel-release
+</pre>
+
+<p>更新套件資訊後，先安裝 pkg-mozilla-archive-keyring 套件。這是套件來源驗證金鑰，安裝後才不會抱怨套件缺乏來源驗證。</p>
+
+<p>再以強制指定套件版本的參數安裝 iceweasel ，如下所示。其中 iceweasel-l10n-zh-tw 是 iceweasel 的傳統中文語系套件。</p>
+
+<pre class="term">
+$ apt-get update
+$ apt-get install pkg-mozilla-archive-keyring
+$ apt-get install -t jessie-backports iceweasel iceweasel-l10n-zh-tw
+</pre>
+
+<p>參考 <a href="http://mozilla.debian.net/">Debian Mozilla team APT archive</a> 。</p>
+
+<h5>Firefox</h5>
+
+<p><em>Firefox 提供的 Linux 編譯版本並非每次都開啟 gstreamer 支援。所以不一定提供 HTML5 的 h.264 影片播放功能。如果你不想安裝 flashplugin-nonfree 又常常看 Youtube 網站的話，還是裝 iceweasel 省事。</em></p>
+
+<p>我選擇下列說明的手動操作安裝 Firefox 。下列示範的方式是用 root 身份，安裝在只有 root 能寫入的目錄區，故 firefox 本身的自動更新功能將會失效。如果你想要用 firefox 的自動更新功能，那就把 firefox 放在自己的家目錄，例如 $HOME/.local/firefox ，不要放在 /opt/firefox 。</p>
+
+<p>到 <a href="http://ftp.mozilla.org/pub/mozilla.org/firefox/">Mozilla FTP</a> 下載 firefox 的壓縮包。 releases 目錄下是正式釋出版， nightly 目錄下是嘗鮮版。下載後的檔案是 .tar.bz2 壓縮包，執行 <code>tar xjvf firefox-????.tar.bz2</code> 就會在目前目錄下建立一個 firefox 子目錄，並將內容解開放在其中。把這個目錄搬到 /opt (或者你想放的位置)。</p>
+
+<p>下列的指令可以建立一個易用的符號連結，並加入一組桌面環境可用的 firefox 應用程式圖示。</p>
+
+<pre class="term">
+root# ln -s /opt/firefox/firefox /usr/bin/firefox.real
+
+root# ln -s /opt/firefox/browser/chrome/icons/default/default16.png \
+  /usr/share/icons/hicolor/16x16/apps/firefox.png
+root# ln -s /opt/firefox/browser/chrome/icons/default/default32.png \
+  /usr/share/icons/hicolor/32x32/apps/firefox.png
+root# ln -s /opt/firefox/browser/chrome/icons/default/default48.png \
+  /usr/share/icons/hicolor/48x48/apps/firefox.png
+root# ln -s /opt/firefox/browser/chrome/icons/default/default48.png \
+  /usr/share/icons/firefox.png
+
+root# cp /usr/share/applications/iceweasel.desktop \
+  /usr/share/applications/firefox.desktop
+</pre>
+
+<p>最後編輯 /usr/share/applications/firefox.desktop ，修改 Exec 和 Icon 項目:</p>
+
+<pre class="language-text">
+[Desktop Entry]
+Encoding=UTF-8
+Name=Mozilla Firefox
+Exec=/opt/firefox/firefox %u
+Icon=firefox
+Comment=Browser the World Wide Web
+GenericName=Web Browser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+</pre>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Debian%208%20%28jessie%29%20%E5%AE%89%E8%A3%9D%E7%AD%86%E8%A8%98%20%E5%9F%BA%E7%A4%8E%E7%AF%87.html">Debian 8 (jessie) 安裝筆記 基礎篇</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/44330768.html">http://blog.roodo.com/rocksaying/archives/44330768.html</a></div>

@@ -1,0 +1,138 @@
+---
+title: apache-session - startup apache server on X Window
+category: computer
+old-category: 電腦技術
+tags: [apache,debian,mplayer,omxplayer]
+---
+<p>在 Unix 類系統(Linux)下，如果你曾經嘗試用 Apache + PHP 撰寫一段程式去執行 mplayer/vlc 等影像播放程式，將會得到 <q>Audio: no sound Video: no video</q> 這類的錯誤訊息；又或者執行各種視窗 GUI 程式，也都會得到類似 <q>Can not open display</q> 的錯誤訊息。這些都是 X Window 的安全限制所帶來的影響。
+</p>
+
+<p>X Window 的設計架構，一開始就允許在同一台主機上登入多個使用者且擁有各自獨立的視窗桌面環境。既然如此，那麼 X Window 就必須提供隔離不同視窗桌面環境的安全性。總不能讓甲使用者執行的視窗程式的畫面顯示在乙使用者的桌面上。如果你或週遭朋友熟悉 X Window 的各種使用途徑，就知道這些事都做得到。我不解釋細節，各位在此只需要了解系統啟動的 Apache 服務被隔離在 X Window 的視窗環境之外，所以透過 Apache 調用的 PHP 程式自然也被隔離在外，而無法再去執行依賴視窗環境的各種 GUI 程式。
+</p>
+
+<!--more-->
+<h4>
+概念
+</h4>
+
+<p>下列是一個簡單的 PHP 範例。當你登入視窗桌面後，在終端機視窗中直接以 PHP 指令模式執行下列的 PHP 程式碼時，可以叫出 mplayer 播放影片。但透過 Apache 調用時，則無法叫出 mplayer 。
+</p>
+
+<pre class="highlight"><code>
+<span class="cp">&lt;?php</span>
+<span class="nb">system</span><span class="p">(</span><span class="s2">"mplayer ~/Videos/demo.mp4"</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>這個安全限制並非無法可解。以 Apache 來說，最簡單的方法就是不要由系統啟動服務，而是改成登入視窗桌面後，在終端機視窗中用目前的使用者身份啟動 Apache 服務(<span class="Onote">此法至少要修改服務埠號，不能用預設的 80 ，因為1000號以下只有 root 能用</span>)。再透過 Apache 調用前面的PHP 範例，就可以叫出 mplayer 了。
+</p>
+
+<p>實際操作起來，可能有一點麻煩。所以我整理了一個 apache-session 的 deb 套件包。只要安裝這個 deb 套件，就會有一個 <kbd>apache-session</kbd> 指令可以用來啟動依附於視窗環境內部的 Apache 服務。
+</p>
+
+<h4>
+摘要
+</h4>
+
+<pre class="language-text">
+apache-session [ start | stop | reload ]
+</pre>
+
+<h4>
+說明
+</h4>
+<p>
+apache-session 是一個命令工具，用以在使用者登入期間，提供屬於此期間的 Apache http 服務。必須在使用者登入後，以一般使用者身份執行。在此期間的 Apache http 行程及其調用的 PHP 程式，都將以登入者的身份運行，故可使用一些僅在登入期間可用的資源。例如使用者登入 X 視窗環境，則此期間的 Apache http 行程將可調用影像播放程式等 X 應用程式。
+</p>
+
+<p>
+apache-session 使用的網路埠號與 Apache 系統服務不同，故兩者可並存，不會互相干擾。 apache-session 預設的埠號是 1080 ，預設的文件目錄是 $HOME/Public 。啟用 apache-session 後，可用瀏覽器開啟 http://localhost:1080/ 查看。
+</p>
+
+<h4>
+取得
+</h4>
+
+<p>
+源碼置於 google code ，請見「<a href="http://code.google.com/p/rocksources/">遊手好閒的石頭成的程式源碼</a>」。
+</p>
+
+<ul>
+    <li>deb 下載: <a href="https://drive.google.com/file/d/0BwYBp19rXvG-dTJQUEY3QmxWazA/edit?usp=sharing">apache-session_1.0.0_all.deb</a> ，測試環境: Debian 6,7,8; Ubuntu 12.04 。
+    <li>source repository: <a href="http://rocksources.googlecode.com/svn/trunk/linux/apache-session">http://rocksources.googlecode.com/svn/trunk/linux/apache-session</a>
+</ul>
+
+<h4>
+選項
+</h4>
+
+<ul>
+    <li>
+    start<br/>
+    啟動服務。可將此動作寫在 $HOME/.xsessionrc 、 $HOME/.config/autostart 或 $HOME/.kde/Autostart 。具體內容請參考你的桌面環境的自動啟動程式的設定方式。
+    你可以先在終端機視窗下測試看看。執行 <code>apache-session start</code> 後，再執行 <code>ps ax|grep "apache2 -f"</code> 查看是否成功啟動了額外的 Apache 服務，再用瀏覽器開啟網址 http://localhost:1080/ 。喔，你需要在家目錄下建一個 Public 目錄，這是 apache-session 預設的文件目錄。
+
+    <li>
+    stop<br/>
+    停止服務。
+
+    <li>
+    reload<br/>
+    重新載入組態內容。
+</ul>
+
+<h4>
+自訂組態
+</h4>
+
+<h5>
+$HOME/.config/apache-envvars
+</h5>
+
+<p>
+在家目錄的 .config 資料夾內，編輯一份名叫 apache-envvars 的文件，可設定下列內容。範例是預設值。
+</p>
+
+<pre class="language-term">
+export APACHE_LISTEN_PORT="1080"
+export APACHE_LOG_DIR="$HOME/log"
+export APACHE_LOG_LEVEL="error"
+export APACHE_DOC_DIR="$HOME/Public"
+</pre>
+
+<ul>
+    <li>
+    APACHE_LISTEN_PORT 是服務聆聽的網路埠號，預設為 1080 。注意，apache-session 只綁定 127.0.0.1 網路介面。只讓使用者指定網路埠號，不讓其指定網路介面。
+
+    <li>
+    APACHE_LOG_DIR 是 apache-session 服務運行時的儲存各種記錄內容的資料夾。包含 apache2.pid, error.log, access.log 。預設放置在家目錄的 log 資料夾內。
+
+    <li>
+    APACHE_LOG_LEVEL 指定 error.log, access.log 的記錄詳細度。在程式開發階段通常指定 warn 或 notice (很多資訊) ，在產品公開階段通常指定 error 或 crit (幾乎不會有資訊)。
+
+    <li>
+    APACHE_DOC_DIR 是 apache-session 公開瀏覽的文件根目錄。預設是家目錄的 Public 資料夾。使用者可以在目錄下，以 .htaccess 文件設定額外的控管內容。
+
+</ul>
+
+<h5>
+/etc/apache2/session/apache*.conf
+</h5>
+
+<p>
+在 /etc/apache2/session 資料夾中，含有 apache22.conf 和 apache24.conf 兩份組態文件。按名稱分別適用 Apache 2.2 和 Apache 2.4 版。 apache-session 指令會自動判別系統安裝的 Apache httpd 版本。
+</p>
+
+<p>
+apache-session 就是讓 Apache httpd 專門載入這裡的組態文件，在系統的 Apache 服務之外，提供依附於使用者登入期間運作的 Apache 服務。
+</p>
+
+<p>
+基本上，不建議使用者修改此處的內容。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/27881435.html">http://blog.roodo.com/rocksaying/archives/27881435.html</a></div>

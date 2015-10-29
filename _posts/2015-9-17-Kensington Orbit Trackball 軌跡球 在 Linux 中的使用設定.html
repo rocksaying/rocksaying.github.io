@@ -1,0 +1,137 @@
+---
+title: Kensington Orbit Trackball 軌跡球 在 Linux 中的使用設定
+category: computer
+old-category: 電腦技術
+tags: [linux,debian,trackball,kensington]
+---
+<p>身為一位 Logitech Marble Trackball 木星軌跡球的用戶，我拿到 Kensington Orbit Trackball 軌跡球後第一眼就覺得這兩隻的球體大小似乎一樣。當場動手互換，證實 Orbit 軌跡球和 Logitech Marble 木星軌跡球的球體通用。</p>
+
+<p>接著，我又比較了它和 Kensington SlimBlade Trackball 軌跡球的捲頁速度。 Orbit 軌跡球捲頁輪 (Scroll Ring) 的捲頁速度要快得多。還可用一根手指 360 度旋轉捲頁，真是爽快。唯一缺點就是少了實體中鍵。或許我當初該買 Kensington Expert Mouse 而非 SlimBlade 軌跡球。</p>
+
+<p>Orbit 軌跡球最大缺點就是沒有實體中鍵，故接下來將著重說明在 Linux 如何設定中鍵模擬。</p>
+
+<!--more-->
+<h4>基礎說明與鍵碼</h4>
+
+<p>首先，請執行 <code>xinput list</code> 確認你的 Orbit 軌跡球的系統識別名稱。在我的系統上，我查到的名稱是 "Primax Kensington Eagle Trackball" ，而不是舊文件上提到的 "Kensington Kensington USB/PS2 Orbit" 。或許是代工廠改了吧。</p>
+
+<p>查看可用屬性:</p>
+
+<pre class="language-text">
+xinput list-props "Primax Kensington Eagle Trackball"
+</pre>
+
+<p>查看按鍵動作設置:</p>
+
+<pre class="language-text">
+xinput get-button-map "Primax Kensington Eagle Trackball"
+1 2 3 4 5 6 7
+</pre>
+
+<p>動作設置第一欄是滑鼠左鍵，第二欄是滑鼠中鍵，第三欄是滑鼠右鍵。但 Orbit 軌跡球實際上只有 4 個按鍵，就是左鍵(鍵碼1)、右鍵(鍵碼3)、捲頁輪順時針捲動(鍵碼4)、捲頁輪逆時針捲動(鍵碼5)。捲頁輪 (scrolling ring) 功能不變，實際可用的按鍵只有左、右兩鍵。要增加滑鼠中鍵動作的方法都要配合特殊設定。一種是啟用中鍵模擬，另一種是啟用第三鍵。</p>
+
+<p>左撇子的按鍵動作設置如下:</p>
+
+<pre class="language-text">
+xinput set-button-map "Primax Kensington Eagle Trackball" 3 2 1 5 4 6 7
+</pre>
+
+<h4>中鍵模擬</h4>
+
+<p>中鍵模擬指同時按左鍵和右鍵等於按中鍵。啟用指令如下:</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Middle Button Emulation" 1
+</pre>
+
+<p>如果你同時按左鍵和右鍵的動作不夠快、有時間差，可調長動作時間。下列設置調長為 0.1 秒 (預設是 0.05 秒):</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Middle Button Timeout" 100
+</pre>
+
+<p>注意， Orbit 軌跡球的「中鍵模擬」與接下來說明的「第三鍵」、「滾輪模擬」兩功能不會同時生效。當啟用中鍵模擬時，第三鍵與滾輪模擬設置就失效。但第三鍵與滾輪模擬則可以並存。</p>
+
+<h4>第三鍵</h4>
+
+<p>第三鍵是指按住左鍵超過 1 秒後放開，等於某一鍵位。預設值是按住左鍵後放開等於按右鍵(鍵碼3)。這設定毫無必要，在此當然希望按住左鍵後放開等於按中鍵(鍵碼2)。另外，我也縮短按住後放開的時間為 0.3 秒。</p>
+
+<p>啟用第三鍵:</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Third Button Emulation" 1
+</pre>
+
+<p>設定放開後等於按中鍵(鍵碼2):</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Third Button Emulation Button" 2
+</pre>
+
+<p>縮短按住左鍵的時間為 0.3 秒:</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Third Button Emulation Timeout" 300
+</pre>
+
+<p>為了不影響按住左鍵的拖曳行為，可以調低動作門檻值為 1 :</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Third Button Emulation Threshold" 1
+</pre>
+
+<h4>四方向捲頁</h4>
+
+<p>滾輪模擬，這是全系軌跡球 (Kensington 與 Logitech) 都通用的玩法。按照我的使用習慣，設為按住右鍵後可四方向捲頁。</p>
+
+<p>啟用滾輪模擬功能:</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Wheel Emulation" 1
+</pre>
+
+<p>設定滾輪模擬鍵: (此例指定右鍵，鍵碼 3)</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Wheel Emulation Button" 3
+</pre>
+
+<p>設定滾輪可以四方向捲頁:</p>
+
+<pre class="language-text">
+xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Wheel Emulation Axes" 6 7 4 5
+</pre>
+
+<h4>X 組態檔設置</h4>
+
+<p>最後說明 X 組態檔設置方式。此設置內容啟用「中鍵模擬」，不使用第三鍵與滾輪模擬。</p>
+
+<pre class="language-text">
+## Debian: /usr/share/X11/xorg.conf.d/50-orbit-trackball.conf
+Section "InputClass"
+    Identifier      "Kensington Orbit Trackball"
+    MatchProduct    "Primax Kensington Eagle Trackball"
+    MatchDevicePath "/dev/input/event*"
+    #Driver "evdev"
+
+    ## Right hand (default setting)
+    #Option "ButtonMapping"      "1 2 3 4 5 6 7"
+
+    ## Left hand
+    #Option "ButtonMapping"      "3 2 1 5 4 6 7"
+
+    ## xinput "Evdev Middle Button Emulation" 1
+    Option "Emulate3Buttons"       "true"
+
+    ## xinput "Evdev Middle Button Timeout" 100
+    Option "Emulate3Timeout" "100"
+EndSection
+</pre>
+
+<p>xinput 與 evdev 的屬性說明請參考 <a href="http://www.x.org/archive/X11R7.6/doc/man/man4/evdev.4.xhtml">EVDEV manual</a> 。</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/Logitech%20Trackman%20Marble%20on%20Debian%20_%20Ubuntu.html">Logitech Trackman Marble on Debian / Ubuntu</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/Kensington%20SlimBlade%20Trackball%20%E8%BB%8C%E8%B7%A1%E7%90%83%E5%9C%A8%20Linux%20%E4%B8%AD%E7%9A%84%E4%BD%BF%E7%94%A8%E8%A8%AD%E5%AE%9A.html">Kensington SlimBlade Trackball 軌跡球在 Linux 中的使用設定</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/48245554.html">http://blog.roodo.com/rocksaying/archives/48245554.html</a></div>

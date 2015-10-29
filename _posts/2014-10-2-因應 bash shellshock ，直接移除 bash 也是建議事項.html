@@ -1,0 +1,39 @@
+---
+title: 因應 bash shellshock ，直接移除 bash 也是建議事項
+category: computer
+old-category: 電腦技術
+tags: [linux,資訊安全,shell script]
+---
+<p>關於 bash shellshock 的漏洞風波愈演愈烈，一波未平一波又起。好像有補不完的完全漏洞。關於這件事，我任職公司也有討論過因應之道。因為我任職公司屬於系統整合商，按照公司的產品性質，我給出的建議處置方式是「直接移除 bash」。</p>
+
+<p>事實上， bash 只是一般使用者登入後使用的命令列介面。但大部份 shell script (指令稿) 的預設解譯器不是 bash ，而是 /bin/sh 。包括 PHP/Python/Perl 以 <code>system()</code> 呼叫外部指令時，也是如此。 /bin/sh 是 ash/dash 的符號連結，這個輕量型命令列介面並不受此 shellshock 影嚮。</p>
+
+<p>在準系統或嵌入式系統中，為了追求輕量化且沒有讓使用者登入之必要性，實務上大多僅安裝 dash 或更輕量的 <a href="http://zh.wikipedia.org/wiki/BusyBox">busybox</a> 。</p>
+
+<!--more-->
+<div class="note">
+純種的 sh (也就是 Bourne shell) 只 Unix 系統才有，這種系統現在大概只有在電腦歷史博物館才看得到。在 Unix-like 系統中，跑得全都是替代品，例如 ash, ksh, zsh, dash, bash 等等，族繁不及備載，參考 <a href="http://en.wikipedia.org/wiki/Unix_shell">Unix shell - Wikipedia</a>。現在說到 /bin/sh 指的是各種可相容於 POSIX 規範的 shell 產品。有些 Unix-like 系統可能預設就將 /bin/sh 連結到 bash 。使用者需要自己確認。
+</div>
+
+<p>bash 和 dash 相比，一個顯而易見的差異在於 bash 提供更完善的命令列線上編輯能力。因為 bash 要讓使用者在終端機環境操作時，享受有更多的便利性。舉凡方向鍵上下翻找命令歷史， Ctrl+A, Ctrl+E 等游標操作編輯行為，都是針對使用者手動操作鍵盤時的需求而設。但對於執行 shell 指令稿來說，這些編輯功能毫無必要。因此像 dash 這些輕量化 shell 都不提供線上編輯能力。</p>
+
+<p>dash (/bin/sh) 雖然是輕量化 shell ，但它可是為執行 shell 指令稿而設計，仍然提供完整的 POSIX 規範的 shell 語法與指令。在 Linux 系統中，由系統自行安裝的 shell 指令稿九成以上僅以此類輕量化 shell 便可執行。而一但碰到 dash 語法不能滿足的操作時，我個人更偏好改用 PHP 或 Python 來寫指令稿 (是的，我也用 PHP 寫指令稿)。因為 bash 的進階語法閱讀性不佳，而我個人更重視閱讀性，所以就不喜歡用 bash 寫指令稿。</p>
+
+<p>附帶一提，不管你的 /bin/sh 實際上連結到哪種 shell 。當你在寫 shell 指令稿時，如果你的 shebang 寫 <code>#!/bin/sh</code> ，那你的指令稿內容就應該只用 POSIX 規範的語法和指令。這樣才能保證 shell 指令稿執行時的相容性。這算是 Linux 散佈套件製作時的基本共識。</p>
+
+<p>從一個系統整合商的角度來看，我們出貨的 Linux 系統根本就不讓使用者登入，我們公司自行撰寫的 shell 指令稿也不限定要用 bash 才跑得動。嗯，確實公司有些人在寫 shell 指令稿時會在開頭標上 <code>#!/bin/bash</code> 。但只是習慣，實際上沒用到 bash 專屬語法。很多人根本不知道 bash 專屬語法。至於一些開放出來的 Web 管理端介面，則是用 PHP (apache + mod_php) 撰寫。故我給出的建議就是「直接移除 bash 」。還有，那些登入後使用 /bin/bash 介面的帳號也要記得改成 /bin/sh 。</p>
+
+<p>如果你是 Linux 桌面的使用者，經常在視窗上開終端機模擬程式 (xterm, gnome-terminal, konsole) 操作指令，沒有 bash 會打字打到手指斷掉的話，也有不正式解法。首先，將 bash 檔改個名字 (例如 /bin/my-bash) ，並將使用帳號的預設 shell 改成 /bin/sh 。最後修改終端機模擬程式的設定，告訴它啟動時執行 /bin/my-bash 。這樣就不會有系統程式「不小心」用到 bash 。只有你在桌面上執行終端機模擬程式時，終端機模擬程式才會用 bash 。當你用 ssh 登入時，則要記得自己執行 my-bash 切到 bash 命令操作環境。</p>
+
+<p>如果還有駭客可以在這種啟動途徑下，植入惡意的 bash 指令稿，那他肯定是用系統中其他的安全漏洞駭入，或者根本就坐在你的電腦前操作。</p>
+
+<p>從一般的、正式的使用目的來說，我覺得一般使用者更新 Linux 供應者提供的 bash 更新套件，應該就足以應付 shellshock 風波了。如果你疑神疑鬼，認為 bash 還有補不完的漏洞，那就換掉它吧。 Unix 世界多得是各種 shell 。</p>
+
+<p>關於 bash shellshock 的漏洞事件:</p>
+
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Shellshock_%28software_bug%29">Shellshock - Wikipedia</a></li>
+<li><a href="http://www.infoq.com/cn/news/2014/09/shellshock">ShellShock来袭——Bug背后的故事</a></li>
+<li><a href="http://www.ithome.com.tw/news/91233">Bash 漏洞連環爆：第二波修補還未完，第三波漏洞又來襲！</a></li>
+<li><a href="http://devco.re/blog/2014/09/30/shellshock-CVE-2014-6271/">Shellshock (Bash CVE-2014-6271) 威脅仍在擴大中，但無需過度恐慌 </a></li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/31862477.html">http://blog.roodo.com/rocksaying/archives/31862477.html</a></div>
