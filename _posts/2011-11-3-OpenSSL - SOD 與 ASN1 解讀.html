@@ -1,0 +1,537 @@
+---
+title: OpenSSL - SOD 與 ASN1 解讀
+category: programming
+old-category: C/C++/C#/Java
+tags: [openssl]
+---
+<p>
+在上一篇《<a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E5%AE%89%E5%85%A8%E6%96%87%E4%BB%B6%E6%A6%82%E8%AB%96.html">SOD 安全文件概論</a>》中，我直接使用工具 openssl 解讀 SOD 的內容。但它只是按照各項資料的結構順序，用粗略的格式顯示資料內容。本文則是直接用 OpenSSL C 函數庫解讀 SOD 內容。
+</p>
+
+<p>
+由於本文案例中的 SOD 採用 ASN.1 格式儲存，所以解讀 SOD 的工作實際上就是 ASN.1 文件的解讀工作，需要利用 OpenSSL C 函數庫中與 ASN.1 相關的函數。不幸的是，在已經很貧乏的 OpenSSL C 函數庫文件中， ASN.1 函數更是連份說明文件都沒有。如果不直接去讀 OpenSSL 的 C 源碼，可能根本寫不出 ASN.1 解讀程式。在此提供大家一個指引方向，想要進行這項挑戰的人，只需要去讀 OpenSSL C 源碼的 crypto/asn1/asn1_par.c 這份源碼文件。本文也沒有足夠的資訊仔細說明那些 C 函數的用法。
+</p>
+
+<!--more-->
+<p>
+本文案例規劃的 SOD 是加上 X.509 金鑰蠟封的 ASN.1 文件，所以 SOD 的解讀工作分成兩部份，第一部份是檢查蠟封是否完好，第二部份才是解讀 ASN.1 文件內容。
+</p>
+
+<p>
+解讀程式有些複雜，所以我保留了除錯用工具程式碼。定義於 sod-info.h 。
+</p>
+
+<pre class="highlight"><code><span class="cp">#define DEBUG 1
+</span>
+<span class="cp">#ifdef DEBUG
+#define _dmsg(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define _dmsg(...) NULL
+#endif
+</span>
+<span class="kt">int</span> <span class="n">sod_verify</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cert_filepath</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sod_filepath</span><span class="p">,</span> <span class="n">BIO</span> <span class="o">*</span><span class="n">out</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">sod_dump</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sod_data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">sod_len</span><span class="p">);</span>
+</code></pre>
+
+
+
+<h4>
+檢查文件蠟封
+</h4>
+
+<p>
+第一動要利用 PKCS7 函數載入 SOD 文件。PKCS7 有三個載入函數，根據你規劃的 SOD 文件儲存格式使用。分別是:
+</p>
+
+<ul>
+    <li>若儲存格式為 SMIME，則以 <code>SMIME_read_PKCS7()</code> 載入。</li>
+    <li>若儲存格式為 PEM，則以 <code>PEM_read_bio_PKCS7()</code> 載入。</li>
+    <li>若儲存格式為 DER，則以 <code>d2i_PKCS7_bio()</code> 載入。</li>
+</ul>
+
+<p>
+本文案例規劃的 SOD 儲存格式為 SMIME ，所以會用 SMIME_read_PKCS7() 載入。
+</p>
+
+<p>
+第二動則是檢查 X.509 的憑證資訊，這部份的程式碼在《<a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20%E8%AE%80%E5%8F%96%20X509%20certificate%20%E7%9A%84%E8%B3%87%E8%A8%8A.html">讀取 X509 certificate 的資訊</a>》中就已經說明。在此就直接引用。
+</p>
+
+<p>
+第三動就是用 X.509 公鑰查驗 SOD 文件的完好性，調用 <code>PKCS7_verify()</code> 為之。
+</p>
+
+<p>
+綜合以上三動，設計了 <code>sod_verify()</code> ，程式碼存為 sod-verify.c 。
+</p>
+
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;openssl/pem.h&gt;
+#include &lt;openssl/x509.h&gt;
+#include &lt;openssl/crypto.h&gt;
+#include "show-x509-info.h"
+#include "sod-info.h"
+</span>
+<span class="cp">#define FORMAT_ASN1     1
+#define FORMAT_TEXT     2
+#define FORMAT_PEM      3
+#define FORMAT_SMIME    6
+</span>
+<span class="cp">#if DEBUG
+</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">smime_verify_callback</span><span class="p">(</span><span class="kt">int</span> <span class="n">ok</span><span class="p">,</span> <span class="n">X509_STORE_CTX</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="kt">int</span> <span class="n">error</span><span class="p">;</span>
+	<span class="n">error</span> <span class="o">=</span> <span class="n">X509_STORE_CTX_get_error</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+	<span class="n">_dmsg</span><span class="p">(</span><span class="s">"error: %d, ok: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">ok</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">ok</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#endif
+</span>
+<span class="cm">/**
+Copy from openssl sources:apps/apps.c:setup_verify()
+ */</span>
+<span class="n">X509_STORE</span> <span class="o">*</span><span class="nf">setup_verify</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">CAfile</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">CApath</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">X509_STORE</span> <span class="o">*</span><span class="n">store</span><span class="p">;</span>
+    <span class="n">X509_LOOKUP</span> <span class="o">*</span><span class="n">lookup</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">store</span> <span class="o">=</span> <span class="n">X509_STORE_new</span><span class="p">()))</span> <span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+    <span class="n">lookup</span><span class="o">=</span><span class="n">X509_STORE_add_lookup</span><span class="p">(</span><span class="n">store</span><span class="p">,</span><span class="n">X509_LOOKUP_file</span><span class="p">());</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lookup</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">CAfile</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">X509_LOOKUP_load_file</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span><span class="n">CAfile</span><span class="p">,</span><span class="n">X509_FILETYPE_PEM</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"Error loading file %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">CAfile</span><span class="p">);</span>
+            <span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="n">X509_LOOKUP_load_file</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="n">X509_FILETYPE_DEFAULT</span><span class="p">);</span>
+
+    <span class="n">lookup</span><span class="o">=</span><span class="n">X509_STORE_add_lookup</span><span class="p">(</span><span class="n">store</span><span class="p">,</span><span class="n">X509_LOOKUP_hash_dir</span><span class="p">());</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lookup</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">CApath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">X509_LOOKUP_add_dir</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span><span class="n">CApath</span><span class="p">,</span><span class="n">X509_FILETYPE_PEM</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"Error loading directory %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">CApath</span><span class="p">);</span>
+            <span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">X509_LOOKUP_add_dir</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="n">X509_FILETYPE_DEFAULT</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">store</span><span class="p">;</span>
+  <span class="nl">end:</span>
+    <span class="n">X509_STORE_free</span><span class="p">(</span><span class="n">store</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// See openssl sources:apps/apps.c:load_certs()
+</span><span class="n">STACK_OF</span><span class="p">(</span><span class="n">X509</span><span class="p">)</span> <span class="o">*</span><span class="n">load_certfile</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">int</span> <span class="n">format</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">BIO</span> <span class="o">*</span><span class="n">certs</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+	<span class="n">STACK_OF</span><span class="p">(</span><span class="n">X509</span><span class="p">)</span> <span class="o">*</span><span class="n">othercerts</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+	<span class="n">STACK_OF</span><span class="p">(</span><span class="n">X509_INFO</span><span class="p">)</span> <span class="o">*</span><span class="n">allcerts</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+	<span class="n">X509_INFO</span> <span class="o">*</span><span class="n">xi</span><span class="p">;</span>
+
+	<span class="k">if</span><span class="p">((</span><span class="n">certs</span> <span class="o">=</span> <span class="n">BIO_new</span><span class="p">(</span><span class="n">BIO_s_file</span><span class="p">()))</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"err certs = BIO_new(BIO_s_file())</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+		<span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="p">(</span><span class="n">BIO_read_filename</span><span class="p">(</span><span class="n">certs</span><span class="p">,</span><span class="n">file</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>	<span class="p">{</span>
+		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"err open %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">file</span><span class="p">);</span>
+		<span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="p">(</span><span class="n">format</span> <span class="o">==</span> <span class="n">FORMAT_PEM</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">othercerts</span> <span class="o">=</span> <span class="n">sk_X509_new_null</span><span class="p">();</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">othercerts</span><span class="p">)</span> <span class="p">{</span>
+			<span class="n">sk_X509_free</span><span class="p">(</span><span class="n">othercerts</span><span class="p">);</span>
+			<span class="n">othercerts</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+			<span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="n">allcerts</span> <span class="o">=</span> <span class="n">PEM_X509_INFO_read_bio</span><span class="p">(</span><span class="n">certs</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span>
+		        <span class="p">(</span><span class="n">pem_password_cb</span> <span class="o">*</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+				<span class="c1">//(pem_password_cb *)password_callback, &amp;cb_data);
+</span>		<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">sk_X509_INFO_num</span><span class="p">(</span><span class="n">allcerts</span><span class="p">);</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+			<span class="n">xi</span> <span class="o">=</span> <span class="n">sk_X509_INFO_value</span> <span class="p">(</span><span class="n">allcerts</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">xi</span><span class="o">-&gt;</span><span class="n">x509</span><span class="p">)</span> <span class="p">{</span>
+				<span class="n">sk_X509_push</span><span class="p">(</span><span class="n">othercerts</span><span class="p">,</span> <span class="n">xi</span><span class="o">-&gt;</span><span class="n">x509</span><span class="p">);</span>
+				<span class="n">xi</span><span class="o">-&gt;</span><span class="n">x509</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="k">else</span> <span class="p">{</span>
+		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"bad input format.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+		<span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
+	<span class="p">}</span>
+  <span class="n">end</span><span class="o">:</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">othercerts</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="s">"unable to load certificates</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">allcerts</span><span class="p">)</span> <span class="n">sk_X509_INFO_pop_free</span><span class="p">(</span><span class="n">allcerts</span><span class="p">,</span> <span class="n">X509_INFO_free</span><span class="p">);</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">certs</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">BIO_free</span><span class="p">(</span><span class="n">certs</span><span class="p">);</span>
+	<span class="k">return</span><span class="p">(</span><span class="n">othercerts</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">sod_verify</span><span class="p">(</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cert_filepath</span><span class="p">,</span> 
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sod_filepath</span><span class="p">,</span>
+    <span class="c1">//out
+</span>    <span class="n">BIO</span> <span class="o">*</span><span class="n">out</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PKCS7</span> <span class="o">*</span><span class="n">p7</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">X509</span> <span class="o">*</span><span class="n">x509</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">X509_STORE</span> <span class="o">*</span><span class="n">store</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">in</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">STACK_OF</span><span class="p">(</span><span class="n">X509</span><span class="p">)</span> <span class="o">*</span><span class="n">signers</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">show_X509_info</span><span class="p">(</span><span class="n">cert_filepath</span><span class="p">,</span> <span class="n">PEM</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x509</span><span class="p">,</span> <span class="p">(</span><span class="n">State</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">rc</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"X509 Cert is invalid.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">in</span> <span class="o">=</span> <span class="n">BIO_new_file</span><span class="p">(</span><span class="n">sod_filepath</span><span class="p">,</span> <span class="s">"r"</span><span class="p">);</span>
+    <span class="c1">//in = BIO_new_mem_buf(sod_der, sod_der_len);
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">in</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"new BIO in failed</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">indata</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+	<span class="n">p7</span> <span class="o">=</span> <span class="n">SMIME_read_PKCS7</span><span class="p">(</span><span class="n">in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">indata</span><span class="p">);</span> <span class="c1">// if format=SMIME
+</span>    <span class="c1">//p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL); // if inform=PEM
+</span>    <span class="c1">//p7 = d2i_PKCS7_bio(in, NULL); // if inform=DER
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">p7</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"SOD is invalid.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"PKCS7 SOD ok.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="n">store</span> <span class="o">=</span> <span class="n">setup_verify</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="s">"certs"</span><span class="p">);</span>
+    <span class="cp">#if DEBUG
+</span>	<span class="n">X509_STORE_set_verify_cb_func</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">smime_verify_callback</span><span class="p">);</span>
+    <span class="cp">#endif
+</span>
+    <span class="n">STACK_OF</span><span class="p">(</span><span class="n">X509</span><span class="p">)</span> <span class="o">*</span><span class="n">other</span> <span class="o">=</span> <span class="n">load_certfile</span><span class="p">(</span><span class="n">cert_filepath</span><span class="p">,</span> <span class="n">FORMAT_PEM</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">other</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"Load cert failed.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">PKCS7_verify</span><span class="p">(</span><span class="n">p7</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">indata</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">FALSE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"SOD Verification failure</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"SOD Verification successful</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">rc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="n">end_func</span><span class="o">:</span>
+    <span class="n">OPENSSL_free</span><span class="p">(</span><span class="n">x509</span><span class="p">);</span>
+	<span class="n">sk_X509_pop_free</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">X509_free</span><span class="p">);</span>
+    <span class="n">BIO_free_all</span><span class="p">(</span><span class="n">indata</span><span class="p">);</span>
+    <span class="n">BIO_free_all</span><span class="p">(</span><span class="n">in</span><span class="p">);</span>
+    <span class="n">PKCS7_free</span><span class="p">(</span><span class="n">p7</span><span class="p">);</span>
+	<span class="n">X509_STORE_free</span><span class="p">(</span><span class="n">store</span><span class="p">);</span>
+    <span class="n">sk_X509_free</span><span class="p">(</span><span class="n">signers</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+
+<h4>
+解讀文件內容
+</h4>
+
+<p>
+調用 <code>PKCS7_verify()</code> 之後，如果蠟封完好，它就會一併傳回拆封後的 ASN.1 文件內容。
+我們需要解讀這份 ASN.1 文件，得到其他文件的摘要資訊。
+</p>
+
+<p>
+本文案例將 ASN.1 文件記載的資訊分成三節。第一節記載 SOD 版本號碼。如果你們的案子可能隨著版本更迭而變更 ASN.1 文件記載的結構，那麼你們就可利用版本號碼判斷後續解讀動作要採用哪一套流程。第二節記載摘要資訊所用的演算器。第三節則是一組記載檔案號碼與摘要內容的序列。
+</p>
+
+<p>
+按照上述結構，我的解讀流程也設計成兩個函數。一、<code>sod_dump()</code> 讀出 SOD 版本號碼與摘要演算器。二、<code>dump_digests()</code> 印出檔案號碼與摘要內容。程式碼存為 sod-dump.c 。
+</p>
+
+<p>
+ASN.1 文件是一種隨機記錄檔，其中儲存的每一筆記錄都屬於 ASN1_object 類。一律先用 <code>ASN1_get_object()</code> 取得該記錄的資料位址與標籤(tag)。再根據標籤判斷記錄型態，調用對應的轉換函數取得資料內容。
+</p>
+
+<p>
+依本文案例的規劃，只用了四種標籤，即: <dfn>SEQUENCE</dfn>, <dfn>OID</dfn>, <dfn>INTEGER</dfn>, <dfn>OCTETSTRING</dfn>。
+</p>
+
+<p>
+<dfn>SEQUENCE</dfn> 是一個包含其他項目的序列，它使 ASN.1 文件的內容形成巢狀結構。解讀 <dfn>SEQUENCE</dfn> 最簡單的方法就是用遞迴。不過本文選擇按照節區劃分。前兩節的 <dfn>SEQUENCE</dfn> 屬於 SOD 基本資訊，交由 <code>get_sod_information()</code>解讀。第三節的 <dfn>SEQUENCE</dfn> 則是檔案號碼與摘要內容序列，交由 <code>dump_digests()</code> 解讀。
+</p>
+
+<p>
+<dfn>INTEGER</dfn> 的項目則以 <code>c2i_ASN1_INTEGER()</code> 讀取轉換為 C 語言的整數項，以 <code>M_ASN1_INTEGER_free()</code> 釋放。
+</p>
+
+<p>
+<dfn>OID</dfn> 則是儲存個體ID的項目，在本文中儲放的是演算器ID。應以 <code>d2i_ASN1_OBJECT()</code> 讀取後，再以 <code>OBJ_obj2nid()</code> 取得其 NID。
+</p>
+
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;openssl/pem.h&gt;
+#include "show-x509-info.h"
+#include "sod-info.h"
+</span>
+<span class="c1">// See openssl sources:crypto/asn1/asn1_par.c:ASN1_parse_dump()
+</span><span class="kt">int</span> <span class="nf">get_sod_information</span><span class="p">(</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">**</span><span class="n">signers</span><span class="p">,</span> 
+    <span class="kt">size_t</span> <span class="n">signers_len</span><span class="p">,</span> 
+    <span class="kt">int</span> <span class="n">target_tag</span><span class="p">,</span> 
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_object</span><span class="p">,</span> 
+    <span class="kt">size_t</span> <span class="o">*</span><span class="n">out_len</span><span class="p">,</span> 
+    <span class="kt">int</span> <span class="o">*</span><span class="n">out_offset</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">boolean</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">current_object</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">pre_object</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">len</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span> <span class="n">xclass</span><span class="p">,</span> <span class="n">constructed</span><span class="p">;</span>
+
+    <span class="n">length</span> <span class="o">=</span> <span class="n">signers_len</span><span class="p">;</span>
+    <span class="n">current_object</span> <span class="o">=</span> <span class="o">*</span><span class="n">signers</span><span class="p">;</span>
+    <span class="n">pre_object</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+    <span class="o">*</span><span class="n">out_object</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="o">*</span><span class="n">out_offset</span> <span class="o">=</span> <span class="n">length</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="n">current_object</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">signers</span> <span class="o">+</span> <span class="n">signers_len</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="n">constructed</span> <span class="o">=</span> <span class="n">ASN1_get_object</span><span class="p">(</span><span class="o">&amp;</span><span class="n">current_object</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">xclass</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+        <span class="c1">// 調用之後，p 會變成此object的位址，len 則是此object的資料長度。
+</span>        <span class="c1">// 如果 tag == V_ASN1_SEQUENCE, 則 len 指的是包含其子項目的資料長度。
+</span>    
+        <span class="n">length</span> <span class="o">-=</span> <span class="n">current_object</span> <span class="o">-</span> <span class="n">pre_object</span><span class="p">;</span>
+        <span class="n">pre_object</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">tag</span> <span class="o">==</span> <span class="n">target_tag</span><span class="p">)</span> <span class="p">{</span>
+            <span class="o">*</span><span class="n">out_object</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+            <span class="o">*</span><span class="n">out_len</span> <span class="o">=</span> <span class="n">len</span><span class="p">;</span>
+            <span class="n">current_object</span> <span class="o">+=</span> <span class="n">len</span><span class="p">;</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="o">*</span><span class="n">out_offset</span> <span class="o">=</span> <span class="o">*</span><span class="n">out_offset</span> <span class="o">-</span> <span class="n">length</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">rc</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+  <span class="nl">end_func:</span>
+    <span class="o">*</span><span class="n">signers</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">boolean</span> <span class="nf">dump_digests</span><span class="p">(</span>
+    <span class="kt">int</span> <span class="n">nid</span><span class="p">,</span> 
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">signers</span><span class="p">,</span> 
+    <span class="kt">size_t</span> <span class="n">signers_len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">boolean</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">current_object</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">pre_object</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">end_sequence</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">len</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span> <span class="n">xclass</span><span class="p">,</span> <span class="n">constructed</span><span class="p">;</span>
+
+    <span class="n">ASN1_INTEGER</span> <span class="o">*</span><span class="n">asn1_int</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tmp</span><span class="p">;</span>
+
+    <span class="n">length</span> <span class="o">=</span> <span class="n">signers_len</span><span class="p">;</span>
+    <span class="n">current_object</span> <span class="o">=</span> <span class="n">signers</span><span class="p">;</span>
+    <span class="n">pre_object</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="n">current_object</span> <span class="o">&lt;</span> <span class="n">signers</span> <span class="o">+</span> <span class="n">signers_len</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 調用之後，p 會變成此object的位址，len 則是此object的資料長度。
+</span>        <span class="c1">// 如果 tag == V_ASN1_SEQUENCE, 則 len 指的是包含其子項目的資料長度。
+</span>        <span class="n">constructed</span> <span class="o">=</span> <span class="n">ASN1_get_object</span><span class="p">(</span><span class="o">&amp;</span><span class="n">current_object</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">xclass</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">constructed</span> <span class="o">&amp;</span> <span class="n">V_ASN1_CONSTRUCTED</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">_dmsg</span><span class="p">(</span><span class="s">"not constructed, invalid format</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">current_dg_num</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">digest_buf</span><span class="p">[</span><span class="n">EVP_MAX_MD_SIZE</span><span class="p">];</span>
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">digest_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+        <span class="n">length</span> <span class="o">-=</span> <span class="n">current_object</span> <span class="o">-</span> <span class="n">pre_object</span><span class="p">;</span>
+        <span class="n">pre_object</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+        <span class="n">end_sequence</span> <span class="o">=</span> <span class="n">current_object</span> <span class="o">+</span> <span class="n">len</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">current_object</span> <span class="o">&lt;</span> <span class="n">end_sequence</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">constructed</span> <span class="o">=</span> <span class="n">ASN1_get_object</span><span class="p">(</span><span class="o">&amp;</span><span class="n">current_object</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">xclass</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+
+            <span class="n">length</span> <span class="o">-=</span> <span class="n">current_object</span> <span class="o">-</span> <span class="n">pre_object</span><span class="p">;</span>
+            <span class="n">pre_object</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">tag</span> <span class="o">==</span> <span class="n">V_ASN1_INTEGER</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">current_object</span><span class="p">;</span>
+                <span class="n">asn1_int</span> <span class="o">=</span> <span class="n">c2i_ASN1_INTEGER</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">asn1_int</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">_dmsg</span><span class="p">(</span><span class="s">"convert to int failed</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+                    <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"DG: %ld</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">ASN1_INTEGER_get</span><span class="p">(</span><span class="n">asn1_int</span><span class="p">));</span>
+                <span class="n">current_dg_num</span> <span class="o">=</span> <span class="n">ASN1_INTEGER_get</span><span class="p">(</span><span class="n">asn1_int</span><span class="p">);</span>
+                <span class="n">M_ASN1_INTEGER_free</span><span class="p">(</span><span class="n">asn1_int</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">tag</span> <span class="o">==</span> <span class="n">V_ASN1_OCTET_STRING</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"Digest: "</span><span class="p">);</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">"%c"</span><span class="p">,</span> <span class="n">current_object</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+                <span class="p">}</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">current_dg_num</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">_dmsg</span><span class="p">(</span><span class="s">"format invalid</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">current_object</span> <span class="o">+=</span> <span class="n">len</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>    
+
+    <span class="n">rc</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+  <span class="nl">end_func:</span>
+    <span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">sod_dump</span><span class="p">(</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sod_data</span><span class="p">,</span>
+    <span class="kt">size_t</span> <span class="n">sod_len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tmp</span><span class="p">;</span>
+    <span class="kt">long</span> <span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">tag</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">xclass</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">offset</span><span class="p">;</span>
+    
+    <span class="kt">size_t</span> <span class="n">length</span> <span class="o">=</span> <span class="n">sod_len</span><span class="p">;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sod_data</span><span class="p">;</span>
+
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pre_object</span> <span class="o">=</span> <span class="n">sod_data</span><span class="p">;</span>
+
+    <span class="c1">//printf("step 1. get version of SOD\n");
+</span>    <span class="n">get_sod_information</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">V_ASN1_INTEGER</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">offset</span><span class="p">);</span>
+
+    <span class="n">ASN1_INTEGER</span> <span class="o">*</span><span class="n">asn1_int</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">asn1_int</span> <span class="o">=</span> <span class="n">c2i_ASN1_INTEGER</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">asn1_int</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"convert to int failed</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"SOD Version: %ld</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">ASN1_INTEGER_get</span><span class="p">(</span><span class="n">asn1_int</span><span class="p">));</span>
+    <span class="n">M_ASN1_INTEGER_free</span><span class="p">(</span><span class="n">asn1_int</span><span class="p">);</span>
+
+    <span class="c1">//printf("step 2. get SOD algorithm\n");
+</span>    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">seq_addr</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+    <span class="n">get_sod_information</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">V_ASN1_OBJECT</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">offset</span><span class="p">);</span>
+    <span class="n">tmp</span> <span class="o">-=</span> <span class="n">offset</span><span class="p">;</span>
+    <span class="c1">// I really do not know why it have to go back. - rock.
+</span>
+    <span class="n">ASN1_OBJECT</span> <span class="o">*</span><span class="n">asn1_obj</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">asn1_obj</span> <span class="o">=</span> <span class="n">d2i_ASN1_OBJECT</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="n">len</span><span class="o">+</span><span class="n">offset</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">asn1_obj</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"get algorithm object failed</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">int</span> <span class="n">nid</span> <span class="o">=</span> <span class="n">OBJ_obj2nid</span><span class="p">(</span><span class="n">asn1_obj</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Algorithm NID: %d; SN: %s; LN: %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">nid</span><span class="p">,</span> <span class="n">OBJ_nid2sn</span><span class="p">(</span><span class="n">nid</span><span class="p">),</span> <span class="n">OBJ_nid2ln</span><span class="p">(</span><span class="n">nid</span><span class="p">));</span>
+    <span class="n">ASN1_OBJECT_free</span><span class="p">(</span><span class="n">asn1_obj</span><span class="p">);</span>
+
+    <span class="c1">//printf("step 3. get DG hash.\n");
+</span>    <span class="n">ASN1_get_object</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">xclass</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+    <span class="n">length</span> <span class="o">-=</span> <span class="n">p</span> <span class="o">-</span> <span class="n">pre_object</span><span class="p">;</span>
+    <span class="n">pre_object</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">tag</span> <span class="o">!=</span> <span class="n">V_ASN1_SEQUENCE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_dmsg</span><span class="p">(</span><span class="s">"get DGGroups failed</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">dump_digests</span><span class="p">(</span><span class="n">nid</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+
+  <span class="nl">end_func:</span>
+    <span class="k">return</span> <span class="n">TRUE</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+sod-info.c 是調用前面說明的解讀函數，查驗並解讀 SOD 的示範程式。它解讀的對象，是我在前一篇《<a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E5%AE%89%E5%85%A8%E6%96%87%E4%BB%B6%E6%A6%82%E8%AB%96.html">SOD 安全文件概論</a>》中，以 sod_generate.php 產生的 SOD 。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -lssl -o sod-info sod-info.c sod-verify.c sod-dump.c show-x509-info.c
+</span><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;openssl/bio.h&gt;
+#include &lt;openssl/buffer.h&gt;
+#include &lt;openssl/pem.h&gt;
+#include "sod-info.h"
+</span>
+<span class="kt">void</span> <span class="nf">openssl_init</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">OpenSSL_add_all_algorithms</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">openssl_init</span><span class="p">();</span>
+
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">sod_data</span> <span class="o">=</span> <span class="n">BIO_new</span><span class="p">(</span><span class="n">BIO_s_mem</span><span class="p">());</span>
+    
+    <span class="n">rc</span> <span class="o">=</span> <span class="n">sod_verify</span><span class="p">(</span><span class="s">"mycert.pem"</span><span class="p">,</span> <span class="s">"/tmp/sod.dat"</span><span class="p">,</span> <span class="n">sod_data</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">BUF_MEM</span> <span class="o">*</span><span class="n">out_data</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="n">BIO_get_mem_ptr</span><span class="p">(</span><span class="n">sod_data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out_data</span><span class="p">);</span>
+        <span class="c1">//_dmsg("size of out data: %d; max: %d.\n", out_data-&gt;length, out_data-&gt;max);
+</span>        <span class="n">sod_dump</span><span class="p">(</span><span class="n">out_data</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">out_data</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+下列為執行結果。
+</p>
+
+<pre class="language-term">
+$ gcc -lssl -o sod-info sod-info.c sod-verify.c sod-dump.c show-x509-info.c
+error: 0, ok: 1
+Issuer  name: /CN=rocksaying/O=Rock's blog./C=TW/ST=Some-State
+Subject name: /CN=rocksaying/O=Rock's blog./C=TW/ST=Some-State
+Validity from: 111011075144Z
+Validity till: 111110075144Z
+PKCS7 SOD ok.
+SOD Verification successful
+SOD Version: 1
+Algorithm NID: 672; SN: SHA256; LN: sha256.
+DG: 1
+Digest: 3315B46DC11FEBFF188C8A4BEC95C7CAB800E7F52848AAFEFDB6CB6550CD3EC5
+DG: 2
+Digest: BD231484C813F1C78F6497B7ACF3B9B28F534A5B7C61D4BBA3AFB580336ACF2E
+DG: 13
+Digest: 5D35444622F70AB896A01C8D2B4904BECFFD30BD81AE9C4AA45B489A3164F0EB
+
+</pre>
+
+<p>
+本文僅將演算器與各檔案的摘要內容傾印於畫面上，並未進行摘要查核動作。請參考《<a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20EVP%2C%20Digest%20and%20Cipher.html">OpenSSL Library - EVP, Digest and Cipher</a>》了解如何透過 NID 調用演算器，以查核晶片內其他文件的完整性。
+</p>
+
+<p>本文是針對 OpenSSL 應用於文件保全工作的最後一篇文章。下列為已完成的其他四篇:
+</p>
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20%E8%AE%80%E5%8F%96%20X509%20certificate%20%E7%9A%84%E8%B3%87%E8%A8%8A.html">
+    OpenSSL Library - 讀取X509 certificate 的資訊</a>
+    </li>
+    <li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20BIO%20%E6%A6%82%E8%AB%96.html">
+    OpenSSL Library - BIO 概論</a>
+    </li>
+    <li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20EVP%2C%20Digest%20and%20Cipher.html">
+    OpenSSL Library - EVP, Digest and Cipher</a>
+    </li>
+    <li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E5%AE%89%E5%85%A8%E6%96%87%E4%BB%B6%E6%A6%82%E8%AB%96.html">
+    OpenSSL Library - SOD 安全文件概論</a>
+    </li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/17760845.html">http://blog.roodo.com/rocksaying/archives/17760845.html</a></div>

@@ -1,0 +1,437 @@
+---
+title: OpenSSL Library - BIO 概論
+category: programming
+old-category: C/C++/C#/Java
+tags: [openssl]
+---
+<p>
+<dfn>BIO</dfn> 是 OpenSSL 庫為了處理資料輸出入所設計的輸出入抽象層，參考《<a href="http://www.openssl.org/docs/crypto/bio.html">bio(3)</a>》的說明。
+OpenSSL 的程式碼經常利用 BIO 的多形性，故在使用 OpenSSL 開發應用程式時，必須先熟悉 BIO。
+</p>
+
+<p>
+BIO 的設計模式是 C 語言 (不是C++) 實作個體導向程式設計多形性(polymorphism of OOP)時常見的設計方式。
+在早期，程序員學了 OOP 的觀念可是還是要寫 C 程式的時代，我們需自己用 C 語言實作類別繼承、動態連結等內容。但我們用的是 C compiler 而非 C++ compiler ，所以很多事我們必須自己處理。
+因此它們的程式碼與近代 C++ 式的表達方式有所差異。
+例如我在《<a href="{{ site.baseurl }}/archives/2007/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E4%B8%AD%E7%9A%84%E4%BB%8B%E9%9D%A2%EF%BC%8C%E5%9C%A8%E5%80%8B%E9%AB%94%E4%B9%8B%E9%96%93%E5%8D%94%E8%AD%B0%E4%BA%92%E5%8B%95%E8%A1%8C%E7%82%BA%E7%9A%84%E5%A4%9A%E7%A8%AE%E5%BD%A2%E5%BC%8F.html">程式語言中的介面，在個體之間協議互動行為的多種形式</a>》說的作法就是一例；GNOME Library 也是這種用 C 語言寫出來的「類別庫」。
+所以 BIO 實際上是一種類別庫。
+</p>
+
+<!--more-->
+<h4>
+BIO 類別輪廓
+</h4>
+
+<p>
+既然 BIO 是一種類別庫，那麼我們最好還是用看待類別的方式去看 BIO ，才容易看清它的輪廓。
+本節將使用 C++ 的語法表達 BIO 的類別內容，以便理解其繼承與多形關係。
+為了方便各位參考 OpenSSL 說明文件草稿，我在類別名稱第一次出現的地方，都會在其後用角括號寫出其 C 語言的原名與文件連結。原名名稱括弧內的數字，是 Unix man page 的表達習慣，表示那屬於 man page 的第幾號分類。
+</p>
+
+<p>
+因為 BIO 類別庫的內容非常多，本節只是選了常用的幾個來表達。完整的內容請查看 OpenSSL 的 bio 標頭文件 (/usr/include/openssl/bio*.h)。
+</p>
+
+<h5>
+BIO 基礎類別
+</h5>
+<p>
+BIO [<a href="http://www.openssl.org/docs/crypto/BIO_new.html">BIO_new(3)</a>] 類別是所有 BIO 類別庫的基礎類別。它宣告了 <dfn>BIO_METHOD</dfn> 介面。所有 BIO 子類別都必須實作此介面。
+</p>
+
+<p>
+在《<a href="{{ site.baseurl }}/archives/2007/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E4%B8%AD%E7%9A%84%E4%BB%8B%E9%9D%A2%EF%BC%8C%E5%9C%A8%E5%80%8B%E9%AB%94%E4%B9%8B%E9%96%93%E5%8D%94%E8%AD%B0%E4%BA%92%E5%8B%95%E8%A1%8C%E7%82%BA%E7%9A%84%E5%A4%9A%E7%A8%AE%E5%BD%A2%E5%BC%8F.html">程式語言中的介面，在個體之間協議互動行為的多種形式</a>》說到介面宣告在 C 語言眼中其實就是一個以結構型態定義多個函數指標成員的「函數表」。BIO_METHOD 正是這種作為「介面」的函數表。程序員想配置新的 BIO 個體時，可以調用 BIO 子類別的建構子得之，亦可將子類別實作的介面傳遞給 BIO 類別的建構子得之。「介面」可以當成參數傳遞，這一點是初學者比較難以理解的特性。
+</p>
+
+<pre class="highlight"><code><span class="n">class</span> <span class="n">BIO_METHOD</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">type</span><span class="p">;</span>
+    <span class="k">virtual</span> <span class="kt">int</span> <span class="n">read</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span>
+    <span class="k">virtual</span> <span class="kt">int</span> <span class="n">gets</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">size</span><span class="p">);</span>
+    <span class="k">virtual</span> <span class="kt">int</span> <span class="n">write</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span>
+    <span class="k">virtual</span> <span class="kt">int</span> <span class="n">puts</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="n">class</span> <span class="n">BIO</span> <span class="o">:</span> <span class="n">BIO_METHOD</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO</span><span class="p">(</span><span class="n">BIO_METHOD</span> <span class="o">*</span><span class="n">type</span><span class="p">);</span> <span class="c1">// BIO_new()
+</span>    <span class="cm">/*
+    BIO_METHOD 是一個函數指標表，其用途即 OOPL 的 interface，
+    每一個函數指標即 interface 中的抽象函數，
+    當建構實體時，才會將指標指向實際的函數。
+    最初的 C 語言便是透過這種模式實作繼承機制。
+    type:
+        BIO_s_file()
+        BIO_s_mem()
+        and more...
+    */</span>
+
+    <span class="o">~</span><span class="n">BIO</span><span class="p">();</span> <span class="c1">// BIO_free()
+</span>
+    <span class="kt">int</span> <span class="n">read</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span> <span class="c1">// BIO_read()
+</span>    <span class="kt">int</span> <span class="n">gets</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">size</span><span class="p">);</span> <span class="c1">// BIO_gets()
+</span>    <span class="kt">int</span> <span class="n">write</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span> <span class="c1">// BIO_write()
+</span>    <span class="kt">int</span> <span class="n">puts</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>  <span class="c1">// BIO_puts()
+</span>    <span class="c1">// manpage fread(),fgets(),fwrite(),fputs()
+</span>    
+    <span class="kt">int</span> <span class="n">tell</span><span class="p">();</span> <span class="c1">// BIO_tell()
+</span>    <span class="kt">int</span> <span class="n">seek</span><span class="p">(</span><span class="kt">long</span> <span class="n">offset</span><span class="p">);</span> <span class="c1">// BIO_seek()
+</span>    <span class="c1">// manpage fseek(3), ftell(3)
+</span>
+    <span class="kt">int</span> <span class="n">printf</span><span class="p">(...);</span> <span class="c1">// BIO_printf()
+</span>    <span class="kt">int</span> <span class="n">snprintf</span><span class="p">(...);</span> <span class="c1">// BIO_snprintf()
+</span>    <span class="c1">// manpage printf(3)
+</span>    
+    <span class="kt">int</span> <span class="n">ctrl</span><span class="p">(...);</span> <span class="c1">// BIO_ctrl()
+</span><span class="p">};</span>
+</code></pre>
+
+
+<h5>
+BIO_file 與 BIO_fd 類別
+</h5>
+<p>
+BIO_file [<a href="http://www.openssl.org/docs/crypto/BIO_s_file.html">BIO_s_file(3)</a>] 是BIO 的子類別之一，它對應 ANSI C 標準庫的 FILE 處理函數。其主要對象是檔案系統中的文件與標準輸出入設備(stdin, stdout, stderr)。
+</p>
+
+<p>
+BIO_file 定義了兩個建構旗標: <dfn>BIO_CLOSE</dfn> 與 <dfn>BIO_NOCLOSE</dfn>，用以表明解構個體時，其 FILE 對象是否需要關閉。通常 FILE 對象為標準輸出入設備時，因為它們是由系統開啟，所以都要使用 <dfn>BIO_NOCLOSE</dfn> 選項表示不要關閉。 
+</p>
+
+<p>
+BIO_fd [<a href="http://www.openssl.org/docs/crypto/BIO_s_fd.html">BIO_s_fd(3)</a>] 對應 POSIX 庫的檔案描述子(file descriptor)處理函數。其對象是所有可用檔案描述子開啟的設備。
+它也同樣使用 <dfn>BIO_CLOSE</dfn> 與 <dfn>BIO_NOCLOSE</dfn> 表明解構時是否需要關閉設備。
+</p>
+
+<pre class="highlight"><code><span class="c1">// close_flag
+</span><span class="cp">#define BIO_NOCLOSE 0
+#define BIO_CLOSE 1
+</span>
+<span class="n">class</span> <span class="n">BIO_file</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_file</span><span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">stream</span><span class="p">,</span> <span class="kt">int</span> <span class="n">close_flag</span><span class="p">);</span> <span class="c1">// BIO_new_fp()
+</span>    <span class="n">BIO_file</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">mode</span><span class="p">);</span> <span class="c1">// BIO_new_file()
+</span>    <span class="c1">// manpage fopen(3)
+</span><span class="p">};</span>
+
+<span class="n">class</span> <span class="n">BIO_fd</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_fd</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">close_flag</span><span class="p">);</span> <span class="c1">// BIO_new_fd()
+</span>    <span class="c1">// manpage open(2)
+</span><span class="p">};</span>
+</code></pre>
+
+
+<h5>
+BIO_mem 類別
+</h5>
+
+<p>
+BIO_mem [<a href="http://www.openssl.org/docs/crypto/BIO_s_mem.html#">BIO_s_mem(3)</a>] 的對象是記憶體區塊。它把記憶體區塊當成一個設備，對它進行的讀取與寫入動作實際上是記憶體的資料複製行為。
+配合大部份的 C 語言函數需要直接傳遞記憶體區塊的指標，故它也定義了一個 get_mem_ptr() 方法。
+</p>
+
+<pre class="highlight"><code><span class="n">class</span> <span class="n">BIO_mem</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_mem</span><span class="p">();</span> <span class="c1">// BIO_new(BIO_s_mem())
+</span>
+    <span class="n">BIO_mem</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">);</span> <span class="c1">// BIO_new_mem_buf()
+</span>    
+    <span class="k">struct</span> <span class="n">BUF_MEM</span> <span class="p">{</span>
+        <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">length</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">max</span><span class="p">;</span>
+    <span class="p">};</span>
+    
+    <span class="kt">int</span> <span class="n">get_mem_ptr</span><span class="p">(</span><span class="n">BUF_MEM</span> <span class="o">**</span><span class="n">ptr</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre>
+
+
+<p>
+BIO_mem 的好處在於會自已配置並維護它持有的記憶體區塊，並隨寫入的資料量主動調整區塊大小。
+</p>
+<p>
+除此之外，它還有一個比較特殊的預設行為，當你指定一個已配置的記憶體區塊給它時，它會是一個唯讀設備。此時你只能透過它從該記憶體區塊中讀取資料，但不能透過它寫入(改變)該區塊的內容。例如:
+</p>
+
+<pre class="highlight"><code><span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">4096</span><span class="p">];</span> <span class="c1">// fixed-size memory block
+</span><span class="n">BIO</span> <span class="o">*</span><span class="n">bio1</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BIO_mem</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span> <span class="c1">// read-only
+</span><span class="n">bio1</span><span class="o">-&gt;</span><span class="n">puts</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span> <span class="c1">// nothing changed.
+</span>
+<span class="n">BIO</span> <span class="o">*</span><span class="n">bio2</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BIO</span><span class="p">(</span><span class="n">BIO_s_mem</span><span class="p">());</span> <span class="c1">// dynamic-allocate memory block
+</span><span class="n">bio2</span><span class="o">-&gt;</span><span class="n">puts</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span> <span class="c1">// store "hello" into the memory block.
+</span>
+</code></pre>
+
+
+<h5>
+BIO_socket 等類別
+</h5>
+<p>
+BIO_socket [<a href="http://www.openssl.org/docs/crypto/BIO_s_socket.html">BIO_s_socket(3)</a>] 對應了 socket 設備處理函數，其對象是 socket 型態為 <dfn>SOCK_STREAM</dfn> 的設備。
+另外還有 BIO_dgram 處理 socket 型態為 <dfn>SOCK_DGRAM</dfn> 的設備；
+BIO_accept [<a href="http://www.openssl.org/docs/crypto/BIO_s_accept.html">BIO_s_accept(3)</a>] 的對象是 socket 函數 accept(2) 開啟的設備；BIO_connect [<a href="http://www.openssl.org/docs/crypto/BIO_s_connect.html">BIO_s_connect(3)</a>] 的對象是 socket 函數 connect(2) 開啟的設備。
+</p>
+
+<pre class="highlight"><code><span class="n">class</span> <span class="n">BIO_socket</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_socket</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">close_flag</span><span class="p">);</span> <span class="c1">// BIO_new_socket()
+</span>    <span class="c1">// manpage socket(2), type SOCK_STREAM
+</span><span class="p">};</span>
+
+<span class="n">class</span> <span class="n">BIO_dgram</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_dgram</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">close_flag</span><span class="p">);</span>   
+    <span class="c1">// manpage socket(2), type SOCK_DGRAM
+</span><span class="p">};</span>
+
+<span class="n">class</span> <span class="n">BIO_connect</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_connect</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">host_port</span><span class="p">);</span>
+    <span class="c1">// manpage connect(2)
+</span><span class="p">};</span>
+
+<span class="n">class</span> <span class="n">BIO_accept</span><span class="o">:</span> <span class="n">public</span> <span class="n">BIO</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="n">BIO_accept</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">host_port</span><span class="p">);</span>         
+    <span class="c1">// manpage accept(2)
+</span><span class="p">};</span>
+</code></pre>
+
+
+<h4>
+使用 BIO 類別
+</h4>
+
+<h5>
+基本操作
+</h5>
+<p>
+我將寫一個基本的範例程式，分別用 BIO_file, BIO_mem 與 BIO_fd 類別開啟4個設備，並寫入一行文字。
+</p>
+
+<p>
+我首先用 C++ 語法寫出範例程式的內容。接著再改寫為 C 語法。
+</p>
+
+<h6>
+C++ 偽碼
+</h6>
+
+<p>
+bio_pseudo.cpp 是用 C++ 語法表達 OpenSSL BIO 類別內容的偽碼，故雖可編譯但不能產生執行檔。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -c bio_pseudo.cpp
+</span><span class="cp">#include &lt;cstdio&gt;
+#include "bio.hpp"
+#include "bio_file.hpp"
+#include "bio_mem.hpp"
+</span>
+<span class="kt">int</span> <span class="nf">foo</span><span class="p">(</span><span class="n">BIO</span> <span class="o">*</span><span class="n">bio</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">bio</span><span class="o">-&gt;</span><span class="n">puts</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio1</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BIO_file</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio2</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BIO_file</span><span class="p">(</span><span class="s">"/tmp/abc"</span><span class="p">,</span> <span class="s">"w"</span><span class="p">);</span>
+    
+    <span class="c1">// dynamic allocate memory block.
+</span>    <span class="n">BIO_mem</span> <span class="o">*</span><span class="n">bio3</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BIO_mem</span><span class="p">();</span>
+
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio4</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BIO_fd</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span> <span class="c1">// 1 is stdout
+</span>
+    <span class="n">foo</span><span class="p">(</span><span class="n">bio1</span><span class="p">,</span> <span class="s">"bio1 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to screen
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">bio2</span><span class="p">,</span> <span class="s">"bio2 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to file '/tmp/abc' 
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">bio3</span><span class="p">,</span> <span class="s">"bio3 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to memory
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">bio4</span><span class="p">,</span> <span class="s">"bio4 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to screen
+</span>    
+    <span class="n">BIO_mem</span><span class="o">::</span><span class="n">BUF_MEM</span> <span class="o">*</span><span class="n">mem_ptr</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    
+    <span class="n">bio3</span><span class="o">-&gt;</span><span class="n">get_mem_ptr</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mem_ptr</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"size of mem ptr: %d; max: %d; data: %s"</span><span class="p">,</span> 
+        <span class="n">mem_ptr</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">,</span> <span class="n">mem_ptr</span><span class="o">-&gt;</span><span class="n">max</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">mem_ptr</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
+    
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h6>
+C 程式碼
+</h6>
+
+<p>
+bio_example.c 的 C 語言程式碼才是真正調用 OpenSSL BIO 類別庫的範例程式。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -lssl -o bio_example bio_example.c
+</span><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;openssl/bio.h&gt;
+#include &lt;openssl/buffer.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">foo</span><span class="p">(</span><span class="n">BIO</span> <span class="o">*</span><span class="n">bio</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">BIO_puts</span><span class="p">(</span><span class="n">bio</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio1</span> <span class="o">=</span> <span class="n">BIO_new_fp</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio2</span> <span class="o">=</span> <span class="n">BIO_new_file</span><span class="p">(</span><span class="s">"/tmp/abc"</span><span class="p">,</span> <span class="s">"w"</span><span class="p">);</span>
+    
+    <span class="c1">// dynamic allocate memory block.
+</span>    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio3</span> <span class="o">=</span> <span class="n">BIO_new</span><span class="p">(</span><span class="n">BIO_s_mem</span><span class="p">());</span>
+
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bio4</span> <span class="o">=</span> <span class="n">BIO_new_fd</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
+
+    <span class="n">foo</span><span class="p">(</span><span class="n">bio1</span><span class="p">,</span> <span class="s">"bio1 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to screen
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">bio2</span><span class="p">,</span> <span class="s">"bio2 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to file '/tmp/abc' 
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">bio3</span><span class="p">,</span> <span class="s">"bio3 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to memory
+</span>    <span class="n">foo</span><span class="p">(</span><span class="n">bio4</span><span class="p">,</span> <span class="s">"bio4 say</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="c1">// put to screen
+</span>    
+    <span class="n">BUF_MEM</span> <span class="o">*</span><span class="n">mem_ptr</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+    <span class="n">BIO_get_mem_ptr</span><span class="p">(</span><span class="n">bio3</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mem_ptr</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"size of mem ptr: %d; max: %d; data: %s"</span><span class="p">,</span> 
+        <span class="n">mem_ptr</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">,</span> <span class="n">mem_ptr</span><span class="o">-&gt;</span><span class="n">max</span><span class="p">,</span> <span class="n">mem_ptr</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+編譯與執行結果如下所示。因為開啟的四個設備中，bio1, bio4 是標準輸出設備，故寫入的文字會直接出現在螢幕上。
+bio2 則是檔案系統的檔案 /tmp/abc，文字被存入其中。bio3 是記憶體，所以文字被存入記憶體。
+</p>
+
+<pre class="language-term">
+$ gcc -lssl -o bio_example bio_example.c
+$ ./bio_example
+bio1 say
+bio4 say
+size of mem ptr: 9; max: 16; data: bio3 say
+$ cat /tmp/abc
+bio2 say
+
+</pre>
+
+<p>
+我先用 C++ 寫出偽碼，再改寫成 C 語言碼。這是要讓大家了解操作 BIO 類別庫時，就應該要用 OOPL 的方式思考。撰寫實際的 C 語言程式碼時，更易清晰地掌握程式流程。
+</p>
+
+<h5>
+加入濾器
+</h5>
+
+<p>
+BIO 還提供一種濾器，可讓我們插入資料流中，幫我們在讀寫資料的過程中過濾資料內容。
+最常見的就是資料編碼與解碼濾器，例如 BIO::Base64 濾器 – <a href="http://www.openssl.org/docs/crypto/BIO_f_base64.html">BIO_f_base64(3)</a>。
+</p>
+
+<p>
+範例程式碼 bio_base64.c 是我將 <a href="http://www.openssl.org/docs/crypto/BIO_f_base64.html">BIO_f_base64(3)</a> 文件所附的範例程式加以擴充所得。
+範例程式在資料流中加入了 BIO::Base64 濾器，因此寫入資料流的內容都將透過此濾器被編碼為 Base64 格式後才輸出。
+修改後的範例程式，利用 BIO 的多形性，使其資料流兩端可以為標準輸出入設備亦或一般檔案。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -lssl -o bio_base64 bio_base64.c
+</span><span class="cp">#include &lt;openssl/bio.h&gt;
+#include &lt;openssl/evp.h&gt;
+</span>
+<span class="c1">// program [input_filepath] [output_filepath]
+// default behaviour is to read from stdin then write to stdout.
+</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">BIO</span> <span class="o">*</span><span class="n">bin</span><span class="p">,</span> <span class="o">*</span><span class="n">bout</span><span class="p">,</span> <span class="o">*</span><span class="n">b64filter</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">buff</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bin</span> <span class="o">=</span> <span class="n">BIO_new_fp</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="n">bin</span> <span class="o">=</span> <span class="n">BIO_new_file</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">"r"</span><span class="p">);</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">bin</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Failed to open input file.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bout</span> <span class="o">=</span> <span class="n">BIO_new_file</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s">"w"</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="n">bout</span> <span class="o">=</span> <span class="n">BIO_new_fp</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">bin</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Failed to open output file.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">b64filter</span> <span class="o">=</span> <span class="n">BIO_new</span><span class="p">(</span><span class="n">BIO_f_base64</span><span class="p">());</span>
+    <span class="n">bout</span> <span class="o">=</span> <span class="n">BIO_push</span><span class="p">(</span><span class="n">b64filter</span><span class="p">,</span> <span class="n">bout</span><span class="p">);</span> <span class="c1">// insert the filter.
+</span>    
+    <span class="k">while</span> <span class="p">((</span><span class="n">rc</span> <span class="o">=</span> <span class="n">BIO_read</span><span class="p">(</span><span class="n">bin</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buff</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">BIO_write</span><span class="p">(</span><span class="n">bout</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">rc</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">BIO_flush</span><span class="p">(</span><span class="n">bout</span><span class="p">);</span>
+
+    <span class="n">BIO_free_all</span><span class="p">(</span><span class="n">bout</span><span class="p">);</span>
+    <span class="n">BIO_free_all</span><span class="p">(</span><span class="n">bin</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+此範例程式可接收兩個參數，第一個參數表示輸入的檔案名稱，第二個參數表示輸出的檔案名稱。
+如果不指定第二個參數，則資料將寫入標準輸出設備。若連第一個參數也省略，則將自標準輸入設備讀取資料。
+</p>
+
+<pre class="language-term">
+$ gcc -lssl -o bio_base64 bio_base64.c
+
+$ cat bio_base64.c | ./bio_base64
+# read from stdin, write to stdout
+
+$ ./bio_base64 bio_base64.c
+# read from bio_base64.c, write to stdout
+
+$ ./bio_base64 bio_base64.c /tmp/b64.txt
+# read from bio_base64.c, write to /tmp/b64.txt
+
+</pre>
+
+<p>
+若將 bio_base64.c 的輸出入來源改成 BIO::Socket 類別，就會支援從網路連線中讀寫資料。
+當你開發支援 SSL 保密線路的網路應用程式時，資料傳輸的基本步驟也就是用 BIO::Socket 建立資料流，再插入 BIO 加密濾器，例如 BIO::Cipher – <a href="http://www.openssl.org/docs/crypto/BIO_f_cipher.html">BIO_f_cipher(3)</a>。
+</p>
+
+<p>
+有興趣了解更多的人，可以參考以下三篇由 Kenneth Ballard 發表於 developerWorks 的《Secure programming with the OpenSSL API》系列文章是利用 OpenSSL 設計具有保密線路的網路程式。第一篇也是在教 BIO 的用法。
+</p>
+
+<ul>
+    <li><a href="http://www.ibm.com/developerworks/linux/library/l-openssl/index.html">Part 1: Overview of the API</a> 
+    </li>
+
+    <li><a href="http://www.ibm.com/developerworks/linux/library/l-openssl2/index.html">Part 2: Secure handshake</a> 
+    </li>
+
+    <li><a href="http://www.ibm.com/developerworks/linux/library/l-openssl3/index.html">Part 3: Providing a secure service</a> 
+    </li>
+</ul>
+
+<p>
+OpenSSL Library 的系列文章:
+</p>
+<ul>
+    <li>
+        <a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20%E8%AE%80%E5%8F%96%20X509%20certificate%20%E7%9A%84%E8%B3%87%E8%A8%8A.html">OpenSSL Library - 讀取 X509 certificate 的資訊</a> 
+    </li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20EVP%2C%20Digest%20and%20Cipher.html">OpenSSL Library - EVP, Digest and Cipher</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E5%AE%89%E5%85%A8%E6%96%87%E4%BB%B6%E6%A6%82%E8%AB%96.html">OpenSSL - SOD 安全文件概論</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E8%88%87%20ASN1%20%E8%A7%A3%E8%AE%80.html">OpenSSL - SOD 與 ASN1 解讀</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/16263025.html">http://blog.roodo.com/rocksaying/archives/16263025.html</a></div>

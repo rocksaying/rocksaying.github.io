@@ -1,0 +1,75 @@
+---
+title: GNOME3 - GObject Introspection 的版本更迭問題
+category: programming
+old-category: Programming
+tags: [gnome,vala,gjs,gobject]
+---
+<p>
+我先前在《<a href="{{ site.baseurl }}/archives/2011/Vala%20%E8%88%87%20GObject%20Introspection%20%E7%9A%84%E4%B8%8D%E6%90%AD%E9%85%8D%E7%8B%80%E6%B3%81.html">Vala與GObject Introspection的不搭配狀況</a>》抱怨這些工具互相不配合的狀況。而我最近兩三天發現根本的原因，其實就出在 <a href="http://live.gnome.org/GObjectIntrospection">gobject-introspection</a> 本身的版本更迭。
+</p>
+
+<p>
+我把一項原本在 Ubuntu 10.04 主機上編譯完成的 typelib 安裝在 Ubuntu 11.04 的主機上測試。我的測試程式擲出 typelib 版本代號不對的訊息，它預期的版本代號是4，而我提供的 typelib 代號是 2，也就是兩者版本不相容。我最終的解決方式是拿源碼在 Ubuntu 11.04 主機上重新編譯。而在尋求答案的過程中，我並未在 gobject-introspection 的 GIRepository API 與工具中，找到可以指定特定版本的選項。換言之，現階段的 gobject-introspection 沒有提供新舊版本的相容能力。
+</p>
+
+<!--more-->
+<h5>
+typelib 不相容
+</h5>
+
+<p>
+在 GObject Introspection 的概念中，程序員可編寫 gir 文件，描述一份共享函數庫的介面資訊，以提供外部調用其中資源的途徑。而 gir 文件又應再交由 g-ir-compiler 產生一份它稱之為 typelib 的中介資訊索引文件，以加快資料檢索動作。
+</p>
+
+<p>
+但是目前的 g-ir-compiler 產生的 typelib 卻有版本之分。例如 Ubuntu 10.04 安裝的 gobject-introspection 套件版本為 0.6.8 ，它提供的 g-ir-compiler 產生的 typelib 會標記版本代號為 2。
+而 Ubuntu 11.04 安裝的 gobject-introspection 套件版本為  0.10.7，它提供的 g-ir-compiler 產生的 typelib 則標記版本代號為 4。當我們的程式透過 girepository API 載入 typelib 時，它就會去檢查 typelib 標記的版本代號。但 girepository 0.10.7 只認版本代號為 4 的 typelib，不接受舊版的 typelib。所以在 Ubuntu 10.04 主機上產生的 typelib 安裝於 Ubuntu 11.04 主機時，便不能使用。反之亦然。
+</p>
+
+<p>
+不幸的是，g-ir-compiler 目前並未提供選項讓我指定輸出的 typelib 版本，所以我不能要求 g-ir-compiler 0.10.7 產生版本代號為 2 的 typelib。除非我願意在同一台主機上安裝不同版本的 gobject-introspection (基於源碼，而非 deb; 而且還要避免版本衝突)，否則我必須在不同 Ubuntu 版本的主機上編譯 typelib ，才能打包不同 Ubuntu 版本使用的 deb 文件。
+</p>
+
+<h5>
+gir 不相容
+</h5>
+
+<p>
+我手動編寫過一些描述既有共享函數庫介面的 gir 文件。當我將那些 gir 文件交給 g-ir-compiler 0.10.7 編譯時，它說這份 gir 文件的版本不對。經我進一步修改後，我發現不止是版本不對，根本連語法元素都改了。這表示說，我必須針對不同版本的 gobject-introspection 準備不同的 gir 文件。這真是瘋狂。
+</p>
+
+<p>
+也是到了這一步，我才知道 valac 0.12 產生的 gir 文件不被 g-ir-compiler 0.6.8 接受的原因。因為 valac 0.12 產生的 gir 文件格式，是針對 gobject-introspection 0.10 使用的格式。舊版的 gobject-introspection 所提供的 g-ir-compiler 當然不認得。
+</p>
+
+<h5>
+現在與將來
+</h5>
+
+<p>
+左看右看，我發覺目前唯一可以在不同版本的 gobject-introspection 相容的使用方式，就是將中介資訊以 gtk-doc 的形式寫在 C 源碼中。當你需要打包不同版本的 deb 文件時，就用源碼在不同版本的主機編譯，讓特定版本的 g-ir-scanner 去掃描 gtk-doc 內容產生特定版本的 gir 文件，再讓特定版本的 g-ir-compiler 產生特定版本的 typelib 文件。
+</p>
+
+<p>
+由於 gobject-introspection 目前還處在規格不穩定的開發階段。我可以理解它在版本成長的過程中，修改既有規格導致文件不相容的狀況。對於提早投入 GNOME3 平台的冒險者而言，這也是不得不接受的苦頭。理論上，當規格穩定之後，應該就會提供版本相容能力。至少也應免除隨著 gobject-introspection 升級，就要修改 gir 內容並重新編譯 typelib 的工作。
+</p>
+
+<p>
+從 GNOME3 的新桌面環境 gnome-shell 採用 JavaScript 語法一事中，不難看出 GNOME3 規畫提供 JavaScript 與 Python 等語言環境，讓程序員可以快速開發應用軟體的意圖。但另一方面， GNOME3 仍持續使用 C 語言以及披著類似 C# 語言外皮的 Vala 開發效率較好的函數庫，例如 GLib, GTK, Clutter, WebKit 等。
+</p>
+
+<blockquote>
+<p>
+It makes sense to build many kinds of applications using (at least) two different levels and languages. Those being C+GObject, and a managed (GC'd) runtime.
+</p>
+
+<p>
+Thus, one of the major goals of the GObject introspection project is to be a convenient bridge between these two world...
+</p>
+
+<cite>Two level applications - C and your favorite runtime</cite>
+</blockquote>
+
+<p>
+因此，<a href="http://live.gnome.org/GObjectIntrospection">gobject-introspection</a> 將是橋接兩者的重要橋樑。這方面處理好了，才能讓開發者不必重複投入資源在不同的語言環境上，讓大家更放心地投入 GNOME3 平台。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15773615.html">http://blog.roodo.com/rocksaying/archives/15773615.html</a></div>

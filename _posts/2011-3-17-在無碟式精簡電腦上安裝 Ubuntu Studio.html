@@ -1,0 +1,85 @@
+---
+title: 在無碟式精簡電腦上安裝 Ubuntu Studio
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,數位訊源,virtualbox]
+---
+<p>我手上有一台無硬碟式精簡電腦 (Atrust t100)，是廠商數年前給公司的工程樣機。
+規格挺舊的(VIA Nano CPU)，但上面沒有任何風扇，也沒有硬碟，運作時很安靜。
+所以我試著用它啟動 <a href="http://ubuntustudio.org/">Ubuntu Studio</a> ，接上我的 USB DAC (NuForce Icon Mobile)。
+</p>
+
+<p>Make an Ubuntu Studio system on USB/SD disk.
+</p>
+
+<!--more-->
+<p>這台精簡電腦支援網路啟動作業系統，不過我打算用 USB/SD 記憶卡安裝作業系統。
+我首先嘗試直接將作業系統安裝在 USB/SD 記憶卡，但是磁碟讀寫速度實在太慢，令我受不了。
+</p>
+
+<p>所以我先建立一個磁碟影像檔掛到虛擬機器上，在虛擬機器中安裝作業系統至磁碟影像檔中。
+之後再將磁碟影像檔的內容複製到 USB/SD 記憶卡。
+</p>
+
+<p>我用的虛擬機器軟體是 VirtualBox。步驟如下:
+</p>
+
+<ul>
+
+<li>
+1. dump disk to raw-image file:<br/>
+<kbd>sudo dd if=/dev/sd? of=disk.img bs=32768
+</kbd>
+<br/>
+USB/SD 記憶體的設備代碼(/dev/sd?)請自行替換。
+</li>
+
+<li>
+2. convert raw-image file to virtualbox-disk-image file:<br/>
+<kbd>VBoxManage convertfromraw disk.img disk.vdi --format VDI
+</kbd>
+</li>
+
+<li>3. create a new virtual machine and mount disk.vdi.
+</li>
+
+<li>4. boot the virtual machine and install Ubuntu Studio. (Do not take snapshot)
+</li>
+
+<li>5. shutdown virtual machine.
+</li>
+
+<li>6. convert virtualbox-disk-image to raw-image.<br/>
+<kbd>VBoxManage clonehd disk.vdi disk.img --format RAW
+</kbd>
+</li>
+
+<li>7. dump raw-image file to disk:<br/>
+<kbd>sudo dd if=disk.img of=/dev/sd? bs=32768
+</kbd>
+</li>
+
+</ul>
+
+<p>
+上面的轉換操作，也是將實體機器轉移到虛擬機器、將虛擬機器轉移到實體機器的玩法。
+有興趣玩無硬碟式精簡電腦的人，不妨參考看看。
+</p>
+<p>
+至於當音樂播放機的效果，以這台電腦的表現來看，就差 SPDIF 數位輸出了。
+機器本身真的很安靜，一般聲音都沒有。待機時也相當省電。
+可惜的是，這台電腦的 USB 端子線路似乎不太好。
+接上我的 NuForce Icon Mobile 後，耳機就隱隱傳來電流嘶聲。
+聲音很細，但是對比接在筆電 Thinkpad X200s 的靜音表現，就會令我不由得在意。
+</p>
+<p>
+到目前為止，我對使用 USB 線傳輸音訊的經驗始終不太好。
+我想這跟一般電腦上的 USB 端子線路的品質有關吧。
+如果可以選擇的話，我個人還是傾向於使用 SPDIF 輸出。
+如果不想用網路傳輸音樂檔的音響發燒友，最好還要挑有 eSata 介面的精簡電腦。
+用來外接存放音樂檔的硬碟。
+</p>
+<p>
+不過我手上的幾台精簡電腦與平台電腦(都是廠商給公司的工程樣機，不是我買的)，都不提供任何數位輸出端子與 eSata 介面。
+所以這幾點需求可能不易滿足。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15372205.html">http://blog.roodo.com/rocksaying/archives/15372205.html</a></div>

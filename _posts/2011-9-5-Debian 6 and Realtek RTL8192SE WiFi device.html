@@ -1,0 +1,20 @@
+---
+title: Debian 6 and Realtek RTL8192SE WiFi device
+category: computer
+old-category: 電腦技術
+tags: [linux,debian,thinkpad]
+---
+<p>我前陣子打算把我的 ThinkPad X200s 的系統從 Ubuntu 10.04 轉移到 Debian 6。
+安裝 Debian 6 之後的使用過程中，大部份的硬體裝置都沒有什麼問題，就是 WiFi 網卡未驅動，以至於無法使用 WiFi 連接網路。我這款 ThinkPad X200s 配的 WiFi 網卡是 Realtek 8192SE。上網查了一下，原因出在 Realtek 提供的 Linux 驅動程式碼是專屬授權，故 Debian 預設不使用。在 Debian wiki 有一份關於「<a href="http://wiki.debian.org/rtl819x">rtl819x</a>」的條目提到 Realtek WiFi 網卡的支援內容，使用者必須勾選 non-free (受版權限制的項目)才會看到相關套件。根據那項條目，RTL8192SE 的支援套件被收錄在 Wheezy (testing) 套件庫。不過我曾試過混用 Squeze 與 Wheezy 套件庫的套件，但衝突太多，搞得系統不太穩定。所以我不想用 testing 的內容，故我選擇了自行下載源碼編譯安裝的方式。
+</p>
+
+<!--more-->
+<p>首先到 Realtek 網站下載 <a href="http://www.realtek.com.tw/downloads/downloadsView.aspx?Langid=1&PNid=48&PFid=48&Level=5&Conn=4&DownTypeID=3&GetDown=false&Downloads=true#RTL8192SE">RTL 8192SE 的 Linux 驅動程式碼</a>。接著參考「<a href="http://www.linwik.com/wiki/using+the+realtek+8172+and+8192se+wireless+controller+with+ubuntu+9.10">Using the Realtek 8172 and 8192se Wireless Controller with Ubuntu 9.10</a>」的內容安裝。安裝過程很順利，編譯安裝後，直接重啟系統(或是以root身份執行 <code>modprobe r8192se_pci</code>)，就能順利啟用 WiFi 網卡，並不順利修改其他的組態檔。唯一要注意的是，當你更新 Linux 核心之後，將需要重複一次 RTL8192SE 驅動程式的編譯安裝工作。
+</p>
+
+<p>
+<em>2012-02-01 更新內容</em>: 我上個月在 Realtek 網站上下載的新版本 RTL8192SE 的 Linux 驅動程式竟然不能成功安裝。Realtek 網站上也找不到舊版的下載連結。幸好我當初有在 filesonic 上留一份。點擊此連結下載: [<a href="http://homepage8.seed.net.tw/web@5/shirock/rtl8192se_linux_amd64/rtl8192se_linux_2.6.0019.1207.2010.tar.gz">rtl8192se_linux_2.6.0019.1207.2010.tar.gz</a>](filesonic現在不能分享檔案了，所以我換了個地方)。如果 Realtek 網站上提供的版本，你裝不起來，再試試這個舊版本。
+</p>
+<p>
+舊版本安裝方式: 一、解壓檔案，並改變工作目錄到解開後的資料夾。二、改變身份為 root。三、執行 <code>make</code>。四、執行 <code>make install</code>，完成後重啟系統即可。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/16579587.html">http://blog.roodo.com/rocksaying/archives/16579587.html</a></div>

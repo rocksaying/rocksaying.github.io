@@ -1,0 +1,355 @@
+---
+title: OpenSSL Library - 讀取 X509 certificate 的資訊
+category: programming
+old-category: C/C++/C#/Java
+tags: [openssl,certificate,X509]
+---
+<p>
+前陣子完成一個案子，這案子要驗證 RFID 卡的文件內容是否可信。
+本文內容是工作過程中寫出來的一個練習程式與小工具。
+此工具用途為查看本地的 X509 證書資訊，並回報其是否有效。
+工具名稱為 x509-cert-info。
+</p>
+<p>
+程式內容使用了 OpenSSL 函數庫。OpenSSL 函數庫內容很多，但公式文件的內容很少，就是些草稿。
+我將陸續整理工作過程中得到的相關經驗，記錄在部落格上。
+</p>
+
+<!--more-->
+<h4>
+x509-cert-info
+</h4>
+
+<p>
+show-x509-info.h 只是一些自己定義的代號。與 OpenSSL 無關，不多解釋。
+</p>
+
+<pre class="highlight"><code><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+    <span class="n">OK</span><span class="p">,</span>
+    <span class="n">ERROR_UNKNOWN</span><span class="p">,</span>
+    <span class="n">ERROR_ALLOCATE_MEMORY_IS_FAILED</span><span class="p">,</span>
+    <span class="n">ERROR_X509_IS_INVALID</span><span class="p">,</span>
+    <span class="n">ERROR_X509_IS_EXPIRED</span><span class="p">,</span>
+    <span class="n">ERROR_CA_FILE_IS_NOT_FOUND</span>
+<span class="p">}</span> <span class="n">State</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+    <span class="n">DER</span><span class="p">,</span>
+    <span class="n">PEM</span>
+<span class="p">}</span> <span class="n">Inform</span><span class="p">;</span>
+
+<span class="cp">#define TRUE 1
+#define FALSE 0
+</span><span class="k">typedef</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">boolean</span><span class="p">;</span>
+
+<span class="n">boolean</span> <span class="n">show_X509_info</span><span class="p">(</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cert_filepath</span><span class="p">,</span> 
+    <span class="n">Inform</span> <span class="n">inform</span><span class="p">,</span>
+    <span class="n">X509</span> <span class="o">**</span><span class="n">out_x509</span><span class="p">,</span>
+    <span class="n">State</span> <span class="o">*</span><span class="n">state</span><span class="p">);</span>
+</code></pre>
+
+
+<p>
+show-x509-info.c 定義了函數 <dfn>show_x509_info()</dfn>。
+此函數要求指定證書(certificate)的文件路徑(<var>cert_filepath</var>)與文件格式(<var>inform</var>)。
+讀入的X509資訊放入指標 <var>out_x509</var> 傳回，另將詳細的函數執行狀態存入 <var>state</var>。
+函數回傳值若為 <dfn>TRUE</dfn>，則此證書的格式正確且日期尚在有效期間內。
+</p>
+
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;openssl/x509.h&gt;
+#include "show-x509-info.h"
+</span>
+<span class="n">boolean</span> <span class="nf">show_X509_info</span><span class="p">(</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cert_filepath</span><span class="p">,</span> 
+    <span class="n">Inform</span> <span class="n">inform</span><span class="p">,</span>
+    <span class="n">X509</span> <span class="o">**</span><span class="n">out_x509</span><span class="p">,</span>
+    <span class="n">State</span> <span class="o">*</span><span class="n">state</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">boolean</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+    <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">X509</span> <span class="o">*</span><span class="n">x509data</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    
+    <span class="n">X509_free</span><span class="p">(</span><span class="o">*</span><span class="n">out_x509</span><span class="p">);</span>
+
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">cert_filepath</span><span class="p">,</span> <span class="s">"r"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">fp</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">ERROR_CA_FILE_IS_NOT_FOUND</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">FALSE</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">inform</span> <span class="o">==</span> <span class="n">DER</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">d2i_X509_fp</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x509data</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">PEM_read_X509</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x509data</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">x509data</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">ERROR_X509_IS_INVALID</span><span class="p">;</span>
+	    <span class="k">return</span> <span class="n">FALSE</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">char</span> <span class="n">issuer_name</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="n">subject_name</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="n">now_timez</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span> <span class="c1">// YYYYMMDDhhmmss: 15, yyMMDDhhmmss: 13
+</span>    <span class="kt">time_t</span> <span class="n">t</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tm</span> <span class="n">tm</span><span class="p">;</span>
+
+    <span class="n">X509_NAME_oneline</span><span class="p">(</span><span class="n">X509_get_issuer_name</span><span class="p">(</span><span class="n">x509data</span><span class="p">),</span> <span class="n">issuer_name</span><span class="p">,</span> 
+                    <span class="k">sizeof</span><span class="p">(</span><span class="n">issuer_name</span><span class="p">));</span>
+    <span class="n">X509_NAME_oneline</span><span class="p">(</span><span class="n">X509_get_subject_name</span><span class="p">(</span><span class="n">x509data</span><span class="p">),</span> <span class="n">subject_name</span><span class="p">,</span> 
+                    <span class="k">sizeof</span><span class="p">(</span><span class="n">subject_name</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Issuer  name: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">issuer_name</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Subject name: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">subject_name</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Validity from: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">x509data</span><span class="o">-&gt;</span><span class="n">cert_info</span><span class="o">-&gt;</span><span class="n">validity</span><span class="o">-&gt;</span><span class="n">notBefore</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Validity till: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">x509data</span><span class="o">-&gt;</span><span class="n">cert_info</span><span class="o">-&gt;</span><span class="n">validity</span><span class="o">-&gt;</span><span class="n">notAfter</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
+    <span class="c1">// x509data-&gt;cert_info-&gt;validity-&gt;notBefore-&gt;length
+</span>    
+    <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">issuer_name</span><span class="p">,</span> <span class="n">subject_name</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">ERROR_X509_IS_INVALID</span><span class="p">;</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">localtime_r</span><span class="p">(</span><span class="o">&amp;</span><span class="n">t</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tm</span><span class="p">)</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">ERROR_ALLOCATE_MEMORY_IS_FAILED</span><span class="p">;</span>
+        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">strftime</span><span class="p">(</span><span class="n">now_timez</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">now_timez</span><span class="p">),</span> <span class="s">"%y%m%d%H%M%SZ"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tm</span><span class="p">);</span>
+    <span class="c1">// notBefore &lt; now_timez &lt; notAfter
+</span>    <span class="c1">//     0     &lt;   n       &lt; 0
+</span>    <span class="k">if</span> <span class="p">((</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">strcmp</span><span class="p">(</span><span class="n">now_timez</span><span class="p">,</span> <span class="n">x509data</span><span class="o">-&gt;</span><span class="n">cert_info</span><span class="o">-&gt;</span><span class="n">validity</span><span class="o">-&gt;</span><span class="n">notBefore</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">))</span>
+      <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">now_timez</span><span class="p">,</span> <span class="n">x509data</span><span class="o">-&gt;</span><span class="n">cert_info</span><span class="o">-&gt;</span><span class="n">validity</span><span class="o">-&gt;</span><span class="n">notAfter</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span><span class="mi">0</span><span class="p">)</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+	    <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">ERROR_X509_IS_EXPIRED</span><span class="p">;</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+    <span class="p">}</span>
+
+  <span class="nl">end_func:</span>
+    <span class="o">*</span><span class="n">out_x509</span> <span class="o">=</span> <span class="n">x509data</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+在 OpenSSL 函數庫中，主要的資料輸出入行為是透過它定義的 <dfn>BIO</dfn> 類別進行。
+但也提供其他的方式，例如透過 C 標準庫的 <dfn>FILE</dfn>。
+本文還不會用到 BIO ，只用 FILE 讀入指定的文件內容。
+</p>
+
+<p>
+處理 DER 格式的X509證書需要使用 d2i_X509, i2d_X509 家族函數，細節宣告於 x509.h (預設位於/usr/include/openssl目錄)。
+處理 PEM 格式的X509證書則需要使用 PEM_read_X509, PEM_write_X509 家族函數，細節宣告於 pem.h。
+請自行閱讀其標頭檔了解更多內容。
+</p>
+
+<p>
+讀入的 X509 結構細節，查看 x509.h 的 <dfn>struct x509_st</dfn>。有些內容可以直接取出，例如有效日期。
+有些內容則要配合指定的方法，例如 issuer_name 與 subject_name。
+至於有哪些方法可以用，請查看 x509.h ，善用你的聯想力。
+</p>
+
+<p>
+x509-cert-info 是主程式，它會根據使用者指定的證書路徑與格式，調用函數 <dfn>show_X509_info()</dfn> 顯示內容。
+並根據 <var>state</var> 回報執行狀態。外部工具 – 例如 shell – 就可以根據程式狀態碼得知證書是否有效。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -lssl  -o x509-cert-info x509-cert-info.c show-x509-info.c
+</span><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;openssl/x509.h&gt;
+#include "show-x509-info.h"
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">args</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">cert_filepath</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">State</span> <span class="n">state</span> <span class="o">=</span> <span class="n">ERROR_UNKNOWN</span><span class="p">;</span>
+    <span class="n">X509</span> <span class="o">*</span><span class="n">x509</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">inform</span> <span class="o">=</span> <span class="n">DER</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Show X509 certificate's information.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Usage: %s &lt;cert_filepath&gt; [format]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Format: DER or PEM, Default format is DER.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Return status:</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">0: ok.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">1: UNKNOWN.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">2: ALLOCATE_MEMORY_IS_FAILED.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">3: X509_IS_INVALID.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">4: X509_IS_EXPIRED.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">5: CA_FILE_IS_NOT_FOUND.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">255</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="n">cert_filepath</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'P'</span> <span class="o">||</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'p'</span><span class="p">)</span>
+            <span class="n">inform</span> <span class="o">=</span> <span class="n">PEM</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Information of %s:</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">cert_filepath</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">show_X509_info</span><span class="p">(</span><span class="n">cert_filepath</span><span class="p">,</span> <span class="n">inform</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x509</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">state</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="k">case</span> <span class="n">ERROR_ALLOCATE_MEMORY_IS_FAILED</span><span class="p">:</span>
+            <span class="n">puts</span><span class="p">(</span><span class="s">"ERROR: ALLOCATE_MEMORY_IS_FAILED</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="n">ERROR_X509_IS_INVALID</span><span class="p">:</span>
+            <span class="n">puts</span><span class="p">(</span><span class="s">"ERROR: X509_IS_INVALID</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="n">ERROR_X509_IS_EXPIRED</span><span class="p">:</span>
+            <span class="n">puts</span><span class="p">(</span><span class="s">"ERROR: X509_IS_EXPIRED</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="n">ERROR_CA_FILE_IS_NOT_FOUND</span><span class="p">:</span>
+            <span class="n">puts</span><span class="p">(</span><span class="s">"ERROR: CA_FILE_IS_NOT_FOUND</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="nl">default:</span>
+            <span class="n">puts</span><span class="p">(</span><span class="s">"ERROR: UNKNOWN</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<p>
+編譯參數如下:
+</p>
+<pre class="language-term">
+gcc -lssl -o x509-cert-info x509-cert-info.c show-x509-info.c
+</pre>
+
+<h4>
+測試
+</h4>
+
+<h5>
+建立測試用的證書
+</h5>
+
+<p>
+使用 openssl 工具的 <dfn>req</dfn> 選項可以建立一份證書。
+在此例中，我們只是要一份測試程式功能的證書，不必考慮公信力，所以建立一份我們自己背書的證書即可。
+用例如下:
+</p>
+
+<pre class="language-term">
+# create PEM format certificate
+openssl req \
+  -x509 -days 30 -newkey rsa:1024 \
+  -subj "/CN=rocksaying/O=Rock's blog./C=TW" \
+  -out mycert.pem
+
+# create DER format certificate
+openssl req \
+  -x509 -days 30 -newkey rsa:1024 \
+  -subj "/CN=rocksaying/O=Rock's blog./C=TW" \
+  -out mycert.der -outform DER
+</pre>
+
+<p>
+<dfn>days</dfn> 是有效天數。<dfn>subj</dfn> 是證書名稱，在此同時也會是發照者名稱，文字格式是 X.500。
+</p>
+
+<p>
+證書格式通常使用 DER 或 PEM。
+<dfn>DER</dfn> 是內容為二進位碼的證書，而 <dfn>PEM</dfn> 則是 Base64 編碼加上特定檔頭的證書。
+這兩者可以互轉。例如我有一份 DER 格式的X509證書，要轉成 PEM 格式的話，只需要以 openssl 工具操作:
+<code>openssl x509 -in x509.crt -inform DER -out x509.pem -outform PEM</code>，即可轉得。
+由於兩種格式可以互轉，所以建立證書時，通常只需要選擇其中一種格式發布。
+</p>
+
+<h5>
+測試結果
+</h5>
+
+<p>
+建立一份 PEM 格式的X509證書，檔名為 mycert.pem。測試的輸出過程如下:
+</p>
+
+<pre class="language-term">
+$ openssl req \
+>   -x509 -days 30 -newkey rsa:1024 \
+>   -subj "/CN=rocksaying/O=Rock's blog./C=TW" \
+>   -out mycert.pem
+Generating a 1024 bit RSA private key
+................++++++
+...........++++++
+writing new private key to 'privkey.pem'
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+-----
+
+$ ./x509-cert-info mycert.pem 
+Information of mycert.pem:
+ERROR: X509_IS_INVALID
+
+$ ./x509-cert-info mycert.pem PEM
+Information of mycert.pem:
+Issuer  name: /CN=rocksaying/O=Rock's blog./C=TW
+Subject name: /CN=rocksaying/O=Rock's blog./C=TW
+Validity from: 110727071525Z
+Validity till: 110826071525Z
+</pre>
+
+<p>
+我先不帶參數地交給 x509-cert-info 查看內容，由於 x509-cert-info 預設格式為 DER ，故判定證書格式不符。
+接著指定選項 PEM，就可成功查看證書內容。
+</p>
+
+<p>
+openssl 工具的 <dfn>x509</dfn> 選項也可以查看證書內容。用例如: <code>openssl x509 -text -in mycert.pem</code>。
+可與本文程式所輸出的結果對照，確認程式無誤。
+</p>
+
+
+<h4>
+References
+</h4>
+<ol>
+    <li>
+        <a href="http://www.openssl.org/docs/crypto/pem.html">PEM_read_X509()</a>
+    </li>
+    
+    <li>
+        <a href="http://www.openssl.org/docs/crypto/d2i_X509.html">d2i_X509_fp()</a> 
+    </li>
+
+    <li>
+        <a href="http://www.openssl.org/docs/HOWTO/certificates.txt">HOWTO certificates</a> 
+    </li>
+    
+    <li>
+        <a href="http://www.madboa.com/geek/openssl/">OpenSSL Command-Line HOWTO</a> - Paul Heinlein.
+    </li>
+</ol>
+<p>
+OpenSSL 文件至今仍在草稿階段，有許多函數與結構的內容並未提及。
+程序員需要自己查看 OpenSSL 的標頭文件(預設位於/usr/include/openssl)找尋有用的內容。
+此外，OpenSSL 的源碼可說是必要的參考文件。
+我建議將閱讀重點放在 apps 目錄內的源碼，其內容對應 openssl 命令項目，較容易理解其工作內容。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20BIO%20%E6%A6%82%E8%AB%96.html">OpenSSL Library - BIO 概論</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20Library%20-%20EVP%2C%20Digest%20and%20Cipher.html">OpenSSL Library - EVP, Digest and Cipher</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E5%AE%89%E5%85%A8%E6%96%87%E4%BB%B6%E6%A6%82%E8%AB%96.html">OpenSSL - SOD 安全文件概論</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/OpenSSL%20-%20SOD%20%E8%88%87%20ASN1%20%E8%A7%A3%E8%AE%80.html">OpenSSL - SOD 與 ASN1 解讀</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/16158079.html">http://blog.roodo.com/rocksaying/archives/16158079.html</a></div>

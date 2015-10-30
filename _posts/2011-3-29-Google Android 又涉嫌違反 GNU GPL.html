@@ -1,0 +1,61 @@
+---
+title: Google Android 又涉嫌違反 GNU GPL
+category: computer
+old-category: Copyleft/Free Softwa
+tags: [自由軟體,android,gpl]
+---
+<p>
+  記者沒有人「請問您對微軟控告邦諾的 Nook 中的 Android 侵犯專利一事，有何看法？」
+</p>
+<p>
+  石頭成表示：又在告專利，來點新鮮事吧。等等，你說被告的對象是 Android？這是件好事，我很高興看到 Android 又被告了。Oracle 告完，微軟告。後面還有開放源碼界的法律專家在等著。活該啊。
+</p>
+<p>
+  繼 Oracle 狀告 Google Android 之後，微軟也出手了。這還不止，就連涉足開放源碼界的法律專家也在質疑 Google Android 違反 GNU GPLv2 的內容。在更早一些時候(3/17)，LinuxDevices 報導《<a href="http://www.linuxfordevices.com/c/a/News/legal-experts-address-Android-GPL-issues/">Google accused of violating GPLv2 licensing in Android</a>》，文中摘要了多位法律專家的見解。在這則新聞中，人們討論的對象，不是 Oracle 告 Android 的 Dalvik 虛擬機，而是 Linux 核心與  bionic 函數庫。Edward Naughton 嚴正地指出: <q>If that is the case, Google has found a way to take Linux away from the open source community and privatize it.</q>(<cite><a href="http://www.huffingtonpost.com/edward-j-naughton/googles-android-contains-_b_836697.html">Google's Android Contains Legal Landmines for Developers and Device Manufacturers</a></cite>).
+</p>
+
+<!--more-->
+<p>
+  在《<a href="http://www.linuxfordevices.com/c/a/News/legal-experts-address-Android-GPL-issues/">Google accused of violating GPLv2 licensing in Android</a>》一文中，質疑的焦點在與 C 源碼有關的標頭檔來源，主要就集中在 bionic 這套精簡版 C 函數庫。按照文中所揭露的資訊，Google 是用工具讀取 Linux kernel 與 glibc 源碼，將相關的結構、巨集與符號定義等內容，從那些源碼中擷取出來。擷取的結果移除了原有的註解內容，當然也移除了 Copyleft 授權宣告。在中文維基的 <a href="http://zh.wikipedia.org/wiki/Android">Android</a> 條目中，亦有相關的敘述指出 Android 的標頭檔是用工具從 Linux kernel 標頭檔所產生的。有趣的是，在英文維基的頁面中並沒有提及這些內容。
+</p>
+<p>
+  如果上述內容屬實，那麼 Google Android 不僅違反 LGPL 的內容，也違反了基礎的著作權法。
+</p>
+<p>
+  在我的經驗中，在不侵犯著作權的條件下實作他人的軟體函數庫的替代品時，工作有三。
+  其一，按照目標函數庫的規格書內容，重新輸入符號與結構的宣告。其二，使用逆向工程找出目標函數庫未於規格書中明文闡述的內容。最後也最重要的一點是，要在「潔淨室」中實作函數的內容。在這之中，不存在用工具去擷取目標函數庫源碼內容的選項。就我所知，與軟體程式有關的著作權案例中，不依上述方式實作的廠商，皆敗訴收場。
+</p>
+<p>
+  再以 Linux C 函數庫為例。由於 Linux C 函數庫主要遵循 ANSI C, POSIX 等標準規格實作。所以實作一個 Linux C 函數庫時，應該是看著 ANSI C, POSIX 等書籍的內容，重新輸入符號與結構的宣告。然後再於潔淨室中實作內容。如果 bionic 函數庫是按照這種方式實作出來的，那就可以隨擁有者之意決定授權書內容。但若文章所說 Google 使用工具擷取產生的方式屬實，那麼 bionic 就有很大的著作權侵權嫌疑。
+</p>
+<p>
+  再看到 LGPL 的處置內容。這部份的違反理由，我在《<a href="{{ site.baseurl }}/archives/2011/Google%20Android%20%E6%B6%89%E5%AB%8C%E9%81%95%E5%8F%8D%20GNU%20GPL.html">Google Android 涉嫌違反 GNU GPL</a>》就曾說明過。
+</p>
+<p>
+  Google 在這件事中最投機取巧的一點就在於他們擷取的內容，到底算不算是被著作權保護的內容。通常軟體規格書中所定義的符號與結構，並不被著作權保護(<span class="Onote">但是可以申請專利保護</span>)。所以某乙拿著某甲的規格書重新輸入那些符號與結構的做法，通常不侵犯某甲的著作權。但 Google 是用工具去讀取其他軟體源碼的內容產生那些符號與結構，似乎不是看著規格書來的。另一方面我也很懷疑 Google 用的工具是否足夠聰明，可將它擷取出來的內容，濾掉規格書中沒提的部份。
+</p>
+<p>
+  我記得有過一個案例，原作者在源碼中定義了一個自定符號，例如 <dfn>MY_ASS_SIZE=99</dfn>。而這個符號在規格書中根本沒提到。於是原作者就靠著這個自定符號，贏了程式碼抄襲的官司。
+</p>
+<p>
+  Google Android 一再以促進商業化為理由，解釋它們修改架構、改變授權書的理由。但我們看看 bionic 對應的 glibc 。依 glibc 所採用的 LGPL 授權書之內容，只要你的應用程式僅僅是連結 glibc 函數庫，就不會因此關係而被要求延用 LGPL。換言之，你就算想寫私有授權的應用程式，一樣可以調用 glibc 函數庫，不會因此侵權。附帶一提，Stallman 曾解釋過引入(#include)標頭檔這動作，並不算使用 glibc 程式碼，所以也不會因此被 LGPL 感染。事實上，一般應用程式根本就不會直接使用 glibc 的程式碼，都是透過連結形式去調用。既然如此，bionic 也可採用 LGPL。所謂商業化而需採用其他授權書的理由站不住腳。
+</p>
+<p>
+  再說既然 bionic 是混合 BSD C 函數庫的內容而來，何不幹脆一點全部都用 BSD C 函數庫的源碼來修改。為何還用工具往 LGPL 授權的程式碼中撈內容。手腳如此不乾不淨，如何不出問題？
+更極端一點的說法，既然 Google Android 不想要成為 GNU/Linux 的一份子，那何不幹脆用 <a href="http://en.wikipedia.org/wiki/NetBSD">NetBSD</a> 實作。它也是開放源碼的作業系統，支援 ARM 架構，授權書還是更利於推廣商業化的 BSD 授權書。
+</p>
+<p>
+  到目前為止，我對 Google Android 的看法有二種。
+</p>
+<p>
+  其一，它是魔鬼代言人，用甜言蜜語誘惑其他廠商使用它。把廠商養肥之後，再祭出智慧財產權的官司宰來吃。
+</p>
+<p>
+  其二，它是智慧財產權流氓。老子財大氣粗、小弟多(一大票的行動設備廠商)。所謂法不責眾，誰要用智慧財產權來告我，我就派出一票小弟圍事。看你要告到幾時。
+</p>
+<p>
+  自由軟體基金會早在去年 Oracle 告 Google 時，就曾發表聲明《<a href="http://www.fsf.org/news/oracle-v-google">FSF responds to Oracle v. Google and the threat of software patents</a>》。在聲明中，自由軟體基金會一方面譴責 Oracle，另一方面也抱怨 Google 的態度，<q>The company still has not taken any clear position or action against software patents</q>。
+</p>
+<p>
+  看到 Google Android 被告，我真的很高興。希望這能逼迫 Google 早點採取更明確的態度處理軟體專利的事。當然啦，那些偷吃自由軟體豆腐的行為，也應通通戒掉。我看了就厭煩。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15453185.html">http://blog.roodo.com/rocksaying/archives/15453185.html</a></div>

@@ -1,0 +1,241 @@
+---
+title: PHP 網頁訊息國際化與 gettext 使用經驗
+category: programming
+old-category: PHP
+tags: [php,gettext,i18n]
+---
+<p>
+PHP 很早就已經支援 GNU gettext 的國際化模組。在線上手冊與網路上也可以找到許多相關的討論文章。
+但是部份內容沒有完善地理解區碼的設定方式，以至於程序員在 <var>LANG</var> 和 <dfn>setlocale()</dfn> 的問題之中糾纏不休。
+</p>
+<p>
+本文首先將說明區碼的設定問題，再示範 gettext 的使用方式。
+</p>
+
+<!--more-->
+<h4>
+區碼的問題
+</h4>
+
+<p>
+當我們想要用 gettext 將我們以 PHP 設計的網站添加國際化的區域性訊息功能時，首先我們必須要使用 <dfn>setlocale()</dfn> 指定訊息區碼；這點與一般應用程式透過環境變數 <var>LANG</var> 的方式不同。例如《<a href="{{ site.baseurl }}/archives/2011/Vala%20with%20GNU%20gettext.html">Vala with GNU gettext</a>》中的範例，調用 <dfn>setlocale()</dfn> 時都不指定區碼，而由環境變數決定。但這種作法不適用於 PHP 建立的 Web 應用程式。因為 PHP 程式係由 httpd 服務行程調用，而 httpd 行程在系統啟動時便已載入，其環境變數已經固定。故我們基本上不應透過環境變數取定訊息區碼，而應使用 <dfn>setlocale()</dfn> 指定明確的區碼。
+</p>
+
+<p>
+初學者在使用 <dfn>setlocale()</dfn> 設定區碼時，最常反應的問題是「我明明照文章上的寫法 setlocale(LC_ALL, "zh_TW")了，但是仍然不會顯示中文訊息」。這個問題的正確答案是「你的系統不認得 <dfn>zh_TW</dfn> 這個區碼」。基於歷史與傳統因素，I18N 的區碼並沒有採用嚴格的格式，同一個文化語系在不同的系統上，可能是用不同的區碼表示。例如臺灣地區正體中文語系的區碼，有些系統是用 "zh_TW"，有些卻是 "zh_TW.utf8"，甚至更早期的還有 "zh_TW.big5"。區區數字之差，就是令使用者抱怨明明設定了環境變數或 setlocale() 了，但軟體顯示的訊息還是沒變的原因。
+</p>
+
+<p>
+php-gettext 可用的區碼係由作業系統的區碼表決定。執行指令 <kbd> locale -a </kbd> 將會列出作業系統目前的區碼表。
+以 Ubuntu 10.04 為例，在我的系統設置上， <kbd> locale -a </kbd> 列出的臺灣區碼只有'zh_TW.utf8'。故我調用 <dfn>setlocale()</dfn> 時，必須指定 'zh_TW.utf8'，gettext 才會正常地取得本地訊息。指定 'zh_TW' 則不會有影響。
+但是有些系統並不是用這個名稱，例如有些系統用 'zh_TW'。此時我傳 'zh_TW.utf8' 給 setlocale() 反而錯了。
+</p>
+
+<p>
+克服此系統設置差異的解決方案有二種:
+</p>
+
+<ol>
+    <li>
+    修改區碼名稱表。<br/>
+    在 Debian/Ubuntu 家族中，區碼名稱表的文件名稱是 /etc/locale.alias 。
+    但這個方案需要經由系統管理者操作，則會影響到整個作業系統，並不建議採用。
+    </li>
+
+    <li>
+    調用 setlocale() 時，給它多個區域代碼。<br/>
+    PHP 4.3.0 之後，setlocale() 允許傳多個區域代碼給它，它將逐一嘗試直到可用為止。
+    下節將細說此方案。
+    </li>
+</ol>
+
+<h5>
+setlocale 的用法
+</h5>
+
+<p>
+PHP 4.3.0 之後，setlocale() 允許傳多個區域代碼給它，它將逐一嘗試直到可用為止。例如
+<code>setlocale(LC_ALL, "zh_TW.utf8", "zh_TW", "zh");</code>
+</p>
+<p>
+至於舊版的 PHP 用戶，也有解。當 <dfn>setlocale()</dfn> 發現你給它的區域代碼不可用時，它會回傳 <dfn>false</dfn> 。利用這個特性，舊版 PHP 也可以自行撰寫嘗試動作。下列為範例
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+    <span class="nv">$possible_locale_name_list</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'zh_TW.utf8'</span><span class="p">,</span> <span class="s1">'zh_TW'</span><span class="p">,</span> <span class="s1">'zh'</span>
+    <span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">PHP_VERSION_ID</span> <span class="o">&gt;=</span> <span class="mi">40300</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$possible_locale_name_list</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$possible_locale_name_list</span> <span class="k">as</span> <span class="nv">$l</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$l</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nv">$result</span><span class="p">)</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span> <span class="nv">$result</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$current_locale</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="k">echo</span> <span class="s2">"目前的區碼是: </span><span class="nv">$current_locale</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"setlocale() 找不到符合的區碼</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h4>
+使用 gettext 顯示區域化訊息
+</h4>
+
+<p>
+當我們正確地理解 <dfn>setlocale()</dfn> 與區碼的使用方式後，接著就要使用 gettext 取出本地化訊息顯示了。
+</p>
+<p>
+在動手撰寫或修改程式之前，你需要先了解關於 gettext 訊息文件的編輯與產生的知識。這部份內容請參考《<a href="{{ site.baseurl }}/archives/2011/Vala%20with%20GNU%20gettext.html">Vala with GNU gettext</a>》，本文不再複述。
+</p>
+
+<p>
+下列的範例程式 hello.php，有兩種執行形式。其一是在命令列執行，第一個參數指定訊息區碼。其二是網頁形式，在網頁網址後加上查詢字串 <em>?locale=區碼</em>。如果不指定區碼，那麼就會顯示原始訊息 - 倒寫的句子。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nb">error_reporting</span><span class="p">(</span><span class="k">E_ALL</span><span class="p">);</span>
+<span class="nb">header</span><span class="p">(</span><span class="s1">'Content-type: text/plain; charset=utf-8'</span><span class="p">);</span>
+
+<span class="k">const</span> <span class="no">GETTEXT_PACKAGE</span> <span class="o">=</span> <span class="s1">'hello'</span><span class="p">;</span>
+
+<span class="nv">$arg_locale</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="nx">PHP_SAPI</span> <span class="o">==</span> <span class="s1">'cli'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$argc</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="nv">$arg_locale</span> <span class="o">=</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nb">header</span><span class="p">(</span><span class="s1">'Content-type: text/plain; charset=utf-8'</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'locale'</span><span class="p">]))</span>
+        <span class="nv">$arg_locale</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'locale'</span><span class="p">];</span>
+<span class="p">}</span>
+
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$arg_locale</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$possible_locale_name_list</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+        <span class="nv">$arg_locale</span> <span class="o">.</span> <span class="s1">'.utf8'</span><span class="p">,</span> <span class="nv">$arg_locale</span>
+    <span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">PHP_VERSION_ID</span> <span class="o">&gt;=</span> <span class="mi">40300</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$possible_locale_name_list</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$possible_locale_name_list</span> <span class="k">as</span> <span class="nv">$l</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$l</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nv">$result</span><span class="p">)</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span> <span class="nv">$result</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$current_locale</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="k">echo</span> <span class="s2">"current locale: </span><span class="nv">$current_locale</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"failed to setlocale</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nb">bindtextdomain</span><span class="p">(</span><span class="nx">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s1">'./locale'</span><span class="p">);</span> <span class="c1">// 區域化內容放置路徑
+</span>    <span class="nb">textdomain</span><span class="p">(</span><span class="nx">GETTEXT_PACKAGE</span><span class="p">);</span> <span class="c1">// 使用 hello.mo 的訊息
+</span>    <span class="nb">bind_textdomain_codeset</span><span class="p">(</span><span class="nx">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">echo</span> <span class="nx">_</span><span class="p">(</span><span class="s2">"好你"</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nx">_</span><span class="p">(</span><span class="s2">"行一第的息訊長。</span><span class="se">\n</span><span class="s2">行二第的息訊長。</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+首先， hello.php 對於區碼格式採用新的方法從寬認定。例如使用者輸入 'zh_TW' 時，就會產生 <code>{'zh_TW.utf8', 'zh_TW'}</code> 的區碼清單，交給 <dfn>setlocale()</dfn> 指定訊息區碼。
+</p>
+
+<p>
+指定區碼之後，接著要指示區域化內容放置路徑、文字範圍與訊息字元編碼格式。分別調用 <dfn>bindtextdomain()</dfn>、<dfn>textdomain()</dfn>、<dfn>bind_textdomain_codeset()</dfn> 函數指示前述項目。由於 PHP 被 httpd 行程調用時，其工作目錄就是 PHP 程式碼所在目錄，故我們可以將區域化內容資料夾建立在 PHP 程式碼所在目錄下。例如你的 PHP 程式碼放在 /var/www/my_web ，則可以建立 /var/www/my_web/locale 資料夾與區域化內容的目錄架構；將區域訊息文件(MO文件)放置在相對應用的區碼路徑，如 /var/www/my_web/locale/zh_TW/LC_MESSAGES。
+</p>
+
+<p>
+最後使用 php-gettext 的函式取得本地化訊息。php-gettext 提供了多個相關的訊息函式，但以 <a href="http://www.php.net/manual/en/function.gettext.php">gettext()</a> 最為常用，並有一個慣例的簡短別名，即 <dfn>_()</dfn>。
+</p>
+
+<p>
+寫好程式後，我們就可以使用 xgettext 工具，將待處理的訊息文字擷取為 POT 文件，再分別翻譯為各語系區碼的 PO 文件。
+最後使用 msgfmt 工具產生 MO 文件後，便大工告成。具體的工具操作如下列所示。
+</p>
+
+
+<pre class="language-term">
+$ xgettext --language=php --from-code=utf-8 --output=hello.pot hello.php
+$ cp hello.pot hello-en_US.po
+$ edit hello-en_US.po
+$ cp hello.pot hello-zh_TW.po
+$ edit hello-zh_TW.po
+$ msgfmt --output=locale/en/LC_MESSAGES/hello.mo hello-en_US.po
+$ msgfmt --output=locale/zh_TW/LC_MESSAGES/hello.mo hello-zh_TW.po
+</pre>
+
+<p>
+以下為範例程式以命令列形式執行的結果。
+</p>
+
+<pre class="language-term">
+$ php hello.php
+好你
+行一第的息訊長。
+行二第的息訊長。
+
+$ php hello.php zh_TW
+current locale: zh_TW.utf8
+你好
+長訊息的第一行。
+長訊息的第二行。
+
+$ php hello.php en_US
+current locale: en_US.utf8
+Hello
+First line of long message.
+Second line of long message.
+
+</pre>
+
+<p>
+以下為範例程式透過 Web 呈現的結果。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/9fcc963b.png" alt="配合參數 ?locale=en_US 顯示英文訊息" />
+<br/>
+
+<img src="http://blog.roodo.com/rocksaying/d68c9f26.png" alt="配合參數 ?locale=zh_TW 顯示中文訊息" />
+<br/>
+
+<h4>
+參考文件
+</h4>
+
+<ul>
+<li>
+    <a href="{{ site.baseurl }}/archives/2011/Vala%20with%20GNU%20gettext.html">Vala with GNU gettext</a> - 本文雖然是說明 Vala 語言使用 gettext 的經驗，但相關觀念卻是相同的。
+</li>
+<li>
+    <a href="http://www.gnu.org/software/gettext/manual/gettext.html">GNU gettext manual</a> 
+</li>
+<li>
+    <a href="http://www.php.net/manual/en/ref.gettext.php">PHP Gettext</a> 
+</li>
+<li>
+    <a href="http://www.php.net/manual/en/function.setlocale.php">PHP setlocale()</a> 
+</li>
+<li>
+    <a href="http://mel.melaxis.com/devblog/2005/08/06/localizing-php-web-sites-using-gettext/">Localizing PHP web sites using gettext</a> - 資訊有些不足，並沒有十分詳細地說明 locale 的設定方式。
+</li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15193601.html">http://blog.roodo.com/rocksaying/archives/15193601.html</a></div>

@@ -1,0 +1,115 @@
+---
+title: Matchbox keyboard
+category: computer
+old-category: 電腦技術
+tags: [matchbox,virtual_keyboard]
+---
+<p>
+因為工作需要，我需要評估一些平板電腦相關的應用。因此我接觸過 MeeGo ，使用過它提供的幾種虛擬鍵盤(軟體鍵盤)，例如 fvkbd, meegotouch-inputmethodkeyboard 。更進一步地，當我嘗試著在 Debian/Ubuntu 系統上自訂一個平板桌面環境時，也需要一個虛擬鍵盤。而 Ubuntu 套件庫中就提供了 <a href="http://matchbox-project.org/?p=1">Matchbox keyboard</a>。
+</p>
+<p>
+Matchbox keyboard 並不是功能最多的虛擬鍵盤。但它應該是結構最簡單的一套，也提供了設定鍵盤佈局的功能。而且 X window 上的其他虛擬鍵盤的原理跟 matchbox keyboard 大同小異。如果想要嘗試客製化一個具有虛擬鍵盤的操作環境，可以 matchbox keyboard 為起點。等到產品化時，我們隨時可以用其他同樣基於 X 協定的虛擬鍵盤替換它。
+</p>
+
+<!--more-->
+<h5>
+Install
+</h5>
+
+<p>
+Debian/Ubuntu 提供的 Matchbox keyboard 相關套件為: <dfn>matchboxkeyboard, libfakekey0</dfn> 。
+在自訂操作環境時，你也需要 <dfn>libfakekey-dev</dfn> 套件，以便重新編譯 Matchbox keyboard 的源碼。
+</p>
+
+<p>
+你可以從 Matchbox keyboard 官方網頁上取得其源碼。或是從 Ubuntu 源碼庫中取得:
+<a href="http://archive.ubuntu.com/ubuntu/pool/universe/m/matchbox-keyboard/matchbox-keyboard_0.1+svn20080916.orig.tar.gz">matchbox-keyboard_0.1+svn20080916.orig.tar.gz</a>。
+</p>
+
+<p>
+我建議先安裝套件庫提供的 Matchbox keyboard 套件，然後再自行編譯源碼替換。
+</p>
+
+
+<h6>
+Fix embedding bug
+</h6>
+
+<p>
+當你配合 <var>--xid</var> 參數執行 <dfn>matchbox-keyboard</dfn> 程式時，它或許不會正確地呈現鍵盤內容。這似乎是個 bug。
+若你碰到這個狀況時，需要修改 matchbox keyboard 的源碼修正它。編輯 src/matchbox-keyboard.c ，將下列所示的兩行程式碼註消。
+</p>
+
+<pre class="highlight"><code>  <span class="cm">/*
+  if (want_embedding)
+    mb_kbd_ui_set_embeded (kb-&gt;ui, True);
+  */</span>
+</code></pre>
+
+
+<h6>
+Build
+</h6>
+
+<p>
+我使用取自 Ubuntu 源碼庫的源碼編譯。在 matchbox keyboard 源碼的根目錄下進行下列操作即可。
+</p>
+
+<pre class="language-term">
+ $ ./autogen.sh 
+ $ ./configure --prefix=/usr
+ $ make
+ $ sudo make install-exec
+</pre>
+
+<p>
+最後一步將安裝 matchbox-keyboard 到 /usr/bin/matchbox-keyboard.
+</p>
+
+<h5>
+基本控制範例
+</h5>
+
+<p>
+1. 執行 <dfn>matchbox-keyboard</dfn>，並配合 <var>--xid</var> 參數。
+它會列出此虛擬鍵盤所屬的視窗容器的 <dfn>XID</dfn>，你需要這個 XID 才能從外部控制虛擬鍵盤的位置。
+</p>
+
+<pre class="language-term">
+ $ matchbox-keyboard --xid
+ 1234567
+</pre>
+
+<p>
+2. 以 python 為例，啟動 python 交談環境，輸入下列敘述。你將可觀察到虛擬鍵盤被控制的情形。
+</p>
+
+<pre class="highlight"><code>
+<span class="kn">import</span> <span class="nn">gtk</span>
+
+<span class="n">xid</span> <span class="o">=</span> <span class="mi">1234567</span>  <span class="c"># the XID of matchbox-keyboard</span>
+
+<span class="n">foreign_window</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">gdk</span><span class="o">.</span><span class="n">window_foreign_new</span><span class="p">(</span><span class="n">xid</span><span class="p">)</span>
+
+<span class="n">foreign_window</span><span class="o">.</span><span class="n">set_keep_above</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">foreign_window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">foreign_window</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="n">foreign_window</span><span class="o">.</span><span class="n">set_decorations</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c"># disable all decorations.</span>
+
+<span class="n">foreign_window</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+
+</code></pre>
+
+
+<img src="http://pcdn1.rimg.tw/photos/956035_ayto3rt_l.png" alt="matchbox keyboard control demo"/>
+
+<p>
+在 matchbox keyboard 源碼中，還提供了一個範例: examples/matchbox-keyboard-gtk-embed.c 。
+此範例展示如何以內嵌形式，利用 <dfn>gtk-event-box</dfn> 控制項，將 matchbox-keyboard 嵌入你的視窗軟體的佈局中。
+</p>
+<p>
+各位可以瀏覽 <a href="http://matchbox-project.org/screenshots.html">screenshots</a> 的下半頁，觀看它實際運用的樣子。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15747723.html">http://blog.roodo.com/rocksaying/archives/15747723.html</a></div>

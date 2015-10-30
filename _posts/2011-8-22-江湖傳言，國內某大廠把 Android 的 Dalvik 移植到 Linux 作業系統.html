@@ -1,0 +1,68 @@
+---
+title: 江湖傳言，國內某大廠把 Android 的 Dalvik 移植到 Linux 作業系統
+category: computer
+old-category: 電腦技術
+tags: [linux,android,linux_kernel]
+---
+<p>某日，我與強者我朋友閒話時，強者我朋友說他某日和梅友仁閒話時，梅友仁告訴他一則我一定感興趣的江湖傳言。江湖傳言道：國內某系統大廠把 Android 的 Dalvik 移植到 Linux 作業系統，並且運行在x86平台。
+</p>
+
+<p>我說，該不會是 Android-x86 吧？那不是什麼新聞了。強者我朋友說「非也」。傳言所說是無修無改的 Linux 核心配上 Dalvik ，不是用 Google 修補過再被其他人移植的 Android-x86 。
+</p>
+
+<!--more-->
+<p>我一聽就來勁了。按這說法，同樣在 x86 平台上，Android-x86 其實並不等於 Linux 作業系統。
+維基百科的 Linux 條目上說:
+</p>
+
+<blockquote>
+    <p>
+    Linux，是一系列類Unix計算機作業系統的統稱。該作業系統的核心的名字也是「Linux」。Linux作業系統也是自由軟體和開放原始碼發展中最著名的例子。
+    </p>
+    <p>
+    嚴格來講，Linux這個詞本身只表示Linux核心，但在實際上人們已經習慣了用Linux來形容整個基於Linux核心，並且使用GNU專案各種工具和資料庫的作業系統（也被稱為GNU/Linux）。基於這些組件的Linux軟體被稱為Linux發行版。
+    </p>
+    <cite>
+    http://zh.wikipedia.org/wiki/Linux
+    </cite>
+</blockquote>
+
+<p>而 Android 條目則說:
+</p>
+
+<blockquote>
+    <p>
+    Linux kernel patches are under GPL v2 
+    ... the Android kernel is now a separate version or fork of the Linux kernel.
+    </p>
+    <p>
+    Android does not have a native X Window System nor does it support the full set of standard GNU libraries, and this makes it difficult to port existing GNU/Linux applications or libraries to Android.
+    </p>
+    <cite>
+    http://en.wikipedia.org/wiki/Android_(operating_system)
+    </cite>
+</blockquote>
+
+<p>基於上述的說法，強者我朋友說雖然 Android 的系統核心衍生自 Linux 核心，但整個核心外層的構成物都去除了 GNU 的味道 – 從殼層到桌面環境所用的軟體都跟我們一般所說的 Linux 發行版不同。Android-x86 是在使用 Google 修補過的 Linux 核心的情況下，搭配 Android 的殼層與桌面環境，將整個 Android 移植回 x86 平台上運行。而江湖傳言所說的做法，則是將 Android 系統的桌面環境與作業核心分割，捨棄 Google 修補過的核心，使用一般的 Linux 發行版的核心與殼層搭配 Android 的桌面環境。也就是把 Dalvik 當成一個獨立的桌面環境，搭配一般的 Linux 發行版。
+</p>
+
+<p>根據江湖傳言，這套運行模式還相當不錯。所有 Linux 核心支援的裝置全都能用 (那些只支援 Android 的驅動程式不就不能用了?)，而那些使用 Dalvik 開發的 Applet ，只要編譯時沒有指定 Arm 架構的最佳化選項，大部份也能直接安裝運作。
+</p>
+
+<p>如果江湖傳言所指的系統大廠真的成功推出產品了，那證明 Dalvik 經過修補後，可以獨立於 Android 核心之外，運行於 Linux 核心主幹之上。我認為這是件好事，程序人員可以將 Dalvik 視為一個獨立的開發環境，在其上開發軟體。不過看看 Dalvik 的授權模式，該系統大廠就算做了，應該也不會開放他們的 Dalvik 源碼。
+</p>
+
+<p>但從硬體支援的角度來看，這種做法有其風險。傳言隱隱指出該系統大廠的背後，似乎有 Intel 支撐。他們的 x86 平台與裝置，全都有 Intel 提供的 Linux 驅動程式支持。所有他們才會選擇把 Dalvik 切割出來的做法。
+</p>
+
+<p>依我在「<a href="{{ site.baseurl }}/archives/2011/Android%20%E5%B0%8D%20Linux%20%E7%9A%84%E8%B2%A0%E9%9D%A2%E5%BD%B1%E9%9F%BF.html">Android 對 Linux 的負面影響</a>」中看到的現況，新硬體裝置的廠商，會優先開發只支援 Android 的驅動程式。至於 Linux 驅動程式的開發工作，就放著吧。大概<em>等個四、五年</em>，Android 核心回流到 Linux 核心主幹後，那些驅動程式就能直接給 Linux 核心用了。說明這個狀況的用意是，選擇 Linux 核心搭配 Dalvik 的途徑，將會失去 Android 驅動程式的支持。除非你的系統平台選用的裝置都有原廠的 Linux 驅動程式支持，否則你最好不要這麼搞。
+</p>
+ 
+<p>講了那麼多江湖傳言的事，真真假假，大家聽聽就好。對號入座請自便，不要找我求證。
+</p>
+
+<p>最後，我另外補上一則確定的消息吧。這則確定的消息是我今天在 ZDNet 上看到的新聞「<a href="http://www.zdnet.com/blog/open-source/linus-torvalds-on-android-the-linux-fork/9426">Linus Torvalds on Android, the Linux fork</a>」。Linus 在 LinuxCon 大會中表示：「雖然目前兩者的核心源碼作仍有大量的合併工作必須進行，但最終兩者將會回歸為共同的核心，但它可能不會<del>需要四到五年</del>在四到五年內實現」(<q>there’s still a lot of merger to be done. … but that eventually Android and Linux would come back to a common kernel, but it will probably not be for four to five years.</q>; 謝謝 penk 與喬老爺的指點)。
+</p>
+
+<p>有趣的是，相較於 Linus 的肯定語氣，ZDNet 新聞編輯 sjvn 所下的摘要則是「There’s still a lot of distance between Google’s Android and its parent operating system Linux, but eventually, the gap will close… eventually」。依我的文學修辭知識，連用兩次 eventually 還夾了一個 ... 的用法，似乎並不那麼肯定；似乎在說 Google 給的是一份沒有實現期限的承諾。誰可以指點一下這段修辭的真實意涵嗎？
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/16408313.html">http://blog.roodo.com/rocksaying/archives/16408313.html</a></div>

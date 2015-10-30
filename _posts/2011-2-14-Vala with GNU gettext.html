@@ -1,0 +1,365 @@
+---
+title: Vala with GNU gettext
+category: programming
+old-category: C/C++/C#/Java
+tags: [vala,gettext,i18n]
+---
+<p>
+Vala 作為 GNOME 開發環境下新興的開發語言，帶入了許多新的功能，其中亦包含國際化(i18n)的支援項目。 儘管 Vala 的線上教學文件沒有隻字片語提到 i18n/l10n，但事實上 Vala 已經將 <a href="http://zh.wikipedia.org/zh-tw/Gettext">GNU gettext</a> 作為內建的語言功能，使用它實現 i18n/l10n 能力。 Vala 提供了名為 <dfn>_</dfn> 的函數，只要我們的 vala 程式碼使用了 <dfn>_()</dfn> 函數，就會使用 GNU gettext 取得本地訊息。
+</p>
+<p>
+但是現階段使用這個內建功能時，還有一個文件未記載的不完善之處必須解決。待我說來。
+</p>
+
+<!--more-->
+<p>
+Vala 轉譯後的 C 源碼，將會引入 gi18n-lib.h 負責 gettext 的程式碼。
+而 gi18n-lib.h 要求程序員必須使用 <dfn>GETTEXT_PACKAGE</dfn> 符號定義你的內容範圍(text domain)。
+但是目前的 valac 在調用 gcc 時，並不會幫我們產生 <dfn>GETTEXT_PACKAGE</dfn> 的符號定義，
+所以 valac 會丟出一個乍看之下莫名奇妙的錯誤訊息: <q>
+#error You must define GETTEXT_PACKAGE before including gi18n-lib.h. 
+Did you forget to include config.h?</q>
+</p>
+
+<p>
+若未追踪它轉譯後的 C 源碼，很難理解我們的 vala 程式碼怎麼會跟 gi18n-lib.h 扯上關係。
+</p>
+
+<p>
+解決方法是使用 valac 時，自己加上一個額外傳遞給 gcc 的參數選項，即:
+<kbd>
+  -X -DGETTEXT_PACKAGE="your_text_domain"
+</kbd>。
+下列是一個完整的使用範例:
+</p>
+
+<pre class="language-term">
+$ valac -X -DGETTEXT_PACKAGE="pcmanfm" hello.vala
+</pre>
+
+<div class="note">
+<p>
+See also: <a href="http://www.mail-archive.com/vala-list@gnome.org/msg02887.html">
+http://www.mail-archive.com/vala-list@gnome.org/msg02887.html</a>
+</p>
+<p>
+或許 vala 未來的版本會提供適當地處理方式。但目前僅能使用這個不優雅的解法。
+</p>
+</div>
+
+<h4>
+Hello gettext
+</h4>
+<p>
+GNU gettext 將本地訊息包裝在副檔名為 <dfn>.mo</dfn> 的文件中(<span class="Onote">以下以 MO 文件稱呼包裝過的本地訊息文件</span>)，它是獨立於應用軟體之外的資料。
+換言之，你的軟體也可以直接使用別的軟體的 MO 文件。
+在說明如何產生自己的 MO 文件之前，我們先在自己的應用軟體中使用別人的 MO 文件，體驗一下 gettext 的能力。
+</p>
+<p>
+我的 Ubuntu 系統中安裝了 pcmanfm 這套檔案管理工具，我將使用它的 MO 文件示範如何顯示我的程式中要區域化的訊息。
+</p>
+
+<pre class="highlight"><code><span class="c1">// 說明 1
+</span><span class="k">const</span> <span class="n">string</span> <span class="n">GETTEXT_PACKAGE</span> <span class="o">=</span> <span class="s">"pcmanfm"</span><span class="p">;</span> 
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 說明 2
+</span>    <span class="n">Intl</span><span class="p">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">LocaleCategory</span><span class="p">.</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="s">""</span><span class="p">);</span>
+
+    <span class="c1">// 說明 3
+</span>    <span class="c1">//Intl.textdomain(GETTEXT_PACKAGE);
+</span>
+    <span class="c1">// 說明 4
+</span>    <span class="n">Intl</span><span class="p">.</span><span class="n">bind_textdomain_codeset</span><span class="p">(</span><span class="n">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s">"utf-8"</span><span class="p">);</span>
+
+    <span class="c1">// 說明 5
+</span>    <span class="n">Intl</span><span class="p">.</span><span class="n">bindtextdomain</span><span class="p">(</span><span class="n">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s">"/usr/share/locale"</span><span class="p">);</span> <span class="c1">// 區域化內容放置處
+</span>
+    <span class="c1">// 說明 6
+</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s">"Execute"</span><span class="p">));</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h5>
+程式說明
+</h5>
+
+<ol>
+    <li>
+    GETTEXT_PACKAGE: 很遺憾，雖然我在這裡定義了常值 <dfn>GETTEXT_PACKAGE</dfn> ，但 valac 並不會用它帶出傳給 gcc 的符號參數 <dfn>-DGETTEXT_PACKAGE=?</dfn> ，所以我們還是要手動加上那個參數。但是它還是有一個安全作用：當 vala 程式碼中的 GETTEXT_PACKAGE 與符號參數 <dfn>-DGETTEXT_PACKAGE</dfn> 兩者之值不相同時， gcc 會抱怨 GETTEXT_PACKAGE 被重新定義了。
+    </li>
+
+    <li>
+    Intl.setlocale(): 使用 GNU gettext 的本地化功能前，必須指定我們要啟用的類型。
+在本例中，我只用到訊息的本地化功能，所以我只啟用 <dfn>LocaleCategory.MESSAGES</dfn>。
+第二個參數指定區碼，若為空字串，則表示由環境變數指定區碼。具影響力的環境變數，依優先等級排列為: <var>LANGUAGE</var>, <var>LC_ALL</var>, <var>LC_MESSAGES</var>, <var>LANG</var>；<var>LANGUAGE</var> 是 GNU gettext 的擴充項目，不是 POSIX 規範項目 (<span class="Onote">參考 <a href="http://www.gnu.org/software/gettext/manual/gettext.html#Locale-Environment-Variables">Locale Environment Variables</a></span>)。若為 <dfn>null</dfn> ，則是查詢目前使用的區碼；但是 Vala 的實作內容似乎有 bug ，它總是回傳環境變數 <var>LANG</var> 之值。
+<br/>
+區域化內容類型，除了訊息的本地化外，還有貨幣符號、數字格式、日期格式等等的本地化。如果我們啟用 <dfn>LocaleCategory.ALL</dfn> ，則會影響所有可以本地化的內容類型。有時這並非我們想要的結果，應謹慎使用。
+    </li>
+
+    <li>
+    Intl.textdomain(): Vala 的 <dfn>_()</dfn> 函數，實際上是調用 <dfn>g_dgettext(GETTEXT_PACKAGE, msgid)</dfn>。由於 <dfn>g_dgettext()</dfn> 會自帶範圍名稱，所以我們不需要用 <dfn>Intl.textdomain()</dfn> 設定預設範圍。
+    </li>
+
+    <li>
+    Intl.bind_textdomain_codeset(): 當我僅啟用本地化訊息功能時(LocaleCategory.MESSAGES)，我必須指定本地訊息的字元編碼，否則 gettext 會用當地慣用的區域編碼系統，例如 zh_TW 預設是 BIG5。
+在早期，這個動作很有用。但是隨著 UTF-8 編碼系統的推廣，現在大部份的本地訊息文件也都是用 UTF-8 編碼，故現在要指定字元編碼為 'utf-8'，否則輸出的訊息通常是所謂的亂碼。
+    </li>
+    
+    <li>
+    Intl.bindtextdomain(): 若你的 MO 文件放置的位置不在系統預設路徑內，則你必須調用
+<dfn>Intl.bindtextdomain()</dfn> 指示訊息文件的搜尋路徑。
+在本例中，pcman.mo 正放置於系統預設路徑內，其實可以省略此動作。
+    </li>
+
+    <li>
+    _(): 將原始訊息交給內建函數 <dfn>_()</dfn>，取得本地化的訊息文字。如果你使用的 MO 文件中未包含對應的本地訊息，則會直接傳回原始訊息。
+    </li>
+</ol>
+
+<p>
+執行範例如下。我透過環境變數 <var>LANG</var> 調整程式輸出的訊息內容。
+</p>
+<pre class="language-term">
+$ valac -X -DGETTEXT_PACKAGE="pcmanfm" hello1.vala
+$ export LANG=zh_TW.utf8
+$ ./hello1
+執行
+$ export LANG=en_US.utf8
+$ ./hello1
+Execute
+
+</pre>
+
+<div class="note">
+前述曾提到環境變數 <var>LANGUAGE</var> 是 GNU gettext 的擴充項目。它必須配合 <var>LANG</var> 或 <var>LC_ALL</var> 使用，用於列出可選用的替代語系。請參考 <a href="http://www.gnu.org/software/hello/manual/gettext/The-LANGUAGE-variable.html">2.3.3 Specifying a Priority List of Languages</a>。通常我們並不使用這個變數。
+</div>
+
+<h4>
+建立你的訊息文件
+</h4>
+
+<p>
+前一節中說明了如何利用 GNU gettext 函數庫，取得原始訊息的本地訊息後輸出。接下來的內容，則要說明如何建立自己的訊息文件。相關內容包括區域訊息文件的編寫格式、操作工具等。
+</p>
+
+<h5>
+編寫區域訊息文件
+</h5>
+
+<p>
+上節提過 MO 文件是包裝過的本地訊息文件，它的內容是索引資料檔，這顯然不是可用文字編輯器編寫的格式。
+其實我們主要的操作對象並不是 MO 文件，而是未包裝過的純文字本地訊息文件；GNU gettext 稱為 PO 文件。
+PO 文件的格式說明請參閱《<a href="http://www.gnu.org/software/gettext/manual/gettext.html#PO-Files">The Format of PO Files</a>》。其實它的格式非常簡單，主體只是由成對的 <dfn>msgid/msgstr</dfn> 描述所組成。其他項目都是選擇性的註釋內容。
+</p>
+
+<p>
+下列是一個最簡單的 PO 文件全文。你可以用你最慣用的文字編輯器編寫這些內容。
+</p>
+
+<pre class="highlight"><code><span class="n">msgid</span>  <span class="s">"Hello"</span>
+<span class="n">msgstr</span> <span class="s">"你好"</span>
+
+<span class="n">msgid</span>  <span class="s">"Welcome to my blog, Rock's saying.</span><span class="se">\n</span><span class="s">"</span>
+<span class="n">msgstr</span> <span class="s">"歡迎來到我的部落格 - 石頭閒語。</span><span class="se">\n</span><span class="s">"</span>
+</code></pre>
+
+
+<p>
+按照 GNU 開發者慣例，PO 文件採用區碼作為主檔名。上列的訊息文件是漢語系臺灣區(<span class="Onote"> zh_TW，這是根據文化別所作為區分</span>)的 PO 文件，就取名為 zh_TW.po。再使用 GNU gettext 提供的工具 <dfn>msgfmt</dfn> 將 PO 文件包裝成 MO 文件，就可以讓我們的軟體使用了。
+</p>
+
+<p>
+下列指令可將 zh_TW.po 包裝成 hello.mo 文件，並將它按區碼與類型，放置於 locale 目錄下。我們放置區域化內容的目錄，慣例命名為 locale。其目錄結構則有標準規範：第一層是區碼，第二層是類型。故 zh_TW 區碼的本地訊息文件，就要放在 zh_TW/LC_MESSAGES 目錄下。至於 MO 文件的主檔名，則是此訊息文件的範圍名稱。
+</p>
+
+<pre class="language-term">
+# 建立本文所需的區域化內容的目錄結構。
+$ mkdir -p locale/zh_TW/LC_MESSAGES
+$ mkdir -p locale/eu_US/LC_MESSAGES
+
+$ msgfmt --output=locale/zh_TW/LC_MESSAGES/hello.mo zh_TW.po
+</pre>
+
+<p>
+MO 文件的主檔名即為訊息的範圍名稱(text domain)。我將使用 hello.mo 訊息文件的內容，故接下來的 vala 程式碼中，我要指定的範圍名稱就是 "hello"。在範例中，我都將自製的 MO 文件放在現行目錄的 locale 子目錄內，故 <dfn>Intl.bindtextdomain()</dfn> 指向 "./locale"。實務上，則應以絕對路徑表示。通常我們自製的 MO 文件，會放在 <var>/usr/local/share/locale</var>。
+</p>
+
+<pre class="highlight"><code><span class="k">const</span> <span class="n">string</span> <span class="n">GETTEXT_PACKAGE</span> <span class="o">=</span> <span class="s">"hello"</span><span class="p">;</span> 
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">Intl</span><span class="p">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">LocaleCategory</span><span class="p">.</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="s">""</span><span class="p">);</span>
+    <span class="n">Intl</span><span class="p">.</span><span class="n">bind_textdomain_codeset</span><span class="p">(</span><span class="n">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s">"utf-8"</span><span class="p">);</span>
+    <span class="n">Intl</span><span class="p">.</span><span class="n">bindtextdomain</span><span class="p">(</span><span class="n">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s">"./locale"</span><span class="p">);</span> <span class="c1">// 區域化內容放置處
+</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%s gettext.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s">"Hello"</span><span class="p">));</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s">"Welcome to my blog, Rock's saying.</span><span class="se">\n</span><span class="s">"</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+下列為執行結果。
+</p>
+
+<pre class="language-term">
+$ valac -X -DGETTEXT_PACKAGE="hello" hello2.vala
+$ export LANG=zh_TW.utf8
+$ ./hello2
+你好 gettext.
+歡迎來到我的部落格 - 石頭閒語。
+$ export LANG=en_US.utf8
+$ ./hello2
+Hello gettext.
+Welcome to my blog, Rock's saying.
+
+</pre>
+
+
+<h5>
+從程式碼中擷取訊息
+</h5>
+
+<p>
+實務上，我們通常不是先寫 PO 文件再套進程式中，那太麻煩了。一般是把要區域化的訊息寫在程式碼中，再用 GNU gettext 的工具 <dfn>xgettext</dfn> 將需翻譯的訊息從程式碼中擷取出來。如下例 hello3.vala。我先寫好程式，並把需要區域化的訊息改成用 <dfn>_()</dfn> 函數處理。
+</p>
+
+<pre class="highlight"><code><span class="k">const</span> <span class="n">string</span> <span class="n">GETTEXT_PACKAGE</span> <span class="o">=</span> <span class="s">"hello3"</span><span class="p">;</span> 
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">Intl</span><span class="p">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">LocaleCategory</span><span class="p">.</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="s">""</span><span class="p">);</span>
+    <span class="n">Intl</span><span class="p">.</span><span class="n">bind_textdomain_codeset</span><span class="p">(</span><span class="n">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s">"utf-8"</span><span class="p">);</span>
+    <span class="n">Intl</span><span class="p">.</span><span class="n">bindtextdomain</span><span class="p">(</span><span class="n">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s">"./locale"</span><span class="p">);</span> <span class="c1">// 區域化內容放置處
+</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span> <span class="s">"hello3. 這一行訊息不需要翻譯</span><span class="se">\n</span><span class="s">"</span> <span class="p">);</span>
+
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span> <span class="s">"%s gettext</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s">"好你"</span><span class="p">)</span> <span class="p">);</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span> <span class="n">_</span><span class="p">(</span><span class="s">"行一第的息訊長。</span><span class="se">\n</span><span class="s">行二第的息訊長。</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span> <span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+接著使用 xgettext 擷取訊息。因為 xgettext 還不認得 Vala 的語法，所以我要指定一個最接近的語言(--language)給它參考；在此我用 C#。Vala 的 gettext 函數名稱是 <dfn>_</dfn> ，所以指定辨識的關鍵字(--keyword) 為 <dfn>_</dfn>。最後，按照 GNU 開發慣例，xgettext 擷取出來的待翻譯訊息文件的副檔名取為 .pot (<span class="Onote">.pot 之意為 PO Template。正在翻譯或已經翻好的訊息文件，則是 .po。</span>)。
+</p>
+
+<pre class="language-term">
+$ xgettext --language="C#" --keyword=_ --from-code=utf-8 \
+  --output=hello3.pot hello3.vala
+$ cp hello3.pot hello3-zh_TW.po
+$ cp hello3.pot hello3-en_US.po
+</pre>
+
+<p>
+最後，我們將 POT 文件複製給翻譯人員，填入翻譯的本地訊息。將翻譯者譯好的 PO 文件收集起來之後，再用 msgfmt 包裝成 MO 文件使用。hello3-zh_TW.po 是翻譯好的區域訊息文件。眼尖的讀者會發覺我這份文件少了很多欄位。再次強調，只有 msgid/msgstr 是必要的主體，其他都是選擇性的註釋，可有可無，刪了也不會影響後續操作。
+</p>
+
+<pre class="highlight"><code><span class="cp"># SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR &lt;EMAIL@ADDRESS&gt;, YEAR.
+#
+</span><span class="n">msgid</span> <span class="s">""</span>
+<span class="n">msgstr</span> <span class="s">""</span>
+<span class="s">"Content-Type: text/plain; charset=UTF-8</span><span class="se">\n</span><span class="s">"</span>
+<span class="s">"Content-Transfer-Encoding: 8bit</span><span class="se">\n</span><span class="s">"</span>
+
+<span class="cp">#: hello3.vala:10
+</span><span class="n">msgid</span> <span class="s">"好你"</span>
+<span class="n">msgstr</span> <span class="s">"你好"</span>
+
+<span class="cp">#: hello3.vala:11
+</span><span class="n">msgid</span> <span class="s">""</span>
+<span class="s">"行一第的息訊長。</span><span class="se">\n</span><span class="s">"</span>
+<span class="s">"行二第的息訊長。</span><span class="se">\n</span><span class="s">"</span>
+<span class="n">msgstr</span> <span class="s">""</span>
+<span class="s">"長訊息的第一行。</span><span class="se">\n</span><span class="s">"</span>
+<span class="s">"長訊息的第二行。</span><span class="se">\n</span><span class="s">"</span>
+</code></pre>
+
+
+<p>
+下列為本小節的示範操作過程。
+</p>
+<pre class="language-term">
+# 1.撰寫程式碼 hello3.vala
+
+# 2. xgettext 擷取訊息
+$ xgettext --language="C#" --keyword=_ --from-code=utf-8 \
+  --output=hello3.pot hello3.vala
+
+# 3. 散佈 POT 文件給其他人翻譯
+$ cp hello3.pot hello3-zh_TW.po
+$ cp hello3.pot hello3-en_US.po
+
+# 4. 收集 PO 文件包裝成 MO 文件
+$ msgfmt --output=locale/zh_TW/LC_MESSAGES/hello3.mo hello3-zh_TW.po
+$ msgfmt --output=locale/en_US/LC_MESSAGES/hello3.mo hello3-en_US.po
+
+$ valac -X -DGETTEXT_PACKAGE="hello3" hello3.vala
+
+$ export LANG=en_US.utf8
+$ ./hello3
+hello3. 這一行訊息不需要翻譯
+Hello gettext
+First line of long message.
+Second line of long message.
+
+$ export LANG=zh_TW.utf8
+$ ./hello3
+hello3. 這一行訊息不需要翻譯
+你好 gettext
+長訊息的第一行。
+長訊息的第二行。
+
+$ unset LANG
+$ ./hello3
+hello3. 這一行訊息不需要翻譯
+好你 gettext
+行一第的息訊長。
+行二第的息訊長。
+
+</pre>
+
+<p>
+實務上，我們會持續編寫程式碼與擷取訊息的工作，再使用 GNU gettext 工具 <dfn>msgmerge</dfn> 將 POT 文件新增的待翻譯項目併入已經翻譯好的 PO 文件中。不必每次擷取 POT 文件後都得重頭再翻譯一次。
+</p>
+
+<h4>
+參考文件與後記
+</h4>
+
+<ul>
+    <li>
+    <a href="http://www.gnu.org/software/gettext/manual/gettext.html">
+    GNU gettext manual</a>
+    </li>
+
+    <li>
+    <a href="http://valadoc.org/glib-2.0/GLib.Intl.html">
+    Vala Intl</a>
+    </li>
+    
+    <li>
+    <a href="http://www.kernel.org/doc/man-pages/online/pages/man3/setlocale.3.html">
+    manpage setlocale(3)</a> - 包含區碼的表達格式。
+    </li>
+</ul>
+
+<p>
+基於歷史與傳統因素，I18N 的區碼並沒有採用嚴格的格式，同一個文化語系在不同的系統上，可能是用不同的區碼表示。這多少產生了程式人員在編寫跨平台的多語化應用軟體時的困擾。或是使用者會抱怨明明設定了環境變數，但軟體顯示的訊息還是沒變。這都是區碼表達格式不匹配的結果。請程序員秉持國際觀，以寬容的文化包容心態多了解區域性差異。善用 <dfn>setlocale()</dfn> 的回傳值或是環境變數 <var>LANGUAGE</var> 改進你的程式內容，提高環境的包容程度。
+</p>
+<p>
+GNU gettext 在執行 <dfn>setlocale()</dfn> 時，採取完全相符的比對策略。但是執行 <dfn>gettext()</dfn> 則是從寬搜尋。例如你的系統區碼表中只有 en_US.utf8 的區碼，那麼執行 <code>setlocale(TYPE, "en_US")</code> 就會判定不匹配。但是執行 <code>gettext(msgid)</code> 時，則會依序從 <var>$locale_dir/en_US.utf8/LC_MESSAGES</var>、<var>$locale_dir/en_US/LC_MESSAGES</var>、<var>$locale_dir/en/LC_MESSAGES</var> 這些目錄中搜尋指定的 MO 文件，條件寬鬆許多。這幾點是初學者需要留意之處。
+</p>
+
+<p>
+GNU gettext 包含了相當豐富的內容，在本文中並沒有詳細說明。請自行閱讀 GNU gettext manual。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/PHP%20%E7%B6%B2%E9%A0%81%E8%A8%8A%E6%81%AF%E5%9C%8B%E9%9A%9B%E5%8C%96%E8%88%87%20gettext%20%E4%BD%BF%E7%94%A8%E7%B6%93%E9%A9%97.html">PHP 網頁訊息國際化與 gettext 使用經驗</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15171511.html">http://blog.roodo.com/rocksaying/archives/15171511.html</a></div>

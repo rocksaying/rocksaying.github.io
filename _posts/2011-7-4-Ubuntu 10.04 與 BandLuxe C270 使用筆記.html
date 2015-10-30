@@ -1,0 +1,182 @@
+---
+title: Ubuntu 10.04 與 BandLuxe C270 使用筆記
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,3g]
+---
+<p>
+我日前買了一張 BandLuxe C270 的 3G 行動網卡，以使用我的中華電信 3G 服務。
+雖然那張行動網卡的規格上標明 Linux Kernel 2.6.27 以上即支援，但實際使用時，還是有些事情沒有說。
+</p>
+
+<p>
+這張行動網卡提供了所謂「內建驅動程式」的功能。這表示它內建了一個 USB CDROM (光碟機)，裡面儲放了它的驅動程式軟體。當你將它插入電腦的 USB 插座後，作業系統首先會把它當成一個 USB 光碟機。對 Windows XP/7 而言，當這張網卡被當成 USB 光碟機之後，作業系統會執行自動安裝程式(若你並未關閉此功能)，安裝網卡內儲的驅動程式與連線軟體。接著，剛才安裝的連線軟體就會取消行動網卡的 USB 光碟功能，並啟用它的 3G 通訊功能。
+</p>
+<p>
+但是上述動作在 Linux 系統中完全沒有意義。因為行動網卡內儲的驅動程式安裝軟體是 Windows 版，沒有 Linux 版。當你將行動網卡插入 USB 插座後，Linux 只會把它當成一個 USB 光碟機，就不會再繼續其他動作。就算你開啟那台光碟，裡面的軟體也不能在 Linux 下使用。
+</p>
+
+<!--more-->
+<h4>
+基本啟用途徑
+</h4>
+
+<p>
+Ubuntu 10.04 的 Linux kernel 版本是 2.6.32 ，已經支援 BandLuxe C270。
+再確認是否安裝了 <dfn>modemmanager</dfn> 套件。
+接著依下列指示啟用通訊功能。
+</p>
+
+<p>
+那要如何才能真正啟用 BandLuxe C270 的 3G 功能呢？解決方式其實非常簡單，你只需要退出它的 USB 光碟，Linux 接下來就會啟動它的 3G 通訊功能(以及附帶的 SD 讀卡機功能)。這個方法適用各種 Linux 桌面版本(Linux Kernel 2.6.27以上)，例如 Ubuntu 9.10 以上、Debain 6。大多數具有類似「內建驅動程式」功能的行動網卡，也可以這樣啟用。
+</p>
+
+<p>
+例如，當 BandLuxe C270 插入電腦的 USB 插座後，你的 Ubuntu 10.04 桌面上就會出現一個名叫「BandLuxe C270」的光碟機。滑鼠指標移動到那個光碟機圖示上，按下滑鼠右鍵叫出選單，再按下「退出」項即可關閉它的 USB 光碟功能。稍等幾秒後，你的網路連線管理員(NetworkManager)就會偵測到 GSM 網路。
+</p>
+
+<p>
+我的 Ubuntu 10.04 沒有啟用桌面圖示功能，所以這個動作需要透過指令列達成。
+操作步驟如下列:
+</p>
+
+<ol>
+    <li>
+    首先查看我的 3G 行動網卡的光碟標籤名稱。輸入指令: <code> ls /dev/disk/by-label </code>。
+    我會看到一個名稱叫 <dfn>BandLuxe\x20C270</dfn> 的設備，那就是我的目標了。
+    不同型號的 3G 行動網卡的光碟標籤名稱不一樣。若你用別款 3G 行動網卡，請按此步驟查看你的網卡的光碟標籤名稱。這個名稱是固定不變，所以只要查看一次，然後記下來。
+    </li>
+
+    <li>
+    第二步就是用指令 eject 退出那台光碟機。輸入指令: <code> sudo eject /dev/disk/by-label/BandLuxe\x20C270</code>。
+    </li>
+
+    <li>
+    退出之後，再等個兩、三秒，就會偵測到 GSM 網路了。詳細地說，Linux 核心會建立代表 3G 數據機的 /dev/ttyUSB0, /dev/ttyUSB1, /dev/ttyUSB2 這3個設備，以及一個代表 SD 讀卡機的 /dev/sd? 設備。
+    </li>
+</ol>
+
+<div class="note">
+<dfn>/dev/disk/by-label</dfn> 是 Linux Kernel 較新的功能。它的用途是以儲存體的標籤名稱作為設備名稱，易於人類閱讀識別。其內的設備名稱實際上是一個符號連結，指向實際的設備名稱。例如 <dfn>/dev/disk/by-label/BandLuxe\x20C270</dfn> 通常指向 <dfn>/dev/sr0</dfn>。注意， sr0 的數字部份會隨著同類設備的增加而改變，並不是固定值。僅看 <dfn>/dev/sr?</dfn> 這個名稱，並不能確定對應到哪個設備。最好還是根據標籤名稱(label)來查設備。
+</div>
+
+<p>
+我寫成 shell script ，如下:
+</p>
+
+<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+
+<span class="nv">DEVICE_NAME</span><span class="o">=</span><span class="s2">"BandLuxe C270"</span>
+<span class="nv">DEVICE</span><span class="o">=</span>/dev/disk/by-label/BandLuxe<span class="se">\\</span>x20C270
+
+<span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$DEVICE</span> <span class="o">]</span>; <span class="k">then
+  </span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">DEVICE_NAME</span><span class="k">}</span><span class="s2"> is not pluging. I will do nothing."</span>
+  <span class="nb">exit </span>1
+<span class="k">fi
+
+</span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">DEVICE_NAME</span><span class="k">}</span><span class="s2"> found."</span>
+sudo eject <span class="nv">$DEVICE</span>
+
+<span class="nb">echo</span> <span class="s2">"Waiting for system detect </span><span class="k">${</span><span class="nv">DEVICE_NAME</span><span class="k">}</span><span class="s2"> as 3G Modem. (Ctrl+C to break)"</span>
+<span class="nv">WAITING</span><span class="o">=</span>1
+<span class="k">while</span> <span class="o">[</span> <span class="nv">$WAITING</span> -eq 1 <span class="o">]</span>; <span class="k">do
+  </span><span class="nb">echo</span> -n <span class="s2">"."</span>
+  sleep 1
+  <span class="k">if</span> <span class="o">[</span> -e /dev/ttyUSB0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">Ok."</span>
+    <span class="nv">WAITING</span><span class="o">=</span>0
+  <span class="k">fi
+done
+
+</span><span class="nb">exit </span>0
+</code></pre>
+
+
+<h4>
+usb modeswitch
+</h4>
+
+<p>
+usb modeswitch 是一套偵測 USB 設備狀態，自動將 3G 行動網卡切換到 3G 通訊功能的軟體。在 Debian Sid 和 Ubuntu 10.04 以上的版本皆提供套件，相關套件是: <dfn>usb-modeswitch</dfn> 和 <dfn>usb-modeswitch-data</dfn>。如果你的行動網卡在它的支援清單之中，你只要安裝了這兩個套件，你就不需要做前一節所述的啟用工作。
+</p>
+
+<p>
+然而 Ubuntu 10.04 提供的 usb-modeswitch 太舊，並不支援 BandLuxe C270 。根據我的測試，usb-modeswitch 的主程式需要 1.1.7 版以上，才可支援 BandLuxe C270 設定。Ubuntu 10.10 以上提供的 usb-modeswitch 就支援 BandLuxe C270。複製新版 usb-modeswitch-data 內的 BandLuxe C270 組態內容給舊版 usb-modeswitch 使用，並不能運作。
+</p>
+
+<p>
+如果你必須要在 Ubuntu 10.04 上使用 usb-modeswitch ，你要從 usb-modeswitch 公式網站下載兩個源碼壓縮文件，自行編譯安裝。
+</p>
+
+<ul>
+    <li>usb-modeswitch 公式網站: <a href="http://www.draisberghof.de/usb_modeswitch/">Draisberghof - USB_ModeSwitch</a>。
+    </li>
+    
+    <li>為了編譯 usb-modeswitch 主程式，你需要安裝套件 libusb-dev 。
+    </li>
+
+    <li>下載 usb-modeswitch-1.?.?.tar.bz2 與 usb-modeswitch-data-????.tar.bz2 這兩個壓縮文件。
+    </li>
+    
+    <li>解壓上列兩個壓縮文件，先進入 usb-modeswitch 的目錄，執行 <code>sudo make install</code>。再進入 usb-modeswitch-data 的目錄，一樣執行 <code>sudo make install</code>。若兩個工作編譯無誤，就會完成安裝動作。
+    </li>
+    
+    <li>現在你的 usb-modeswitch 已經可以工作了。不用重新啟動系統，現在直接插上 BandLuxe C270，看看網路連線管理員是否可成功偵測 GSM 網路。
+    </li>
+</ul>
+
+<h4>
+網路連線管理員的連線設定
+</h4>
+
+<p>
+當你插上 3G 行動網卡，並選擇上述其中一個方法啟用其通訊功能後，Ubuntu 桌面應該會彈出一個「偵測到行動寬頻(GSM)設備」的訊息框，這表示網路連線管理員已經看到這個 3G 行動網卡了。
+</p>
+
+<p>
+如果你沒有看到這個訊息框，但確定作業系統已經成功將 3G 行動網卡切換到通訊功能，那麼可能是你沒有安裝 modemmanager 套件。請安裝此套件，例如執行: <code>sudo apt-get install modemmanager</code>。此套件是預設安裝項目，通常不必自己動手裝。但我曾經在我的某一台電腦上，碰到 modemmanager 未安裝的情形。一開始未注意到這件事，只知道 3G 網卡明明按照前面的步驟啟用通訊功能了，但網路連線管理員就是找不到這個設備。直到我將 modemmanager 套件安裝上去後才搞定。
+</p>
+
+<p>
+若你是第一次插上 3G 行動網卡，網路連線管理員會出現一個「新的行動寬頻(GSM)連線...」的選項，供使用者啟動設定精靈。滑鼠左鍵點擊工作列上的「網路連線管理員」圖示，浮出選單中應出現「新的行動寬頻(GSM)連線...」項目。
+選擇該項目，開始新增你的 3G 帳號。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/1068387_h49ggfw_l.png" alt="新的行動寬頻連線" />
+
+<p>
+下一步可選擇服務地區。台灣地區目前知道的服務提供者是: Chunghwa Telecom (中華電信)、Far EasTone (遠傳)、TW Mobile (台灣大哥大)、Vibo Telecom (威寶)。
+</p>
+
+<p>
+我是中華電信 3G 上網吃到飽用戶，所以我選 Chunghwa Telecom ，資費方案(APN)要選 internet。
+不過這個設定精靈只做了半套工，當你結束設定精靈後，還要再繼續編輯連線內容，才能輸入你的 3G 門號與密碼。
+</p>
+
+<p>
+以滑鼠右鍵點擊工作列上的「網路連線管理員」圖示，選擇「編輯連線」項目，再切換到「行動寬頻」頁面，選擇剛剛新增的連線項目，然後編輯它。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/1068389_pc5zj7k_l.png" alt="查看可用的行動寬頻項目"/>
+
+<p>
+下圖是編輯畫面。通常只需要編輯第一頁的內容。號碼不變。使用者名稱填入你的 3G 門號(09xx的門號)。密碼可填可不填，此處不填的話，連線時會再問你。存取點名稱(APN)依你的服務商提供的名稱，我當然是維持internet不變。個人識別號碼(PIN)，中華電信預設是 0000 。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/1068391_l39926b_l.png" alt="編輯行動寬頻項目"/>
+
+<p>
+設定完成後，你就可以透過網路連線管理員開啟或關閉 3G 連線了。
+</p>
+
+<h4>
+Windows XP 題外話
+</h4>
+
+<p>
+話說我這張 3G 網卡安裝時，一開始在 Windows XP 上一直無法連線。反而先從 Ubuntu 10.04 上連線成功。在 Google 查了半天，也看不出 Windows XP 的驅動程式有問題。後來注意到 3G 行動網卡連線時是當成一台數據機(Modem)，我才突然想到我的 Windows XP 無法連線的原因。因為我已經很久都沒用 Modem 撥接上網，所以我很久以前就把 Windows XP 的 Telephony 服務關閉了。既然 Telephony 關閉了，就不能啟用數據撥接功能，所以 BandLuxe 的連線軟體就沒有反應了。
+</p>
+
+<p>
+它的驅動程式自動安裝軟體，怎麼沒有想到檢查 Telephony 服務是否開啟了啊。搞得我差點不想在 Windows XP 上使用 3G 上網。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15987847.html">http://blog.roodo.com/rocksaying/archives/15987847.html</a></div>

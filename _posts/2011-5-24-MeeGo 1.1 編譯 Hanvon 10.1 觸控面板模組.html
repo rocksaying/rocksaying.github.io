@@ -1,0 +1,121 @@
+---
+title: MeeGo 1.1 編譯 Hanvon 10.1 觸控面板模組
+category: computer
+old-category: 電腦技術
+tags: [meego,linux_kernel]
+---
+<p>
+  MeeGo 1.1 使用的 Linux 核心是 2.6.35 ，此版本並不支援 Hanvon (漢王)觸控面板，也不支援多點觸控。
+  必須套用 MeeGo 維護者額外提供的 patch 文件，自行編譯核心。
+</p>
+<h4>安裝套件</h4>
+<p>安裝 MeeGo 後，再安裝編譯核心所需的套件。</p>
+<pre class='term'>sudo zypper install kernel-netbook-devel make gcc diffutils patch</pre>
+<h4>取得 Patch</h4>
+<p>
+  查看 <a href="https://bugs.meego.com/show_bug.cgi?id=10887">Hanvon/PixCir touchscreen constantly "clicks" when touched</a>。
+  下載上列文件中的其中3個patch:
+</p>
+<ul>
+  <li>0001-2.6.37-hid-multitouch-support-for-PixCir-based-panels.patch</li>
+  <li>0002-2.6.37-hid-multitouch-disable-2.6.36-MT-features.patch</li>
+  <li>0003-2.6.37-hid-multitouch-add-unitec-ids-to-driver.patch</li>
+</ul>
+<p>
+  套用此 patch 後，可讓 2.6.35 的核心支持 Hanvon 觸控面板。
+  但受限於核心功能，僅提供單點觸控。
+</p>
+
+<!--more-->
+<h4>編譯核心</h4>
+<ul>
+  <li>http://wiki.meego.com/Recompile_kernel</li>
+  <li>http://wiki.meego.com/How-to:_getting_new_chipset_support_to_the_MeeGo_kernel</li>
+</ul>
+<h5>1. 取得 MeeGo 核心原始碼:</h5>
+<p>下載:</p>
+<pre class='term'>wget http://repo.meego.com/MeeGo/releases/1.1/core/repos/source/kernel-2.6.35.3-10.3.src.rpm</pre>
+<p>還原:</p>
+<pre class='term'>rpm2cpio kernel-2.6.35.3-10.3.src.rpm | cpio -id</pre>
+<p>
+  rpm 還原後，會看到很多文件，其中大部份是過往的 patch 文件，略過不理。
+  我們需要的是 linux-2.6.35.tar.bz 和 patch-2.6.35.3.bz2 。
+</p>
+<h5>2. 解開核心源碼</h5>
+<p>解開 kernel source 與 Patch 文件。</p>
+<pre class='term'>tar xjvf linux-2.6.35.tar.bz
+bzip2 -d patch-2.6.35.bz2</pre>
+<h5>3. 套件 Patch 內容</h5>
+<p>將觸控面板所需的3個更新文件也複製到同目錄下。以便下列操作。</p>
+<pre class='term'>
+cd linux-2.6.35
+
+# patch patch-2.6.35.3 
+patch -p1 < ../patch-2.6.35.3
+
+# patch for hanvon touchpanel
+patch -p1 < ../0001-2.6.37-hid-multitouch-support-for-PixCir-based-panels.patch
+patch -p1 < ../0002-2.6.37-hid-multitouch-disable-2.6.36-MT-features.patch
+patch -p1 < ../0003-2.6.37-hid-multitouch-add-unitec-ids-to-driver.patch
+
+cd ..
+</pre>
+<h5>4. 產生預設的 kernel config</h5>
+<pre class='term'>make -f Makefile.config</pre>
+<p>
+  會產生多組 kernel config 。
+  將目標平台的 kernel config 複製到 kernel source ，
+  且文件名稱改為 .config.
+  本例使用 kernel-netbook.config ，此為 Netbook 平台適用組態。
+</p>
+<pre class='term'>
+cp kernel-netbook.config linux-2.6.35/.config
+cd linux-2.6.35
+
+# 套用 .config 的內容進行配置。
+make oldconfig
+</pre>
+<p>
+  在進行 make oldconfig 時，它會詢問幾個新項目，其中一項是在問要不要啟用 hanvon 設備。
+  答案當然是 yes 。
+</p>
+<h5>5. 開始編譯</h5>
+<p>
+  整個編譯工作，會需要1GB以上的磁碟空間，以及相當長的編譯時間。
+  我建議在桌上型電腦上進行編譯工作，而不要直接在安裝 MeeGo 的 netbook 或平板機上進行。
+  以避免儲存空間不足或是編譯耗時的狀況。
+</p>
+<pre class='term'>
+# 開始編譯。
+make
+
+make modules
+
+# 將各模組安裝到 /lib/modules/2.6.35.3 目錄。
+sudo make modules_install
+
+# 將3個核心文件安裝到 /boot 目錄。
+# System.map-2.6.35.3  config-2.6.35.3  vmlinuz-2.6.35.3
+sudo make install
+</pre>
+<p>
+  如果要將已編好的核心文件與模組打包起來，在安裝後，打包下列內容:
+</p>
+<ul>
+  <li>/lib/modules/2.6.35.3</li>
+  <li>/boot/System.map-2.6.35.3</li>
+  <li>/boot/config-2.6.35.3</li>
+  <li>/boot/vmlinuz-2.6.35.3</li>
+</ul>
+<h5>6. (非必要) 建立新的 initrd image</h5>
+<pre class='term'>cd /boot
+sudo mkinitrd -o initrd.img-2.6.35.3 2.6.35.3</pre>
+<p>最後，更新你的開機程式，例如 grub2:</p>
+<pre class='term'>sudo update-grub</pre>
+<h4>後記</h4>
+<p>
+  MeeGo 終於趕在本週(5/23,5/24)的年會之前釋出 MeeGo 1.2。
+  不過根據我先前在 twitter 上得到的消息，MeeGo 1.2 使用的 Linux kernel 版本為 2.6.37。
+  如無修補，則此版本仍然不適用漢王觸控面板。
+  如果手頭上的測試硬體機種採用的觸控面板屬於此類，屆時仍然免不了要自行編譯核心。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15700151.html">http://blog.roodo.com/rocksaying/archives/15700151.html</a></div>

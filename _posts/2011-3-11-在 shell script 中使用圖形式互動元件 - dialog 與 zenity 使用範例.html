@@ -1,0 +1,279 @@
+---
+title: 在 shell script 中使用圖形式互動元件 - dialog 與 zenity 使用範例
+category: computer
+old-category: 電腦技術
+tags: [linux,shell script]
+---
+<p>
+在 Unix 世界中，系統管理者普遍會用 shell script 撰寫簡單的管理工具。
+為了強化易用性，簡化 shell script 的撰寫工作，就出現了專門負責提供圖形式互動元件的小工具，
+可供我們在 shell script 中調用。
+讓它們處理複雜的使用者輸入工作，同時也提高了 shell script 的使用親和力。
+</p>
+<p>
+本文提供其中兩種工具的使用範例。
+</p>
+<ul>
+    <li>
+    一、文字終端機環境: dialog。
+    非 Ubuntu 預裝項目。
+    </li>
+    <li>
+    二、GNOME桌面環境: zenity。
+    這是 GNOME Desktop 計劃下的一個小工具。為 Ubuntu 桌面版本預裝項目，Ubuntu 桌面版都會安裝此套件。
+    </li>
+</ul>
+
+<!--more-->
+<h4>
+判斷使用環境
+</h4>
+
+<p>
+dialog 與 zenity 所提供的使用元件基本上是一致的。
+若你想要寫一個具有圖形式輸入元件的 shell script ，且當其執行於桌面環境時 zenity ，執行於純文字終端環境時則用 dialog。那麼可以參考下列的判斷方式。
+</p>
+
+<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+
+<span class="nv">MESSAGE</span><span class="o">=</span><span class="s2">"Hello world"</span>
+
+zenity --help &gt; /dev/null
+<span class="k">if</span> <span class="o">[</span> 0 <span class="o">=</span> <span class="nv">$?</span> <span class="o">]</span>; <span class="k">then
+    </span>zenity --info --text<span class="o">=</span><span class="s2">"</span><span class="nv">$MESSAGE</span><span class="s2">"</span>
+<span class="k">else
+    </span>dialog --no-shadow --infobox <span class="s2">"</span><span class="nv">$MESSAGE</span><span class="s2">"</span> 3 20
+<span class="k">fi</span>
+</code></pre>
+
+<p>
+zenity 是一個基於 Gtk+ 的視窗程式，當其執行時會先初始 GTK 環境。
+若無法初始 GTK 環境時，將結束且結束碼為 1。
+可據此判斷其是否執行於桌面環境。
+</p>
+
+<h4>
+dialog 使用範例
+</h4>
+<p>
+dialog 說明請參閱 dialog manpage。另推薦<span class="name_notation">臥龍小三</span>所著《Linux Shell 程式設計實務》一書，第十六章有許多精彩範例。
+</p>
+
+<h5>
+取得使用者的輸入結果
+</h5>
+<p>
+dialog 主要由程式結束碼(exit code)返回使用者輸入結果。
+按 Unix shell script 慣例，0 表示正常、肯定等正面意義。
+非零值(通常是1)皆表示錯誤、否定等錯誤意義。
+若輸入結果為字串形式，則預設上將寫入標準錯誤輸出端(stderr)。
+一般皆將其重導入暫存性檔案，再自檔案中讀出使用者輸入的內容。
+</p>
+<p>
+dialog 可改變結果的輸出管道，但一般不建議這麼做。
+</p>
+
+<pre class="highlight"><code>dialog --yesno <span class="s2">"是否繼續"</span> 5 40
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"確定"</span>
+<span class="k">else
+    </span><span class="nb">echo</span> <span class="s2">"取消"</span>
+<span class="k">fi</span>
+</code></pre>
+
+<br/>
+
+<pre class="highlight"><code>dialog --textbox /usr/share/doc/libc6/copyright 20 60
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"接受"</span>
+<span class="k">else
+    </span><span class="nb">echo</span> <span class="s2">"不接受"</span>
+<span class="k">fi</span>
+</code></pre>
+
+<p>
+使用者可按下 Ctrl-C 中止，此時將得到否定的程式結束碼(1)。
+</p>
+
+<pre class="highlight"><code>dialog --inputbox 請輸入文字 8 40 2&gt; /dev/shm/dialog-output
+<span class="nv">text</span><span class="o">=</span><span class="sb">`</span>cat /tmp/dialog-output<span class="sb">`</span>
+<span class="nb">echo </span>You input <span class="s2">"</span><span class="nv">$text</span><span class="s2">"</span>.
+</code></pre>
+
+
+<div class="note">
+<p>
+新版 Linux 系統(大概從 Linux kernel 2.4 以後)會自動建立一個基於共享記憶體的檔案系統，掛載在 /dev/shm 。簡單地說，那是一塊 Ram disk，但使用上比 Ram disk 更方便。在其中建立檔案，便等於配置相同大小的共享記憶體區域，程序員甚至不需要用到 mmap() 或 shmget()；刪除檔案即釋出記憶體。
+</p>
+<p>
+處理暫存性資料時，/dev/shm 的效能遠優於傳統的 /tmp。
+但對於不支援 /dev/shm 的傳統系統，仍建議將暫存性資料存於 /tmp 。
+</p>
+</div>
+
+<h5>
+由標準輸入端控制 dialog 行為
+</h5> 
+<p>
+這類使用元件必須透過標準輸入端輸入資料，才能控制它的動作。
+例如 gauge, progressbox。
+</p>
+
+<pre class="highlight"><code><span class="k">for </span>i <span class="k">in </span>1 2 3 4 5 6 7 8 9 10 ; <span class="k">do
+    case</span> <span class="nv">$i</span> <span class="k">in
+    </span>1<span class="p">)</span>
+        <span class="c"># setp 1... do something.</span>
+        sleep 1
+        <span class="p">;;</span>
+    2<span class="p">)</span>
+        <span class="c"># setp 2... do something.</span>
+        sleep 1
+        <span class="p">;;</span>
+    3<span class="p">)</span>
+        <span class="c"># setp n... do something.</span>
+        <span class="c"># 以下類推</span>
+        sleep 1
+        <span class="p">;;</span>
+    <span class="k">*</span><span class="p">)</span>
+        <span class="c"># setp n... do something.</span>
+        sleep 1
+        <span class="p">;;</span>
+    <span class="k">esac</span>;
+
+    <span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">0"</span> <span class="c"># write new percentage to zentiy</span>
+<span class="k">done</span> <span class="se">\</span>
+| dialog --gauge Installing... 6 40
+
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -ne 0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"Cancel."</span>
+    <span class="nb">exit </span>1
+<span class="k">fi
+
+</span><span class="nb">echo</span> <span class="s2">"Normal end. If you cancel, here will not execute."</span>
+</code></pre>
+
+
+
+<h4>
+zenity 使用範例
+</h4>
+<p>
+GNOME zenity 完整說明請參閱 zenity manpage，或線上版:《<a href="http://library.gnome.org/users/zenity/stable/">Zenity Manual</a> 》。
+</p>
+
+<h5>
+由程式結束碼返回使用者輸入結果
+</h5>
+<p>
+這類使用元件，由程式結束碼(exit code)返回使用者輸入結果。按 Unix shell script 慣例，0 表示正常、肯定等正面意義。
+非零值(通常是1)皆表示錯誤、否定等錯誤意義。
+question, text-info 屬於此類元件。
+</p>
+
+<pre class="highlight"><code>zenity --question
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"確定"</span>
+<span class="k">else
+    </span><span class="nb">echo</span> <span class="s2">"取消"</span>
+<span class="k">fi</span>
+</code></pre>
+
+<br/>
+
+<pre class="highlight"><code>zenity --title<span class="o">=</span>本程式授權書 --text-info <span class="se">\</span>
+  --filename<span class="o">=</span>/usr/share/doc/libc6/copyright --width<span class="o">=</span>600 --height<span class="o">=</span>600
+
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"接受"</span>
+<span class="k">else
+    </span><span class="nb">echo</span> <span class="s2">"不接受"</span>
+<span class="k">fi</span>
+</code></pre>
+
+<p>
+雖然 text-info 元件沒有否定的按鈕，但若按下視窗標題區的 X 鈕，仍會得到否定的程式結束碼(1)。
+</p>
+
+<h5>
+由標準輸出端返回使用者輸入結果
+</h5>
+<p>
+這類使用元件，由標準輸出端返回使用者輸入結果。
+大部份元件屬於此類。
+</p>
+
+<pre class="highlight"><code><span class="nv">text</span><span class="o">=</span><span class="sb">`</span>zenity --entry --title<span class="o">=</span>請輸入文字<span class="sb">`</span>
+<span class="nb">echo </span>You input <span class="s2">"</span><span class="nv">$text</span><span class="s2">"</span>.
+</code></pre>
+
+<br/>
+
+<pre class="highlight"><code><span class="nv">filepath</span><span class="o">=</span><span class="sb">`</span>zenity --file-selection --title<span class="o">=</span>選擇檔案<span class="sb">`</span>
+<span class="nb">echo </span>You <span class="k">select</span> <span class="s2">"</span><span class="nv">$filepath</span><span class="s2">"</span>.
+</code></pre>
+
+<p>
+選項 <var>--directory</var> 改為選擇目錄。<var>--multiple</var> 則可複選。
+</p>
+
+<pre class="highlight"><code><span class="nv">da</span><span class="o">=</span><span class="sb">`</span>zenity --calendar --date-format<span class="o">=</span>%F<span class="sb">`</span>
+<span class="nb">echo </span>You choice <span class="nv">$da</span>
+</code></pre>
+
+<p>
+<var>--date-format</var> 所接受的日期格式，與指令 <kbd>date</kbd> 相同。
+</p>
+
+<h5>
+由標準輸入端控制 zenity 的行為
+</h5> 
+<p>
+這類使用元件有一部份參數，必須透過標準輸入端輸入，才能控制它的動作。
+例如 list, progress。
+</p>
+
+<pre class="highlight"><code><span class="nv">item</span><span class="o">=</span><span class="sb">`</span>ls | zenity --list --column<span class="o">=</span>List<span class="sb">`</span>
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
+  </span><span class="nb">echo </span>You check <span class="nv">$item</span>.
+<span class="k">else
+  </span><span class="nb">echo </span>Cancel.
+<span class="k">fi</span>
+</code></pre>
+
+
+<pre class="highlight"><code><span class="k">for </span>i <span class="k">in </span>1 2 3 4 5 6 7 8 9 10 ; <span class="k">do
+    case</span> <span class="nv">$i</span> <span class="k">in
+    </span>1<span class="p">)</span>
+        <span class="c"># setp 1... do something.</span>
+        sleep 1
+        <span class="p">;;</span>
+    2<span class="p">)</span>
+        <span class="c"># setp 2... do something.</span>
+        sleep 1
+        <span class="p">;;</span>
+    3<span class="p">)</span>
+        <span class="c"># setp n... do something.</span>
+        <span class="c"># 以下類推</span>
+        sleep 1
+        <span class="p">;;</span>
+    <span class="k">*</span><span class="p">)</span>
+        <span class="c"># setp n... do something.</span>
+        sleep 1
+        <span class="p">;;</span>
+    <span class="k">esac</span>;
+
+    <span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">0"</span> <span class="c"># write new percentage to zentiy</span>
+<span class="k">done</span> <span class="se">\</span>
+| zenity --progress --text<span class="o">=</span><span class="s2">"Installing..."</span> --auto-close --auto-kill
+
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -ne 0 <span class="o">]</span>; <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"Cancel."</span>
+    <span class="nb">exit </span>1
+<span class="k">fi
+
+</span><span class="nb">echo</span> <span class="s2">"Normal end. If you cancel, here will not execute."</span>
+</code></pre>
+
+
+<p>
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15333309.html">http://blog.roodo.com/rocksaying/archives/15333309.html</a></div>

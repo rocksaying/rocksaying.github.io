@@ -1,0 +1,60 @@
+---
+title: GJS/GnomeShell - timeout
+category: programming
+old-category: JavaScript
+tags: [gjs]
+---
+<p>
+GJS/GnomeShell 的運行環境，基本上是以事件為基礎。而它的事件處理迴圈，則是由 <dfn>mainloop</dfn> 負責。
+mainloop 除了主要事件來源外，還提供了兩種可添加的事件來源，即 timeout 事件與 idle 事件。
+本文為這些功能的使用範例。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="kr">const</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
+<span class="c1">//if (Mainloop == null)</span>
+<span class="c1">//    Mainloop = imports.seed.mainloop; // a simulate one. </span>
+
+<span class="kd">var</span> <span class="nx">event_source1_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="nx">print</span><span class="p">(</span><span class="s2">"repeat..."</span><span class="p">);</span>
+    
+    <span class="c1">// if return true, it will run again.</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">event_source2_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="nx">print</span><span class="p">(</span><span class="s2">"run only once..."</span><span class="p">);</span>
+    
+    <span class="c1">// if return false, it will be remove from mainloop.</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">idle_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">idle_source_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">idle_add</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"idle..."</span> <span class="o">+</span> <span class="nx">idle_count</span><span class="p">);</span>
+        <span class="nx">idle_count</span><span class="o">++</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">idle_count</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">// remove this source.</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="nx">GLib</span><span class="p">.</span><span class="nx">PRIORITY_DEFAULT_IDLE</span><span class="p">);</span>
+
+<span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add_seconds</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">event_source1_id</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"stop repeat"</span><span class="p">);</span>
+        <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">source_remove</span><span class="p">(</span><span class="nx">event_source1_id</span><span class="p">);</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"after 2 seconds, this will quit"</span><span class="p">);</span>
+        <span class="nx">event_source1_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"quit"</span><span class="p">);</span>
+        <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">quit</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">});</span>
+
+<span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
+
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15700221.html">http://blog.roodo.com/rocksaying/archives/15700221.html</a></div>

@@ -1,0 +1,98 @@
+---
+title: 粗略看過 CoffeeScript 的語法特徵
+category: programming
+old-category: JavaScript
+tags: [javascript]
+---
+<p>
+今天我來說個新的程式語言，<a href="http://jashkenas.github.com/coffee-script/">CoffeeScript</a> 。 CoffeeScript 的編譯器會將它的程式碼轉譯成 JavaScript 程式碼。它產生的 JavaScript 程式碼基本上可以在任何 JavaScript 環境中運行。
+</p>
+
+<p>
+我沒有用過這玩意，只是它的語法令我覺得有點意思。CoffeeScript 的設計目的，在為 JavaScript 環境提供一個「更整潔的語法」。我大致看了一下它的程式碼範例，它大部份的語法混合了 Python 與 Ruby 的風格，但程式碼區塊(匿名函數)這部份則是採用 C# 語法。
+我們來看看「<a href="http://www.ibm.com/developerworks/web/library/wa-coffee1/index.html">Your first cup of CoffeeScript, Part 1: Getting started</a>」這篇文章中的範例程式碼，初步認識 CoffeeScript 的語法。
+</p>
+
+<!--more-->
+<p>
+具 Python 特徵的語法是其程式段落格式採用 Python 風格，捨棄配對括號，而嚴格地使用縮排區分段落，但不用加 : 。
+</p>
+
+<p>
+具 Ruby 特徵的語法是:
+</p>
+
+<ul>
+    <li>函數呼叫像 Ruby 一樣可以略去參數列的 () 括號。</li>
+    <li>字串竄寫是用 #{}。</li>
+    <li>後置條件式。</li>
+    <li>Ruby 的 range 表達方式。</li>
+    <li>但不採用 Ruby 的迭代用法。</li>
+</ul>
+
+<p>
+匿名函數則是 C# 格式，但將函數內文的連接符號從 =&gt; 改為 -&gt; 。此外，若函數不接受參數，那代表參數列的 () 可以省略。
+</p>
+
+<p>
+先看參考文章 Listing 2 的 CoffeeScript 程式碼:
+</p>
+
+<pre class="highlight"><code><span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">.</span><span class="nf">.</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">console</span><span class="p">.</span><span class="nf">log</span> <span class="s2">"Hello </span><span class="si">#{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
+</code></pre>
+
+
+<p>
+用 Ruby 來讀的話，將是:
+</p>
+<pre class="highlight"><code><span class="p">(</span><span class="mi">1</span><span class="p">.</span><span class="nf">.</span><span class="mi">5</span><span class="p">).</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="s2">"Hello </span><span class="si">#{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+</code></pre>
+
+
+<p>
+用 Python 來讀則是:
+</p>
+<pre class="highlight"><code><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+  <span class="k">print</span><span class="p">(</span><span class="s">"Hello </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+</code></pre>
+
+
+<p>
+再看參考文章 Listing 5 的 CoffeeScript 程式碼:
+</p>
+
+<pre class="highlight"><code><span class="n">stdin</span><span class="p">.</span><span class="nf">on</span> <span class="s1">'data'</span><span class="p">,</span> <span class="p">(</span><span class="n">input</span><span class="p">)</span> <span class="o">-&gt;</span> 
+    <span class="nb">name</span> <span class="o">=</span> <span class="n">input</span><span class="p">.</span><span class="nf">trim</span><span class="p">()</span> 
+    <span class="n">process</span><span class="p">.</span><span class="nf">exit</span><span class="p">()</span> <span class="k">if</span> <span class="nb">name</span> <span class="o">==</span> <span class="s1">'exit'</span> 
+    <span class="n">console</span><span class="p">.</span><span class="nf">log</span> <span class="s2">"Hello </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+</code></pre>
+
+
+
+<p>
+按照 C# 風格可讀為:
+</p>
+
+<pre class="highlight"><code><span class="n">stdin</span><span class="p">.</span><span class="n">on</span><span class="p">(</span><span class="s">"data"</span><span class="p">,</span> <span class="p">(</span><span class="n">input</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="n">var</span> <span class="n">name</span> <span class="o">=</span> <span class="n">input</span><span class="p">.</span><span class="n">trim</span><span class="p">()</span> 
+    <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">==</span> <span class="s">"exit"</span><span class="p">)</span>  
+        <span class="n">process</span><span class="p">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="n">console</span><span class="p">.</span><span class="n">log</span><span class="p">(</span><span class="err">@</span><span class="s">"Hello $name}"</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="p">)</span>
+</code></pre>
+
+
+<p>
+但我另外想到一個問題，按照 CoffeeScript 縮排分段方式，匿名函數幾乎只能放在最後一個參數。
+如果我要傳遞兩個匿名函數，我就不知道要如何縮排了。
+例如 C# 的這一行 <code>a_method( (i) => i+1, () => 1 )</code>，似乎就寫不出來。
+</p>
+
+<p>
+它揉雜了許多程式語言的特徵，在我看來，有些表達風格顯得不一致。
+從程式碼的字數來算，需要輸入的字數確實比較少了；但從文字閱讀的角度來看，似乎不是那麼容易看得明白。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18352007.html">http://blog.roodo.com/rocksaying/archives/18352007.html</a></div>

@@ -1,0 +1,251 @@
+---
+title: Web Storage 使用經驗
+category: computer
+old-category: 電腦技術
+tags: [web,html5,webstorage]
+---
+<p>
+
+針對瀏覽器的本地資料儲存功能， W3C 規劃了至少三種功能規格，<a href="http://www.w3.org/TR/webstorage/">Web Storage</a> 是其中最簡單的一種。
+
+它原本是 HTML5 規格的一部份，後來單獨劃為一個規格。不過我們還是將它籠統地歸為 HTML5 的功能之一。
+
+</p>
+
+
+
+<p>
+
+W3C 將 Web Storage 定義為用戶端 JavaScript 環境中的一種實作了 <a href="http://www.w3.org/TR/webstorage/#storage">Storage</a> 介面的實體。這個介面提供了一組基於 key/value 的操作方法，隱藏了資料存續細節。簡單地說，一個 storage 就是一個 hash table ，你只需要按照 hash table 的方式存取資料，例如 <code>sessionStorage.x = 1; y = sessionStroage.x + 100</code>。用戶端底層會幫程序員處理資料存續的工作，你完全不必知道資料如何存入資料庫或取出。
+
+</p>
+
+<!--more-->
+<h4>
+Web Storage 的種類
+</h4>
+
+<p>
+W3C Web Storage 目前規劃了兩種型態的儲存體：<dfn>sessionStorage</dfn> 與 <dfn>localStorage</dfn>。對你的 JavaScript 程式碼而言，這就是兩個全域變數: <var>sessionStorage</var> 與 <var>localStorage</var>。
+</p>
+
+<h5>
+sessionStorage
+</h5>
+
+<p>
+在新分頁或新視窗中開啟連結時，用戶端程式將會為新開啟的視窗建立一個新會期(session)，每一個會期代表一組獨立的可用資源。而 <dfn>sessionStorage</dfn> 就是歸屬於會期管理的資料項目。這表示每個視窗都會有自己的 sessionStorage ；不同視窗的 sessionStorage 就是不同的內容。另一方面，當網頁視窗關閉時，表示這個會期結束了，故此會期內的 sessionStorage 也會被刪除。使用者下次再開啟此網頁時，sessionStorage 的內容將會重新開始。就此特性來看，sessionStorage 只適合用於儲存暫時性資料。
+</p>
+
+<p>
+舉例來說，有一網頁 http://localhost/session-test.html，內容所下列:
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+function init() {
+    if (!sessionStorage.x)
+        sessionStorage.x = 1;
+    document.getElementById("session_x").firstChild.nodeValue = sessionStorage.x;
+}
+function inc_session_x() {
+    sessionStorage.x++; // sessionStorage is an attribute of window
+    document.getElementById("session_x").firstChild.nodeValue = sessionStorage.x;
+}
+function clear_all() {
+    sessionStorage.clear();
+    document.getElementById("session_x").firstChild.nodeValue = sessionStorage.x;
+}
+<span class="nt">&lt;/script&gt;</span>
+
+<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">"init()"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;h1&gt;</span>SessionStorage test<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;p&gt;</span>
+sessionStorage.x = <span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"session_x"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;button</span> <span class="na">onclick=</span><span class="s">"inc_session_x();"</span><span class="nt">&gt;</span>inc<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;hr/&gt;</span>
+<span class="nt">&lt;div&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">onclick=</span><span class="s">"clear_all();"</span><span class="nt">&gt;</span>clear<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+
+<span class="nt">&lt;/body&gt;</span>
+
+</code></pre>
+
+
+<p>
+接著觀察它的使用情形。啟動你的瀏覽器，先增加一個視窗開啟 http://localhost/session-test.html ，然後按幾下 inc 鈕改變 <var>sessionStorage.x</var> 的值。接著再新增另一個視窗(或新頁籤)，同樣開啟 http://localhost/session-test.html 。你會發現這兩個視窗的 <var>sessionStorage.x</var> 的值並不會相同。你也可以使用瀏覽器的「重新整理」去更新兩個視窗的內容，以證明這兩個視窗各管各的 <var>sessionStorage.x</var>。
+</p>
+
+<p>
+如果你要設計一個 Web 應用軟體允許使用者開啟不同視窗使用不同帳號的話，<dfn>sessionStorage</dfn> 將可滿足你的需求。
+</p>
+
+
+<h5>
+localStorage
+</h5>
+
+<p>
+<dfn>localStorage</dfn> 的持續時間與存在範圍與 Cookie 類似。它的持續時間由程序員自行指定，不會隨著瀏覽器關閉而自動終止。它的存在範圍遵循相同來源政策(The Same Origin Policy)，同一個網站的所有網頁都會使用同一個 <var>localStorage</var> 。
+</p>
+
+<ol>
+    <li>
+    <var>localStorage.x</var> in http://mydomain/index1.html
+    等於
+    <var>localStorage.x</var> in http://mydomain/index2.html
+    </li>
+    
+    <li>
+    <var>localStorage.x</var> in http://mydomain/aaa/index1.html
+    等於
+    <var>localStorage.x</var> in http://mydomain/bbb/index1.html
+    </li>
+
+    <li>
+    <var>localStorage.x</var> in http://mydomain/aaa/index1.html
+    不等於
+    <var>localStorage.x</var> in http://yourdomain/aaa/index1.html
+    </li>
+</ol>
+
+<p>
+注意，localStorage 存在範圍的劃分細度只到主機名稱，不再依路徑區分。所以，如果你的網頁應用放在多人共同的網頁空間上，而且你的網址只用路徑區分的話，最好不要用 lcoalStorage 儲存資料。因為同一主機名稱上的其他網頁，也會使用同一個 localStorage 。
+</p>
+
+<div class="note">
+Cookie 不指定路徑時，預設採用目前網頁的路徑，並以路徑劃分存在範圍。所以
+document.cookie in http://mydomain/aaa/index1.html
+不等於
+document.cookie in http://mydomain/bbb/index1.html
+。localStorage 並不採用這項規則。
+</div>
+
+<p>
+舉例來說，有一網頁 http://localhost/localstorage-test.html，內容所下列:
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+function inc_local_x() {
+    localStorage.x++; // localStorage is an attribute of window
+    document.getElementById("local_x").firstChild.nodeValue = localStorage.x;
+}
+function clear_all() {
+    localStorage.clear();
+    document.getElementById("local_x").firstChild.nodeValue = localStorage.x;
+}
+function init() {
+    if (!localStorage.x)
+        localStorage.x = 1;
+    document.getElementById("local_x").firstChild.nodeValue = localStorage.x;
+}
+<span class="nt">&lt;/script&gt;</span>
+
+<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">"init()"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;h1&gt;</span>LocalStorage test<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;p&gt;</span>
+localStorage.x = <span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"local_x"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;button</span> <span class="na">onclick=</span><span class="s">"inc_local_x();"</span><span class="nt">&gt;</span>inc<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;hr/&gt;</span>
+<span class="nt">&lt;div&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">onclick=</span><span class="s">"clear_all();"</span><span class="nt">&gt;</span>clear<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+
+<span class="nt">&lt;/body&gt;</span>
+
+</code></pre>
+
+
+<p>
+按著下列操作步驟觀察使用情形。
+</p>
+
+<ul>
+    <li>
+    啟動瀏覽器，開啟 http://localhost/localstorage-test.html 。按幾下 inc 鈕增加 <var>localStorage.x</var> 之值。
+    </li>
+    <li>
+    新增瀏覽器視窗，同樣開啟 http://localhost/localstorage-test.html 。顯示其 <var>localStorage.x</var> 之值與第一步的視窗內容一致。
+    </li>
+    <li>
+    再新增瀏覽器視窗，但開啟 http://127.0.0.1/localstorage-test.html ，此視窗的 <var>localStorage.x</var> 將於其兩個視窗的內容不同。因為 localhost 與  127.0.0.1 被視為不同來源，所以它們看到的 <var>localStorage</var> 也不相同。
+    </li>
+    <li>
+    關閉全部的瀏覽器視窗，再重新啟動瀏覽器。然後開啟 http://localhost/localstorage-test.html ，你將看到先前改變 <var>localStorage.x</var> 之值被保存下來了，而不會從 1 開始。
+    </li>
+</ul>
+
+<p>
+localStorage 保存的資料內容，將持續到使用者主動要求清除為止。
+</p>
+
+<h4>
+Web Storage 的方法
+</h4>
+
+<ul>
+    <li>以 getItem()/setItem() 或者被覆寫的索引運算子、屬性存取運算子讀取或儲存資料。例: 
+<pre class="code">
+localStorage.setItem('x', 1);   // object method
+localStorage.y = 1;             // property accessor
+sessionStorage['z'] = 1;        // indexer
+
+alert(localStorage['x']);           // indexer
+alert(localStorage.getItem('y'));   // object method
+alert(sessionStorage.z);            // property accessor
+</pre>
+    </li>
+
+    <li>以 removeItem() 或者被覆寫的 <dfn>delete</dfn> 運算子刪除指定資料。
+    例: 
+<pre class="code">
+localStorage.removeItem('x');   // object method
+delete localStorage.y;          // delete operator 
+</pre>
+    </li>
+
+    <li>使用 <dfn>clear()</dfn> 方法清除全部資料。
+    例: <code> localStorage.clear(); </code>。
+    </li>
+
+    <li>欲儲存的資料量超出程式允許的資料容量時，將擲出 <dfn>QUOTA_EXCEEDED_ERR</dfn> 例外。
+    </li>
+    
+    <li><em>規格衝突!</em> 當任一項 Web Storage 的內容改變時，<var>window</var> 應發出 <dfn>storage</dfn> 事件。但是 HTML5 規格也有一個同名的事件型態，然而用途完全不同。現在似乎只有微軟 IE9 將這個事件型態對應 Web Storage 規範的用途(<span class="Onote">See: <a href="http://msdn.microsoft.com/en-us/library/cc197059%28v=vs.85%29.aspx">MSDN: onstorage Event</a></span>)。其他瀏覽器則是將此事件型態對應 HTML5 規範的用途。因此到目前為止，我還無法在 Firefox 5, Chrome 等瀏覽器上捕抓到 Web Storage 內容異動的事件。
+    </li>
+</ul>
+
+<h4>
+Web Storage 與 Cookie
+</h4>
+
+<p>
+Web Storage 和 Cookie 的差異，主要反應在用戶端程式(<span class="Onote">即一般人慣稱的瀏覽器，按 W3C 用語是 user agent，表示這是個執行在使用者主機上的應用程式</span>)與伺服端的互動行為。 Cookie 是附屬於 HTTP 協定中的功能，它的資料會隨著 HTTP 表頭在用戶端與伺服器之間傳遞，故伺服器也可以存取 Cookie 資料。用戶端方面亦不需程序員多花工夫，用戶端就會按照 Cookie 指定的領域與路徑，將相配的 Cookie 內容傳回伺服器。
+</p>
+
+<p>
+Web Storage 則純粹是用戶端程式的功能規格，它的資料只供用戶端存取。程序員則應透過 W3C 定義的 Web Storage 的 JavaScript API 存取其資料。若要把 Web Storage 的資料再傳回伺服器，則程序員還需要做些手腳，例如透過 Cookie 或表單上傳。
+</p>
+
+<p>
+其次，受 HTTP 表頭每行可接受的字串長度之限制，故 Cookie 的可容納的資料量有限。每個頁面可容納的 Cookie 資料量，一般慣例在 4 KB 上下。而 Web Storage 之容量，按 W3C 規格書所述，係由用戶端程式自行決定；理論上僅受限於用戶端可用的磁碟容量。目前慣例上，預設在 1MB 到 5MB 上下，但可由使用者自行調整。
+</p>
+
+<h4>
+使用經驗
+</h4>
+
+<p>
+Web Storage 和 Cookie 的使用方式非常相似。Web Storage 適用的使用情境，大部份也可以用 Cookie 實現。
+換句話說，如果你現有的 Web 應用軟體使用 Cookie 就足以應付資料儲存工作的話，倒不必趕流行換用 Web Storage 機制。
+</p>
+
+<p>
+就我們公司目前的開發經驗所知，基於 WebKit 引擎的用戶端之 Web Storage 預設容量上限為 1MB 。而我們的專案指定了 1GB 容量上限，並實際儲存了上百MB的資料量。不過 WebKit 實作的 Web Storage 資料儲存功能，畢竟不是針對大型資料庫的操作情境，不適合儲存大量資料。請不要把它當成 PostgreSQL, MySQL 等資料庫的替代品。
+</p>
+
+<p>
+最後，請持續關注 W3C 更新的 <a href="http://www.w3.org/TR/webstorage/#security-storage">Web Storage Security</a>，因為他們會補充最新的相關安全事項。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15967715.html">http://blog.roodo.com/rocksaying/archives/15967715.html</a></div>

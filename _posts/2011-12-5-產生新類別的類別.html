@@ -1,0 +1,240 @@
+---
+title: 產生新類別的類別
+category: programming
+old-category: JavaScript
+tags: [javascript,metaprogramming,中介編程]
+---
+<p>
+介紹 JavaScript 關於函數與建構者的基礎知識。理解此一基礎，將建構者內容參數化。
+透過參數化的技巧，實作一個產生新類別的類別。
+</p>
+
+<h4>
+JavaScript 定義類別的基本方式
+</h4>
+
+<p>
+JavaScript 沒有類別定義的關鍵字。"定義類別"這句話在 JavaScript 中的意義，
+等於是定義一個新的建構者(Constructor)。
+</p>
+
+<!--more-->
+<p>
+JavaScript中的「建構者」是什麼?
+答案是一個具有建立與賦予初值給個體之能力的函數實體。
+<q>A constructor is a Function object that creates and initialises objects.</q>
+簡單說，建構者就是一個函數。
+參考「<a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">JavaScript的中介編程與反射能力示範</a>」。
+</p>
+
+<p>
+以下 JavaScript 程式碼示範如何定義建構者，亦可理解為定義類別。
+</p>
+<pre class="highlight"><code><span class="c1">// 定義一個新的建構者，名稱為 Class1; </span>
+<span class="c1">// 亦可理解為定義一個新的類別，名稱為 Class1。</span>
+<span class="kd">function</span> <span class="nx">Class1</span><span class="p">()</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="cm">/* public members. */</span>
+<span class="nx">Class1</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> 
+<span class="p">{</span>
+    <span class="na">foo</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"foo..."</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">c1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class1</span><span class="p">();</span> <span class="c1">// allocate an instance of Class1.</span>
+<span class="nx">c1</span><span class="p">.</span><span class="nx">foo</span><span class="p">();</span>
+</code></pre>
+
+
+<p>
+配合 JavaScript 的用語習慣，在本文中主要用「建構者」一詞，而不用「類別」。
+</p>
+
+<h4>
+JavaScript 表達函數內文的方式
+</h4>
+
+<p>
+JavaScript 定義函數的語法，有兩種表達函數內文的方式。
+第一種方式使用 <code>{ }</code> 括起函數內文，這是我們熟悉的表達方式。
+第二種方式則是用字串表達函數內文，詳見 ECMA-262 規格書第 15.3.2.1 節。
+</p>
+
+<blockquote>
+The last argument specifies the body (executable code) of a function; any preceding arguments specify formal
+parameters.
+<cite>15.3.2.1 new Function (p1, p2, ... , pn, body)
+</cite>
+</blockquote>
+
+<p>
+在 meta-programming 的場合中，我們通常需要採用第二種方式。
+以下程式碼所表達的內容等義。
+</p>
+
+<pre class="highlight"><code><span class="c1">// 第1種，以 {} 括起函數內文。</span>
+<span class="kd">function</span> <span class="nx">Class2</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">title</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 第2種，以字串表達函數內文。</span>
+<span class="kd">var</span> <span class="nx">Class3</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s1">' \
+    this.title=""; \
+    this.value = 0;'</span><span class="p">);</span>
+</code></pre>
+
+
+<h4>
+建構者內容的參數化
+</h4>
+
+<p>
+首先，我們先複習一次常規的、一般的建構者定義內容。
+class11.js 定義了一個名為 <dfn>Class11</dfn> 的建構者，<var>Class11.prototype</var> 指派其公開成員。
+</p>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">Class11</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">Class11</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">inc</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">;</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="na">val</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">v</span> <span class="o">!=</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// setter</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span> <span class="c1">// getter</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">o1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class11</span><span class="p">();</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">o1</span><span class="p">.</span><span class="nx">val</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nx">inc</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">val</span><span class="p">());</span>
+</code></pre>
+
+
+<p>
+接著，我們把建構者的函數內文改成字串表達，並把定義公開成員的程式碼拆開撰寫。
+改成下列內容。
+</p>
+
+<pre class="highlight"><code><span class="c1">// 將函數內文改成字串表達。</span>
+<span class="kd">var</span> <span class="nx">func_body</span> <span class="o">=</span> <span class="s1">' \
+    this.value = 0; \
+'</span><span class="p">;</span>
+<span class="c1">// 把 prototype 成員的程式碼段落分開。</span>
+<span class="kd">var</span> <span class="nx">proto</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">inc</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">;</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="na">val</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">v</span> <span class="o">!=</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// setter</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span> <span class="c1">// getter</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// 以下的表達方式，可以將類別內容參數化。</span>
+<span class="kd">var</span> <span class="nx">Class11</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="nx">func_body</span><span class="p">);</span>
+<span class="nx">Class11</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="nx">proto</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">o1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class11</span><span class="p">();</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">o1</span><span class="p">.</span><span class="nx">val</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nx">inc</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">val</span><span class="p">());</span>
+</code></pre>
+
+
+<p>
+從上例的改寫程式碼中，我們可以看出建構者的函數內文與其公開成員的內容，都可以變成一個參數。
+結合以上的建構者內容參數化的演示，可以寫出下列專門用來產生新的類別的建構者。
+另一種說法是: 它是一個可以產生匿名類別的類別。
+我個人則習慣說是「配置一個未分類個體」。
+</p>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">UnclassifiedObject</span><span class="p">(</span><span class="nx">construct</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">func_body</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">construct</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">func_body</span> <span class="o">=</span> <span class="nx">construct</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
+        <span class="nx">func_body</span> <span class="o">=</span> <span class="nx">func_body</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span>
+            <span class="nx">func_body</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+            <span class="nx">func_body</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
+        <span class="c1">// strip 'function() {' and '}'.</span>
+    <span class="p">}</span>
+    
+    <span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="nx">func_body</span><span class="p">);</span>
+    <span class="c1">// var c = construct; // ERROR! it will take a reference to construct.</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">proto</span><span class="p">)</span>
+        <span class="nx">c</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="nx">proto</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">c</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h4>
+UnclassifiedObject 的用例
+</h4>
+
+<p>
+<dfn>UnclassifiedObject</dfn> 的回傳結果是一個新的類別。根據是否配合 <dfn>new</dfn> 運算子而有兩種使用途徑。
+</p>
+
+<p>
+第一、將 <dfn>UnclassifiedObject</dfn> 產生的新類別指派一個名稱，使這個新類別變成一般的具名類別來用。
+</p>
+
+<pre class="highlight"><code><span class="c1">// 配置一個類別，並指派其名稱為 'NewClass'。</span>
+<span class="kd">var</span> <span class="nx">NewClass</span> <span class="o">=</span> <span class="nx">UnclassifiedObject</span><span class="p">(</span>
+    <span class="cm">/*construct*/</span>
+    <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="nx">proto</span>
+<span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">o1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">NewClass</span><span class="p">();</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">o1</span><span class="p">.</span><span class="nx">inc</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nx">val</span><span class="p">());</span>
+</code></pre>
+
+
+<p>
+第二、配合 <dfn>new</dfn> 運算子，直接配置一個未分類個體。
+</p>
+
+<pre class="highlight"><code><span class="c1">// 注意運算順序!</span>
+<span class="c1">// 先調用 UnclassifiedObject() 回傳一個新的類別，</span>
+<span class="c1">// 此回傳值再接上 new 運算子後，就產生一個新的未分類個體。</span>
+<span class="c1">// aka. 匿名類別實體。</span>
+
+<span class="kd">var</span> <span class="nx">o2</span> <span class="o">=</span> <span class="k">new</span> <span class="p">(</span><span class="nx">UnclassifiedObject</span><span class="p">(</span>
+    <span class="cm">/*construct*/</span>
+    <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="nx">proto</span>
+<span class="p">));</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">o2</span><span class="p">.</span><span class="nx">inc</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nx">val</span><span class="p">());</span>
+</code></pre>
+
+
+<p>
+大部份的 JavaScript library ，例如 extJS, jQuery 等，事實上都是透過這種機制，為 JavaScript <em>擴充</em>了類別定義功能。
+你或許不再需要自己設計一個類別的類別，但了解它的基礎觀念，總是百利而無害。
+對於一位 JavaScript library 的設計者，這是必要知識。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/GJS%20-%20D-Bbus%20%E8%87%AA%E5%8B%95%E5%85%A7%E8%A7%80%28Introspect%29%E8%88%87%E9%85%8D%E7%BD%AE%E4%BB%A3%E7%90%86%E5%80%8B%E9%AB%94.html">GJS - D-Bbus 自動內觀(Introspect)與配置代理個體</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18294075.html">http://blog.roodo.com/rocksaying/archives/18294075.html</a></div>

@@ -1,0 +1,205 @@
+---
+title: Embed VLC video in your GTK app and control via DBus
+category: programming
+old-category: Programming
+tags: [python,d-bus,vlc,dbus]
+---
+<p>
+VLC 這套媒體播放軟體的擴充性實在好用，在 Linux 桌面環境能玩的花樣更多。
+自從它實作了 Freedesktop Media Player DBus 介面之後，我們只需要透過基本的 D-Bus 功能，就可操作它的播放動作。
+再配合它的 <code>--drawable-xid</code> 指定呈像視窗，就可在我們的桌面應用軟體中，嵌入影片播放功能。
+實現這個功能，並不需要撰寫複雜的程式碼。
+</p>
+
+<!--more-->
+<p>
+欲由另一個程式控制 VLC 的播放行為，可利用 Freedesktop Media Player DBus 介面。關於此介面的說明，可參考 <a href="http://wiki.videolan.org/DBus-spec">VLC D-Bus spec</a>。
+請留意這個 DBus 介面是一個通用介面，有許多 Linux 環境的媒體播放軟體也逐漸加入此介面的支援行列。
+例如 banshee, rhythmbox, amarok 。所以你也可以透過同樣的 DBus 介面控制它們。
+甚至只需要用 shell script 就可以實現一些簡單的小功能。
+但若你要把播放的影像內容嵌入，則你必須再看那些媒體播放軟體是否提供你指定呈像視窗的選項。 
+VLC 就可透過 <code>--drawable-xid</code> 指定。
+</p>
+<p>
+在此稍微說明一下指定呈像視窗所需的 <dfn>XID</dfn> 是什麼東西。
+Linux 桌面環境目前主要是以 X11 協定為主要的 GUI 架構。在 X11 協定中，你所看到的每一個視覺控制項都有一個識別代號 — X11 稱之為 <dfn>XID</dfn>。
+任何行程只要知道視覺控制項的 XID 為何，就可以對它送出控制命令。
+而 VLC 播放影片時，影像所呈現的區域，其實也是一個視窗控制項，所以也會有一個 XID。
+VLC 同樣是利用這個 XID 告訴 X11 server 在哪裡顯示視訊內容。
+</p>
+
+<p>
+我們可以利用 <dfn>xwininfo</dfn> 查看指定軟體使用的 XID 為何。如下所示範，可查知 XID 為 79691795。
+</p>
+<pre class="language-term">
+rock:~$ xwininfo -name "VLC media player" -int
+
+xwininfo: Window id: 79691795 "VLC media player"
+
+  Absolute upper-left X:  1620
+  Absolute upper-left Y:  138
+  Relative upper-left X:  1620
+  Relative upper-left Y:  138
+  Width: 432
+  Height: 113
+  Depth: 24
+  Visual: 0x21
+</pre>
+
+<p>
+那麼我們是否可以自己先配置一個視窗區域，然後要求 VLC 用這個區域顯示視訊內容呢？
+答案自然是可以，因此我們才能把影像播放功能嵌入我們自己的軟體畫面。
+</p>
+
+<div class="note">
+<ul>
+    <li>
+    並非每種視覺控制項都可以用於繪出視訊內容。在 GTK 工具中，我們應使用 <dfn>DrawingArea</dfn> 控制項才能供 VLC 繪出視訊內容。
+    </li>
+    
+    <li>To enable vlc's dbus control function: 
+(ref: <a href="http://wiki.videolan.org/DBus">http://wiki.videolan.org/DBus</a>)
+    <br/>
+<pre class="language-term">
+$ vlc --control dbus
+</pre>
+    </li>
+
+    <li>To ask vlc to render video in foreign area (by XID or HWND):
+(ref: <a href="http://trac.videolan.org/vlc/ticket/4655">http://trac.videolan.org/vlc/ticket/4655</a>)
+    <br/>
+<pre class="language-term">
+#X11: 
+$ vlc --drawable-xid $XID
+
+#Windows: 
+C:> vlc --drawable-hwnd $HWND
+</pre>
+    </li>
+</ul>    
+</div>
+
+<p>
+我用 Python 寫了一個 GTK 範例程式示範利用 VLC 將影像播放內容嵌入自己的應用軟體的功能。另外加了一個暫停與播放的按鈕，示範透過 VLC 的 DBus 介面控制播放動作。
+</p>
+
+<p>
+範例程式首先透過 GTK 建立了一個視窗，然後在視窗中配置一個固定位置的佈局板(fixed panel)。接著，在佈局板上放置一個 DrawingArea 控制項並取得其 XID。稍候要將其 XID 告知 VLC ， VLC 就會把影像呈現在該控制項內。佈局板上再加入兩個按鈕，一個 Play/Pause 可透過 VLC DBus 介面暫停或播放影像，另一個 Quit 就是結束此程式了。
+</p>
+
+<p>
+當 GTK 完成上述視覺控制項的配置工作並顯示在螢幕上後，程式會執行 media_play() 函數。它先啟動一個 VLC 行程(launch_vlc_service)，靜待2秒等 VLC 行程啟動完成。接著配置 VLC DBus 的代理個體，透過其 DBus 介面，將指定的影片加入媒體清單並播放之。
+</p>
+
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">gtk</span><span class="o">,</span> <span class="nn">gtk.gdk</span>
+<span class="kn">import</span> <span class="nn">dbus</span>
+<span class="c">#from dbus.mainloop.glib import DBusGMainLoop</span>
+
+<span class="n">vlc_service</span> <span class="o">=</span> <span class="s">'org.mpris.vlc'</span>
+<span class="n">vlc_path</span> <span class="o">=</span> <span class="s">'/'</span>
+<span class="n">vlc_player_path</span> <span class="o">=</span> <span class="s">'/Player'</span>
+<span class="n">vlc_tracklist_path</span> <span class="o">=</span> <span class="s">'/TrackList'</span>
+<span class="n">mediaplayer_ifacename</span> <span class="o">=</span> <span class="s">'org.freedesktop.MediaPlayer'</span>
+
+<span class="n">XID</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">Vlc</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">Player</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">Tracklist</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="c">#DBusGMainLoop(set_as_default=True)</span>
+
+<span class="k">def</span> <span class="nf">init_xid</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">XID</span>
+    <span class="n">XID</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">get_window</span><span class="p">()</span><span class="o">.</span><span class="n">xid</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"XID: </span><span class="si">%</span><span class="s">d</span><span class="se">\n</span><span class="s">"</span> <span class="o">%</span> <span class="n">XID</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">launch_vlc_service</span><span class="p">(</span><span class="n">view_id</span><span class="p">):</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="s">"vlc -I dummy --control dbus --drawable-xid </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">view_id</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">pid</span> <span class="c"># background and NOWAIT</span>
+
+<span class="k">def</span> <span class="nf">init_player</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">Vlc</span><span class="p">,</span> <span class="n">Player</span><span class="p">,</span> <span class="n">Tracklist</span>
+    <span class="n">vlc_proxy</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">vlc_service</span><span class="p">,</span> <span class="n">vlc_path</span><span class="p">)</span>
+    <span class="n">Vlc</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">vlc_proxy</span><span class="p">,</span> <span class="n">mediaplayer_ifacename</span><span class="p">)</span>
+    <span class="n">player_proxy</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">vlc_service</span><span class="p">,</span> <span class="n">vlc_player_path</span><span class="p">)</span>
+    <span class="n">Player</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">player_proxy</span><span class="p">,</span> <span class="n">mediaplayer_ifacename</span><span class="p">)</span>
+    <span class="n">tracklist_proxy</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">vlc_service</span><span class="p">,</span> <span class="n">vlc_tracklist_path</span><span class="p">)</span>
+    <span class="n">Tracklist</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">tracklist_proxy</span><span class="p">,</span> <span class="n">mediaplayer_ifacename</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">play_video</span><span class="p">(</span><span class="n">mrl</span><span class="p">):</span>
+    <span class="n">Tracklist</span><span class="o">.</span><span class="n">AddTrack</span><span class="p">(</span><span class="n">mrl</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">program_quit</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">Vlc</span><span class="o">.</span><span class="n">Quit</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">gtk</span><span class="o">.</span><span class="n">main_quit</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Good bye"</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">media_play</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
+    <span class="n">init_xid</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+    <span class="n">launch_vlc_service</span><span class="p">(</span><span class="n">XID</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">init_player</span><span class="p">()</span>
+    <span class="n">play_video</span><span class="p">(</span><span class="s">"file:///home/rock/Video/maids_05.rmvb"</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">media_toggle_play</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
+    <span class="n">Player</span><span class="o">.</span><span class="n">Pause</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">"PID: </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">())</span>
+
+<span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">()</span>
+
+<span class="n">w</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">gtk</span><span class="o">.</span><span class="n">WINDOW_TOPLEVEL</span><span class="p">)</span>
+
+<span class="n">w</span><span class="o">.</span><span class="n">set_default_size</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">640</span><span class="p">)</span>
+
+<span class="n">fixed_panel</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Fixed</span><span class="p">()</span>
+<span class="n">w</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fixed_panel</span><span class="p">)</span>
+
+<span class="n">media_view</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">DrawingArea</span><span class="p">()</span>
+<span class="n">media_view</span><span class="o">.</span><span class="n">set_size_request</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+<span class="n">fixed_panel</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">media_view</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">btn_toggle_play</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="s">"Play/Pause"</span><span class="p">)</span>
+<span class="n">btn_toggle_play</span><span class="o">.</span><span class="n">connect_object</span><span class="p">(</span><span class="s">"clicked"</span><span class="p">,</span> <span class="n">media_toggle_play</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+<span class="n">fixed_panel</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">btn_toggle_play</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>
+
+<span class="n">btn_quit</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="s">"Quit"</span><span class="p">)</span>
+<span class="n">btn_quit</span><span class="o">.</span><span class="n">connect_object</span><span class="p">(</span><span class="s">"clicked"</span><span class="p">,</span> <span class="n">program_quit</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+<span class="n">fixed_panel</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">btn_quit</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>
+
+<span class="n">media_view</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">"map"</span><span class="p">,</span> <span class="n">media_play</span><span class="p">)</span>
+
+<span class="n">w</span><span class="o">.</span><span class="n">set_decorated</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span> <span class="c"># disable all decorations.</span>
+<span class="n">w</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="n">w</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">"destroy"</span><span class="p">,</span> <span class="n">program_quit</span><span class="p">)</span>
+
+<span class="n">w</span><span class="o">.</span><span class="n">show_all</span><span class="p">()</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+</code></pre>
+
+
+<p>
+請記得修改範例程式想播放的影像位址，否則不會看到任何影像。
+下圖便是 vlc-dbus.py 實際執行時的畫面擷圖。我故意取消了該視窗的外框裝飾，所以不見視窗邊框與上方的視窗標題列。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/1047645_h6s4it2_l.png" alt="vlc-dbus.py 播放影像圖" />
+
+
+<p>
+關於 Python 撰寫 DBus 程式的教學文件，可閱讀本人《<a href="{{ site.baseurl }}/archives/2011/Python%20DBus%20%E6%95%99%E5%AD%B8%E7%B2%BE%E8%A6%81.html">Python DBus 教學精要</a>》。
+</p>
+
+<p>
+我不清楚 VLC 從哪一版起實作了 DBus 與 drawable-xid 兩個選項。
+我的環境是 vlc 1.0.6 與 vlc 1.1.10 。我不知道 vlc vlc 0.9 是否支援。
+如果你是用舊版 vlc 的，也許不能這麼玩。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15945609.html">http://blog.roodo.com/rocksaying/archives/15945609.html</a></div>

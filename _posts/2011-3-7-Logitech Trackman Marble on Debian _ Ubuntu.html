@@ -1,0 +1,274 @@
+---
+title: Logitech Trackman Marble on Debian / Ubuntu
+category: computer
+old-category: 電腦技術
+tags: [linux,ubuntu,debian,trackpoint,trackball]
+---
+<p>
+繼小紅點(TrackPoint)讓我玩上癮之後，我又對另一種不常見的指標設備 — 軌跡球 — 感到興趣了。
+昨天終於弄了一個價格合宜的羅技<a href="http://www.logitech.com/zh-tw/mice-pointers/trackballs/devices/4786">木星軌跡球(Logitech Trackman Marble)</a>來玩，台幣約在680元左右。
+</p>
+<p>
+包裝中附有 Windows 與 MacOS 的驅動程式。在 Windows 上的使用方式不必多講了。
+我來說說在 Ubuntu 10.04 上使用這隻軌跡球的經驗吧。
+</p>
+<div class="note">
+2013-03-19 更新在 Debian 6 上的使用內容。
+</div>
+
+<!--more-->
+<h4>
+各部名稱說明
+</h4>
+
+<p>
+木星軌跡球提供四顆按鍵，分別是大左鍵、大右鍵、小左鍵、小右鍵。
+按照羅技預設狀態，大左鍵與大右鍵即一般的滑鼠左、右鍵，小左鍵即瀏覽器的上一頁鍵，小右鍵即瀏覽器的下一頁鍵。
+而在 X 環境下，這四顆按鍵由左到右的代號是:
+</p>
+<ul>
+    <li>大左鍵: 1</li>
+    <li>小左鍵: 8</li>
+    <li>小右鍵: 9</li>
+    <li>大右鍵: 2</li>
+</ul>
+<p>
+本文主要使用代號稱呼上述按鍵，例如「第8鍵」表示小左鍵。
+</p>
+
+
+<h4>
+GPointing Device Settings (Pointing devices)
+</h4>
+
+<p>
+羅技木星軌跡球(Trackman Marble)的識別名稱是"Logitech USB Trackball"，大部份的功能都可以在 GPointing Device Settings 中設定。
+</p>
+
+<p>
+GPointing Device Settings 的執行名稱是 "gpointing-device-settings"，在「系統／偏好設定」選單中的名稱則是"Pointing devices"。
+程式畫面如下圖:
+</p>
+<img src="http://blog.roodo.com/rocksaying/7bea6541.png" alt="Trackball in gpointing device settings" />
+
+<h5>
+Middle Button Emulation (中鍵模擬)
+</h5>
+
+<p>
+Middle Button Emulation 設定中鍵模擬功能。啟用後，同時點擊大左鍵(第1鍵)與大右鍵(第2鍵)等於點擊滑鼠中鍵。
+</p>
+
+<p>
+Check this will enable pressing buttons 1 and 2 at the same time as a middle mouse click.
+</p>
+
+<p>
+如果你希望指定第8鍵或第9鍵等於滑鼠中鍵的話，Ubuntu 10.04 需要透過 Xorg 的組態設定才可實現， Debian 6 則可以使用 xinput 設置。
+</p>
+
+<h5>
+Wheel Emulation (滾輪模擬)
+</h5>
+
+<p>
+Wheel Emulation 設定滾輪模擬功能。啟用後，按住滾輪模擬鍵再滾動軌跡球，即等於滾輪滾動。
+由 button 處選擇哪一個鍵代表滾輪模擬鍵。
+例如選擇 8 表示小左鍵(第8鍵)代表滾輪模擬鍵。
+</p>
+
+<p>
+但是此處有個問題，即 GPointing Device Settings 中並無法選擇小右鍵(第9鍵)代表滾輪模擬鍵。
+如果你希望指定第9鍵代表滾輪模擬鍵，需透過指令實現。指令為:
+<kbd>xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Button" 9</kbd>。
+請參考下一節的內容。
+</p>
+
+<h4>
+xinput
+</h4>
+
+<p>
+如果不想使用 GPointing Device Settings，亦可自行使用工具 xinput 設定。
+</p>
+
+<p>
+使用 xinput 設定時必須指定軌跡球的設備名稱，這可以指令 <kbd>xinput --list</kbd> 查看。
+羅技軌跡球的設備名稱通常是 "Logitech USB Trackball"。
+如果你的羅技軌跡球的設備名稱不一樣，則下列指令中的設備名稱處，請自行修改。
+</p>
+
+<p>
+得知設備名稱後，就可查看軌跡球有哪些屬性可以設定，指令為 <kbd>xinput list-props "Logitech USB Trackball"</kbd>。
+它會列出許多屬性及其當前設定值。例如:
+</p>
+
+<ul>
+    <li>
+    Evdev Middle Button Emulation:	1<br/>
+    是否啟用滑鼠中鍵模擬: 啟用後，同時點擊大左鍵與大右鍵等於點擊滑鼠中鍵。
+    (亦可由 GPointing Device Settings 設定)。
+    </li>
+
+    <li>
+    Evdev Middle Button Timeout:	50<br/>
+    點擊速度 (亦可由 GPointing Device Settings 設定)。
+    </li>
+
+    <li>
+    Evdev Wheel Emulation:	1<br/>
+    是否啟用滾輪模擬: 啟用後，按住滾輪模擬鍵再滾動軌跡球，即等於滾輪滾動。
+     (亦可由 GPointing Device Settings 設定)。
+    </li>
+
+    <li>
+    Evdev Wheel Emulation Button:	8<br/>
+    指定滾輪模擬鍵: 8 是小左鍵，9是小右鍵。
+    (可由 GPointing Device Settings 設定，但第9鍵必須用 xinput 指定)。
+    </li>
+
+    <li>
+    Evdev Wheel Emulation Axes:	6, 7, 4, 5<br/>
+    允許水平與垂直方向滾動 (亦可由 GPointing Device Settings 設定)。
+    </li>
+
+    <li>
+    Evdev Wheel Emulation Inertia:	10<br/>
+    滾動慣性 (亦可由 GPointing Device Settings 設定)。
+    </li>
+
+    <li>
+    Evdev Wheel Emulation Timeout:	200<br/>
+    按住時間 (亦可由 GPointing Device Settings 設定)。
+    </li>
+</ul>
+
+<p>
+例如下列4行指令可令軌跡球的操作行為是同時點擊大左、大右兩鍵為滑鼠中鍵，按住小右鍵(第9鍵)為滾輪。
+</p>
+
+<pre class="language-text">
+xinput set-prop "Logitech USB Trackball" "Evdev Middle Button Emulation" 1
+ # 啟用中鍵模擬：啟用後，同時點擊大左鍵與大右鍵等於點擊滑鼠中鍵。
+
+xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation" 1
+ # 啟用滾輪模擬: 啟用後，按住滾輪模擬鍵再滾動軌跡球，即等於滾輪滾動。
+
+xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Button" 9
+ # 指定滾輪模擬鍵: 8 是小左鍵，9是小右鍵。
+ # 在 GPointing Settings 中，不能指定第9鍵。
+
+xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Axes" 6 7 4 5
+ # 允許水平與垂直方向滾動。
+</pre>
+
+<p>
+較新版本的 xinput 還可以指定軌跡球的按鍵對應。例如 Debian 6 的 xinput 就可以。
+執行 <kbd>xinput get-button-map "Logitech USB Trackball"</kbd> 可以查看目前的按鍵對應。
+使用 <dfn>set-button-map</dfn> 選項則可以改變按鍵對應。
+</p>
+
+<p>
+以指定滑鼠中鍵為例，分成以下三種用法 (<em>Ubuntu 10.04不適用</em>):
+</p>
+
+<ul>
+    <li><kbd>xinput set-button-map "Logitech USB Trackball" 1 2 3 4 5 6 7 8 9 </kbd><br/>
+    預設按鍵配置，同時按下軌跡球的大左鍵加大右鍵等於滑鼠中鍵。
+
+    <li><kbd>xinput set-button-map "Logitech USB Trackball" 1 8 3 4 5 6 7 2 9 </kbd><br/>
+    按下軌跡球的小左鍵等於滑鼠中鍵。
+
+    <li><kbd>xinput set-button-map "Logitech USB Trackball" 1 8 3 4 5 6 7 9 2 </kbd><br/>
+    按下軌跡球的小右鍵等於滑鼠中鍵。
+</ul>
+
+<p>
+以上指令所設定的內容，僅指定第9鍵代表滾輪模擬和指定第8或第9鍵模擬滑鼠中鍵這兩項是 GPointing Device Settings 做不到的，其他皆可以 GPointing Device Settings 設定。就看個人的使用習慣。
+</p>
+
+<p>
+這些指令內容可寫進 /etc/gdm/PreSession/Default 或是家目錄的 .xsessionrc 中，即可在登入桌面時自動執行。
+亦可在「系統／偏好設定／始動應用程式」中，添加自動啟動項目執行。
+</p>
+
+<h4>
+Xorg 組態文件
+</h4>
+
+<p>
+這是 Debian 6 / Ubuntu 10.04 才開始加入的設定機制。
+在 Ubuntu 線上輔助文件 <a href="https://help.ubuntu.com/community/Logitech_Marblemouse_USB">Logitech_Marblemouse_USB</a> 中說明的也是這種設定方式。
+但我個人試用結果，其行為細節似乎和 Ubuntu 線上輔助文件的說明有些出入。
+</p>
+
+<p>
+當我參考線上文件第二種情境(<a href="https://help.ubuntu.com/community/Logitech_Marblemouse_USB#Example%20-%20simple%20middle%20button%20and%20scrolling">simple middle button and scrolling</a>)的設定方式後，
+我發現在我的系統上的行為表現是點擊第8鍵等於中鍵，按住第8鍵再滾動軌跡球等於滾輪。
+亦即第8鍵才是滾輪模擬鍵，而非文件設定中說明的第9鍵。
+這似乎是個 bug，只有利用 xinput 才能指定第9鍵為滾輪模擬鍵。
+</p>
+
+<p>
+基本上，這個設定方式相當麻煩，不建議使用。我還是建議使用前兩種工具設定軌跡球功能。
+</p>
+
+<h4>
+個人設定與使用感覺
+</h4>
+
+<p>
+因為我習慣了小紅點(TrackPoint)的使用方式，所以我的設定的軌跡球操作方式是: 一、啟用滾輪模擬；二、指定點擊第8鍵(小左鍵)等於滑鼠中鍵；三、按住第8鍵再滾動軌跡球等於滾輪。
+</p>
+
+<p>
+我主要是用 GPointing Device Settings 設定內容。
+只有指定點擊第8鍵等於滑鼠中鍵的項目，我透過 Xorg 組態文件或 xinput 實現。
+我將軌跡球的 Xorg 組態內容儲存在：
+</p>
+<ul>
+    <li>Debian: /usr/share/X11/xorg.conf.d/10-marble.conf 。
+    <li>Ubuntu: /usr/lib/X11/xorg.conf.d/10-marble.conf 。
+</ul>
+
+<pre class="language-text">
+Section "InputClass"
+    Identifier      "Marble Mouse"
+    MatchProduct    "Logitech USB Trackball"
+    MatchIsPointer  "on"
+    MatchDevicePath "/dev/input/event*"
+    Driver          "evdev"
+    Option          "SendCoreEvents" "true"
+
+    Option "Buttons"            "9"
+
+    #
+    # This makes left small button (8) into the middle, and puts
+    #  scrolling on the left small button (8).
+    #
+
+    # If you do not like to press buttons 1 and 4 at the same time,
+    # use this settings to make button 8 into the middle.
+    Option "ButtonMapping"      "1 8 3 4 5 6 7 2 9"
+
+    # Also can use GPoint Device Settings.
+    Option "EmulateWheelButton" "8"
+    Option "EmulateWheel"       "true"
+    Option "YAxisMapping"       "4 5"
+    Option "XAxisMapping"       "6 7"
+
+EndSection
+</pre>
+
+<p>
+就個人使用感覺而言，個人寫程式的時候，小紅點還是比軌跡球便利些。
+不過試著在繪圖軟體上畫線條時，倒是軌跡球畫的比較直。
+若跟滑鼠來比，軌跡球確實也比滑鼠好用，不論是使用空間，或是手腕舒適度上，皆優於滑鼠。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2012/KVM%20%E8%88%87%20USB%20%E8%BB%8C%E8%B7%A1%E7%90%83%E7%9A%84%E4%B8%AD%E9%8D%B5%E6%A8%A1%E6%93%AC.html">KVM 與 USB 軌跡球的中鍵模擬</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/Kensington%20SlimBlade%20Trackball%20%E8%BB%8C%E8%B7%A1%E7%90%83%E5%9C%A8%20Linux%20%E4%B8%AD%E7%9A%84%E4%BD%BF%E7%94%A8%E8%A8%AD%E5%AE%9A.html">Kensington SlimBlade Trackball 軌跡球在 Linux 中的使用設定</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/Kensington%20Orbit%20Trackball%20%E8%BB%8C%E8%B7%A1%E7%90%83%20%E5%9C%A8%20Linux%20%E4%B8%AD%E7%9A%84%E4%BD%BF%E7%94%A8%E8%A8%AD%E5%AE%9A.html">Kensington Orbit Trackball 軌跡球 在 Linux 中的使用設定</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15305647.html">http://blog.roodo.com/rocksaying/archives/15305647.html</a></div>

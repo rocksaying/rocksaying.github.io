@@ -1,0 +1,107 @@
+---
+title: php-dbus unboxing
+category: programming
+old-category: PHP
+tags: [php,d-bus,dbus]
+---
+<p>
+我先前在「<a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">PHP DBus client</a>」一文中，只粗略地提到某些 DBus 方法或信號傳回的資料項目，要調用其方法 <dfn>getData()</dfn> 取值。
+沒有說明為什麼，因此其他人在使用時，經常又再問我如何取用某某 DBus 方法的回傳值。
+那些不能直接取值的資料項目，其實都是被封箱的(boxed)。
+</p>
+
+<p>
+<dfn>Variant, Struct, Dict, Array</dfn> 等型態，在 DBus 規格中皆歸類為封箱型態 (Boxed type)。
+封箱型態的意義可參考 <a href="http://msdn.microsoft.com/en-us/library/yz2be5wk%28v=vs.80%29.aspx">Boxing and Unboxing (C# Programming Guide)</a> 之解釋。
+PHP DBus 模組從遠端個體取得封箱型態的內容時，會將它們配置為 <dfn>DbusVariant, DbusStruct, DbusDict, DbusArray</dfn> 等類別個體。
+這些被封箱在冠上 <dfn>Dbus</dfn> 之名的型態裡的內容，需要先拆封 (unboxing) 為 PHP 基本型態後，才能得其值。
+拆封方法便是 <code>$obj->getData()</code>。
+</p>
+
+<!--more-->
+<p>
+範例一是一個簡單的拆封範例。我向 Linux 桌面環境上常用的 NetworkManager 調用 GetAll() 方法查詢其目前屬性狀態。
+回傳的屬性狀態是一個封箱資料，所以要先對目標拆封才能得值。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$NM_Service</span> <span class="o">=</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">;</span>
+<span class="nv">$NM_Player_Path</span> <span class="o">=</span> <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">;</span>
+<span class="nv">$DBus_Properties_Interface</span> <span class="o">=</span> <span class="s1">'org.freedesktop.DBus.Properties'</span><span class="p">;</span>
+ 
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SYSTEM</span><span class="p">);</span>
+ 
+<span class="nv">$proxy_obj</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
+    <span class="nv">$NM_Service</span><span class="p">,</span> <span class="nv">$NM_Player_Path</span><span class="p">,</span> <span class="nv">$DBus_Properties_Interface</span><span class="p">);</span>
+
+<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$proxy_obj</span><span class="o">-&gt;</span><span class="na">GetAll</span><span class="p">(</span><span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">);</span>
+
+<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span> <span class="c1">// boxing values
+</span>
+<span class="nv">$unboxed_result</span> <span class="o">=</span> <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span> <span class="c1">//unboxing
+</span><span class="nv">$cs</span> <span class="o">=</span> <span class="nv">$unboxed_result</span><span class="p">[</span><span class="s1">'ActiveConnections'</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span>
+<span class="k">echo</span> <span class="s1">'Name of connection 0: '</span><span class="p">,</span> <span class="nv">$cs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+上述範例所得到的封箱資料，像是個俄羅斯娃娃，資料內容被層層包裝。
+當我們需要多次從這個 DBus 封箱資料中取值時，就要重複上述拆封工作，這實在是件煩事。
+所幸要把它完全拆封倒也不是難事，一個遞迴函數就可以解決。
+</p>
+
+<p>
+範例二是 DBus 封箱資料的泛用拆封函數，它會將所有封箱資料全部拆封。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">dbus_unboxing</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$v</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$v</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$vv</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$v</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">dbus_unboxing</span><span class="p">(</span><span class="nv">$vv</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$v</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">is_object</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="k">and</span> <span class="nb">strpos</span><span class="p">(</span><span class="nb">get_class</span><span class="p">(</span><span class="nv">$v</span><span class="p">),</span> <span class="s1">'Dbus'</span><span class="p">)</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">dbus_unboxing</span><span class="p">(</span><span class="nv">$v</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">());</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nv">$v</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$NM_Service</span> <span class="o">=</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">;</span>
+<span class="nv">$NM_Player_Path</span> <span class="o">=</span> <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">;</span>
+<span class="nv">$DBus_Properties_Interface</span> <span class="o">=</span> <span class="s1">'org.freedesktop.DBus.Properties'</span><span class="p">;</span>
+ 
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SYSTEM</span><span class="p">);</span>
+ 
+<span class="nv">$proxy_obj</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
+    <span class="nv">$NM_Service</span><span class="p">,</span> <span class="nv">$NM_Player_Path</span><span class="p">,</span> <span class="nv">$DBus_Properties_Interface</span><span class="p">);</span>
+
+<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$proxy_obj</span><span class="o">-&gt;</span><span class="na">GetAll</span><span class="p">(</span><span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">);</span>
+
+<span class="nv">$unboxed_result</span> <span class="o">=</span> <span class="nx">dbus_unboxing</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
+
+<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$unboxed_result</span><span class="p">);</span> <span class="c1">// unboxing values
+</span>
+<span class="k">echo</span> <span class="s1">'Name of connection 0: '</span><span class="p">,</span> <span class="nv">$unboxed_result</span><span class="p">[</span><span class="s1">'ActiveConnections'</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+比對範例一與範例二的 var_dump 結果，可以看出這個拆封函數會遺失型態資訊 (例如 dbus signature)。目前還看不出有無副作用。
+</p>
+
+<p>
+此外，「<a href="http://msdn.microsoft.com/en-us/library/yz2be5wk%28v=vs.80%29.aspx">Boxing and Unboxing (C# Programming Guide)</a>」提到了拆封工作的效能問題。
+雖然我們此處談的是 PHP ，但基本道理是一樣的。
+從 <dfn>dbus_unboxing()</dfn> 的程式碼中，應該也可想像拆封一個有多層封箱的資料時，將會發生多次資料內容配置工作。
+因此從效能面考量，若你只需要向一個封箱資料取其中一筆內容時，你應先考慮用範例一的方式取值，而不建議直接調用本文所寫的 <dfn>dbus_unboxing()</dfn> 函數將其全部拆封。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/Php-dbus%20extension%20with%20ByteArray%20support.html">Php-dbus extension with ByteArray support</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/16404035.html">http://blog.roodo.com/rocksaying/archives/16404035.html</a></div>

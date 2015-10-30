@@ -1,0 +1,206 @@
+---
+title: PHP 自訂註記與屬性注入功能
+category: programming
+old-category: PHP
+tags: [php,ioc,依賴注射,annotation,schema-database]
+---
+<p>我前天想要修改我寫的一個精簡型 PHP RESTful 框架，將它由外部設定(注入)控制項屬性內容的動作，改的更有使用彈性。最好像 Java Spring framework 那樣，可以透過註記(annotation)方式，讓使用者指定要注入的項目。
+</p>
+
+<p>雖然 PHP 的語法並不支援註記符號，但是我可以變通一下，把註記內容寫在 doc 區，然後再自己解析 doc 的內容。 PHP 的 <a href="http://www.phpdoc.org/">phpDocumentor</a> 和 <a href="http://pear.phpunit.de/">PHPUnit</a> 工具就是這麼做的。這個工作倒也不難，只需要用到 PHP Reflection 功能的 <a href="http://php.net/manual/en/reflectionclass.getdoccomment.php">getDocComment()</a> 就可以了。
+</p>
+
+<!--more-->
+<p>我先解釋什麼是 <dfn>doc 註解</dfn>？ 基本上，在 PHP 的語言規範中，並沒有提到 doc 註解這個條目，但是許多工具與擴充模組的程序員在設計時，卻不約而同地採用了 Java 的 doc 註解寫法做為特別強調是說明文件的註解。凡是用 <code>/**</code> (一斜兩星)開頭、<code>*/</code> (一星一斜)結尾的註解，就視為對緊隨此段落的程式元素的說明文字，專門稱之為 doc 註解。如下所示:
+</p>
+
+<pre class="highlight"><code>/**
+開頭為一斜兩星的註解，就是 doc 註解。
+因為跟著這段註解的程式元素是變數 $text1 的定義，故這段 doc 註解就被視為
+$text1 的說明文字。
+*/
+var $text1;
+
+/**
+ * 這也是 doc 註解。
+ * 大部份書上會教你這樣寫，但這只是為了美觀而已，前面的縮排與星號並非必要。
+ */
+var $text2;
+
+/*
+注意開頭只有一斜一星，這只是普通的註解。
+*/
+var $text3;
+</code></pre>
+
+
+<p>雖然 PHP 的語言規範沒提到 doc 註解，但 PHP Reflection 模組確實支援這種 Java doc 式的 doc 註解，並提供了 <dfn>getDocComment()</dfn> 方法讓程序員可以取得程式項目的 doc 註解文字。舉例來說，下列 get_class_doc.php 示範了如何取得指定類別的 doc 註解內容。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="sd">/**
+ Foo
+
+ @author rock
+ */</span>
+<span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$data</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$rFoo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionClass</span><span class="p">(</span><span class="s1">'Foo'</span><span class="p">);</span>
+
+<span class="nv">$doc</span> <span class="o">=</span> <span class="nv">$rFoo</span><span class="o">-&gt;</span><span class="na">getDocComment</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$doc</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+執行結果如下:
+
+<pre class="language-term">
+$ php get_class_doc.php
+/**
+ Foo
+
+ @author rock
+ */
+</pre>
+
+<p>
+我們可以為變數、函數、類別、方法與屬性寫 doc 註解。想要取得這些元素的 doc 註解，就必須先配置對應於指定元素的反射體，再調用反射體的 <dfn>getDocComment()</dfn> 取其 doc 註解。要讀類別的 doc 註解，就要先透過 <dfn>ReflectionClass</dfn> 配置該類別的反射體；要讀某個體的屬性的註解，便要透過對象的反射體的 <dfn>getProperty()</dfn> 方法先配置該屬性的反射體。餘類推。
+</p>
+
+<p>
+取得 doc 註解的工作完成了。接著就要實現解析 doc 註解，找出我們定義的註記，再做我們想做的事。在本文中，我要練習的是定義一個叫 <dfn>@resource</dfn> 的屬性註記。當我配置了一個 Foo 類的個體後，我就會去查看它有沒有任何屬性加上 <dfn>@resource</dfn> 註記。若有此註記，我就從外部(類別定義之外的地方)指派一個值給那個屬性。這個作法屬於控制反轉(IoC)設計模式，IoC 在 Java 世界相當有名，但是 PHP 要做也很簡單，我以前就寫過一個，見「<a href="{{ site.baseurl }}/archives/2010/PHP%20%E5%AF%A6%E4%BD%9C%20IoC_DI%20%E8%A8%AD%E8%A8%88%E6%A8%A1%E5%BC%8F.html">PHP 實作 IoC/DI 設計模式 </a>」。ioc_prop_resource_1.php 示範了如何做這件事。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="sd">/**
+ Foo
+
+ @author rock
+ */</span>
+<span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
+    <span class="sd">/**
+     @resource
+     */</span>
+    <span class="k">var</span> <span class="nv">$data</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$form</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'name'</span>  <span class="o">=&gt;</span> <span class="s1">'Rock'</span><span class="p">,</span>
+    <span class="s1">'email'</span> <span class="o">=&gt;</span> <span class="s1">'shirock@blog'</span>
+<span class="p">);</span>
+
+
+<span class="nv">$foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+
+<span class="c1"># 分析 doc ，找出 @resource 註記，指派 $form 的內容給有此註記的屬性。
+</span><span class="nv">$rfoo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$foo</span><span class="p">);</span>
+
+<span class="nv">$props</span> <span class="o">=</span> <span class="nv">$rfoo</span><span class="o">-&gt;</span><span class="na">getProperties</span><span class="p">();</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$props</span> <span class="k">as</span> <span class="nv">$prop</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$prop_name</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">;</span>
+    <span class="nv">$doc</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">getDocComment</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/@resource\s/"</span><span class="p">,</span> <span class="nv">$doc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"assign form to property '${prop_name}'</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="nv">$foo</span><span class="o">-&gt;</span><span class="nv">$prop_name</span> <span class="o">=</span> <span class="nv">$form</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//print_r($foo);
+</span><span class="k">echo</span> <span class="s1">'Name: '</span><span class="p">,</span>  <span class="nv">$foo</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'EMail: '</span><span class="p">,</span> <span class="nv">$foo</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'email'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+我設計的註記 <dfn>@resource</dfn> 是針對屬性賦值之用，所以這個註記最好是寫在屬性的 doc 註解內。而我就去查看各屬性的 doc 註解有沒有寫上 <dfn>@resource</dfn>。查看工作實在很簡單，用字串比對函數就行。找到之後，再把資料內容指派給那個屬性即可(第32行)。上例的執行結果如下:
+</p>
+
+<pre class="language-term">
+$ php ioc_prop_resource_1.php
+assign form to property 'data'
+Name: Rock
+EMail: shirock@blog
+
+</pre>
+
+<p>
+不過上一個例子的指派行為其實並不算好。因為那個屬性是公開存取的，所以簡單地用指派運算就成。但若屬性的存取權是受保護的(protected, private)，那麼上例的指派行為就會引起 PHP 的執行錯誤，PHP 會說你試圖改變一個不允許存取的屬性的內容。
+</p>
+
+<p>
+對於屬性存取權的限制，還是有解決之道。這也是透過 Reflection 功能才能玩出的特效。說起來，Java 的 Spring framework 也是利用 java.reflect 才能玩出屬性注入的把戲(<span class="Onote">參考「<a href="{{ site.baseurl }}/archives/2010/Java%20Spring%20framework%20%E9%96%8B%E7%99%BC%E4%BA%BA%E5%93%A1%E9%9D%A2%E8%A9%A6%E9%A1%8C.html#comment-22138959">Spring framework 實際上是透過 reflect 完成 autowired 的</a>」</span>)。我只要把指派行為改為 Reflection 的 <dfn>setValue()</dfn> 就可以讓我的注入行為更完善。ioc_prop_resource_2.php 就是改良後的範例。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="sd">/**
+ Foo
+
+ @author rock
+ */</span>
+<span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
+    <span class="sd">/**
+     @resource
+     */</span>
+    <span class="k">private</span> <span class="nv">$data</span><span class="p">;</span>  <span class="c1"># 現在，這是私有屬性
+</span>    
+    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'Name: '</span><span class="p">,</span>  <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="s1">'EMail: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'email'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$form</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'name'</span>  <span class="o">=&gt;</span> <span class="s1">'Rock'</span><span class="p">,</span>
+    <span class="s1">'email'</span> <span class="o">=&gt;</span> <span class="s1">'shirock@blog'</span>
+<span class="p">);</span>
+
+
+<span class="nv">$foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+
+<span class="c1"># 分析 doc ，找出 @resource 註記，指派 $form 的內容給有此註記的屬性。
+</span><span class="nv">$rfoo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$foo</span><span class="p">);</span>
+
+<span class="nv">$props</span> <span class="o">=</span> <span class="nv">$rfoo</span><span class="o">-&gt;</span><span class="na">getProperties</span><span class="p">();</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$props</span> <span class="k">as</span> <span class="nv">$prop</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$prop_name</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">;</span>
+    <span class="nv">$doc</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">getDocComment</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/@resource\s/"</span><span class="p">,</span> <span class="nv">$doc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"assign form to property '${prop_name}'</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="c1">//$foo-&gt;$prop_name = $form; # ERROR!
+</span>        <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">setAccessible</span><span class="p">(</span><span class="k">TRUE</span><span class="p">);</span> <span class="c1">// only effect this reflector.
+</span>        <span class="c1">// Ok. It can set value to this private property.
+</span>        <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">setValue</span><span class="p">(</span><span class="nv">$foo</span><span class="p">,</span> <span class="nv">$form</span><span class="p">);</span> 
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//print_r($foo);
+</span><span class="nv">$foo</span><span class="o">-&gt;</span><span class="na">dump</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+看吧，很簡單。<var>$prop</var> 是個體屬性的反射體，你可以將它視為存取屬性的後門。而這個後門可以藉由 <dfn>setAccessible()</dfn> 局部性地打開它的寫入權限，於是這個反射體就可以跳過 <dfn>private</dfn> 飾詞的限制，從外部改變這個屬性的內容。請注意，<dfn>setAccessible()</dfn> 並不會徹底改變屬性的存取權限。其影響僅限於開啟過的反射體，程序員依然不允許直接賦值給屬性。
+</p>
+
+<p>
+說到存取權飾詞，我額外說些個人感想。Neal Ford 在《程式設計師提升生產力秘笈》中說過，「在具有強力反射能力的語言中， private 關鍵字只是裝飾用的」。我想只有初學者才會把它當一回事。老練的程序員有很多手段可以隱蔽資料成員的操作細節，甚至不需要修改使用者的程式碼，就能將原本直接存取資料成員的動作隔離為間接的屬性存取方法。所以我個人習慣上已經不太使用 <dfn>protected</dfn>、<dfn>private</dfn> 關鍵字。我反而覺得還是以前那種在名稱前加上底線的命名方式更加直覺。因為不需任何額外動作，只要一看到底線名稱的成員，我就知道那是不公開的成員。我習慣上就會當這些成員不存在，不使用它們。
+</p>
+<p>
+習慣使用普通的文字編輯器寫程式的程序員，應該會感受到好的命名習慣反而有一目了然的效率。如果單純只用存取權飾詞的話，我還要用 IDE 工具，再把指標點到成員名稱上，我才會看到那個成員的存取權。我習慣一眼掃過一頁程式碼就要掌握這些資訊。對於要用指標移動才能點出這些資訊的操作方式，敬謝不敏。
+</p>
+
+<p>
+言歸正傳。自訂註記的技巧練習完成，那就把它應用到我原本要做的事上吧。我在我的程式框架中增加了一個 <code>@resource [name]</code> 的註記定義。透過這個註記，使用者可以很簡單地指定一些資源將被注入控制項的哪個屬性。請看「<a href="http://code.google.com/p/schema-database/source/diff?path=/trunk/web/index.php&format=side&r=49">Diff of index.php: r48. vs r49</a>」的異動紀錄。應用了這個註記的控制項的範例請看「<a href="http://code.google.com/p/schema-database/source/diff?spec=svn49&r=49&format=side&path=/trunk/web/controllers/book.php&old_path=/trunk/web/controllers/book.php&old=33">Diff of book.php: r33 vs. r49</a>」。
+</p>
+
+<div class="note">
+我的精簡型 PHP 框架，原本就是搭配我寫的資料函數庫「<a href="{{ site.baseurl }}/archives/2010/PHP%20-%20Schema-Database.html">schema-database</a>」，所以源碼放在一起。推蔫大家順便看看 schema-database 。
+</div><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18627329.html">http://blog.roodo.com/rocksaying/archives/18627329.html</a></div>

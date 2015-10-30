@@ -1,0 +1,402 @@
+---
+title: GJS - D-Bbus 自動內觀(Introspect)與配置代理個體
+category: programming
+old-category: JavaScript
+tags: [javascript,xml,d-bus,gjs,e4x]
+---
+<p>
+我之前在「<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>」說明 gjs 如何調用 D-Bus 服務時，提到 gjs 提供的 D-Bus 實作內容相當低階，以致於我們必須要自己定義我們想要調用的 D-Bus 代理個體的介面原型。在該文中我也提到，大部份的 D-Bus 服務都會實作 org.freedesktop.DBus.Introspectable 介面，提供 Introspect 方法(<span class="Onote">D-Bus 的 introspect 在 Java/C# 中採用的說法就是 reflect</span>)，讓其他人可以藉由這個方法查看介面規格。我們查詢的結果會是一份 XML 文件，若我們進一步分析該文件，就可以直接將分析結果交給 DBus.proxifyPrototype() 注入指定的代理類別。
+</p>
+
+<p>
+本文就是想要利用 gjs 實作的 E4X 能力，去解析遠端個體傳回的內觀資訊(introspection)，由程式自行產生 gjs dbus 模組所需的介面原型敘述，再注入成為新的類別。免除由程序員自己手寫介面原型敘述的不便。
+</p>
+
+<!--more-->
+<h4>
+程式概觀
+</h4>
+
+<p>
+我的實作程式主要有兩個工作函數。第一個工作函數 <dfn>IntrospectPrototype()</dfn> 負責取得指定對象的介面原型表。第二個工作函數 <dfn>ProxyObjectFactory()</dfn> 則產生 D-Bus 遠端個體的代理者。
+</p>
+
+<h5>IntrospectPrototype</h5>
+
+<p>
+<dfn>IntrospectPrototype()</dfn> 負責調用指定對象的 DBus Introspect() 方法取回其內觀資訊(XML文件)，再利用 gjs 的 E4X 能力解析成為 gjs DBus.proxifyPrototype 預期的介面原型表，將此表回傳。
+</p>
+
+<p>
+DBus.proxifyPrototype 要求的介面原型資訊表之格式如下:
+</p>
+<pre class="language-text">
+{
+  介面名稱: 
+  {
+    name: "介面名稱",
+    methods: [
+      { name: "方法名稱", inSignature: "型態簽名", outSignature: "型態簽名"},
+      ...(可以有多個方法)
+    ],
+    signals: [
+      { name: "訊號名稱", inSignature: "型態簽名", outSignature: "型態簽名"},
+      ...(可以有多個訊號)
+    ]
+},
+...(可以有多個介面)
+}
+</pre>
+
+<p>
+在以網頁瀏覽器為載具的 JavaScript 環境中，我們習慣利用 DOM API 處理 XML 文件內容。但在以 gjs 為載具的環境中，並沒有提供 DOM API ，故我們不能用 DOM API 處理 XML 文件。所幸 gjs 支援 E4X (ECMAScript for XML) 規格，所以我們可以利用 gjs 本身的語言能力處理 XML 文件。這也使本文的實作工作簡單許多。
+</p>
+
+<p>
+關於 E4X 的使用，可以參考「<a href="{{ site.baseurl }}/archives/2010/ECMAScript%20E4X%20%E9%AB%94%E9%A9%97%E8%88%87%E5%AF%A6%E4%BD%9C%E7%8F%BE%E6%B3%81.html">ECMAScript E4X</a>」。另一個常常與 gjs 相提的 Seed，並不支援 E4X，所以 Seed 不能使用本文實作的程式。
+</p>
+
+<h5>ProxyObjectFactory</h5>
+
+<p>
+<dfn>ProxyObjectFactory()</dfn> 是 D-Bus 遠端個體代理者工廠。它會產生一個新類別(匿名的類別)，注入 <dfn>IntrospectPrototype()</dfn> 所取回的介面原型資訊，產生我們所需要的 D-Bus 服務的代理個體。
+</p>
+
+<p>
+<dfn>ProxyObjectFactory()</dfn> 要 4 個必要參數項目，分別指出你要連接的 DBus 類型、服務名稱、遠端個體路徑以及要存取的介面名稱。此外還要一個額外的參數項目，依程式流程，給予一個回呼函數或是一個介面原型表。
+</p>
+
+<p>
+關於在 JavaScript 中產生匿名類別的技巧，請參考「<a href="{{ site.baseurl }}/archives/2011/%E7%94%A2%E7%94%9F%E6%96%B0%E9%A1%9E%E5%88%A5%E7%9A%84%E9%A1%9E%E5%88%A5.html">JavaScript - 產生類別的類別</a>」。
+</p>
+
+
+<h4>
+具內觀能力的 dbus.js
+</h4>
+
+<p>
+我直接繼承 gjs 原本的 dbus 模組，但為了與原本的有所區別，我將我寫的 dbus.js 放在名為 rock 的名稱空間中。這牽涉到 gjs 使用名稱空間的技巧，在後面的使用範例中會略加說明。
+</p>
+
+<pre class="highlight"><code><span class="cm">/*************************************************************
+rock.dbus
+Copyright 2011 rock &lt;shirock.tw@gmail.com&gt;
+License: GNU LGPL (http://www.gnu.org/licenses/lgpl.html)
+*************************************************************/</span>
+<span class="kr">const</span> <span class="nx">_Lang</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">lang</span><span class="p">;</span>
+<span class="nx">_Lang</span><span class="p">.</span><span class="nx">copyProperties</span><span class="p">(</span><span class="nx">imports</span><span class="p">.</span><span class="nx">dbus</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+
+<span class="cm">/**
+分析輸出端點的 XML 資料，轉成下列的表格形式:
+  { 
+    name: 端點名稱, 
+    inSignature: 輸入參數的 DBus 型態簽名, 
+    outSignature: 輸出參數的 DBus 型態簽名 
+  };
+@param export_node : DBus 輸出端點的 XML 資料。
+ 它可以是 DBus Method，也可以是 DBus Signal。
+@return false | 參數內容表.
+ */</span>
+<span class="kd">function</span> <span class="nx">_parseDIXArgs</span><span class="p">(</span><span class="nx">export_node</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">po</span> <span class="o">=</span> <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">''</span> <span class="p">};</span>
+    <span class="nx">po</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">export_node</span><span class="p">.</span><span class="err">@</span><span class="nx">name</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">po</span><span class="p">.</span><span class="nx">name</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">po</span><span class="p">.</span><span class="nx">name</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    
+    <span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="cm">/*
+    n = export_node.arg.length();
+    print("\t\tNumber of Arg: " + n);
+    var arg_node;
+    for (var i = 0; i &lt; n; ++i) {
+        arg_node = export_node.arg[i];
+        // &lt;arg name="interface" direction="in" type="s"/&gt;
+        print("\t\tArg name: "  + arg_node.@name + 
+              "; dir: "         + arg_node.@direction +
+              "; type: "        + arg_node.@type)
+    }
+    */</span>
+
+    <span class="kd">var</span> <span class="nx">ds</span> <span class="o">=</span> <span class="p">{</span><span class="na">inSignature</span><span class="p">:</span> <span class="s1">'in'</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'out'</span><span class="p">};</span>
+    <span class="kd">var</span> <span class="nx">d</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">sig</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nx">d</span> <span class="k">in</span> <span class="nx">ds</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nx">args</span> <span class="o">=</span> <span class="nx">export_node</span><span class="p">.</span><span class="nx">arg</span><span class="p">.(</span><span class="err">@</span><span class="nx">direction</span> <span class="o">==</span> <span class="nx">ds</span><span class="p">[</span><span class="nx">d</span><span class="p">]);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">name</span> <span class="o">==</span> <span class="s2">"ReferenceError"</span><span class="p">)</span>
+                <span class="nx">args</span> <span class="o">=</span> <span class="nx">export_node</span><span class="p">.</span><span class="nx">arg</span><span class="p">;</span>
+            <span class="k">else</span>
+                <span class="k">throw</span> <span class="nx">e</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nx">n</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">length</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">sig</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">n</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">sig</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="err">@</span><span class="nx">type</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="nx">po</span><span class="p">[</span><span class="nx">d</span><span class="p">]</span> <span class="o">=</span> <span class="nx">sig</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">po</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/**
+分析 DBus Introspect XML 內容。
+分析輸出端點的 XML 資料，轉成 gjs DBus.proxifyPrototype 要求的表格形式。
+@param introspection Introspect 回傳的 XML 原始文件。
+@return DBus介面原型表
+ */</span>
+<span class="kd">function</span> <span class="nx">_parseDBusIntrospectXML</span><span class="p">(</span><span class="nx">introspection</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XML</span><span class="p">(</span><span class="nx">introspection</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/&lt;!DOCTYPE </span><span class="se">[^</span><span class="sr">&gt;</span><span class="se">]</span><span class="sr">+&gt;/</span><span class="p">,</span><span class="s1">''</span><span class="p">));</span> <span class="c1">// gjs supports E4X.</span>
+    <span class="c1">// The DOCTYPE description of DBus XML look like illegal for E4X,</span>
+    <span class="c1">// so I need to strip it.</span>
+
+    <span class="kd">var</span> <span class="nx">export_types</span> <span class="o">=</span> <span class="p">{</span><span class="na">method</span><span class="p">:</span> <span class="s1">'methods'</span><span class="p">,</span> <span class="na">signal</span><span class="p">:</span> <span class="s1">'signals'</span><span class="p">};</span>
+    <span class="kd">var</span> <span class="nx">extype</span><span class="p">,</span> <span class="nx">extypeval</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">number_export</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">export_node</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">iface_table</span> <span class="o">=</span> <span class="p">{};</span>
+    <span class="kd">var</span> <span class="nx">iface_node</span><span class="p">,</span> <span class="nx">iface_desc</span><span class="p">,</span> <span class="nx">result</span><span class="p">;</span>
+    
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">x</span><span class="p">.</span><span class="kr">interface</span><span class="p">.</span><span class="nx">length</span><span class="p">();</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">iface_node</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="kr">interface</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+        <span class="nx">iface_desc</span> <span class="o">=</span> <span class="p">{</span> 
+            <span class="na">name</span><span class="p">:</span> <span class="nx">iface_node</span><span class="p">.</span><span class="err">@</span><span class="nx">name</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span> 
+            <span class="na">methods</span><span class="p">:</span> <span class="p">[],</span> 
+            <span class="na">signals</span><span class="p">:</span> <span class="p">[]</span> 
+        <span class="p">};</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="nx">extype</span> <span class="k">in</span> <span class="nx">export_types</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">extypeval</span> <span class="o">=</span> <span class="nx">export_types</span><span class="p">[</span><span class="nx">extype</span><span class="p">];</span>
+            <span class="nx">number_export</span> <span class="o">=</span> <span class="nx">iface_node</span><span class="p">[</span><span class="nx">extype</span><span class="p">].</span><span class="nx">length</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">number_export</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">iface_desc</span><span class="p">[</span><span class="nx">extypeval</span><span class="p">]</span> <span class="o">=</span> <span class="p">[];</span>
+                <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">number_export</span><span class="p">;</span> <span class="o">++</span><span class="nx">j</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">export_node</span> <span class="o">=</span> <span class="nx">iface_node</span><span class="p">[</span><span class="nx">extype</span><span class="p">][</span><span class="nx">j</span><span class="p">];</span>
+                    <span class="nx">result</span> <span class="o">=</span> <span class="nx">_parseDIXArgs</span><span class="p">(</span><span class="nx">export_node</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+                        <span class="nx">iface_desc</span><span class="p">[</span><span class="nx">extypeval</span><span class="p">].</span><span class="nx">push</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span> <span class="c1">//foreach export_types</span>
+        <span class="nx">iface_table</span><span class="p">[</span><span class="nx">iface_desc</span><span class="p">.</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">iface_desc</span><span class="p">;</span>
+    <span class="p">}</span> <span class="c1">// foreach interface</span>
+    <span class="k">return</span> <span class="nx">iface_table</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/**
+內觀 DBus 服務的原型資訊。
+@return prototypes 內觀所得的原型資訊表(prototypes)。
+ 如果指定的 DBus 服務沒有實作 Introspectable 介面，則 prototypes 為 false。
+ */</span>
+<span class="kd">function</span> <span class="nx">IntrospectPrototype</span><span class="p">(</span><span class="nx">bus</span><span class="p">,</span> <span class="nx">service_name</span><span class="p">,</span> <span class="nx">object_path</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">introspectableProxy</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">IntrospectableProxy</span><span class="p">(</span><span class="nx">bus</span><span class="p">,</span>
+            <span class="nx">service_name</span><span class="p">,</span> <span class="nx">object_path</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">prototypes</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
+
+    <span class="nx">introspectableProxy</span><span class="p">.</span><span class="nx">IntrospectRemote</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">){</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">result</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nx">result</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="nx">prototypes</span> <span class="o">=</span> <span class="nx">_parseDBusIntrospectXML</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">callback</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
+            <span class="nx">mainloop</span><span class="p">.</span><span class="nx">quit</span><span class="p">(</span><span class="s2">""</span><span class="p">);</span>
+        <span class="k">else</span>
+            <span class="nx">callback</span><span class="p">(</span><span class="nx">prototypes</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="nx">CALL_FLAG_START</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">callback</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
+        <span class="nx">mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s2">""</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nx">prototypes</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/**
+DBus 遠端個體代理者工廠.
+args:
+ required:
+    bus
+    service_name
+    object_path
+    interface_name
+ 
+ option:
+    interface_prototype
+    callback
+ */</span>
+<span class="kd">function</span> <span class="nx">ProxyObjectFactory</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">poc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>    <span class="c1">// proxy object class</span>
+    <span class="kd">var</span> <span class="nx">po</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>     <span class="c1">// proxy object</span>
+    <span class="kd">var</span> <span class="nx">proto</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>  <span class="c1">// prototype</span>
+
+    <span class="kd">function</span> <span class="nx">_construct_proxy_object</span><span class="p">(</span><span class="nx">proto</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">poc</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s2">"this._init();"</span><span class="p">);</span>
+        <span class="nx">poc</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="na">_init</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+	            <span class="nx">args</span><span class="p">.</span><span class="nx">bus</span><span class="p">.</span><span class="nx">proxifyObject</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">service_name</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">object_path</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+        <span class="c1">// 將介面原型注入代理類別</span>
+        <span class="nx">proxifyPrototype</span><span class="p">(</span><span class="nx">poc</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="nx">proto</span><span class="p">);</span>
+        <span class="nx">po</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">poc</span><span class="p">();</span>
+        <span class="nx">poc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">// release</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_prototype</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">proto</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">interface_prototype</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">IntrospectPrototype</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">bus</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">service_name</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">object_path</span><span class="p">,</span> 
+            <span class="kd">function</span><span class="p">(</span><span class="nx">protos</span><span class="p">){</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+                <span class="nx">proto</span> <span class="o">=</span> <span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">];</span>
+                <span class="nx">_construct_proxy_object</span><span class="p">(</span><span class="nx">proto</span><span class="p">);</span>
+                <span class="k">return</span> <span class="nx">args</span><span class="p">.</span><span class="nx">callback</span><span class="p">(</span><span class="nx">po</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">protos</span> <span class="o">=</span> <span class="nx">IntrospectPrototype</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">bus</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">service_name</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">object_path</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="nx">proto</span> <span class="o">=</span> <span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">];</span>
+        <span class="nx">protos</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">//release</span>
+    <span class="p">}</span>
+    <span class="nx">_construct_proxy_object</span><span class="p">(</span><span class="nx">proto</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">callback</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">args</span><span class="p">.</span><span class="nx">callback</span><span class="p">(</span><span class="nx">po</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nx">po</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+<dfn>ProxyObjectFactory()</dfn> 的參數項目 <var>interface_prototype</var> 與 <var>callback</var> 的差別在於使用時機，你必須根據你調用 <dfn>ProxyObjectFactory()</dfn> 的時機，指定正確的項目。這個「時機」，指的是你的程序狀態是否進入「<em>事件迴圈</em>」狀態。當你的程序進入「事件迴圈」狀態後，你必須指定 callback 。
+</p>
+
+<p>
+之所以會有這種時機區別，原因在於 D-Bus 是一種非同步訊息機制，也可以說是一種事件機制。它的事件由 GNOME Library 的事件迴圈(event loop)輪詢觸發。GNOME Library 事件迴圈可以是 mainloop 也可以是 Gtk.main 。在本文中預設是用 mainloop 作為事件迴圈。當你的程序調用 <code>mainloop.run()</code> 之後，你的程序狀態就進入一個無限迴圈中，不停地輪詢是否有新的事件發生。當事件發生時，就調用已登記的回呼函數(callback)處理。
+</p>
+<p>
+D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴圈分派工作。所以在 gjs 中，所有的 D-Bus 方法，都應透過回呼函數處理結果。請參考「<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>」的寫法，調用 D-Bus 方法的結果，並不是儲放在函數回傳值，而是由 callback 處理。
+</p>
+<p>
+但本文實作時，卻遇到了一個矛盾。我希望程序在進入事件迴圈之前，就先透過 D-Bus 的 Introspect 方法取得 D-Bus 服務的內觀資訊。但要取得 D-Bus 服務的內觀資訊，就必須要進入事件迴圈之後，才可以觸發 D-Bus Introspect 方法的事件。簡單地說，我想要在事件之前得到訊息，但這訊息要在事件之後才能產生。本文實作時，就是遇到了這麼一個矛盾。
+</p>
+
+<p>
+我解決這個矛盾的方法很簡單，我在 <dfn>IntrospectPrototype()</dfn> 設計了一個參數 <var>callback</var>。如果沒有指定這個參數，那就認為程序尚未進入事件迴圈。然後我就直接調用 <code>mainloop.run()</code> 等待 <dfn>IntrospectRemote()</dfn> 回傳的內觀資訊。當取回內觀資訊後，就馬上用 <code>mainloop.quit()</code> 脫離事件迴圈，讓程序繼續進行 <dfn>IntrospectPrototype()</dfn> 下一步的回傳動作。我在 <dfn>IntrospectPrototype()</dfn> 內設計了一個小迴圈等待我想要的事件發生，之後才回傳。這讓我的 <dfn>IntrospectPrototype()</dfn> 表現得像是一個同步函數。
+</p>
+
+<p>
+但是在一個程序中(更精確地說是一個線程中)，只能有一個事件迴圈。如果你的程序狀態已經進入了事件迴圈，那麼調用 <code>mainloop.run()</code> 的動作將會造成程式錯誤。所以我的 <dfn>IntrospectPrototype()</dfn> 與 <dfn>ProxyObjectFactory()</dfn> 就依是否進入事件迴圈為區別，劃分了要給 callback 參數的時機與不給 callback 參數的時機。進入事件迴圈前，不必給 callback 參數；進入事件迴圈後，則必須給 calback 參數。
+</p>
+
+<h4>
+使用範例
+</h4>
+
+<pre class="highlight"><code><span class="c1">//const DBus = imports.dbus;</span>
+<span class="kr">const</span> <span class="nx">DBus</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">rock</span><span class="p">.</span><span class="nx">dbus</span><span class="p">;</span>
+<span class="kr">const</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
+
+<span class="c1">// new way via rock.dbus.</span>
+<span class="c1">// Case 1: 在程式狀態進入 mainloop 之前可用此形式。</span>
+<span class="kd">let</span> <span class="nx">notifier</span> <span class="o">=</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
+    <span class="na">bus</span><span class="p">:</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">session</span><span class="p">,</span> 
+    <span class="na">service_name</span><span class="p">:</span>   <span class="s1">'org.freedesktop.Notifications'</span><span class="p">,</span>
+    <span class="na">object_path</span><span class="p">:</span>    <span class="s1">'/org/freedesktop/Notifications'</span><span class="p">,</span>
+    <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.Notifications'</span><span class="p">});</span>
+
+<span class="kr">const</span> <span class="nx">NetworkManagerServiceName</span> <span class="o">=</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">;</span>
+
+<span class="kd">let</span> <span class="nx">network_manager</span> <span class="o">=</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
+    <span class="na">bus</span><span class="p">:</span>        <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span> 
+    <span class="na">service_name</span><span class="p">:</span>       <span class="nx">NetworkManagerServiceName</span><span class="p">,</span>
+    <span class="na">object_path</span><span class="p">:</span>        <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">,</span>
+    <span class="na">interface_name</span><span class="p">:</span>     <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">});</span>
+
+<span class="nx">network_manager</span><span class="p">.</span><span class="nx">GetDevicesRemote</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">paths</span><span class="p">){</span>
+    <span class="c1">// 此間內容已處於 mainloop 狀態，必須使用下列兩種形式調用 DBus.ProxyObjectFactory.</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">let</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">paths</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"Path: "</span> <span class="o">+</span> <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+
+        <span class="c1">// Case 2: 若不知介面原型，則必須給予回呼函數.</span>
+        <span class="c1">// async (callback) mode:</span>
+        <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
+            <span class="na">bus</span><span class="p">:</span>    <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span>
+            <span class="na">service_name</span><span class="p">:</span>   <span class="nx">NetworkManagerServiceName</span><span class="p">,</span>
+            <span class="na">object_path</span><span class="p">:</span>    <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> 
+            <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.DBus.Properties'</span> <span class="p">,</span> 
+            <span class="na">callback</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">network_device</span><span class="p">){</span>
+                <span class="nx">network_device</span><span class="p">.</span><span class="nx">GetAllRemote</span><span class="p">(</span><span class="s2">"org.freedesktop.NetworkManager.Device"</span><span class="p">,</span>
+                <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">){</span>
+                    <span class="nx">print</span><span class="p">(</span><span class="s2">"-- begin callback output (should display after sync output) --"</span><span class="p">);</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">result</span><span class="p">)</span>
+                        <span class="nx">print</span><span class="p">(</span><span class="s2">"\t"</span> <span class="o">+</span> <span class="nx">p</span> <span class="o">+</span> <span class="s2">": "</span> <span class="o">+</span> <span class="nx">result</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
+                    <span class="nx">print</span><span class="p">(</span><span class="s2">"-- end callback output --"</span><span class="p">);</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+
+        <span class="c1">// Case 3: 你給予介面原型(interface_prototype), 則流程可循序進行.</span>
+        <span class="c1">// sync mode:</span>
+        <span class="kd">let</span> <span class="nx">network_device</span> <span class="o">=</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
+            <span class="na">bus</span><span class="p">:</span>    <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span>
+            <span class="na">service_name</span><span class="p">:</span>   <span class="nx">NetworkManagerServiceName</span><span class="p">,</span>
+            <span class="na">object_path</span><span class="p">:</span>    <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> 
+            <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.DBus.Properties'</span><span class="p">,</span>
+            <span class="na">interface_prototype</span><span class="p">:</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">Properties</span><span class="p">});</span>
+
+        <span class="nx">network_device</span><span class="p">.</span><span class="nx">GetAllRemote</span><span class="p">(</span><span class="s2">"org.freedesktop.NetworkManager.Device"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">){</span>
+            <span class="nx">print</span><span class="p">(</span><span class="s2">"-- begin sync output --"</span><span class="p">);</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">result</span><span class="p">)</span>
+                <span class="nx">print</span><span class="p">(</span><span class="s2">"\t"</span> <span class="o">+</span> <span class="nx">p</span> <span class="o">+</span> <span class="s2">": "</span> <span class="o">+</span> <span class="nx">result</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
+            <span class="nx">print</span><span class="p">(</span><span class="s2">"-- end sync output --"</span><span class="p">);</span>
+        <span class="p">});</span>
+   <span class="p">}</span>
+<span class="p">});</span> 
+
+<span class="nx">notifier</span><span class="p">.</span><span class="nx">NotifyRemote</span><span class="p">(</span>
+    <span class="s2">"appname"</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"message-im"</span><span class="p">,</span> <span class="s2">"Test"</span><span class="p">,</span> <span class="s2">"end after 2 seconds"</span><span class="p">,</span> <span class="p">[],</span> <span class="p">{},</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">print</span><span class="p">(</span><span class="s2">"result: "</span> <span class="o">+</span> <span class="nx">result</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="nx">DBus</span><span class="p">.</span><span class="nx">CALL_FLAG_START</span>
+<span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">source_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add_seconds</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="nx">print</span><span class="p">(</span><span class="s2">"quit"</span><span class="p">);</span>
+    <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">quit</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">});</span>
+
+<span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
+</code></pre>
+
+
+<p>
+與「<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>」的內容相比，最大的差異就在於此處的 demo.js 已經不再需要程序員定義 D-Bus 服務的原型資訊與類別了。這一切都由 rock.dbus 處理。demo.js 展示了三種不同的使用方式，其中有 callback 參數與沒有 callback 參數的方式，要根據前一節所說的使用時機決定。
+</p>
+
+<p>
+下圖是 demo.js 執行於 Linux Mint 12 桌面的結果。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/1965013_5w5q55z_l.png" alt="demo.js執行結果" />
+
+<p>
+順便說明 gjs 的名稱空間與模組管理方式。demo.js 第一行註解的是 gjs 內建的 dbus 模組，第二行使用了本文實作的 dbus 模組。那麼 gjs 是如何找到我自定的 dbus 模組呢？ 首先， gjs 會先按 <em>include path</em> 找尋模組；其次， gjs 會將模組的名稱空間對應到目錄結構，根據名稱空間往 <em>include path</em> 底下的子目錄找尋相同主檔名的 js 文件。
+</p>
+
+<p>
+gjs 預設的 <em>include path</em> 為 /usr/share/gjs-1.0。第一行註解的 <code>imports.dbus</code> 將指示 gjs 載入 /usr/share/gjs-1.0/<em>dbus</em>.js。第二行的 <code>imports.rock.dbus</code> 則將指示 gjs 載入 /usr/share/gjs-1.0/<em>rock/dbus</em>.js</em>。如果你想要指定其他的路徑作為 gjs 的 <em>include path</em> ，執行 gjs 時請加上 <dfn>-I</dfn> 或 <dfn>--include-path=DIR</dfn> 參數。
+</p>
+
+<p>
+本文實作的 dbus.js，我在 Ubuntu 10.04 (gjs 0.5), Ubuntu 11.04 (gjs 0.7), Linux Mint 12 (gjs 1.3) 三種不同的 gjs 版本環境上都使用過。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18612549.html">http://blog.roodo.com/rocksaying/archives/18612549.html</a></div>

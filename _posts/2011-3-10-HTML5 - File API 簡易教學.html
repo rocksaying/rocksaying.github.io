@@ -1,0 +1,359 @@
+---
+title: HTML5 - File API 簡易教學
+category: programming
+old-category: JavaScript
+tags: [ajax,html5]
+---
+<p>
+HTML5 規劃了一組支援本地文件(客戶端文件)讀取的函數介面，即 <a href="http://www.w3.org/TR/FileAPI/">File API</a>。
+透過 File API ，我們可以直接在瀏覽器中讀取客戶端的文件，而不需要先將檔案回傳到伺服端暫存後再讓瀏覽器取回顯示。
+</p>
+<p>
+本文將設計兩個文件閱讀工具示範 File API 的用法。
+整個工作僅需在瀏覽器(客戶端)使用 JavaScript 即可達成，完全不需要任何資料上傳到伺服端的工作。
+</p>
+
+<!--more-->
+<p>
+在瀏覽器中，我們必須先得到一個 <dfn>File</dfn> 個體，才能調用 File API 所規範的各項行為。
+但是基於安全性考量，HTML5 規範中只允許一種建立 <dfn>File</dfn> 個體的途徑，那就是透過「檔案選擇元件」(input type="file")。
+當使用者在檔案選擇元件中選取檔案後，瀏覽器才會建立對應的 <dfn>File</dfn> 個體。
+當瀏覽器將使用者選取的檔案配置為 <dfn>File</dfn> 個體之後，會儲存於檔案選擇元件的 files 屬性中。這是 HTML5 新增的元件屬性。
+程序員可從 files 屬性中取得 <dfn>File</dfn> 個體。
+</p>
+<p>
+上述規範，其目的在限制檔案讀取行為必須經過使用者之手。
+瀏覽器不允許程序員直接建立 <dfn>File</dfn> 個體，藉此避免不經使用者察覺而讀取客戶端文件的惡意網頁程式行為。
+</p>
+
+<p>
+下列是一個簡單的範例，展示如何從檔案選擇元件(input type="file")獲得 <dfn>File</dfn> 個體，並觀看其屬性值。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">file_viewer_load</span><span class="p">(</span><span class="nx">controller</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="s2">"Type of files[0]: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">toString</span><span class="p">()</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="o">+</span>
+        <span class="s2">"File name: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="o">+</span>
+        <span class="s2">"File size: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">size</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="o">+</span>
+        <span class="s2">"File type: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">type</span><span class="p">;</span>
+    <span class="nx">alert</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
+    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer_load(this);"</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span></code></pre>
+
+
+<div class="note">
+HTML5 可以建立單選與多選的檔案選擇元件，所以給我們的是一個 <var>files</var> 陣列。
+本文只使用檔案單選元件，所以使用者選擇的檔案，總是 <var>files</var> 的第一個項目(files[0])。
+</div>
+
+<h5>
+Read as Text
+</h5>
+
+<p>
+當使用者選取檔案後，瀏覽器僅先收集檔案資訊於 <dfn>File</dfn> 個體中，還不會實際讀取檔案內容。
+故前一節的操作僅能得知檔案的名稱、大小與文件型態。尚無內容。
+我們需再透過 <a href="http://www.w3.org/TR/FileAPI/#FileReader-interface">FileReader</a> 個體，才能要求瀏覽器載入檔案的內容，以便進一步地操作。
+</p>
+
+<p>
+下列實作了一個簡單的文件閱讀器，先讓使用者透過檔案選擇元件選取檔案，再用 <dfn>FileReader</dfn> 讀取內容。
+最後在頁面上顯示檔案內容。
+</p>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">FileViewer</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span>
+        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReader</span><span class="p">();</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">onloadend</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">self</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                    <span class="nx">self</span><span class="p">.</span><span class="nx">loaded</span><span class="p">();</span>
+                <span class="p">}</span>
+    <span class="p">})(</span><span class="k">this</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">FileViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">load</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">file</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">readAsText</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">FileViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">loaded</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_name</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_size</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">file_viewer</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">file_viewer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileViewer</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="na">controller</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'file_selector'</span><span class="p">),</span>
+            <span class="na">view_name</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filename'</span><span class="p">),</span>
+            <span class="na">view_size</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filesize'</span><span class="p">),</span>
+            <span class="na">view</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_box'</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">body</span> <span class="nx">onload</span><span class="o">=</span><span class="s2">"init();"</span><span class="o">&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
+    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer.load();"</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="nx">Name</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filename"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
+            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
+<span class="nx">Size</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filesize"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
+            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
+<span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="nx">textarea</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_box"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">cols</span><span class="o">=</span><span class="s2">"60"</span> <span class="nx">rows</span><span class="o">=</span><span class="s2">"20"</span><span class="o">&amp;</span><span class="nx">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="sr">/textarea&amp;gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span>
+</code></pre>
+
+
+<p>
+<dfn>FileReader</dfn> 提供了不同地讀取結果，以配合不同的使用需求。
+file-view.html 僅需要在文字區中顯示檔案內容，所以使用 FileReader::readAsText() 方法。
+程序員必須將想讀取內容的 <dfn>File</dfn> 個體傳遞給 FileReader::readAsText()。
+FileReader::readAsText() 讀取資料後，會將內容存於本身的 <var>result</var> 屬性。
+</p>
+<p>
+<dfn>FileReader</dfn> 提供的讀取方法皆是非同步模式，所以程序員尚需指定各讀取階段的事件函數。
+在本文中，我只關心讀取完成的事件，故僅指定了 <dfn>onloadend</dfn> 事件。
+</p>
+<p>
+file-view.html 先等使用者選擇要顯示的檔案，觸發 load() 方法，調用 FileReader::readAsText() 讀取內容。
+待讀取完成(onloadend)，再將讀取結果(reader.result)指派給文字區顯示。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/47458bbf.png" alt="file-view.html 執行畫面" />
+
+<h5>
+Read as Data URI
+</h5>
+<p>
+Data URI (<a href="http://tools.ietf.org/html/rfc2397">RFC 2397</a>) 是一種特殊的 URL 格式，可直接將文件內容編成一組 URL 字串。
+這允許我們有途徑將其他的檔案內容嵌入 HTML 文件中。
+維基百科的《<a href="http://en.wikipedia.org/wiki/Data_URI_scheme">Data URI scheme</a>》條目記載了瀏覽器的支援度與一些使用範例。
+</p>
+<p>
+舉例而言，在一般情形中，我們的 HTML 文件中並不直接包含圖片的資料內容，而是透過 img 的 <var>src</var> 屬性指向另一個圖片文件的遠端網址 URL。
+由於 Data URI 也是一種正式的 URL 格式，於是我們可以直接將圖片的資料內容編成一個 URL 字串，指派給 img 的 <var>src</var> 屬性。
+如此一來，便可以在一份 HTML 文件中同時包含文字、圖片等其他資料內容。
+</p>
+
+<p>
+<dfn>FileReader</dfn> 提供了直接將檔案內容讀取為 Data URI 字串的方法，即 FileReader::readAsDataURL()。這令我們得以實現在頁面中嵌入讀取結果的目標。
+</p>
+
+<p>
+image-view.html 利用 Data URI 機制，直接在頁面上顯示使用者選取的本地圖片內容，而不須上傳到伺服端處理。
+</p>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">ImageViewer</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span>
+        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReader</span><span class="p">();</span>
+
+    <span class="kd">function</span> <span class="nx">_event_handler</span><span class="p">(</span><span class="nx">self</span><span class="p">,</span> <span class="nx">method</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kd">function</span><span class="p">(){</span>
+            <span class="nx">method</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">self</span><span class="p">);</span>
+        <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">onloadend</span> <span class="o">=</span> <span class="nx">_event_handler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">loaded</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">ImageViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">load</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">file</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">readAsDataURL</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">ImageViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">loaded</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_name</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_size</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_data</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span> <span class="sr">/^image/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span> <span class="p">)</span>
+        <span class="nx">alert</span><span class="p">(</span><span class="s2">"This is not an image file. Type: "</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">view</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">file_viewer</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">file_viewer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ImageViewer</span><span class="p">({</span>
+        <span class="na">controller</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'file_selector'</span><span class="p">),</span>
+        <span class="na">view_name</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filename'</span><span class="p">),</span>
+        <span class="na">view_size</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filesize'</span><span class="p">),</span>
+        <span class="na">view</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_image'</span><span class="p">),</span>
+        <span class="na">view_data</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_data'</span><span class="p">)</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">body</span> <span class="nx">onload</span><span class="o">=</span><span class="s2">"init();"</span><span class="o">&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
+    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer.load();"</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="nx">Name</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filename"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
+            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
+<span class="nx">Size</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filesize"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
+            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
+<span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="nx">textarea</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_data"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">cols</span><span class="o">=</span><span class="s2">"60"</span> <span class="nx">rows</span><span class="o">=</span><span class="s2">"2"</span><span class="o">&amp;</span><span class="nx">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="sr">/textarea&amp;gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="nx">img</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_image"</span> <span class="nx">alt</span><span class="o">=</span><span class="s2">"Show Image"</span> <span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span>
+</code></pre>
+
+
+<p>
+image-view.html 大致與 file-view.html 相似，僅差別在其顯示的是圖片。
+由於 img 只能透過 <var>src</var> 屬性指定圖片內容，故我們需要利用 Data URI 機制，讓它顯示 <dfn>FileReader</dfn> 所讀入的圖片內容。
+據此需求，我們調用 FileReader::readAsDataURL() 而不是 FileReader::readAsText()。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/537ab71a.png" alt="image-view.html 執行畫面" />
+
+<p>
+image-view.html 示範的內容，通常可應用於照片上傳到伺服器之前的預覽動作，更進一步地達成多照片同時上傳與進度呈現的效果。
+對此有興趣的人，可閱讀《<a href="http://www.ibm.com/developerworks/cn/web/1101_hanbf_fileupload/">使用 JavaScript File API 实现文件上传</a>》。
+不過該文章在讀取檔案內容時，使用了 FireFox 專有的 File 讀取方法，而不是 W3C 規範的 FileReader 方法。
+Mozilla 官方文件中已經標注捨棄專有的 File 讀取方法。各位宜參考本文內容，改用W3C 規範的方式。
+</p>
+
+<h5>
+FileReaderSync
+</h5>
+
+<p>
+為了配合 HTML5 新增的多線作業機制(Web Worker)，File API 又規劃了另一組同步化的 <dfn>FileReaderSync</dfn> 方法。
+<dfn>FileReaderSync</dfn> 提供的讀取方法採同步讀取模式，所以它們會將讀取的檔案內容作為函數值回傳。
+</p>
+
+<p>
+下列是採用 FileReaderSync 讀取方法的 file-view.html。
+</p>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">FileViewer</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span>
+        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReaderSync</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="nx">FileViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">load</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_name</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view_size</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">file</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">view</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">readAsText</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">file_viewer</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">file_viewer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileViewer</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="na">controller</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'file_selector'</span><span class="p">),</span>
+            <span class="na">view_name</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filename'</span><span class="p">),</span>
+            <span class="na">view_size</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filesize'</span><span class="p">),</span>
+            <span class="na">view</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_box'</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">body</span> <span class="nx">onload</span><span class="o">=</span><span class="s2">"init();"</span><span class="o">&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
+    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer.load();"</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="nx">Name</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filename"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
+<span class="nx">Size</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filesize"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
+<span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="nx">textarea</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_box"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">cols</span><span class="o">=</span><span class="s2">"60"</span> <span class="nx">rows</span><span class="o">=</span><span class="s2">"20"</span><span class="o">&amp;</span><span class="nx">gt</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="sr">/textarea&amp;gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span>
+</code></pre>
+
+
+<p>
+非同步模式與同步模式的程式架構，主要差異在於同步模式可自讀取函數返回讀取結果，
+而非同步模式須指定事件處理函數捕抓讀取完成事件。
+</p>
+
+
+<h5>
+瀏覽器相容性
+</h5>
+<p>
+在我的環境中，FireFox 3.5 與 Chrome 9 皆可運作，但尚不支援 FileReaderSync 方法。
+亦即本文最後一個範例程式無法在 FireFox 3.5 與 Chrome 9 上執行。
+</p>
+<p>
+至於 IE8 與 Opera 10 ，則尚未支援 HTML5 的 files 屬性與 File API，
+所以不能執行本文的範例程式。
+</p>
+
+<h5>
+參考資料
+</h5>
+
+<ul>
+    <li>
+    <a href="http://www.w3.org/TR/html5/common-input-element-attributes.html#dom-input-files">
+    W3C Draft - HTML5 File/FileList</a>
+    </li>
+
+    <li>
+    <a href="http://www.w3.org/TR/FileAPI/">
+    W3C Draft - File API</a>
+    </li>
+
+    <li>
+    <a href="http://tools.ietf.org/html/rfc2397">RFC 2397</a> - Data URI
+    </li>
+
+    <li>
+    <a href="http://www.ibm.com/developerworks/cn/web/1101_hanbf_fileupload/">
+    使用 JavaScript File API 实现文件上传</a>
+    </li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/15328315.html">http://blog.roodo.com/rocksaying/archives/15328315.html</a></div>

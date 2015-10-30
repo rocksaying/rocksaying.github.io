@@ -1,0 +1,144 @@
+---
+title: schema-database - 查詢結果與 PDO~~FETCH_CLASS
+category: programming
+old-category: PHP
+tags: [database,activerecord,orm,pdo]
+---
+<p>我上週整理我幾年前開發的一個具備簡單 Active record 與 ORM 功能的 PHP 資料庫函數庫 <a href="http://code.google.com/p/schema-database/">schema-database</a> 。我想要為查詢函數加上一個參數，讓編程人員選擇查詢結果的型態為陣列或個體。因為 schema-database 的底層是 PDO ，所以要調整 PDO 汲取方法(fetch)的選項。
+</p>
+
+<p>在改寫動作中，我注意到 PDO 有一個選項叫 <dfn>PDO::FETCH_CLASS</dfn> 。它與 <dfn>PDO::FETCH_OBJ</dfn> 的差別在於 <dfn>PDO::FETCH_OBJ</dfn> 汲取出的資料型態是標準類別的個體(stdClass)，也就是單純的屬性集合體。而 <dfn>PDO::FETCH_CLASS</dfn> 汲取出的資料型態則是指定的類別的個體；這個類別可由使用者自己定義。
+<dfn>PDO::FETCH_CLASS</dfn> 的用途，很明顯可以搭配 ORM 類，讓 PDO 直接幫使用者配置 ORM 實體。
+</p>
+
+<!--more-->
+<p>由於我的 schema-database 本身就有提供一個通用的 ORM 類別，叫 <dfn>Database_Row</dfn>。自然我就順手加上了這個選項，讓使用者可以取出具有 ORM 能力的資料記錄。但是 <dfn>PDO::FETCH_CLASS</dfn> 有一個在文件中沒有提到的奇特行為，讓我一開始寫的程式發生錯誤，困擾了我一個下午的時間。
+</p>
+
+<p>在我說明這個奇特行為之前，先讓我們試著思考一下同樣的事，我們應該怎麼做？
+</p>
+
+<p>首先，我們會從資料庫中讀出指定的記錄。接著我們會配置對應的 ORM 個體。最後將記錄的資料內容，填入 ORM 個體的屬性。或者直接把資料內容作為配置 ORM 個體時的建構參數。總之，一個通常的過程是: 一、調用建構方法配置個體，二、填入資料欄位(個體屬性)。
+但是 <dfn>PDO::FETCH_CLASS</dfn> 奇特之處就在於它的過程是相反的。它是先填入個體屬性，再調用建構方法。很奇特吧。
+在 C++/Java 等語言中，根本沒有先填屬性再調建構方法這種事，因為在你調用建構方法之前根本沒東西存在。但是 PHP 並不禁止這種行為。
+</p>
+
+<p>下列內容就是用 PHP 語言表示上述所說的過程。假設 Book 是一個 ORM 類別。第一段是一般預期的配置過程。第二段則是 <dfn>PDO::FETCH_CLASS</dfn> 的配置過程。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">author</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$input_data</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'isbn'</span>  <span class="o">=&gt;</span> <span class="s1">'1234567890'</span><span class="p">,</span>
+    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'Title 1'</span><span class="p">,</span>
+    <span class="s1">'author'</span><span class="o">=&gt;</span>  <span class="s1">'rock'</span>
+<span class="p">);</span>
+
+<span class="c1">// 1. expected way:
+</span><span class="nv">$b1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Book</span><span class="p">;</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$input_data</span> <span class="k">as</span> <span class="nv">$field</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$b1</span><span class="o">-&gt;</span><span class="nv">$field</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 2. PDO_FETCH_CLASS's way:
+</span><span class="k">foreach</span> <span class="p">(</span><span class="nv">$input_data</span> <span class="k">as</span> <span class="nv">$field</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$b2</span><span class="o">-&gt;</span><span class="nv">$field</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nv">$b2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Book</span><span class="p">;</span>
+
+<span class="k">echo</span> <span class="s2">"B1 title: </span><span class="si">{</span><span class="nv">$b1</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s2">"B2 title: </span><span class="si">{</span><span class="nv">$b2</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// empty...
+</span><span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>眼尖的人，應該不用執行就可以看出 <dfn>PDO::FETCH_CLASS</dfn> 的奇特行為會帶來什麼困擾。
+通常，建構方法會將個體的所有屬性指派為預設值或是空值。這表示 <dfn>PDO::FETCH_CLASS</dfn> 調用建構方法之後，它原先設定的欄位內容就全部重置了。於是接下來我們取出的值就不是我們預期的內容。
+</p>
+
+<p>這個奇特行為曾經被舉報為 bug 與修正。但後來因為某些理由(但不知道是什麼)，又被 PHP 維護團隊還原回去了，但另外增加一個 <dfn>PDO::FETCH_PROPS_LATE</dfn> 的調整選項。相關訊息可參考「<a href="https://bugs.php.net/bug.php?id=49521">Bug #49521 - PDO fetchObject sets values before calling constructor</a>」。
+<dfn>PDO::FETCH_PROPS_LATE</dfn> 選項可以延後設定屬性的行為，使 <dfn>PDO::FETCH_CLASS</dfn> 的配置過程改為先調建構方法再設屬性。
+</p>
+
+<p>延用前一節的 PHP 程式碼，修改為實際 <dfn>PDO::FETCH_CLASS</dfn> 與 <dfn>PDO::FETCH_PROPS_LATE</dfn> 的用法。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">author</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"ISBN: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="s2">"Title: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="s2">"Author: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">author</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$dsn</span> <span class="o">=</span> <span class="s1">'sqlite::memory:'</span><span class="p">;</span>
+<span class="nv">$db</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="nv">$dsn</span><span class="p">);</span>
+<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"CREATE TABLE books (
+    isbn varchar(13) primary key,
+    title varchar(1024) not null,
+    author varchar(1024) not null
+    );"</span><span class="p">);</span>
+<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"INSERT INTO books VALUES ('1234567890', 'Title1 ', 'rock');"</span><span class="p">);</span>
+
+<span class="nv">$stat</span> <span class="o">=</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"SELECT * FROM books;"</span><span class="p">);</span>
+
+<span class="c1">//$stat-&gt;setFetchMode(PDO::FETCH_CLASS, 'Book'); 
+</span>  <span class="c1">// Unexcepted result. The constructor will reset all properties.
+</span>
+<span class="nv">$stat</span><span class="o">-&gt;</span><span class="na">setFetchMode</span><span class="p">(</span><span class="nx">PDO</span><span class="o">::</span><span class="na">FETCH_CLASS</span> <span class="o">|</span> <span class="nx">PDO</span><span class="o">::</span><span class="na">FETCH_PROPS_LATE</span><span class="p">,</span> <span class="s1">'Book'</span><span class="p">);</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="nv">$book</span> <span class="o">=</span> <span class="nv">$stat</span><span class="o">-&gt;</span><span class="na">fetch</span><span class="p">())</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s1">'Class of book is '</span><span class="p">,</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$book</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="nv">$book</span><span class="o">-&gt;</span><span class="na">dump</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>我一開始說這是我在修改 schema-database 函數庫時碰到的問題。那麼用我的 schema-database 配上 <dfn>PDO::FETCH_CLASS</dfn> 會如何？
+因為我的 schema-database 的 Database_Row 的建構方法總是會初始資料欄位，若是按照 PDO 原先的奇特行為，那麼所有的資料欄位都會被重置，就沒用了。必須搭配 <dfn>PDO::FETCH_PROPS_LATE</dfn> 才會得到正確結果。所以我將 schema-database 設計為看到 <dfn>PDO::FETCH_CLASS</dfn> 的選項時，就會自己搭配 <dfn>PDO::FETCH_PROPS_LATE</dfn>，且將記錄配置為 Database_Row 個體。
+</p>
+
+<p>前一節的 pdo_fetch_props_late_example.php ，改用 schema-database 的 <dfn>Database_Query</dfn> 實作的話，程式碼將會是下列內容:
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s1">'database_query.php'</span><span class="p">;</span>
+
+<span class="nv">$dsn</span> <span class="o">=</span> <span class="s1">'sqlite::memory:'</span><span class="p">;</span>
+<span class="nv">$db</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="nv">$dsn</span><span class="p">);</span>
+<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"CREATE TABLE books (
+    isbn varchar(13) primary key,
+    title varchar(1024) not null,
+    author varchar(1024) not null
+    );"</span><span class="p">);</span>
+<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"INSERT INTO books VALUES ('1234567890', 'Title1 ', 'rock');"</span><span class="p">);</span>
+
+<span class="nv">$query</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Database_Query</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'db'</span> <span class="o">=&gt;</span> <span class="nv">$db</span><span class="p">));</span>
+
+<span class="nv">$books</span> <span class="o">=</span> <span class="nv">$query</span><span class="o">-&gt;</span><span class="na">from</span><span class="p">(</span><span class="s1">'books'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">select</span><span class="p">(</span><span class="nx">PDO</span><span class="o">::</span><span class="na">FETCH_CLASS</span><span class="p">);</span>
+<span class="c1">// schema-database 看到 PDO::FETCH_CLASS 的選項時，總是搭配 PDO::FETCH_PROPS_LATE，
+// 且將記錄配置為 Database_Row 個體。
+</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$books</span> <span class="k">as</span> <span class="nv">$book</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s1">'Class of book is '</span><span class="p">,</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$book</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// Database_Row
+</span>    <span class="k">echo</span> <span class="s2">"ISBN: </span><span class="si">{</span><span class="nv">$book</span><span class="o">-&gt;</span><span class="na">isbn</span><span class="si">}</span><span class="s2">; Title: </span><span class="si">{</span><span class="nv">$book</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+我在「<a href="{{ site.baseurl }}/archives/2010/PHP%20-%20Schema-Database.html">PHP - Schema-Database</a>」的介紹文章最後，舉了一個 PowerQuery 例子。當時在該範例中，我要自己取出記錄後轉成 <dfn>Database_Row</dfn> 個體。現在不必這麼做了。
+但實際操作時的效能議題依舊。如果你只需要從查詢結果中取值，我仍建議你取為標準個體(<dfn>PDO::FETCH_OBJ</dfn>)或陣列(<dfn>PDO::FETCH_ASSOC</dfn>)。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/16920627.html">http://blog.roodo.com/rocksaying/archives/16920627.html</a></div>
