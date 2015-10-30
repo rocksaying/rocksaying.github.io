@@ -1,0 +1,294 @@
+---
+title: 用查表代替 switch - struct, union 與 enum 的應用
+category: programming
+old-category: C/C++/C#/Java
+tags: [refactor,重構,資料結構]
+---
+<p>
+很久以前，我已忘了是在哪本書看到的事(或許不只一本書)。書中說使用 switch..case.. 的場合，大部份都可以也應該改用查表方式代替。
+這句話的意義也含括了一句程式設計領域的名言，即「資料結構 + 演算法 = 程式」。
+</p>
+<p>
+大多數場合，連續的 switch..case.. 或 if..elseif.. 只是不斷複製類似的程式片段。
+這種文章結構，沒有運用資料結構觀念，就連演算法的部份也很粗糙，是很糟糕的程式碼。
+而在改用查表方式的重構過程中，規劃資料結構建「表」，並設計「查」的演算法，
+就自然而然地實踐了「資料結構 + 演算法 = 程式」這句話，也提高了程式碼的品質。
+</p>
+
+<!--more-->
+<p>
+我日前就專案需求，用 C 語言寫了一個程式。程式中有一段載入組態設置文件的動作。
+這個動作的設計過程，符合查表法代替switch..case..的目標。
+而且這段程式碼用了些少見的表述方式(但仍是 ANSI C 規範)，可以展現 C 語言語法的理解程度。
+故本文以此例演示。
+</p>
+
+<p>
+首先，來看看只用 if..elseif.. (switch..case..的變形) 的程式碼長什麼樣。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -o config-load1 config-load1.c parse_conf_line.c
+</span><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">parse_conf_line</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">line</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_key</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_value</span><span class="p">);</span>
+
+<span class="c1">// defs.h
+</span><span class="cp">#define CONFIG_PATH "/tmp/test.conf"
+#define DEFAULT_SERVER "localhost"
+#define LISTEN_PORT 5000
+#define TIMEOUT 10
+</span>
+<span class="cp">#define BUFLEN 1024
+</span><span class="c1">// end defs.h
+</span>
+<span class="c1">// Global config variables.
+</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Server</span> <span class="o">=</span> <span class="n">DEFAULT_SERVER</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">Port</span> <span class="o">=</span> <span class="n">LISTEN_PORT</span><span class="p">;</span>
+<span class="kt">time_t</span> <span class="n">Timeout</span> <span class="o">=</span> <span class="n">TIMEOUT</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">load_config</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">],</span> <span class="n">buf2</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
+    <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">CONFIG_PATH</span><span class="p">,</span> <span class="s">"r"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">fp</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">BUFLEN</span><span class="p">,</span> <span class="n">fp</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parse_conf_line</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span> <span class="o">||</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="s">"server"</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">Server</span> <span class="o">=</span> <span class="n">strcpy</span><span class="p">(</span>
+                    <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="p">);</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Server</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="s">"port"</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">Port</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Port</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="s">"timeout"</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">Timeout</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="cm">/*
+            more duplicate codes.
+            .
+            .
+            .
+            */</span>
+        <span class="p">}</span>
+        <span class="n">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%s not found. Use default settings.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">CONFIG_PATH</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">load_config</span><span class="p">();</span>
+    
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Server  : %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Server</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Port    : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Port</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Timeout : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<div class="note">
+我省掉了 parse_conf_line.c 的內容，因為那不是本文重點。
+各位只需要知道它包含了一個函數，可分析一份以 <code>key = value</code> 形式存在的文件即可。
+</div>
+
+<p>
+config-load1.c 最大的問題就在 if..elseif.. 這一段。
+每一段 if 只是決定組態名稱，並重複類似的變數值指派動作。
+隨著可組態項目陸續增加，這一段程式碼就會被複製地愈來愈長，重複的程式片段也就愈來愈多。
+</p>
+
+<p>
+接著再看用查表方式重構後的 config-load.c 。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -o config-load config-load.c parse_conf_line.c
+</span><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">parse_conf_line</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">line</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_key</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_value</span><span class="p">);</span>
+
+<span class="c1">// defs.h
+</span><span class="cp">#define CONFIG_PATH "/tmp/test.conf"
+#define DEFAULT_SERVER "localhost"
+#define DEFAULT_PATH   "/local"
+#define LISTEN_PORT 5000
+#define TIMEOUT 10
+#define PROCESS_UID 1000
+#define PROCESS_GID 1000
+</span>
+<span class="cp">#define BUFLEN 1024
+</span><span class="c1">// end defs.h
+</span>
+<span class="c1">// Global config variables.
+</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Server</span> <span class="o">=</span> <span class="n">DEFAULT_SERVER</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_PATH</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">Port</span> <span class="o">=</span> <span class="n">LISTEN_PORT</span><span class="p">;</span>
+<span class="kt">time_t</span> <span class="n">Timeout</span> <span class="o">=</span> <span class="n">TIMEOUT</span><span class="p">;</span>
+<span class="n">uid_t</span> <span class="n">ProcessUid</span> <span class="o">=</span> <span class="n">PROCESS_UID</span><span class="p">;</span>
+<span class="n">gid_t</span> <span class="n">ProcessGid</span> <span class="o">=</span> <span class="n">PROCESS_GID</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">LogLevel</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
+    <span class="k">enum</span> <span class="p">{</span>
+        <span class="n">STR</span><span class="p">,</span>
+        <span class="n">INT</span>
+    <span class="p">}</span> <span class="n">value_type</span><span class="p">;</span>
+    <span class="k">union</span> <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">str_var</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="o">*</span><span class="n">int_var</span><span class="p">;</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+<span class="n">config_table</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">{</span><span class="s">"server"</span><span class="p">,</span>          <span class="n">STR</span><span class="p">,</span> <span class="p">{.</span><span class="n">str_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Server</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s">"path"</span><span class="p">,</span>            <span class="n">STR</span><span class="p">,</span> <span class="p">{.</span><span class="n">str_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Path</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s">"port"</span><span class="p">,</span>            <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Port</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s">"timeout"</span><span class="p">,</span>         <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">Timeout</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s">"process_uid"</span><span class="p">,</span>     <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">ProcessUid</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s">"process_gid"</span><span class="p">,</span>     <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">ProcessGid</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s">"log_level"</span><span class="p">,</span>       <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">LogLevel</span><span class="p">}},</span>
+    <span class="p">{</span><span class="nb">NULL</span><span class="p">,</span>              <span class="n">STR</span><span class="p">,</span> <span class="p">{</span><span class="nb">NULL</span><span class="p">}}</span> <span class="c1">// end
+</span><span class="p">},</span>
+<span class="o">*</span><span class="n">conf_item</span> <span class="o">=</span> <span class="n">config_table</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">load_config</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">],</span> <span class="n">buf2</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
+    <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">CONFIG_PATH</span><span class="p">,</span> <span class="s">"r"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">fp</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">BUFLEN</span><span class="p">,</span> <span class="n">fp</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parse_conf_line</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span> <span class="o">||</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+            
+            <span class="k">for</span> <span class="p">(</span><span class="n">conf_item</span> <span class="o">=</span> <span class="n">config_table</span><span class="p">;</span> 
+                  <span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">;</span>
+                  <span class="o">++</span><span class="n">conf_item</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> 
+                    <span class="k">continue</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">value_type</span> <span class="o">==</span> <span class="n">STR</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">str_var</span> <span class="o">=</span> <span class="n">strcpy</span><span class="p">(</span>
+                        <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="p">);</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">str_var</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="p">{</span>
+                    <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">int_var</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">int_var</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%s not found. Use default settings.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">CONFIG_PATH</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">load_config</span><span class="p">();</span>
+    
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Server  : %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Server</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Path    : %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Path</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Port    : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Port</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Timeout : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Uid     : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">ProcessUid</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Gid     : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">ProcessGid</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"LogLevel: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">LogLevel</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+config-load.c 比較難理解的應該是下列這一段內容。
+</p>
+
+<pre class="highlight"><code><span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
+    <span class="k">enum</span> <span class="p">{</span>
+        <span class="n">STR</span><span class="p">,</span>
+        <span class="n">INT</span>
+    <span class="p">}</span> <span class="n">value_type</span><span class="p">;</span>
+    <span class="k">union</span> <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">str_var</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="o">*</span><span class="n">int_var</span><span class="p">;</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+簡單地說，我宣告了一個匿名結構(<dfn>struct</dfn>)。
+這個結構包含了三個欄位，分別是字元指標的 <dfn>key</dfn>，<dfn>enum</dfn> 型別的 <dfn>value_type</dfn>，以及匿名<dfn>union</dfn>的 var 指標。var 指標指向一個實際儲存組態值的全域變數。雖然也可以用 void* 含混帶過，但編譯器會抱怨，且使用時也經常要帶上強迫轉型行為。故不如以 union 的形式明確表述。
+</p>
+<p>
+緊接著這個匿名結構宣告語法後的符號 config_table 與 conf_item ，表示套用此匿名結構定義的變數。其中的 conf_item 還是指標型態，指向 config_table 。
+</p>
+<p>
+不熟悉匿名表達形式的人，可以按照自己的理解，嘗試把名稱補上去，應該就會看懂了。
+</p>
+<p>
+至於 <code>{.str_var = &Server}</code> 的 <code>.str_var</code>、<code>.int_var</code> 表述方式，則是在設定變數初值時，不採位置順序而是明確指定欄位的語法。
+</p>
+<p>
+看懂這張表後，再去看演算法就不難理解了。
+一個簡單的 for 迴圈找出符合的組態項目，然後判斷型別，調用適合的存值方法。
+</p>
+
+<p>
+這個範例還有進一步的改善空間。
+例如把分散的各個組態變數全部彙集成一張組態鍵值表，就更具使用彈性，只是會犧牲一些執行效率。
+</p>
+
+<p>
+另一方面，在此也可以看出提供動態型別系統的程式語言如何提高程式開發生產力。
+上述用 C 語言設計的表與演算法，在動態型別系統中，以 PHP 為例，能以下列形式簡單做到。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">load_config</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$config_table</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nv">$fh</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="nx">CONFIG_PATH</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="nv">$fh</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="nb">fgets</span><span class="p">(</span><span class="nv">$buf</span><span class="p">,</span> <span class="nv">$fh</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="p">(</span><span class="nv">$kv</span> <span class="o">=</span> <span class="nx">parse_conf_line</span><span class="p">(</span><span class="nv">$buf</span><span class="p">)))</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="k">list</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="nv">$value</span><span class="p">)</span> <span class="o">=</span> <span class="nv">$kv</span><span class="p">;</span>
+            <span class="nv">$config_table</span><span class="p">[</span><span class="nv">$key</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nb">fclose</span><span class="p">(</span><span class="nv">$fh</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+多數動態型別程式語言皆內建鍵值表或關聯式陣列的資料型態，令程式人員可以很簡單地建表。
+</p>
+<p>
+再者，像本文的 C 語言範例所建的表中，包含了一個 <dfn>value_type</dfn> 欄位，用以判斷該用什麼方法儲存組態值。
+而動態型別語言則不必如此麻煩，一個泛用的指派行為(=)就可以實現。
+這些都是動態型別語言的長處，程式人員應積極運用。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/20220500.html">http://blog.roodo.com/rocksaying/archives/20220500.html</a></div>

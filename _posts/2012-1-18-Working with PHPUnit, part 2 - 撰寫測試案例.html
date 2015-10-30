@@ -1,0 +1,447 @@
+---
+title: Working with PHPUnit, part 2 - 撰寫測試案例
+category: programming
+old-category: PHP
+tags: [tdd,agile_method,phpunit,unittest]
+---
+<p>
+繼第一部份《<a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%201%20-%20%E5%AE%89%E8%A3%9D%E5%82%99%E5%BF%98%E9%8C%84.html">Working with PHPUnit, part 1 - 安裝備忘錄</a>》後，接下來舉例說明操作 PHPUnit 之過程。
+</p>
+<div class="note">
+初版: 2007-01-18。<br/>
+最近更新: 2012-01-18。修正參考連結，補充 3.4 版後使用差異。
+</div>
+<ol>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html#PHPUnit3 指令工具與測試案例源碼檔">PHPUnit 指令工具與測試案例源碼檔</li>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html#撰寫測試案例源碼內容">撰寫測試案例源碼內容</a></li>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html#從測試對象產生測試案例源碼骨架">從測試對象產生測試案例源碼骨架</a></li>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html#完成測試案例與產生測試項目清單">完成測試案例與產生測試項目清單</a></li>
+</ol>
+
+<!--more-->
+<a name="PHPUnit3 指令工具與測試案例源碼檔"></a>
+<h3>PHPUnit 指令工具與測試案例源碼檔</h3>
+<p>
+PHPUnit 主要指令工具是 phpunit ，請瀏覽《<a href="http://www.phpunit.de/manual/3.4/en/textui.html">Chapter 5. The Command-Line Test Runner</a>》查看 phpunit 指令說明。此處概述一些注意事項。首先， PHPUnit 以 class 為測試單位，要求每一測試案例 (Test case, Test story) 之內容應實作在一個類別中。為與測試對象有所區別，本文稱實作測試案例內容之類別為測試類別 (test class) 。據此， phpunit 的第一參數為測試類別的名稱，並假設每一個 php 測試案例源碼檔僅包含一個測試類別，且測試案例之源碼檔名與測試類別名稱相同。 phpunit 又遵循 <a href="http://pear.php.net/manual/en/standards.naming.php">PEAR Coding Standards::Naming Conventions</a>  為 php 源碼檔命名與配置原則，將底線字元 (_) 視為檔案系統目錄層級的分隔字元。例如測試類別名稱若為 Model_My_ExampleTest ，則 phpunit 會自動在檔案系統中找尋 'Model/My/ExampleTest.php' 。若要抑止此一預設檔案規則，則可以指定第二參數為 php 源碼路徑與檔名。
+</p>
+<pre class="language-text">
+$ phpunit Model_My_ExampleTest
+# 僅指定第一參數， phpunit 自動尋找 Model/My/ExampleTest.php
+
+$ phpunit Model_My_ExampleTest unit_test/my_example_test.php
+# 指定 phpunit 以 unit_test/my_example_test.php 為測試案例源碼檔
+</pre>
+
+<a name="撰寫測試案例源碼內容"></a>
+<h3>撰寫測試案例源碼內容</h3>
+<p>
+SimpleTest.php 是一個基本的測試案例源碼樣板，可以此測試 PHPUnit 是否成功安裝。
+</p>
+<h4>SimpleTest.php</h4>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">SimpleTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">thisIsNotATest</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'nothing'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testItIsTrue</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="k">TRUE</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @test
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">arrayIsEmpty</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nv">$fixture</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$fixture</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+以下列出 PHPUnit 撰寫測試案例源碼時的基本事項:
+</p>
+<ol>
+<li>
+需要載入 'PHPUnit/Framework.php' 。
+</li>
+<li>
+測試案例之內容必須實作於一個測試類別中，且測試類別應繼承自 PHPUnit_Framework_TestCase 類別。測試類別之名稱遵循 <a href="http://pear.php.net/manual/en/standards.naming.php">PEAR Coding Standards::Naming Conventions</a> ，首字母應大寫。一個測試案例源碼檔中應僅包含一個測試類別，源碼檔預設與測試類別同名。
+</li>
+<li>
+每一測試案例項目應實作為一個測試類別之實例行為。 phpunit 預期每一個無參數且名稱符合 test* 的個體行為是一個測試項目。另一個可用的方式是在個體行為的文件區塊 (docblock) 中註記 <code>@test</code>。因此 SimpleTest.php 中只有 <var>testItIsTrue()</var> 及 <var>arrayIsEmpty()</var> 是測試項目，而 <var>thisIsNotATest()</var> 不會執行。
+</li>
+<li>
+測試項目之行為名稱建議採用 camel caps 樣式，即每字之間不分開，第一字之首字母小寫，其餘字之首字母大寫。採用此種命名方式時， phpunit 可自動產生可閱讀的測試項目清單文件。See also: 《<a href="http://www.phpunit.de/manual/3.4/en/other-uses-for-tests.html">Chapter 16. Other Uses for Tests: Agile Documentation</a>》。
+</li>
+<li>
+測試內容採用斷言敘述 (assert) ，可用之斷言參閱《<a href="http://www.phpunit.de/manual/3.4/en/api.html#api.assert">Chapter 22. PHPUnit API::PHPUnit_Framework_Assert</a>》。
+</li>
+</ol>
+<pre class="language-text">
+$ phpunit --testdox-text test_list.txt SimpleTest
+PHPUnit 3.0.0 by Sebastian Bergmann.
+
+..
+
+Time: 00:00
+
+
+OK (2 tests)
+
+$ type test_list.txt
+Simple
+ [x] It is true
+ [x] Array is empty
+
+</pre>
+
+<a name="從測試對象產生測試案例源碼骨架"></a>
+<h3>從測試對象產生測試案例源碼骨架</h3>
+<p>
+由於測試案例源碼內容大致相同， phpunit 也提供了自動產生測試案例源碼骨架的功能，根據測試對象的內容產生一個對應的測試案例源碼。請參閱《<a href="http://www.phpunit.de/manual/3.4/en/skeleton-generator.html">Chapter 17. Skeleton Generator</a>》，測試對象必須是一個類別，若 php 源碼檔中包含多個類別時， phpunit 只將最後一個類別視為測試對象而為其產生測試案例源碼骨架。
+</p>
+
+<p>
+DatabaseRow 是一個彈性的資料庫欄位類別。可以藉 Configuration-driven Development (<span class="Onote">See also: 《<a href="{{ site.baseurl }}/archives/2007/Example%20of%20Configuration%20Driven%20Development%20with%20PHP.html">Example of Configuration Driven Development with PHP</a>》</span>) 的方式讀入資料庫欄位的 schema ，並能檢查資料值是否符合資料型態。它覆載了 <code>__set, __get</code> 行為作欄位內容的存取子。可隨時新增欄位，唯新增欄位不檢查資料型態。此外，對於嘗試取得未定義欄位內容的動作，皆回傳 False 。
+</p>
+
+<h4>DatabaseRow.php</h4>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">DatabaseRow</span> <span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$fieldMap</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$schema</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$schema</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$schema</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">schema</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">]))</span> <span class="p">{</span>
+                    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">];</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$isType</span> <span class="o">=</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">)</span>
+            <span class="o">?</span> <span class="s1">'is_'</span> <span class="o">.</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span>
+            <span class="o">:</span> <span class="k">FALSE</span>
+        <span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nv">$isType</span> <span class="k">or</span> <span class="nv">$isType</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$k</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span><span class="p">)</span>
+            <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span>
+            <span class="o">:</span> <span class="k">FALSE</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+以 DatabaseRow 類別為測試對象，接著使用 phpunit 的選項 <var>--skeleton-test</var> 為 DatabaseRow 產生測試案例源碼骨架。 phpunit 會在測試對象之名稱後添加 'Test' 作為測試案例源碼檔與測試類別之名稱。
+在 team-work 時，通常我們在決定類別的各項公開行為的名稱後就會產生測試案例骨架，接著就將工作類別與測試類別分別交給程式人員和測試人員撰寫，不必等到類別的內容實作完成後才產生測試案例骨架。
+</p>
+<pre class="language-text">
+$ phpunit --skeleton-test DatabaseRow
+PHPUnit 3.4.14 by Sebastian Bergmann.
+
+Wrote skeleton for "DatabaseRowTest" to "DatabaseRowTest.php".
+
+</pre>
+
+<p>
+請自行開啟 DatabaseRowTest.php 查看測試案例骨架源碼。 phpunit 產生的測試案例骨架源碼會自動為測試對象之每一公開行為產生一個「未完成 (incomplete)」的測試項目。<del>而且它的內容比較多，允許直接執行。</del>
+</p>
+<pre class="language-text">
+$ phpunit DatabaseRowTest
+PHPUnit 3.0.0 by Sebastian Bergmann.
+II
+Time: 00:00
+OK, but incomplete or skipped tests!
+Tests: 2, Incomplete: 2.
+</pre>
+
+<p>
+PHPUnit 3.0 版產生的測試案例源碼帶有一些額外的啟動碼，所以可以下列方式直接以 php 指令執行。PHPUnit 3.4 版後就沒有了。
+</p>
+<pre class="language-text">
+$ php DatabaseRowTest.php
+PHPUnit 3.0.0 by Sebastian Bergmann.
+II
+Time: 00:00
+OK, but incomplete or skipped tests!
+Tests: 2, Incomplete: 2.
+</pre>
+
+<a name="完成測試案例與產生測試項目清單"></a>
+<h3>完成測試案例與產生測試項目清單</h3>
+<p>
+當我們將 DatabaseRow 類別的內容完成到一個段落時，我們同時改寫 DatabaseRowTest.php 的內容，為了載入 schema ，我添加 phpunit 沒有為我們加上的建構行為，在其中載入 schema (30-34行)。此處我先測試未指派 schema 和有指派 schema 兩個情形。下列為測試案例使用的 schema 與改寫後的第二版 DatabaseRowTest.php 。
+</p>
+<h4>DatabaseRowTest.js</h4>
+<pre class="highlight"><code>{
+    "id": {
+        "type": "integer",
+        "default": 0
+    }
+}
+</code></pre>
+
+<h4>DatabaseRowTest.php, version 2</h4>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
+</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">,</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestCase.php"</span><span class="p">;</span>
+<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestSuite.php"</span><span class="p">;</span>
+
+<span class="k">require_once</span> <span class="s1">'DatabaseRow.php'</span><span class="p">;</span>
+
+<span class="sd">/**
+ * Test class for DatabaseRow.
+ * Generated by PHPUnit_Util_Skeleton on 2007-xx-xx.
+ */</span>
+<span class="k">class</span> <span class="nc">DatabaseRowTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
+    <span class="sd">/**
+     * Runs the test methods of this class.
+     *
+     * @access public
+     * @static
+     */</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">require_once</span> <span class="s2">"PHPUnit/TextUI/TestRunner.php"</span><span class="p">;</span>
+
+        <span class="nv">$suite</span>  <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestSuite</span><span class="p">(</span><span class="s2">"DatabaseRowTest"</span><span class="p">);</span>
+        <span class="nv">$result</span> <span class="o">=</span> <span class="nx">PHPUnit_TextUI_TestRunner</span><span class="o">::</span><span class="na">run</span><span class="p">(</span><span class="nv">$suite</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="nv">$schema</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span> <span class="o">=</span>
+            <span class="nb">json_decode</span><span class="p">(</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'DatabaseRowTest.js'</span><span class="p">),</span> <span class="kc">true</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * Sets up the fixture, for example, open a network connection.
+     * This method is called before a test is executed.
+     *
+     * @access protected
+     */</span>
+    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * Tears down the fixture, for example, close a network connection.
+     * This method is called after a test is executed.
+     *
+     * @access protected
+     */</span>
+    <span class="k">protected</span> <span class="k">function</span> <span class="nf">tearDown</span><span class="p">()</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 未指定 Schema 時，任何欄位之值皆為 FALSE
+     *
+     * @test
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithoutSchema</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 指派 Schema 。
+     * 在此例中，只有 id 欄位，型態為 integer ，預設值為 0 。
+     *
+     * @test
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithSchema</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'default'</span><span class="p">],</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">address</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement test__set().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">test__set</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// Remove the following line when you implement this test.
+</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">markTestIncomplete</span><span class="p">(</span>
+          <span class="s2">"This test has not been implemented yet."</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement test__get().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">test__get</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// Remove the following line when you implement this test.
+</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">markTestIncomplete</span><span class="p">(</span>
+          <span class="s2">"This test has not been implemented yet."</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
+</span><span class="k">if</span> <span class="p">(</span><span class="nx">PHPUnit_MAIN_METHOD</span> <span class="o">==</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">DatabaseRowTest</span><span class="o">::</span><span class="na">main</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+請自行執行並觀察結果。接著我要測試設定欄位值的動作，由於每一個測試項目執行前都需要建立一個乾淨的 DatabaseRow 實例，故我將建立 DatabaseRow 實例的動作寫在 <code>setUp()</code> 中。 <code>setUp()</code> 是專門用於為每一個測試項目建立乾淨的測試環境之用。See also:《<a href="http://www.phpunit.de/manual/3.4/en/fixtures.html">Chapter 6. Fixtures</a>》。下列為第三版的 DatabaseRowTest.php 。
+</p>
+
+<h4>DatabaseRowTest.php, version 3</h4>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
+</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">,</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestCase.php"</span><span class="p">;</span>
+<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestSuite.php"</span><span class="p">;</span>
+
+<span class="k">require_once</span> <span class="s1">'DatabaseRow.php'</span><span class="p">;</span>
+
+<span class="sd">/**
+ * Test class for DatabaseRow.
+ * Generated by PHPUnit_Util_Skeleton on 2007-xx-xx.
+ */</span>
+<span class="k">class</span> <span class="nc">DatabaseRowTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
+    <span class="sd">/**
+     * Runs the test methods of this class.
+     *
+     * @access public
+     * @static
+     */</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">require_once</span> <span class="s2">"PHPUnit/TextUI/TestRunner.php"</span><span class="p">;</span>
+
+        <span class="nv">$suite</span>  <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestSuite</span><span class="p">(</span><span class="s2">"DatabaseRowTest"</span><span class="p">);</span>
+        <span class="nv">$result</span> <span class="o">=</span> <span class="nx">PHPUnit_TextUI_TestRunner</span><span class="o">::</span><span class="na">run</span><span class="p">(</span><span class="nv">$suite</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="nv">$schema</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span> <span class="o">=</span>
+            <span class="nb">json_decode</span><span class="p">(</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'DatabaseRowTest.js'</span><span class="p">),</span> <span class="kc">true</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="nv">$row</span><span class="p">;</span>
+    <span class="sd">/**
+     * 每個測試項目執行前，都重新配置一次 $row
+     *
+     * @access protected
+     */</span>
+    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 未指定 Schema 時，任何欄位之值皆為 FALSE
+     *
+     * @test
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithoutSchema</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 指派 Schema 。
+     * 在此例中，只有 id 欄位，型態為 integer ，預設值為 0 。
+     *
+     * @test
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithSchema</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'default'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">address</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 右值不符欄位型態時，欄位值不變。
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testSetIdAsInvalidValue</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span> <span class="o">=</span> <span class="s1">'john'</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'default'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 設定 id 為 5。
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testSetIdAsFive</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * 增加 name 欄位，未指定資料型態 (不檢查型態)
+     * 增加欄位前，其值為 FALSE 。
+     * 增加欄位後，先設其值為 5 ，再設為 'john'。
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testSetNameAsJohn</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="s1">'john'</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="s1">'john'</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
+</span><span class="k">if</span> <span class="p">(</span><span class="nx">PHPUnit_MAIN_METHOD</span> <span class="o">==</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">DatabaseRowTest</span><span class="o">::</span><span class="na">main</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+最後示範以 phpunit 在測試同時為我們產生測試項目清單。此處就可看出為測試案例類別的實例行為 (即測試項目) 取一個有意義的名字相當重要。<strong>在 Agile method 中隨處可見「source code is document」這句話。追隨它，相信它，貫徹它。</strong>不要淪為報告打字員。我們堅持拒絕多打一次報告! (See also: 《<a href="{{ site.baseurl }}/archives/2006/%E8%BB%9F%E9%AB%94%E5%B7%A5%E7%A8%8B%E4%B8%89%E5%A4%A7%E9%99%A3%E7%87%9F%2C%20RUP%2C%20CMMI%2C%20Agile%20Method.html">軟體工程三大陣營, RUP, CMMI, Agile Method</a>》)
+</p>
+<pre class="language-text">
+$ phpunit --testdox-text test.log DatabaseRowTest
+PHPUnit 3.4.14 by Sebastian Bergmann.
+.....
+Time: 00:00
+
+OK (5 tests)
+
+$type test.log
+DatabaseRow
+ [x] New database row without schema
+ [x] New database row with schema
+ [x] Set id as invalid value
+ [x] Set id as five
+ [x] Set name as john
+</pre>
+<p>
+我在《<a href="{{ site.baseurl }}/archives/2006/%E5%85%88%E8%AA%AA%E6%95%85%E4%BA%8B%E5%86%8D%E5%8B%95%E6%89%8B%E8%A8%AD%E8%A8%88%2C%20%E5%BE%9E%E4%B8%80%E5%80%8B%E7%B0%A1%E5%96%AE%E6%95%85%E4%BA%8B%E7%9C%8B%20Test%20Driven%20Development.html">先說故事再動手設計, 從一個簡單故事看 Test Driven Development</a>》也說明了如何在日常工作中推動 Test-driven Development 過程。到目前為止已經介紹了相當多 PHPUnit 的內容，基本上足以應付多數場合的需求。更多的內容可以參閱線上手冊《<a href="http://www.phpunit.de/manual/3.4/en/index.html">PHPUnit Manual</a>》。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2653972.html">http://blog.roodo.com/rocksaying/archives/2653972.html</a></div>

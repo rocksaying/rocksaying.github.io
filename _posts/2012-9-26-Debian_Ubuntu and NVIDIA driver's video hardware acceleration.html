@@ -1,0 +1,157 @@
+---
+title: Debian/Ubuntu and NVIDIA driver's video hardware acceleration
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,debian,mplayer,vlc,nvidia]
+---
+<p>
+Debian/Ubuntu 系統與 NVIDIA 視訊晶片的視訊加速播放功能。
+</p>
+
+<div class="note">
+第一次發布日期: 2010-09-09<br/>
+最近更新日期: 2012-09-26<br/>
+適用的 Linux 散佈版本: Debian 6.0 與 Ubuntu 10.04 。<br/>
+我使用的 NVIDIA 視訊晶片是 GeForce 8600 。
+</div>
+
+<!--more-->
+<h4>
+NVIDIA 視訊驅動程式
+</h4>
+
+<p>
+若要啟用 NVIDIA 的視訊加速播放(或稱硬解播放)功能，首先，你需要先安裝 NVIDIA 官方的視訊驅動程式。 Ubuntu 的使用者可以安裝套件 <dfn>nvidia-current</dfn> ，或者和 Debian 使用者一樣手動下載安裝。我採用手動下載安裝的方式，因為這樣可以保持最新的視訊驅動程式版本。缺點是 Linux 核心更新後，就要再重新安裝一次視訊驅動程式。
+</p>
+
+<p>
+進入「<a href="http://www.nvidia.com.tw/Download/index.aspx?lang=tw">NVIDIA 驅動程式下載</a>」此頁面，下載你需要的視訊驅動程式安裝包。你會得到一個名稱是 NVIDIA-Linux-???.run 的檔案，請設定該檔屬性為可執行，然後以 root 的身份執行它。跟隨它的指引安裝。
+</p>
+
+<p>
+安裝視訊驅動程式之後，請先檢查 <dfn>/usr/lib/libvdpau_nvidia.so</dfn> 是否存在？
+它應該是一個連結指向 <dfn>/usr/lib/vdpau/libvdpau_nvidia.so.1</dfn>。
+如果不存在 <dfn>/usr/lib/libvdpau_nvidia.so</dfn> 或者不是一個指向正確位置的連結，請建立它。指令如下:
+</p>
+
+<pre class="language-term">
+$ sudo ln -s /usr/lib/vdpau/libvdpau_nvidia.so.1 /usr/lib/libvdpau_nvidia.so
+</pre>
+
+<p>
+安裝視訊驅動程式之後，必須重新啟動 X 視窗或者直接重啟系統。
+接著再安裝視訊處理API與支援硬解播放的播放軟體。以下選擇 mplayer 與 vlc 。
+</p>
+
+<h4>
+mplayer
+</h4>
+
+<p>
+若你是 NVIDIA 顯示晶片的使用者 (NVIDIA 8或更新的晶片，我的測試機上安裝的是 GeForce 8600)，Ubuntu lucid 的官方套件已經支援高清影片的 NVIDIA 硬體加速播放功能(硬解播放)。你只需要安裝下列的套件:
+</p>
+
+<ul>
+  <li>
+  nvidia-current:<br/>
+   enable hardware acceleration from NVIDIA 8 serials.<br/>
+   Debian 的使用者請參考第一節的說明手動安裝。
+  </li>
+
+  <li>
+  libvdpau1:<br/>
+   nVidia VDPAU library. mplayer requires this.
+  </ll>
+
+  <li>
+  mplayer and smplayer:<br/>
+   <dfn>smplayer</dfn> 是一個良好的 mplayer 前端使用介面，可以幫我們處理要傳遞給 mplayer 的參數。
+   安裝它，我們就不用自己輸入 mplayer 需要的那些長之又長的參數。
+   當然你也可以選擇其他的 mplayer ‪前端使用介面。
+  </li>
+</ul>
+
+<pre class="language-term">
+$ sudo apt-get install nvidia-current libvdpau1 mplayer smplayer
+</pre>
+
+<p>
+當你安裝完成 <dfn>nvidia-current</dfn> 後，你需要重新啟動你的 X ，或是乾脆重新開機。
+</p>
+
+<p>
+執行 <dfn>smplayer</dfn> 後，首先到「偏好設定」：偏好設定 -&gt; 一般 -&gt; 視設 -&gt; Output driver: <dfn>vdpau</dfn>。確定你的 Output driver 設定為 <dfn>vdpau</dfn>。然後你就可以快樂地欣賞你的 HD 高清影片了。在播放過程中， mplayer 的 CPU 使用率應在10%以下。
+</p>
+<p>
+若要直接用 mplayer 播放，請加參數 <kbd>-vo vdpau -vc ffmpeg12vdpau,ffwmv3vdpau,ffvc1vdpau,ffh264vdpau,ffodivxvdpau</kbd>。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/72ca0ba1.jpg" alt="Ubuntu lucid play HD video" />
+
+<div class="note">
+網路資訊說不能開啟 ssa/ass 字幕。但我在 Ubuntu 10.04 上的運作結果很正常。
+又有資訊說要關閉 snapshot 選項才能啟動 mplayer。我在 Ubuntu 10.04 上的使用狀態是在啟用 snapshot 選項的狀態下，還是可以啟動 mplayer ，但是在播放過程中不能擷圖。
+</div>
+
+<h4>
+Vlc player
+</h4>
+
+<h5>Ubuntu</h5>
+
+<p>
+vlc 1.1 開始支援硬體加速播放，但是 Ubuntu lucid 官方維護的版本目前仍停留在 vlc 1.0.6。
+你可以透過來自 PPA 的第三方套件庫，安裝新版的 vlc 以及相關的更新套件。參考 <a href="https://edge.launchpad.net/~nvidia-vdpau/+archive/cutting-edge-multimedia">Cutting-edge-multimedia</a> 的說明。
+</p>
+<pre class="language-term">
+$ sudo add-apt-repository ppa:nvidia-vdpau/cutting-edge-multimedia
+$ sudo apt-get update
+</pre>
+
+<p>
+注意，Cutting-edge-multimedia 套件庫的相依關係可能與 Ubuntu lucid 官方套件庫衝突。我建議你先用 clonezilla 之類的軟體備份你的系統區。此外，若你在安裝時碰到相依性衝突導致失敗，請先移除相關套件，然後再重新安裝。
+</p>
+
+<h5>Debian</h5>
+<p>
+Debian 6 提供的 vlc 1.1.3 版本則是不能啟用「Use GPU acceleration」選項。
+想要在 Debian 6 使用 vlc 硬解播放的話，你需要下載 vlc 的源碼自行編譯。
+</p>
+
+<h5>VA API</h5>
+<p>
+vlc 使用 VA API 處理視訊繪製工作。所以 NVIDIA 視訊晶片的使用者還需要安裝下列套件: libvdpau1, vdpau-va-driver, libva1, libva-x11-1, vainfo 。
+</p>
+
+<p>
+vainfo 是一個小工具，可以檢查你的作業環境是否可以支援基於 VA API 的視訊處理工作。
+正常可支援視訊硬解播放的環境，檢查結果如下所示:
+</p>
+<pre class="language-term">
+$ vainfo
+libva: libva version 0.31.0
+Xlib:  extension "XFree86-DRI" missing on display ":0.0".
+libva: va_getDriverName() returns 0
+libva: Trying to open /usr/lib/dri/nvidia_drv_video.so
+libva: va_openDriver() returns 0
+vainfo: VA API version: 0.31
+vainfo: Driver version: Splitted-Desktop Systems VDPAU backend for VA API - 0.6.3
+vainfo: Supported profile and entrypoints
+      VAProfileMPEG2Simple            :	VAEntrypointVLD
+      VAProfileMPEG2Main              :	VAEntrypointVLD
+      VAProfileH264Main               :	VAEntrypointVLD
+      VAProfileH264High               :	VAEntrypointVLD
+      VAProfileVC1Simple              :	VAEntrypointVLD
+      VAProfileVC1Main                :	VAEntrypointVLD
+      VAProfileVC1Advanced            :	VAEntrypointVLD
+</pre>
+
+<p>
+如果 vainfo 的檢查結果沒有發現錯誤，那麼 vlc 就能採用硬解播放功能。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Debian%20Jessie%20use%20mplayer%20with%20VAAPI.html">Debian Jessie use mplayer with VAAPI</a></li>
+<li><a href="{{ site.baseurl }}/archives/2014/Kiosk%20Designing%20%E7%BA%8C%E7%AF%87%20-%20%E5%9C%A8%20x86%20PC%20%E4%B8%8A%EF%BC%8C%E4%BB%A5%20mplayer%20%E6%9B%BF%E4%BB%A3%20omxplayer.html">Kiosk Designing 續篇 - 在 x86 PC 上，以 mplayer 替代 omxplayer</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13707359.html">http://blog.roodo.com/rocksaying/archives/13707359.html</a></div>

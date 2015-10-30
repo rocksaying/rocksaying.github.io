@@ -1,0 +1,75 @@
+---
+title: gjs - To manage custom library (管理自製程式庫)
+category: programming
+old-category: JavaScript
+tags: [gjs,gnome-shell]
+---
+<p>
+gjs 使用 <var>imports.searchPath</var> 屬性 (型態為陣列) 管理程式庫的資料夾。
+因為那是一個陣列，所以用 push() 方法就可以往裡面增加程式庫資料夾。
+</p>
+<p>
+加入資料夾路徑後，該資料夾與子資料夾內所有的 js 文件都會被載入。
+文件名稱將成為 <dfn>imports</dfn> 的屬性名稱，而子資料夾階層可視為名稱空間。
+</p>
+
+<!--more-->
+<p>
+假設現在有一個資料夾，內含兩個自訂的 gjs 庫 (hello.js, rock.js)。
+文件樹狀結構如下:
+</p>
+
+<pre class="language-text">
+/tmp/js
+|-- hello.js
+`-- rocksaying
+    `-- rock.js
+</pre>
+
+<pre class="highlight"><code><span class="c1">// ==== hello.js ====</span>
+<span class="kr">const</span> <span class="nx">XX</span> <span class="o">=</span> <span class="s1">'const value.'</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">hello</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span><span class="s2">"Hello world"</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+<span class="c1">// ==== rock.js ====</span>
+<span class="kd">function</span> <span class="nx">rnr</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span><span class="s2">"rock and roll"</span><span class="p">);</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<p>
+以下為使用案例。
+</p>
+
+<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s2">"Current searchPath: "</span> <span class="o">+</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">searchPath</span><span class="p">);</span>
+
+<span class="c1">// 用 push() 方法加入 /tmp/js 程式庫資料夾。</span>
+<span class="nx">imports</span><span class="p">.</span><span class="nx">searchPath</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">'/tmp/js'</span><span class="p">);</span>
+
+<span class="c1">// 文件名稱將成為 imports 的屬性名稱。</span>
+<span class="c1">// 例如 /tmp/js/hello.js =&gt; imports.hello</span>
+<span class="nx">imports</span><span class="p">.</span><span class="nx">hello</span><span class="p">.</span><span class="nx">hello</span><span class="p">();</span> <span class="c1">// 調用 hello.js 中的 hello() 。</span>
+
+<span class="kr">const</span> <span class="nx">Hello</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">hello</span><span class="p">;</span> <span class="c1">// gjs 的慣例用法。</span>
+<span class="nx">Hello</span><span class="p">.</span><span class="nx">hello</span><span class="p">();</span>
+<span class="nx">print</span><span class="p">(</span> <span class="nx">Hello</span><span class="p">.</span><span class="nx">XX</span> <span class="p">);</span>
+
+<span class="c1">// 子資料夾階層可視為名稱空間。</span>
+<span class="c1">// 例如 /tmp/js/rocksaying/rock.js =&gt; imports.rocksaying.rock</span>
+<span class="nx">imports</span><span class="p">.</span><span class="nx">rocksaying</span><span class="p">.</span><span class="nx">rock</span><span class="p">.</span><span class="nx">rnr</span><span class="p">();</span> <span class="c1">// 調用 rocksaying/rock.js 中的 rnr()</span>
+
+</code></pre>
+
+
+<p>
+依我預料，這應該也適用於 gnome-shell 的場合。
+</p>
+<p>
+一般而言，我會將自製的 gjs 程式庫放在 /usr/local/share/gjs-1.0 資料夾的子資料夾中。
+甚少往 <var>imports.searchPath</var> 增加新的資料夾。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/21002958.html">http://blog.roodo.com/rocksaying/archives/21002958.html</a></div>

@@ -1,0 +1,151 @@
+---
+title: Synergy - 軟體KVM 使用說明
+category: computer
+old-category: 電腦技術
+tags: [kvm,synergy]
+---
+<p>我的辦公桌上有兩台電腦螢幕以及兩台電腦。這兩台電腦各接一台電腦螢幕。但我不想要在桌上放兩組鍵盤與滑鼠，所以我需要一個工具，可以讓這兩組電腦共用同一組鍵盤與滑鼠。這種工具叫「<a href="http://zh.wikipedia.org/zh-hant/KVM%E5%88%87%E6%8D%A2%E5%99%A8">KVM</a>」。本文說明的是一套基於軟體實作的 KVM 工具，它就是 <a href="http://synergy-foss.org/">Synergy</a>。
+</p>
+
+<p>Synergy 是一套自由軟體，且支援多種平台，計有 Windows, Mac OS 和 Linux。它可以讓許多組電腦共用一組鍵盤與滑鼠。切換方式也很聰明，使用者只要設定好各個螢幕的位置後，當你的滑鼠指標碰到螢幕的邊緣時，Synergy 就會將你的鍵盤與滑鼠的連接對象切換到另一台電腦。
+</p>
+
+<!--more-->
+<p>在 Debian 與 Ubuntu 的套件庫中都可以發現 <dfn>synergy</dfn> 套件，使用軟體管理員或 apt-get 工具就可以安裝。套件庫中還有一個 <dfn>quicksynergy</dfn> 的圖形介面設定工具，建議第一次接觸 Synergy 的使用者一併安裝 quicksynergy 。
+</p>
+
+<p>Synergy 在使用時，將電腦分成兩種角色。實際接著鍵盤與滑鼠的電腦，就是 synergy server 的角色，本文又稱之為控制端電腦。其他想共用鍵盤與滑鼠(本身沒接)的電腦則是 synergy client ，本文又稱之為使用端電腦。
+</p>
+
+<p>負責 synergy server 的電腦，需要設定一份組態文件，並執行 <dfn>synergys</dfn> 這個程式。而扮演 synergy client 的電腦則是執行 <dfn>synergyc</dfn> 這個程式。
+</p>
+
+<h4>
+Synergy server
+</h4>
+
+<h5>
+使用 quicksynergy 設定控制端
+</h5>
+
+<p>使用 quicksynergy 工具時，負責 synergy server 的電腦僅需要設定「Share」頁的內容。設定項目也很簡單，就是指定其他使用端電腦(synergy client)的名字。
+</p>
+
+<p>quicksynergy 把運作環境想像成使用者在同一張辦公桌上，放了好幾組電腦配螢幕，所以需要使用者告訴 quicksynergy 你的螢幕是怎麼放置的。它認為控制端電腦(Synergy server)就是放在正中間的螢幕，而使用者應該在「Share」頁面中，指定其他四個位置的使用端電腦的螢幕名稱。這名稱隨便使用者命名，只要你自己不會搞混就行。
+</p>
+
+<p>當你指定好螢幕名稱後，按下「Execute」鈕，quicksynergy 就會將你的設定的組態內容儲存在 "$HOME/.quicksynergy/synergy.conf"，並啟動 synergys 程式。你之後可以直接叫 synergys 根據 $HOME/.quicksynergy/synergy.conf 的組態啟動，不需要每次都透過 quicksynergy 。
+</p>
+
+<h5>
+手動編寫控制端組態文件
+</h5>
+
+<p>quicksynergy 只能讓使用者指定其他四組使用端電腦的位置。但事實上，Synergy 可以設定超過4組以上的使用端電腦，這就需要透過手動編寫組態文件才能實現。
+</p>
+
+<p>Synergy server 的組態文件分成兩個區段。第一段 <dfn>screens</dfn> 設定各個螢幕名稱，第二段 <dfn>links</dfn> 描述螢幕的相對位置。
+</p>
+
+<p>舉例來說，若我的桌上有三組電腦，放中間的是控制端電腦，使用端電腦放左、右兩邊。首先，我在組態文件的 <dfn>screens</dfn> 區段中，為這三組電腦的螢幕取名字。中間的叫 main-desktop ，左邊的叫 left-box，右邊的叫 right-box 。內容如下:
+</p>
+
+<pre class="language-text">
+section: screens
+    main-desktop:
+    left-box:
+    right-box:
+end
+</pre>
+
+<p>接著要在 <dfn>links</dfn> 區段中，描述這三台螢幕的相對位置。這稍微考驗了使用者對於物體的空間相對位置的文字表達能力。以本文之例，這三台螢幕的相對位置就是「main-desktop 的左邊是 left-box，右邊是right-box；而 left-box 的右邊是 main-desktop；right-box 的左邊是 main-desktop」。將這一句話寫成下列形式:
+</p>
+
+<pre class="language-text">
+section: links
+    main-desktop:
+        left = left-box
+        right = right-box
+    left-box:
+        right = main-desktop
+    right-box:
+        left = main-desktop
+end
+</pre>
+
+<p>這兩段合起來，就是 synergys 需要的組態文件。我配合 quicksynergy 的位置，將組態文件儲存在 $HOME/.quicksynergy/synergy.conf 。
+</p>
+
+<h6>
+synergy.conf 完整內容
+</h6>
+
+<pre class="language-text">
+section: screens
+    main-desktop:
+    left-box:
+    right-box:
+end
+section: links
+    main-desktop:
+        left = left-box
+        right = right-box
+    left-box:
+        right = main-desktop
+    right-box:
+        left = main-desktop
+end
+</pre>
+
+<p>當我準備好這份組態文件後，我只需要執行下列指令就可以啟動 Synergy 的控制端功能了。
+</p>
+
+<pre class="language-term">
+ /usr/bin/synergys --config $HOME/.quicksynergy/synergy.conf
+</pre>
+
+<p>參數 <var>--config</var> 指示組態文件的路徑。如果你需要測試調整你的組態內容時，你可以在執行指令中加上參數 <var>-f</var>，這將令 synergys 在前景運作，你按 Ctrl+C 就可以終止程式。
+</p>
+
+<p>當你確定你的設定沒問題後，你可以將這行指令加在你的桌面自動啟動項目中。GNOME 桌面的使用者，可以從開始工作列 -> 「系統」 -&gt; 「偏好設定」 -&gt; 「始動應用程式」 (或啟動應用程式) ，新增自動執行項目。(GNOME Panel -&gt; System -&gt; Preferences -&gt; Startup Applications)
+</p>
+
+<h4>
+Synergy client
+</h4>
+
+<p>相較於 Synergy server 的設定內容，Synergy client 的使用方式就簡單多了，甚至根本不需要圖形介面或組態文件。
+</p>
+
+<p>使用 quicksynergy 啟動 Synergy 使用端功能時，請設定「Use」頁面的內容。「Server」欄填入控制端電腦的 IP 位置(或是主機名稱，如果你有設定DNS或hosts的話)。「Screen」欄填入這台使用端電腦的螢幕名稱，螢幕名稱配合控制端電腦上的設置。最後按下「Execute」鈕，完成。
+</p>
+
+<p>透過指令列的方式，則是執行下列指令:
+</p>
+
+<pre class="language-term">
+ /usr/bin/synergyc --name $SCREEN_NAME $SERVER_IP
+</pre>
+
+<p>
+參數 <var>--name</var> 指定這台用戶的螢幕名稱。請把 <var>$SCREEN_NAME</var> 換成你命名的螢幕名稱，將 <var>$SERVER_IP</var> 換成控制端電腦的 IP 位置或主機名稱。如果你需要測試調整你的組態內容，你可以在執行指令中加上參數 <var>-f</var>，這將令 synergyc 在前景運作，你按 Ctrl+C 就可以終止程式。
+</p>
+
+<p>當你確定你的設定沒問題後，你可以將這行指令加在你的桌面自動啟動項目中。GNOME 桌面的使用者，可以從開始工作列 -> 「系統」 -&gt; 「偏好設定」 -&gt; 「始動應用程式」 (或啟動應用程式) ，新增自動執行項目。
+</p>
+
+<h4>
+使用事項
+</h4>
+
+<p>
+Synergy 不能共用螢幕。如果你只有一台螢幕的話，不適合用 Synergy。
+</p>
+
+<p>synergys 與 synergyc 都需要連接 X server。這表示你的控制端電腦與使用端電腦都必須進入 X 視窗環境之後，才能透過 Synergy 共用鍵盤與滑鼠。如果你的環境是在單純的文字終端機共用鍵盤，那麼 Synergy 不適合。你可能還是需要硬體 KVM 。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2012/KVM%20%E8%88%87%20USB%20%E8%BB%8C%E8%B7%A1%E7%90%83%E7%9A%84%E4%B8%AD%E9%8D%B5%E6%A8%A1%E6%93%AC.html">KVM 與 USB 軌跡球的中鍵模擬</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18743053.html">http://blog.roodo.com/rocksaying/archives/18743053.html</a></div>

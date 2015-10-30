@@ -1,0 +1,121 @@
+---
+title: KVM 與 USB 軌跡球的中鍵模擬
+category: computer
+old-category: 電腦技術
+tags: [trackball,kvm]
+---
+<p>
+我在「<a href="{{ site.baseurl }}/archives/2012/Synergy%20-%20%E8%BB%9F%E9%AB%94KVM%20%E4%BD%BF%E7%94%A8%E8%AA%AA%E6%98%8E.html">Synergy - 軟體KVM 使用說明</a>」中提到我的工作需要一套 KVM。我首先嘗試了 Synergy 這套軟體 KVM。它確實做得很好，只是我目前的工作內容常常要退出使用端 X 視窗或切到文字終端機。在這種情形下，Synergy 就不能繼續為我服務了。我不得已，只好再添購一組硬體的 USB KVM；型號是「<a href="http://www.uptech.tw/product_detail.php?prod_id=433">Uptech KVM211U</a>」。
+</p>
+
+<p>
+這陣子使用下來，這種 USB KVM 的相容性問題不大，連我的 USB <a href="http://zh.wikipedia.org/zh-tw/%E8%BB%8C%E8%B7%A1%E7%90%83">軌跡球</a>都能接。但還是有一點的問題，那就是 KVM 在切換終端時，實際上就是在插拔 USB 設備。於是每次按下 KVM 的切換鍵時，作業系統都會出現 USB 鍵盤與滑鼠拔出或連接的情形。
+這對我來說就是個困擾了。因我為軌跡球設定了一些操作行為，例如指定中鍵模擬滾輪。不幸的是，當 KVM 切走時(拔出滑鼠)，這個設定就會失效；KVM 切回時(插入滑鼠)，我得再執行一次設定工作。
+</p>
+
+<!--more-->
+<p>
+下列是在 Linux 系統中， KVM 切換時的系統訊息。切走時顯示 USB 設備離線。切回時顯示新增 USB 鍵盤與 USB 軌跡球。
+</p>
+
+<pre class="language-text">
+[21772.590052] usb 2-3.1: USB disconnect, address 5
+[21772.768025] usb 2-3.4: USB disconnect, address 6
+
+
+[21783.132035] usb 2-3.1: new low speed USB device using ohci_hcd and address 7
+[21783.268244] usb 2-3.1: configuration #1 chosen from 1 choice
+[21783.286150] input: USB Keyboard as /devices/pci0000:00/0000:00:0b.0/usb2/2-3/2-3.1/2-3.1:1.0/input/input10
+[21783.552033] usb 2-3.4: new low speed USB device using ohci_hcd and address 8
+[21783.678212] usb 2-3.4: configuration #1 chosen from 1 choice
+[21783.689886] input: Logitech USB Trackball as /devices/pci0000:00/0000:00:0b.0/usb2/2-3/2-3.4/2-3.4:1.0/input/input12
+</pre>
+
+<p>
+我苦練十餘年的編程功力，這時候就要派上用場了(天之聲: 就為了這點小事...)。所以我利用 Linux 的 HAL 服務，寫了一個軌跡球組態守護程式(daemon)，它會傾聽 HAL 放出的設備新增訊號，一但發現軌跡球被插入了，它就會接著執行中鍵模擬滾輪的設定工作。我終於不必每次按 KVM 切換後還得再動手跑一次設定。程式 trackman_init 的源碼於下列:
+</p>
+
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<span class="c"># coding: utf-8</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
+<span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">gobject</span><span class="o">,</span> <span class="nn">dbus</span>
+<span class="kn">from</span> <span class="nn">dbus.mainloop.glib</span> <span class="kn">import</span> <span class="n">DBusGMainLoop</span>
+
+<span class="n">HAL_SERVICE_NAME</span> <span class="o">=</span> <span class="s">"org.freedesktop.Hal"</span>
+<span class="n">HAL_MANAGER_PATH</span> <span class="o">=</span> <span class="s">"/org/freedesktop/Hal/Manager"</span>
+<span class="n">HAL_MANAGER_IFACE</span> <span class="o">=</span> <span class="s">"org.freedesktop.Hal.Manager"</span>
+<span class="n">HAL_DEVICE_IFACE</span> <span class="o">=</span> <span class="s">"org.freedesktop.Hal.Device"</span>
+
+<span class="n">TRACKBALL_PRODUCT_NAME</span> <span class="o">=</span> <span class="s">"Logitech USB Trackball"</span>
+
+<span class="k">def</span> <span class="nf">init_wheel_emulation</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"init wheel emulation."</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">'xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Button" 8'</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">'xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation" 1'</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">'xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Axes" 6 7 4 5'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span>
+        <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">HAL_SERVICE_NAME</span><span class="p">,</span> <span class="n">device_path</span><span class="p">),</span>
+        <span class="n">HAL_DEVICE_IFACE</span><span class="p">)</span>
+    <span class="n">info_product</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">"info.product"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">info_product</span> <span class="o">==</span> <span class="n">TRACKBALL_PRODUCT_NAME</span><span class="p">:</span>
+        <span class="c">#init_wheel_emulation()</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+<span class="k">class</span> <span class="nc">DeviceAddedSignalRecipient</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">add_signal_receiver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device_added_handler</span><span class="p">,</span> 
+            <span class="n">dbus_interface</span><span class="o">=</span><span class="n">HAL_MANAGER_IFACE</span><span class="p">,</span> <span class="n">signal_name</span> <span class="o">=</span> <span class="s">"DeviceAdded"</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">device_added_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
+        <span class="c">#print "Signal recivied: %s" % device_path</span>
+        <span class="k">if</span> <span class="n">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
+            <span class="n">init_wheel_emulation</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+    <span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
+    
+    <span class="n">hal_manager</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span>
+        <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">HAL_SERVICE_NAME</span><span class="p">,</span> <span class="n">HAL_MANAGER_PATH</span><span class="p">),</span>
+        <span class="n">HAL_MANAGER_IFACE</span><span class="p">)</span>
+
+    <span class="n">device_paths</span> <span class="o">=</span> <span class="n">hal_manager</span><span class="o">.</span><span class="n">FindDeviceByCapability</span><span class="p">(</span><span class="s">"input.mouse"</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">device_path</span> <span class="ow">in</span> <span class="n">device_paths</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
+            <span class="n">init_wheel_emulation</span><span class="p">()</span>
+            <span class="k">break</span>
+
+    <span class="n">recipient</span> <span class="o">=</span> <span class="n">DeviceAddedSignalRecipient</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="k">except</span> <span class="nb">KeyboardInterrupt</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"Exit program."</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">()</span>
+</code></pre>
+
+
+<div class="note">
+trackman_init 需要配合 HAL D-Bus 服務。
+Ubuntu 桌面會預裝 HAL 服務，但是 Debian 桌面好像不會，你得要自己安裝 <dfn>hal</dfn> 套件。
+</div>
+
+<p>
+trackman_init 的工作很簡單。因為 KVM 切回控制權時的狀況等於插入鍵盤滑鼠，所以利用 HAL D-Bus 服務提供的 <dfn>DeviceAdded</dfn> 訊號，獲知設備新增的事件。當設備新增事件發生時，就查看新插入設備的產品名稱是否為羅技軌跡球(<code>GetProperty("info.product") == "Logitech USB Trackball"</code>)。若是就調用 xinput 設定中鍵模擬滾輪的行為。設定方式請參考「<a href="{{ site.baseurl }}/archives/2011/Logitech%20Trackman%20Marble%20on%20Debian%20_%20Ubuntu.html">Logitech Trackman Marble on Ubuntu 10.04</a>」。另外，trackman_init 啟動時也會利用 HAL D-Bus 服務的 <code>FindDeviceByCapability("input.mouse")</code> 找出已連接的滑鼠設備，並進一步判斷產品種類與啟用設定。
+</p>
+
+<p>
+把 trackman_init 加到偏好設定的「始動應用程式」項目中，讓桌面啟動時一併執行，它就會一直在背景幫我傾聽軌跡球的插入事件並啟用滾輪模擬設定。
+</p>
+
+<p>
+我以前用過基於 PS/2 設備的 KVM ，我記得那種 KVM 切換後，電腦端仍然以為鍵盤與滑鼠還連接著，並不會離線。PS/2 設備基本上也不支持熱插拔。不知道為何這些 USB KVM 反而退步了。而且因為切換時等於是拔出再插入，切回時，系統還會再花約一秒的時間初始設備。所以實際使用時，總覺得切換時的反應慢了一拍。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18797680.html">http://blog.roodo.com/rocksaying/archives/18797680.html</a></div>

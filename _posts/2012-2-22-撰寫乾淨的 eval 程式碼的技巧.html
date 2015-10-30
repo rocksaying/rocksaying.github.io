@@ -1,0 +1,177 @@
+---
+title: 撰寫乾淨的 eval 程式碼的技巧
+category: programming
+old-category: JavaScript
+tags: [javascript,eval]
+---
+<p>
+JavaScript 的 <dfn>eval()</dfn> 功能很強大，但想用得好卻不容易。
+寫在 eval 內的程式碼，經常被抱怨不能寫太長、很難修改維護。
+其實老練的 JavaScript 程式人員有許多技巧可以讓這件事變得容易。
+本文則將說明其中一種讓 eval 內的程式碼變得易寫易讀的技巧。
+</p>
+
+<!--more-->
+<p>
+eval_bad.js 是典型的難寫難讀的 eval 寫法。
+</p>
+
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">prefix</span> <span class="o">=</span> <span class="s2">"X-"</span><span class="p">;</span>
+
+<span class="nb">eval</span><span class="p">(</span><span class="s2">" \
+    var lists = { \
+        "</span><span class="nx">name</span><span class="s2">": "</span><span class="nx">abc</span><span class="s2">", \
+        "</span><span class="nx">age</span><span class="s2">" : 1, \
+        "</span><span class="nx">code</span><span class="s2">": prefix + "</span><span class="mi">0010</span><span class="s2">" \
+    }; \
+     \
+    for (var p in lists) { \
+        alert(p + "</span><span class="err">:</span> <span class="s2">" + lists[p]); \
+    } \
+"</span><span class="p">);</span>
+</code></pre>
+
+<p>
+這種寫法難寫難讀。大部份的書籍，甚至因此建議程式人員不要用 <dfn>eval()</dfn>。
+</p>
+<ul>
+    <li>難寫: 你必須要仔細地為「字串內的程式碼」中的字串括號加上跳脫符號。
+    如果字串內程式碼中想要寫入多行程式，那麼也要留意字串分行的 \ 。
+    最不幸的是，JavaScript 語法分析器只會把它當成普通的字串，不會幫你檢查內部程式碼的語法。</li>
+    <li>難讀: 太多的跳脫符號與分行。
+    程式碼編輯器的語法分色也不會應用於上，你只會看到一串同色的"字串"。
+    </li>
+</ul>
+
+<p>
+想要改善這種狀況，我們必須思考的問題是：「我該如何把程式中的一段程式碼變成字串？」
+</p>
+<p>
+我說的可不是在程式碼編輯器裡剪貼一段程式碼，然後複製到一對雙引號(")這種事。
+我指的是如何讓一個程式，在執行過程中，從自己的身上取得一段程式碼，把這段程式碼變成程式中的字串。
+喔，對了。如果你還分不清楚「字串」與「程式碼」的區別，你還不適合做程式人員。
+</p>
+
+<p>
+在 JavaScript 語言中，此問題的解答難度，取決於回答者對 JavaScript 語言規範的熟悉程度。
+簡單來說，就是回答者是否看完 ECMA-262 這份規格書。
+</p>
+<p>
+這問題的解法，在 JavaScript 語言規範中有著直接了當的門路可循。
+請看 ECMA-262 第 15.3.4.2 項: <dfn>Function.prototype.toString</dfn>。
+依我手上的PDF文件頁次，是第3版第99頁，第5.1版第119頁。
+</p>
+
+<blockquote>
+<h6>
+15.3.4.2 Function.prototype.toString ( )
+</h6>
+<p>
+  An implementation-dependent representation of the function is returned. This representation has the
+  syntax of a FunctionDeclaration. Note in particular that the use and placement of white space, line
+  terminators, and semicolons within the representation string is implementation-dependent.
+</p>
+<cite>ECMA-262 3rd edition, p.99</cite>
+</blockquote>
+
+<p>
+這段話的白話是說，當你調用一個「函數」的 <dfn>toString()</dfn> 方法時，此方法會傳回這個函數的宣告文句，亦即文字內容是「這個函數的程式碼」的字串。
+這個提示足夠明顯了。想要從程式中取出一段程式碼當成字串？ 這就是了。
+</p>
+
+<p>
+我先寫一段小程式來看看調用函數的 <dfn>toString()</dfn> 方法時，到底是個什麼結果。
+請看 function-toString.js 。
+</p>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">sawp</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
+    <span class="nx">a</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+    <span class="nx">b</span> <span class="o">=</span> <span class="nx">c</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="nx">swap</span><span class="p">.</span><span class="nx">toString</span><span class="p">());</span>
+<span class="c1">// alert(swap.toString());</span>
+</code></pre>
+
+
+<p>
+毫不意外，它的輸出結果正好就是我寫的 swap 函數的整段程式碼。
+</p>
+
+<p>
+接著需要處理一下函數宣告的頭尾。
+函數的 <dfn>toString()</dfn> 方法傳回的是一段完整的函數宣告。
+而讓 <dfn>eval()</dfn> 執行，只需要函數內的程式碼，並不需要頭尾的敘述。
+為此，我需要設計一個簡單的函數，它接受一個函數作為參數。
+這個函數會調用參數的 <dfn>toString()</dfn> 方法取得其宣告文句。
+接著以頭尾的 <dfn>{ , }</dfn> 為判斷依據，用字串函數 <dfn>slice()</dfn> 取出其中的程式碼文句 (ECMA-262 稱為 <dfn>function body</dfn>)。
+</p>
+
+<p>
+eval_clean.js 是以 eval_bad.js 為對照所改寫的清晰版本。
+其中 <dfn>_script()</dfn> 函數，就是我用來取出程式碼文句的函數。
+</p>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">_script</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">prefix</span> <span class="o">=</span> <span class="s2">"X-"</span><span class="p">;</span>
+
+<span class="nb">eval</span><span class="p">(</span><span class="nx">_script</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+    <span class="kd">var</span> <span class="nx">lists</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"abc"</span><span class="p">,</span> 
+        <span class="s2">"age"</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"code"</span><span class="p">:</span> <span class="nx">prefix</span> <span class="o">+</span> <span class="s2">"0010"</span>
+    <span class="p">};</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">lists</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">alert</span><span class="p">(</span><span class="nx">p</span> <span class="o">+</span> <span class="s2">": "</span> <span class="o">+</span> <span class="nx">lists</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}));</span>
+</code></pre>
+
+
+<p>
+eval_clean.js 與 eval_bad.js 相比，就易寫易讀了。
+</p>
+<ul>
+    <li>易寫: 你不必再為了跳脫字元與分行的 \ 煩心。
+    同時，JavaScript 語法分析器會幫你檢查語法。</li>
+    <li>易讀: 它與其他程式碼的外觀一樣。
+    如果你的程式碼編輯器提供語法分色的功能，也一樣會應用於其中。
+    不再是一行同色的"字串"。</li>
+</ul>
+
+<p>
+當我需要組成程式碼或是在不同的 JavaScript 端點間傳遞要執行的程式碼時，經常採用這種方式撰寫。
+使用 <dfn>eval()</dfn> 不再是程式人員的負擔。
+</p>
+
+<hr/>
+<p>
+補充內容。端點是一個雙關語。
+JavaScript 是一個程式語言，在它的規範中，稱呼它實際運行的環境為 host (寄宿處、宿主)。
+而 host 在資訊科學中的另一個意義就是設備端點。
+</p>
+<p>
+「不同的 JavaScript 端點間傳遞要執行的程式碼」這句話是有點抽象，我補充幾個實際情境。
+</p>
+
+<ul>
+<li>
+1. 雲端運算的場法。將我的運算方程式散佈到其他機器的 JavaScript 端點執行。
+</li>
+<li>
+2. 在 gnome-shell/seed/gjs 的環境撰寫一段 JavaScript 程式碼，交給 Gtk.WebKit 執行。或者反過來。
+例如: <a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20Desktop%20and%20WebKit.html">JavaScript 與 Desktop - Desktop and WebKit</a>。
+</li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/%E8%B7%A8%E7%AB%AF%E9%BB%9E%E5%82%B3%E9%81%9E%E7%A8%8B%E5%BC%8F%E7%A2%BC%E8%88%87%E8%B3%87%E6%96%99%E7%9A%84%E6%8A%80%E5%B7%A7.html">跨端點傳遞程式碼與資料的技巧</a></li>
+<li><a href="{{ site.baseurl }}/archives/2013/Touch%20IME%20%E4%BD%BF%E7%94%A8%E5%9C%A8%E5%B5%8C%E5%85%A5%20WebKit%20%E7%9A%84%E5%A0%B4%E5%90%88.html">Touch IME 使用在嵌入 WebKit 的場合</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18991164.html">http://blog.roodo.com/rocksaying/archives/18991164.html</a></div>

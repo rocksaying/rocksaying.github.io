@@ -1,0 +1,132 @@
+---
+title: Debian 6 如何增加系統啟動程式與指定順序
+category: computer
+old-category: 電腦技術
+tags: [linux,debian]
+---
+<p>以往在 Debian 5 或 Ubuntu 10.04 中，我們使用下列指令所示範的內容，新增系統啟動程式:</p>
+
+<pre class="language-term">
+# update-rc.d hello defaults NN 
+</pre>
+
+    <p>其中的 <var>NN</var> 可以指定啟動順序，例如 90 。</p>
+
+	<p>但是在 Debian 6 使用此指令時，我們將發現 <var>NN</var> 不作用了。這是因為 Debian 6 現在參考 LSB (Linux Standard Base) 制定的「<a href="http://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/tocsysinit.html">System Initialization</a>」規範，以啟動指令稿內的 INIT 敘述區塊決定啟動順序，不再理會參數指定的數字。同時，Debian 6 也改用 insserv 指令取代 update-rc.d 。</p>
+
+<!--more-->
+<p>LSB 所制定的啟動方式，與 Ubuntu 一度引進的 uevent 機制同樣採用啟動事件決定程式項目的相依關係，進而安排啟動順序。參考「<a href="http://wiki.debian.org/LSBInitScripts/DependencyBasedBoot">Dependency based boot sequence</a>」了解詳情。</p>
+
+
+	<p>一份符合 LSB 規範的最精簡啟動指令稿(init script)之範例如下:</p>
+
+<pre class="language-text">
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          scriptname
+# Required-Start:    $all
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start daemon at boot time
+# Description:       Enable service provided by daemon.
+### END INIT INFO
+</pre>
+
+	<p>其中由 <code>### BEGIN INIT INFO</code> 和 <code>### END INIT INFO</code> 這兩行所夾起的內容，皆為啟動行為之指示。其意義請參考「<a href="http://wiki.debian.org/LSBInitScripts">How to LSBize an Init Script</a>」。</p>
+
+
+	<ul>
+	<li><dfn>Provides</dfn> 欄位必須指定一個可識別的名稱，一般同啟動指令稿的檔名。<br />  此欄位所指識別名稱，可作為其他程式排定相依關係之依據。</li>
+		<li><dfn>Required-Start</dfn> 欄位指示此程式之前應先啟動哪個項目。換句話說就是排在哪個程式後面啟動。<br />  <dfn>$all</dfn> 是一個虛設項目，表示所有程式項目。在 Required-Start 使用，將令此程式排在最後啟動。</li>
+		<li><dfn>Required-Stop</dfn> 欄位指示此程式應在哪個項目之前停止。換句話說就是排在哪個程式前面停止。<br />  此欄位可以留白。</li>
+		<li><dfn>Default-Start</dfn> 欄位指示在哪些 run level 下要啟動此程式。一般都填 '2 3 4 5' 。</li>
+		<li><dfn>Default-Stop</dfn> 欄位指示在哪些 run level 下要停止此程式。一般都填 '0 1 6' 。</li>
+	</ul>
+
+
+	<p>假設現在有 A, B 兩程式要加入系統啟動程式項目中，且 B 要排在 A 之後才能啟動。那麼 A, B 兩程式的啟動指令稿將如下所示:</p>
+
+
+	<p>/etc/init.d/test-a:<br />指定程式識別名稱為 test-a 。</p>
+
+
+<pre class="language-text">
+#!/bin/sh
+# This is for program A.
+### BEGIN INIT INFO
+# Provides:          test-a
+# Required-Start:    $syslog
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start daemon at boot time
+### END INIT INFO
+</pre>
+
+	<p>/etc/init.d/test-b:<br />因為 A 程式的啟動識別名稱為 test-a ，故此處的 Required-Start 欄位內容應填 test-a ，指示此項目要排在 test-a 之後。</p>
+
+
+<pre class="language-text">
+#!/bin/sh
+# This is for program B.
+### BEGIN INIT INFO
+# Provides:          test-b
+# Required-Start:    test-a
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start daemon at boot time
+### END INIT INFO
+</pre>
+
+	<p>接著分別執行 <kbd>insserv test-a</kbd> 與 <kbd>insserv test-b</kbd> ，啟用這兩個項目。<kbd>insserv -r test-a</kbd> 則會移除啟動項目。</p>
+
+
+	<p>我們可以查看 /etc/rc2.d 目錄，檢查是否建立了相關的符號連結。按照我們前述所指示的啟動相依性，通常 test-a 的符號連結會是 S18test-a ，而 test-b 的符號連結會是 S19test-b 。</p>
+
+
+	<p>目前有 8 個虛設項目: (皆以 $ 開頭)</p>
+
+
+	<ul>
+	<li>$local_fs<br />  本地檔案系統被掛載。所有用到 /var 目錄的啟動項目，都要相依此項目。</li>
+		<li>$network<br />  網路介面被啟用。</li>
+		<li>$named<br />  名稱伺服功能被啟用。</li>
+		<li>$portmap</li>
+		<li>$remote_fs<br />  所有檔案系統被掛載。包含 /usr 目錄節點。</li>
+		<li>$syslog<br />  系統記錄功能被啟用。</li>
+		<li>$time<br />  系統時間被設定。</li>
+		<li>$all<br />  所有項目後。</li>
+	</ul>
+
+
+	<p>一般的 daemon 項目應相依 <dfn>$remote_fs</dfn> 與 <dfn>$syslog</dfn> 。而與核心模組(驅動程式)有關的項目，則相依 <dfn>$local_fs</dfn> 。</p>
+
+
+<h5>postinst 與 prerm</h5>
+
+
+	<p>打包 debian 文件時，其中的 postinst 與 prerm 可以參考下列範例安插 insserv 的動作:</p>
+
+
+<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+
+<span class="k">if</span> <span class="o">[</span> -x /sbin/insserv <span class="o">]</span>; <span class="k">then
+    </span>insserv your-program-name
+<span class="k">else
+    </span>update-rc.d your-program-name defaults 90
+<span class="k">fi</span>
+</code></pre>
+
+
+
+<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+
+<span class="k">if</span> <span class="o">[</span> -x /sbin/insserv <span class="o">]</span>; <span class="k">then
+    </span>insserv -r your-program-name
+<span class="k">else
+    </span>update-rc.d -f your-program-name remove
+<span class="k">fi</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/19886844.html">http://blog.roodo.com/rocksaying/archives/19886844.html</a></div>

@@ -1,0 +1,87 @@
+---
+title: Python - GObject event, Threading, and Signal
+category: programming
+old-category: Python
+tags: [python,signal,gobject,dbus]
+---
+<p>
+示範如何在 Python 中使用 GObject event 、Python threading 與 Signal 進行非同步工作。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<span class="c"># coding: utf-8</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">gobject</span>      <span class="c"># need for gobject event timeout</span>
+<span class="kn">import</span> <span class="nn">signal</span>       <span class="c"># need for system signal.</span>
+<span class="kn">import</span> <span class="nn">threading</span>    <span class="c"># need for python thread.</span>
+<span class="c">#from dbus.mainloop.glib import DBusGMainLoop</span>
+<span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">g_event_timer</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="c"># for gobject.timeout_add(). it's gobject-style thread.</span>
+    <span class="c"># note: there are three kind of basic event source.</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"1. g_event_timer tick."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">True</span>  <span class="c"># keep interval</span>
+
+<span class="k">def</span> <span class="nf">sys_signal_timer</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="c"># for system Signal</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"2. sys_signal_timer tick."</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">thread_timer_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="c"># for threading.Timer</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"3. thread_timer tick."</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">terminate_gobject_loop</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+    <span class="n">loop</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+
+<span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span>  <span class="n">terminate_gobject_loop</span><span class="p">)</span>
+
+<span class="n">gobject</span><span class="o">.</span><span class="n">threads_init</span><span class="p">()</span>            <span class="c"># required for gobject collaborate with python thread.</span>
+<span class="c">#DBusGMainLoop(set_as_default=True) # if you use DBus.</span>
+<span class="c">#dbus.mainloop.glib.threads_init() # required for dbus collaborate with python thread.</span>
+<span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+
+<span class="c"># enable g_event_timer tick.</span>
+<span class="n">gobject</span><span class="o">.</span><span class="n">timeout_add</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">g_event_timer</span><span class="p">)</span>
+
+<span class="c"># enable sys_signal_timer tick.</span>
+<span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">sys_signal_timer</span><span class="p">)</span>
+<span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">signal</span><span class="o">.</span><span class="n">siginterrupt</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>  <span class="c"># not really work.</span>
+
+<span class="c"># enable thread_timer tick.</span>
+<span class="n">thread_timer</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">thread_timer_func</span><span class="p">)</span>
+<span class="n">thread_timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">"PID: </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="s">"Press Ctrl+C will quit g_event_timer."</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Unknown error. It breaks eventloop."</span><span class="p">)</span>
+
+<span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIG_IGN</span><span class="p">)</span>  <span class="c"># cancel signal_timer.</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">"Wait 5 seconds."</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">"Quit g_event_timer."</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">"Ignore signal_timer."</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">"Only thread_timer tick."</span><span class="p">)</span>
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="c"># 1. g_event_timer will not tick.</span>
+<span class="c"># 2. if I don't cancel signal_timer, signal_timer will tick and interrupt sleep.</span>
+<span class="c"># 3. thread_timer will still tick.</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">"End"</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre>
+
+
+<p>
+基於 GObject 事件機制的程式類型，例如 GTK 或 DBus ，若要配合 Python 內部的 threading 機制，則必須在使用前先調用 <code>gobject.threads_init()</code> 。
+而 DBus 程式則還要再調用 <code>dbus.mainloop.glib.threads_init()</code>。
+才可以讓 Python threading 正常運作。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/20178742.html">http://blog.roodo.com/rocksaying/archives/20178742.html</a></div>

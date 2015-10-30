@@ -1,0 +1,90 @@
+---
+title: ECMAScript6 草案的 Name object
+category: programming
+old-category: JavaScript
+tags: [javascript,ecmascript]
+---
+<p>JavaScript 的下一版規格 ECMAScript6 提出了 <a href="http://wiki.ecmascript.org/doku.php?id=harmony:private_name_objects">Name object</a> 的規範。
+這是一種少見的語言功能。
+由於這個功能值得玩味，所以我寫了這篇文章。
+</p>
+
+<!--more-->
+<p>在介紹 <dfn>Name object</dfn> 之前，我們最好再次複習變數與變數名稱的關係：
+當我們使用變數 a 的時候，其意義是使用符號 a 所指涉的那個變數，而不是符號 a 本身。
+</p>
+
+<p>這句是抽象敘述，具體而言可藉車與車牌為喻，以便理解。
+</p>
+
+<p>這裡有一輛車，這是一個實際存在的個體。車上又掛有一塊車牌，車牌上寫著車號 a 。
+在程式語言中，當我想發動那輛車時，我不能寫著「發動那輛車」這種敘述。
+那是日常對話時配合肢體動作用的口語，就算在書面文中也是模糊不清的敘述，在程式語言中更不能被電腦理解。
+程式語言必須寫成「令掛著車牌 a 的車輛發動」。如下:
+</p>
+
+<pre class="language-text">
+var a = new Car();
+
+a.launch();
+</pre>
+
+<p>其實 <code>var a = new Car();</code> 這一行看似簡單的敘述，就包含了三個行為。
+一、配置符號 <var>a</var>；二、配置一個類型為 Car 的變數；三、指定符號 a 聯繫第二步配置的變數。
+白話說就是：一、做一塊車牌寫著 a ；二、造一輛車；三、將車牌掛到車上。
+</p>
+
+<p>當你看完上一段敘述時，你就應該意識到 <code>var a = new Car();</code> 實質上產生了兩個個體。
+一個是車牌(符號)，另一個是車。
+</p>
+
+<p>但是大部份的程式語言並不讓程序人員操作符號，只讓我們動符號指涉的對象。
+亦即程序人員操作的將是掛著車牌 a 的車輛(符號 a 指涉的對象)，而不是車牌(符號本身)。
+</p>
+
+<p>複習上述的基本觀念之後，再看 ECMAScript6 提出的 <dfn>Name object</dfn> 就不是那麼難懂了。
+<dfn>Name object</dfn> 就是一個單純表達符號的個體 (<span class="Onote">Ruby 也有這種功能</span>)。
+</p>
+
+<p>將 Name object 應用到屬性上，就可以在 JavaScript 中實現私有(非公開)屬性了。
+例如 example.js :
+</p>
+
+<pre class="highlight"><code><span class="kr">import</span> <span class="nx">Name</span> <span class="nx">from</span> <span class="s2">"@name"</span>
+
+<span class="kd">let</span> <span class="nx">key</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Name</span><span class="p">();</span>
+<span class="c1">// 產生一個符號。在程式語言中，每個符號都是獨一無二的。</span>
+
+<span class="kd">function</span> <span class="nx">MyClass</span><span class="p">(</span><span class="nx">privateData</span><span class="p">,</span> <span class="nx">publicData</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 1. 以 Name object 為屬性名稱。</span>
+    <span class="k">this</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">privateData</span><span class="p">;</span>  
+     
+    <span class="c1">// 2. 以 String object 為屬性名稱。</span>
+    <span class="k">this</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]</span> <span class="o">=</span> <span class="nx">publicData</span><span class="p">;</span> 
+    <span class="c1">// 與 this.key = public Data; 同義</span>
+    
+    <span class="c1">// 3. Lost property.</span>
+    <span class="k">this</span><span class="p">[</span><span class="k">new</span> <span class="nx">Name</span><span class="p">()]</span> <span class="o">=</span> <span class="s2">"Even you can't touch this property."</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+上例的 <code>let key = new Name();</code> 產生了一個獨一無二的新符號，再將符號 <var>key</var> 聯繫這個新符號，並用它作為 <dfn>MyClass</dfn> 的其中一個屬性的名稱。
+在其他模組中，你無法得到這個符號。所以其他模組就無法透過符號直接存取這個屬性，也就實現了私有屬性的功能。
+</p>
+
+<p>
+至於 JavaScript 的屬性連結子(.)，在 JavaScript 內部實際上是以字串為鍵的索引操作。
+故 <code>this.key</code> 在 JavaScript 內部其實是 <code>this["key"]</code>。
+這也阻絕了外界操作 <code>this[key]</code> 屬性的意圖。
+</p>
+
+<p>
+此外，ECMAScript6 說明以 Name object 為名稱的屬性，其可枚舉性(enumerability attribute)預設為 false 。
+故一般慣用的反射方式，如 <code>getOwnPropertyNames()</code> 與 <code>for...in</code> 皆不會列出這種屬性。
+</p>
+
+<p>
+更多相關資訊，請詳閱「<a href="http://wiki.ecmascript.org/doku.php?id=harmony:private_name_objects">harmony:private_name_objects [ES Wiki]</a>」。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/19752888.html">http://blog.roodo.com/rocksaying/archives/19752888.html</a></div>

@@ -1,0 +1,97 @@
+---
+title: IBus 與 DBus
+category: computer
+old-category: 電腦技術
+tags: [dbus,ibus]
+---
+<p>
+<a href="http://zh.wikipedia.org/zh-hant/IBus">IBus</a> 輸入法平台利用 D-Bus 協定作為訊息通路。
+所以程式人員可透過 D-Bus 協定控制 IBus 輸入法的動作。但比較麻煩的是，IBus 不連接公用的 dbus-daemon 服務，而是另行實作了 ibus-daemon。所以 D-Bus 客戶端若用預設的方式接上 dbus-daemon 後，並不能找到與 IBus 平台溝通的訊息通路。
+</p>
+
+<p>
+用公車系統對上述內容作個譬喻。IBus 跟 DBus 都是同一款公車，駕駛與乘坐方式是一樣的。但是 DBus 停靠的車站是 dbus-daemon ，而 IBus 停靠的車站是 ibus-daemon。乘客(客戶端)如果跑到 dbus-daemon 車站的話，搭不到 IBus 的車。乘客要去 ibus-daemon 車站，才能搭上 IBus 的車。那麼乘客要如何找到 IBus 的停靠站呢？
+</p>
+
+<!--more-->
+<p>
+首先參考「<a href="http://code.google.com/p/ibus/issues/detail?id=904">ibus issue 904</a>」的紀錄。IBus 作者回答了這個問題。
+</p>
+<blockquote>
+<p>
+ibus 没有使用dbus-daemon，而是有一个ibus-daemon，功能类是dbus-daemon，但是增加了输入法管理的功能。
+</p>
+<p>
+cat /home/phuang/.config/ibus/bus/*
+可以看到ibus-daemon的链接地址。你可以修改环境变量DBUS_SESSION_BUS_ADDRESS，来使d-feet链接ibus-
+daemon
+</p>
+</blockquote>
+
+<p>
+大部份使用者的 $HOME/.config/ibus/bus 中只有一個檔案，但部份高階使用者可能存有好幾份檔案。哪一份檔案才是目前 X 環境的 IBus 在用的呢？「<a href="http://linux.lsdev.sil.org/blog/?p=58">Controlling IBus with DBusSharp </a>」談及了這一方面的細節。他說檔名格式是 ‘localmachineid’-'hostname’-'displaynumber’。我實際操作的情形是，在泛unix平台上，<var>hostname</var> 都是 'unix'。<var>displaynumber</var> 則從環境變數 <var>DISPLAY</var> 取得。比較麻煩的是我不知道如何查知 localmachineid 。所以我的作法是，從環境變數 <var>DISPLAY</var> 取得 displaynumber，再從相同 displaynumber 的文件中，挑出建立時間最新的那一份。
+</p>
+
+<p>
+基本上，程式人員需要讀取上述檔案的內容，找到 <var>IBUS_ADDRESS</var> 這一欄的內容，這就是 ibus-daemon 車站的地址。乘客要到這個地址搭 IBus。下例是以 dbus-send 搭上 IBus 查詢 IBus 主介面內容與切換到中文行列30輸入法的範例。
+</p>
+
+<pre class="language-term">
+$ cat ~/.config/ibus/bus/652062d949d803b309ab55a9xxxxxxxx-unix-0
+# This file is created by ibus-daemon, please do not modify it
+IBUS_ADDRESS=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em>
+IBUS_DAEMON_PID=1593
+
+$ dbus-send --address=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em> \
+  --print-reply --dest=org.freedesktop.IBus /org/freedesktop/IBus \
+  org.freedesktop.DBus.Introspectable.Introspect
+
+$ dbus-send --address=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em> \
+  --print-reply --dest=org.freedesktop.IBus /org/freedesktop/IBus \
+  org.freedesktop.IBus.CurrentInputContext
+
+   object path "<em>/org/freedesktop/IBus/InputContext_65</em>"
+
+$ dbus-send --address=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em> \
+  --print-reply --dest=org.freedesktop.IBus <em>/org/freedesktop/IBus/InputContext_65</em> \
+  org.freedesktop.IBus.InputContext.SetEngine string:"array"
+
+</pre>
+
+<ul>
+    <li>IBus 的服務名稱是: <dfn>org.freedesktop.IBus</dfn>。</li>
+    <li>IBus 主控者的路徑是: <dfn>/org/freedesktop/IBus</dfn>。</li>
+    <li>IBus 主控者實作的介面是: <dfn>org.freedesktop.IBus</dfn>。</li>
+    <li>應用程式需要先調用 <dfn>org.freedesktop.IBus.CurrentInputContext</dfn> 方法取得負責自己的 IBus 輸入法本體的路徑，才能控制自己的輸入法狀態。</li>
+</ul>
+
+<p>
+IBus 的安裝套件中，包含了專供 Python 使用的 ibus 庫。Python 可以直接引入 ibus 庫來控制，不需要了解如何取得 idbus-daemon 的地址。
+</p>
+
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+
+<span class="kn">import</span> <span class="nn">ibus</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="n">bus</span> <span class="o">=</span> <span class="n">ibus</span><span class="o">.</span><span class="n">Bus</span><span class="p">()</span>
+
+<span class="n">input_context_path</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">current_input_contxt</span><span class="p">()</span>  <span class="c"># incorrect spelling?</span>
+<span class="n">input_context</span> <span class="o">=</span> <span class="n">ibus</span><span class="o">.</span><span class="n">inputcontext</span><span class="o">.</span><span class="n">InputContext</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">input_context_path</span><span class="p">)</span>
+
+<span class="c">#mock_engine = ibus.EngineDesc(name='array')</span>
+<span class="c">#input_context.set_engine(mock_engine)</span>
+
+<span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="n">bus</span><span class="o">.</span><span class="n">list_active_engines</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Set input engine to: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">engine</span><span class="o">.</span><span class="n">longname</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"description: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">engine</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+    <span class="n">input_context</span><span class="o">.</span><span class="n">set_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">3.0</span><span class="p">)</span>
+
+<span class="n">input_context</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
+</code></pre>
+
+
+<p>
+py-ibus-demo.py 會循序切換輸入法引擎，每換一次就停三秒。你可以觀察你的輸入法狀態是否跟著變化。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18844532.html">http://blog.roodo.com/rocksaying/archives/18844532.html</a></div>

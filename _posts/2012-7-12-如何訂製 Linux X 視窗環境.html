@@ -1,0 +1,337 @@
+---
+title: 如何訂製 Linux X 視窗環境
+category: computer
+old-category: 電腦技術
+tags: [linux,debian,gdm,openbox]
+---
+<p>
+以 Debian 6 與 Ubuntu 10.04 / 12.04 為基礎，說明如何訂製 X 視窗環境。
+相關內容:
+</p>
+<ul>
+    <li>GDM
+    </li>
+    <li>startx
+    </li>
+    <li>Xsession
+    </li>
+    <li>openvt - no GDM
+    </li>
+    <li>OpenBox
+    </li>
+</ul>
+
+<!--more-->
+<h4>
+GDM</h4>
+
+<h5>
+自動登入</h5>
+
+<p>尋找關鍵字 <em>AutomaticLoginEnable</em> 、 <em>AutomaticLogin</em>。
+</p>
+
+<p>
+Debian 6 編輯 /etc/gdm3/daemon.conf 。
+</p>
+
+<pre class="language-text">
+[daemon]
+AutomaticLoginEnable = true # Enable auto login.
+AutomaticLogin = rock       # Which account will login.
+
+</pre>
+
+<p>
+Ubuntu 10.04 編輯 /etc/gdm/gdm.schemas
+</p>
+
+<pre class="language-text">
+      &lt;key&gt;daemon/AutomaticLoginEnable&lt;/key&gt;
+      &lt;default&gt;true&lt;/default&gt;
+
+      &lt;key&gt;daemon/AutomaticLogin&lt;/key&gt;
+      &lt;default&gt;rock&lt;/default&gt;
+</pre>
+
+<p>
+Ubuntu 12.04 預設使用 lightdm ，其組態文件為 /etc/lightdm/lightdm.conf 。
+自動登入組態如下:
+</p>
+
+<pre class="language-text">
+[SeatDefaults]
+autologin-user=rock
+autologin-user-timeout=0
+
+</pre>
+
+<h4>
+如何決定 X 使用環境 (X session)</h4>
+
+<p>GDM 在自動登入時，由 $HOME/.dmrc 決定登入後的 X 使用環境(X session)。
+內容如下:
+</p>
+
+<pre class="language-text">
+[Desktop]
+Session=gnome
+</pre>
+
+<p>.dmrc 中的 <dfn>Session</dfn> 名稱，指的是 /usr/share/xsessions 下的 .desktop 文件。
+例如 <code>Session=gnome</code> 表示根據 /usr/share/xsessions/gnome.desktop 文件的內容載入 X 使用環境 (文件名稱相配)。
+</p>
+
+<p>.desktop 文件的內容以 gnome.desktop 為例說明:
+</p>
+
+<pre class="language-text">
+[Desktop Entry]
+Name=GNOME
+Exec=gnome-session
+Type=Application
+</pre>
+
+<ul>
+<li>
+Name=GNOME<br/>
+  GDM 登入畫面中，顯示給使用者選擇的 X 使用環境名稱。
+</li>
+<li>
+Exec=gnome-sesion<br/>
+  負責啟動 X 使用環境的執行檔。
+</li>
+<li>
+Type=Application<br/>
+  規定項目。
+</li>
+</ul>
+
+<p>注意，當 .dmrc 中指定的 <dfn>Session</dfn> 為 <em>default</em> 時，則 GDM 將會根據系統指定的 x-session-manager 或 $HOME/.xsession 載入 X 使用環境。
+這一部份與 startx 的機制相同，詳細後述。
+</p>
+
+<h3>
+startx</h3>
+
+<p>你可以修改 /etc/default/grub 取消 GDM 登入行為。
+</p>
+
+<pre class="language-text">
+#GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+GRUB_CMDLINE_LINUX_DEFAULT="text"
+</pre>
+
+<p>修改文件後，需執行 update-grub 更新狀態。
+</p>
+
+<p>取消 GDM 登入行為後，系統將不再顯示 GDM 的登入畫面。
+取而代之則是顯示文字終端機的登入提示，使用者登入後，可以再執行 <kbd>startx</kbd> 啟動 X 視窗環境。
+</p>
+
+<p>startx 將會先找 $HOME/.xsession (或 $HOME/.Xsession) 再找 x-session-manager 以載入 X 視窗環境。
+</p>
+
+<p>使用者可以在自己的家目錄下，編寫一個專屬 .xsession 完全客製自己喜好的 X 視窗環境。
+但大部份使用者不會這麼大費周章，通常只需要建立 .xsession 的符號連結指向自己偏好的 X 視窗環境執行檔。
+例如:
+</p>
+
+<pre class="language-text">
+$ ln -s /usr/bin/openbox-session $HOME/.xsession
+</pre>
+
+<p>你可以參考 /usr/share/xsessions 下的 .desktop 文件，了解系統中安裝了哪些可用的 X 視窗環境執行檔。
+</p>
+
+<p>若使用者的家目錄下不存在 .xsession ，startx 就會嘗試執行 /usr/bin/x-session-manager 載入系統預設的 X 視窗環境。
+</p>
+
+<p>而 x-session-manager 基本上是由 update-alternatives 維護的符號連結。
+update-alternatives 會建立一個候選者資料庫，記錄哪些執行檔可以做為 x-session-manager 的候選者。
+</p>
+
+<p>update-alternatives 的操作指令示範如下:
+</p>
+
+<ul>
+<li>
+註冊新的候選者<br/>
+  update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/bin/my-x-session 90
+</li>
+<li>
+列出可用的候選者<br/>
+  udpate-alternatives --list x-session-manager
+</li>
+<li>
+顯示目前選擇的候選者<br/>
+  udpate-alternatives --display x-session-manager
+</li>
+<li>
+指定使用的候選者<br/>
+  udpate-alternatives --set x-session-manager /usr/bin/my-x-session
+</li>
+</ul>
+
+<p>當然，使用者也可以無視 update-alternatives ，直接修改 /usr/bin/x-session-manager 指向自己偏好的 X 使用環境。
+</p>
+
+<h4>
+openvt</h4>
+
+<p>使用 openvt ，可以實現開機後直接進入 X 視窗環境，且不經過 GDM 的目的。
+</p>
+
+<p>openvt 是一個虛擬終端機程式，它可以將使用者指定的程式直接啟動在新的終端機上。
+</p>
+
+<p>虛擬終端機(virtual terminal)是一組模擬的鍵盤與螢幕組合，藉由虛擬終端機程式，可以在一台實體電腦主機上，模擬多組終端機，讓使用者可以在不同的終端機上以不同的使用身份執行不同的程式。
+</p>
+
+<p>傳統上， Linux 作業系統啟動後，都會一併啟動 6 個虛擬終端機執行 login 程式。 Linux 作業系統啟動後，使用者看到的 <kbd>Login:</kbd> 提示，就是由虛擬終端機程式叫起的。使用者可以利用鍵盤的 Ctrl+Alt+F1 到 Ctrl+Alt+F6 的組合鍵切換這6個虛擬終端機。
+</p>
+
+<p>叫起 login 程式的虛擬終端機程式是 getty 。而 openvt 則是另一種較少用的虛擬終端機程式。
+但是在此，它可以幫助我們於開機後跳過 GDM 而直接進入 X 視窗環境。
+</p>
+
+<p>請先參考上一節的內容，關閉開機後啟動 GDM 的行為。再參考後述內容修改 init 組態文件。
+</p>
+
+<p>以 Debian6 與 Ununtu 10.04/12.04 為例，它們的 init 組態文件需加入一些關於 openvt 啟動 startx 的內容。
+</p>
+
+<h5>
+Debian 6</h5>
+
+<p>需要修改 /etc/inittab 。開啟該文件，找尋 getty 的設定段落。
+在最後一個 getty 段落下，加入下列一行內容。
+其實加在任何位置都可以，只是跟 getty 放在一起比較方便維護。
+</p>
+
+<pre class="language-text">
+7:23:respawn:/bin/openvt -efwc 7 -- /bin/su - rock -c /usr/bin/startx
+</pre>
+
+<p>說明:
+</p>
+
+<ul>
+    <li>
+    7 是分派給該虛擬終端機的號碼。Linux作業系統傳統上分配了 1~6 號給 getty。
+    故我們新增的虛擬終端機通常會從第 7 號開始。
+    </li>
+    <li>rock 是指定的使用者登入身份。依使用者的實際使用情況調整。
+    </li>
+    <li>以使用者身份啟動 startx 程式。參考上節 startx 的內容。
+    </li>
+</ul>
+
+<h5>
+Ubuntu 10.04/12.04</h5>
+
+<p>需要在 /etc/init 目錄下，增加一筆新組態文件。配合終端機名稱，新的組態文件通常取名為 tty7.conf 。 /etc/init/tty7.conf 的內容如下:
+</p>
+
+<pre class="language-text">
+# tty - openvt startx
+
+start on runlevel [23]
+stop on runlevel [!23]
+respawn
+exec /bin/openvt -efwc 7 -- /bin/su - rock -c /usr/bin/startx
+</pre>
+
+<h5>
+X Wrapper</h5>
+
+<p>有些系統透過 init 啟動 openvt 時會顯示權限不允、拒絕執行之類的訊息。
+遇到這種情況時，需要修改 /etc/X11/Xwrapper.config 的 <dfn>allowed_users</dfn> 設定。
+該項預設為 console ，請改為 anybody 。如下:
+</p>
+
+<pre class="language-text">
+# Xwrapper.config (Debian X Window System server wrapper configuration file)
+#
+# If you have edited this file but would like it to be automatically updated
+# again, run the following command as root:
+#   dpkg-reconfigure x11-common
+
+allowed_users=anybody
+</pre>
+
+<h4>
+OpenBox</h4>
+
+<p><a href="http://zh.wikipedia.org/zh-tw/Openbox">OpenBox</a> 是一種常見的輕量化視窗管理程式(Window Manager)。
+其組態內容請見 /etc/X11/openbox 目錄的文件內容。
+</p>
+
+<p>/etc/X11/openbox 內為 openbox 預設組態文件。而使用者專用組態則位於 $HOME/.config/openbox 。使用者專用組態的優先性高於 /etc/X11/openbox 的內容。
+使用者通常會直接將 /etc/X11/openbox 內的文件複製到 $HOME/.config/openbox ，
+然後修改成自己偏好的內容。
+</p>
+
+<ul>
+    <li>
+    autostart.sh<br/>
+    openbox 啟動後，要自動執行的 script 內容。
+    注意，在此 script 中，想要執行的視窗程式必須要放到背景執行 (最後加上 & 符號)，否則會阻礙接下來的內容。
+    </li>
+    <li>menu.xml<br/>
+    OpenBox 滑鼠右鍵浮動選單的內容。
+    </li>
+    <li>rc.xml<br/>
+    OpenBox 行為特徵組態內容。包含視窗行為、滑鼠行為、鍵盤行為。
+    </li>
+</ul>
+
+<p>在 Debian/Ubuntu 中，可以安裝 obconf 與 obmenu ，使用 GUI 工具設定 rc.xml 與 menu.xml 。
+</p>
+
+<h4>
+其他</h4>
+
+<p>現代的 Linux 桌面環境，需要配合許多服務行程才能正常工作。
+而 Linux 散佈版本的維護團隊，會將這些服務行程都寫入預裝的 X session 中。
+所以一般使用者不必注意這些服務行程到底負責什麼工作，也能愉快地使用 Linux 桌面。
+</p>
+
+<p>但對於想自訂精簡化 X 視窗環境的使用者來說，這就有點麻煩了。
+因為你必須了解當你需要什麼功能時，就要在你的 X session 中加入什麼程式。
+而這方面沒有什麼良好的解決方法，通常需要仰賴不斷的錯誤嘗試找出答案。
+</p>
+
+<p>我個人的經驗，不要去碰 /etc/X11 底下的內容。複製任何一個現存的 X session 指令稿，例如以 /usr/bin/openbox-gnome-session 為基礎，增刪成你偏好的內容。自訂的 X session 指令稿可以存在 /usr/bin 或是 $HOME/.xsession 。附帶一提，大部份的 X session 是 shell script，但 gnome-session 則是用 C 語言撰寫後編譯過的執行檔，不適合參考。
+</p>
+
+<h5>
+Polkit agent</h5>
+
+<p>
+若是你安裝或是自行編寫了一個精簡的 X 視窗環境，同時又希望能使用一些需要暫時性改變到 root 身份的圖形介面程式，你必須要注意下列 Polkit 程式是否啟動了。若未啟動，表示你必須將它們加入你的 X session 之中。
+</p>
+
+<ul>
+    <li>/usr/lib/policykit-1/polkitd</li>
+    <li>/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1<br/>
+    GNOME/GTK 相關程式相依此服務。</li>
+    <li>/usr/lib/kde4/libexec/polkit-kde-authentication-agent-1<br/>
+    KDE 相關程式相依此服務。</li>
+</ul>
+
+<p>
+例如你在自訂的精簡 X 環境中，執行 gnome-control-center 調整主機的網路 IP 。當你按下套用後，若上述的 polkit-gnome-authentication-agent-1 沒有啟動，則 gnome-control-center 將無法獲得 root 權限，也就不能儲存與更動你剛剛設定的網路 IP 。
+</p>
+<p>
+碰到這個情形，你就要將上述的 Polkit 程式加到你的 xsession 中。
+重新啟動 X 環境，再重複上段的設定行為。
+此時 Polkit 程式就會彈出對話視窗，要求你輸入管理者的密碼。
+透過 Polkit agent ，gnome-control-center 就能獲得 root 權限儲存你的設定內容。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2014/Raspberry%20Pi%20Kiosk%20Designing%20-%20based%20on%20HTML5%20and%20OMXPlayer.html">Raspberry Pi Kiosk Designing - based on HTML5 and OMXPlayer</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/Ubuntu%20%E5%95%9F%E5%8B%95%E7%95%AB%E9%9D%A2%E8%88%87%E6%A1%8C%E9%9D%A2(startx)%E5%95%9F%E5%8B%95%E5%A4%B1%E6%95%97%E7%9A%84%E9%97%9C%E4%BF%82.html">Ubuntu 啟動畫面與桌面(startx)啟動失敗的關係</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/19886616.html">http://blog.roodo.com/rocksaying/archives/19886616.html</a></div>

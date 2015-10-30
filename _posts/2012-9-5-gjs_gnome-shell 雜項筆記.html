@@ -1,0 +1,81 @@
+---
+title: gjs/gnome-shell 雜項筆記
+category: programming
+old-category: JavaScript
+tags: [gjs,gnome-shell]
+---
+<p>
+gjs 相關的內容實在太散亂了。
+一些不足以湊成單獨一篇文章的內容，我就統一放在這裡了。
+目前有下列項目:
+</p>
+<ul>
+    <li>ARGV - 取得命令列參數
+    </li>
+    <li>imports.gi.versions - 指定 GIRepository 資源版本
+    </li>
+    <li>執行外部程式 - 如果想用 gjs 寫 shell script...
+    </li>
+</ul>
+
+<!--more-->
+<h4>取得命令列參數</h4>
+
+<p>命令列參數可由全域變數 <var>ARGV</var> 取得。
+</p>
+
+<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s2">"Length of arguments: "</span> <span class="o">+</span> <span class="nx">ARGV</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ARGV</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span><span class="nx">ARGV</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h4>指定 GIRepository 資源版本</h4>
+
+<p>隨著 gnome-shell 開始導入 GTK 3 ，系統中同時存在兩種版本的 GDK/GTK 等 GIRepository 資源。
+故我們將可能遭遇到版本衝突的狀況。
+如果你的程式明確地使用其中一個版本才具備的功能時，最好指定版本號碼。
+可用 <code>imports.gi.versions.??? = "version number";</code> 指定。
+</p>
+
+<pre class="highlight"><code><span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">versions</span><span class="p">.</span><span class="nx">Gtk</span> <span class="o">=</span> <span class="s1">'2.0'</span><span class="p">;</span> <span class="c1">// specify GIRepository of GTK to version 2.0.</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s2">"It will load GTK version "</span> <span class="o">+</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">versions</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">);</span>
+</code></pre>
+
+
+<h4>執行外部程式</h4>
+<p>調用 <dfn>imports.gi.GLib.spawn_command_line_sync()</dfn>。回傳一個陣列，內容如下:
+</p>
+<ul>
+    <li>[0] - true or false; 是否執行成功？
+    </li>
+    <li>[1] - string; 外部程式的 stdout 輸出的文字內容。
+    </li>
+    <li>[2] - string; 外部程式的 stderr 輸出的文字內容。
+    </li>
+    <li>[3] - int; exit_status; 外部程式的結束狀態碼。
+    </li>
+</ul>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">command</span><span class="p">(</span><span class="nx">cmd</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">.</span><span class="nx">spawn_command_line_sync</span><span class="p">(</span><span class="nx">cmd</span><span class="p">);</span>
+    <span class="c1">//print(results);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nx">results</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">command</span><span class="p">(</span><span class="s1">'uname -a'</span><span class="p">);</span>
+<span class="nx">print</span><span class="p">(</span><span class="s2">"Exit status: "</span> <span class="o">+</span> <span class="nx">results</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
+<span class="nx">print</span><span class="p">(</span><span class="s2">"Output content: "</span> <span class="o">+</span> <span class="nx">results</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</code></pre>
+
+
+<hr/>
+
+<p>
+其他的 gjs 文章，請用本部落格右上的搜尋欄搜尋 <dfn>gjs</dfn>，
+或是直接點擊本文的 <dfn>gjs</dfn> 標籤。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/20113838.html">http://blog.roodo.com/rocksaying/archives/20113838.html</a></div>

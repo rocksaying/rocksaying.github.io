@@ -1,0 +1,162 @@
+---
+title: 雙螢幕桌布DIY製作程式
+category: computer
+old-category: 電腦技術
+tags: [php,lcd]
+---
+<p>
+我的桌上電腦使用兩台螢幕，一直一橫。如果在 Windows XP 系統想要兩個螢幕上分別使用不同的桌布，需要一些小技巧。
+有人介紹 DisplayFusion 這套軟體。但或許它調整過試用版可用的功能，我安裝後並不能分別設定桌布。
+所以我又去思考如何自己動手作了。
+</p>
+<p>
+自己動手製作雙螢幕桌布的技巧，請參考這位作者的說明：「<a href="http://lcjan.pixnet.net/blog/post/29929609">雙螢幕不同桌布DIY教學</a>」。
+但我覺得用繪圖軟體修圖很麻煩，再說製作過程只需要方形區域的剪貼合併動作，所以我乾脆寫一個小程式來做這件事。
+</p>
+
+<!--more-->
+<p>
+程式見下列內容。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+
+<span class="nv">$horizon</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+
+<span class="nv">$dspinfos</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'height'</span><span class="o">=&gt;</span>  <span class="mi">1200</span><span class="p">,</span>
+        <span class="s1">'width'</span> <span class="o">=&gt;</span>  <span class="mi">1920</span><span class="p">,</span>
+        <span class="s1">'img_path'</span>  <span class="o">=&gt;</span> <span class="s1">'1.jpg'</span>
+    <span class="p">),</span>
+    <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'height'</span><span class="o">=&gt;</span>  <span class="mi">1920</span><span class="p">,</span>
+        <span class="s1">'width'</span> <span class="o">=&gt;</span>  <span class="mi">1200</span><span class="p">,</span>
+        <span class="s1">'img_path'</span>  <span class="o">=&gt;</span> <span class="s1">'2.png'</span>
+    <span class="p">)</span>
+<span class="p">);</span>
+
+<span class="nv">$offset_x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$offset_y</span> <span class="o">=</span> <span class="mi">360</span><span class="p">;</span>
+
+<span class="c1">###########################
+</span>
+<span class="nv">$dsp_height</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$dsp_width</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$horizon</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$dsp_height</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dspinfos</span> <span class="k">as</span> <span class="nv">$dspinfo</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$dsp_width</span> <span class="o">+=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">];</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nv">$dsp_height</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$dsp_height</span> <span class="o">=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">];</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$dsp_width</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dspinfos</span> <span class="k">as</span> <span class="nv">$dspinfo</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$dsp_height</span> <span class="o">+=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">];</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nv">$dsp_width</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$dsp_width</span> <span class="o">=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">];</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$src_imgs</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$dspinfos</span> <span class="k">as</span> <span class="nv">$dspinfo</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$img_path</span> <span class="o">=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'img_path'</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/\.jpg$/i'</span><span class="p">,</span> <span class="nv">$img_path</span><span class="p">))</span>
+        <span class="nv">$img</span> <span class="o">=</span> <span class="nb">imagecreatefromjpeg</span><span class="p">(</span><span class="nv">$img_path</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="nv">$img</span> <span class="o">=</span> <span class="nb">imagecreatefrompng</span><span class="p">(</span><span class="nv">$img_path</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">)</span> <span class="o">!=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span> <span class="k">or</span> 
+        <span class="nx">images</span><span class="p">(</span><span class="nv">$img</span><span class="p">)</span> <span class="o">!=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">])</span>
+    <span class="p">{</span>
+        <span class="nv">$timg</span> <span class="o">=</span> <span class="nb">imagecreatetruecolor</span><span class="p">(</span><span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">],</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]);</span>
+        <span class="nb">imagecopyresized</span><span class="p">(</span><span class="nv">$timg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> 
+            <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">],</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">],</span>
+            <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nb">imagesy</span><span class="p">(</span><span class="nv">$img</span><span class="p">));</span>
+        <span class="nv">$img</span> <span class="o">=</span> <span class="nv">$timg</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nv">$src_imgs</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$img</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$wimg</span> <span class="o">=</span> <span class="nb">imagecreatetruecolor</span><span class="p">(</span><span class="nv">$dsp_width</span><span class="p">,</span> <span class="nv">$dsp_height</span><span class="p">);</span>
+
+<span class="nv">$img</span> <span class="o">=</span> <span class="nv">$src_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">imagecopymerge</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span> 
+    <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> 
+    <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nb">imagesy</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="mi">100</span><span class="p">))</span> 
+<span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"merge failed</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$img</span> <span class="o">=</span> <span class="nv">$src_imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">imagecopymerge</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span>
+    <span class="nv">$dspinfos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'width'</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nv">$offset_x</span><span class="p">,</span> <span class="nv">$offset_y</span><span class="p">,</span>
+    <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nb">imagesy</span><span class="p">(</span><span class="nv">$img</span><span class="p">)</span> <span class="o">-</span> <span class="nv">$offset_y</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"merge failed</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">imagecopymerge</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span> <span class="nv">$dspinfos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'width'</span><span class="p">],</span>
+    <span class="nv">$dspinfos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'width'</span><span class="p">]</span> <span class="o">-</span> <span class="nv">$offset_y</span><span class="p">,</span>
+    <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nv">$offset_y</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"merge failed</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="nb">imagepng</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="s1">'wallpaper.png'</span><span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+首先修改 <var>$dspinfos</var> 陣列中的螢幕長寬與想要使用的桌布圖檔路徑。
+我的螢幕是兩台 1920x1200 解析度的螢幕，這是現在少見的解析度，不要照抄。
+再者，螢幕一為橫式顯示，螢幕二為直式顯示，所以 <var>$dspinfos</var> 設定的長寬剛好相反。
+</p>
+
+<p>
+其次，桌布圖檔可以用 jpeg 或 png 。
+若圖檔放置的位置跟程式不在同一目錄下，請記得在圖檔路徑中加上目錄位置。
+如果圖檔大小和螢幕大小不一致，我的程式會用最簡單的方法縮放圖像內容。
+若是圖檔長寬比例和螢幕長寬比例不一樣的話，圖像內容縮放後會變形。
+所以我建議先用簡單的編輯功能，調整圖檔大小與比例，再用這個工具產生桌布。
+</p>
+
+<p>
+最後是座標偏移量的設定。如果兩台都是水平橫放並排的話，偏移量都是 0 。
+比較麻煩的是一直一橫的排放方式，如同「<a href="http://lcjan.pixnet.net/blog/post/29929609">雙螢幕不同桌布DIY教學</a>」這篇文章所說。
+這時請進入控制台，查看次顯示器的座標偏移值。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/2456835_b1coyn1_l.jpg" alt="次顯示器座標偏移量" />
+
+<p>
+如圖1所示，我的次顯示器是垂直方向偏移360點。
+所以我指派 360 給 <var>$offset_y</var>。
+</p>
+
+<p>
+設定好基本狀態後，就可以執行這個工具了。這是用 PHP 語言撰寫的工具，請用 php5 執行它。
+如果沒有顯示任何錯誤訊息，那麼你就會在目錄下看到一個名稱為 wallpaper.png 的雙螢幕用桌布圖檔。
+以我的螢幕配置情形來說，這張新桌布圖檔看起來會像圖2。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/2456839_94s0git_l.jpg" alt="雙螢幕桌布圖檔" />
+
+<p>
+最後用任何可以設定 Windows 桌布的工具，指派這張圖檔作為你的螢幕桌布，配置方式請選「並排」或「並列」。
+實際使用效果如圖3所示。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/2456833_querwpo_l.jpg" alt="桌布實際使用效果" />
+
+<p>
+寫了這個程式之後，我從 K島上取得的那些雜誌掃圖，都可以用來作直立螢幕的桌布了。哈哈。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/19490282.html">http://blog.roodo.com/rocksaying/archives/19490282.html</a></div>

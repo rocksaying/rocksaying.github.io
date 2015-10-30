@@ -1,0 +1,67 @@
+---
+title: Introspection and Reflection in Programming Language
+category: programming
+old-category: Programming
+tags: [reflection,反射,metaprogramming, 中介編程,introspection]
+---
+<p>
+網友在另一篇文章的<a href="{{ site.baseurl }}/archives/2012/PHP%205.4%20%E6%96%B0%E5%8A%9F%E8%83%BD.html#comment-22425496">回應</a>中，問我程式語言中的自識與反射有何區別。
+關於反射與自識，我的說法是「Reflection 一般譯為反射，但我稱為自識的能力」。見「<a href="{{ site.baseurl }}/archives/2007/%E4%BB%80%E9%BA%BC%E6%98%AF%20Reflection%20%EF%BC%9F.html">什麼是 Reflection?</a>」。
+</p>
+
+<p>
+「反射」，或稱「反映」，對應英文 reflect；「自識」，或稱「內省」，對應英文 introspect 。
+在程式語言中，這兩者基本上指的是同一件事，即個體認知自身的能力，<q>讓 object 看到自己的外貌的功能</q>。
+但是 reflect 與 introspect 的語義，表達了兩種方式的差異在於認知途徑不同。
+也就是說，反射能力就是自識能力，差別在語義不同。
+</p>
+
+<!--more-->
+<p>
+有些程式語言採用要個體先拿一面鏡子，亦即反射體(reflector)，透過這面鏡子才能看到自己樣貌的認知途徑，例如Java、C#。「反射」、「reflect」的語義就是要表達這個情境。
+</p>
+
+<p>
+另一方面，有些程式語言不需要一面鏡子、一個反射體，就可以讓個體認識自己。這種情形使用「自識」、「introspect」的語義。由於不存在反射體，稱「反射」就不符合情境。
+</p>
+
+<p>
+有趣的是，基於歷史因素，PHP 兩種途徑都支援。它一開始是自識途徑。後來 Java 普及到資訊教育體系之後，為了吸引那些學生使用 PHP，故 PHP 引入了許多 Java 的項目，這其中就包含了反射。就形成了如今兩種途徑並存的情形。
+</p>
+
+<p>
+既然 PHP 兩種途徑都支援，那麼用它來說明兩種途徑的形式差異再好不過了。
+下列程式碼示範了最基本的認知自身現有屬性的動作。
+兩種途徑並列，讓人一眼就能理解什麼是認知途徑的差異。
+</p>
+
+<pre class="highlight"><code>class A {
+    var $title = 'abc';
+}
+
+$a = new A();
+
+/* Introspect, 直接的自我認知 */
+foreach ($a as $prop =&gt; $value) {
+    echo $prop, ': ', $value, "\n";
+}
+
+/* Reflect, 拿鏡子看自己 */
+$ref_a = new ReflectionObject($a);
+foreach ($ref_a-&gt;getProperties() as $prop_reflector) {
+    $prop = $prop_reflector-&gt;name;
+    $vavlue = $a-&gt;$prop; //$value = $prop_reflector-&gt;getValue($a);
+
+    echo $prop, ': ', $value, "\n";
+} 
+
+</code></pre>
+
+
+<p>
+就目前已知的程式語言來看，採用反射途徑的程式語言，其個體的自識能力都比較低下，使用比較不方便。從上列範例的程式碼，應該不難看出為何我說使用不方便。
+</p>
+
+<p>
+附帶一提，像 <dfn>GetType</dfn> 或 <dfn>typeof</dfn> 這些查知個體型態的方法，只是自識能力中最基本的項目。如果要列一張各種程式語言自識能力的評比表，它甚至還不會被列入評比項目。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/19362490.html">http://blog.roodo.com/rocksaying/archives/19362490.html</a></div>

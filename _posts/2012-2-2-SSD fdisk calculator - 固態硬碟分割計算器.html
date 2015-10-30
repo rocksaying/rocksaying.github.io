@@ -1,0 +1,213 @@
+---
+title: SSD fdisk calculator - 固態硬碟分割計算器
+category: computer
+old-category: 電腦技術
+tags: [ssd,fdisk,4k align]
+---
+<p>
+SSD fdisk calculator。固態硬碟分割計算器。讓你的磁區對齊 4K 區塊。
+此程式為網頁版，瀏覽器打開本頁即可計算。不用下載，不用安裝。
+</p>
+<p>
+春節前，看到 PCHome 有批 SSD 好便宜，我趁機買了一個回來裝在我的 ThinkPad 上。
+不過在分割磁區時碰到了些小麻煩。為了要準確地對齊 4K 區塊，我乾脆寫了個計算器來算位置。
+本來是用 gnumeric 試算表算的，後來為了發佈出來，又花了半天用 JavaScript 寫成網頁版。
+</p>
+
+<!--more-->
+<p>
+程式碼請自己查看本網頁的原始碼，我懶得顯示了。
+</p>
+
+<div>
+Author: rock <shirock.tw@gmail.com> <br/>
+License: GNU GPL v3.
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript">
+/**
+Author: rock <shirock.tw@gmail.com>
+License: GNU GPL v3.
+ */
+var num_primary_partitions = 0;
+var num_logical_partitions = 0;
+
+/**
+@return next sector
+ */
+function calculate_partition_args(jq_id, start_sector) {
+    var end_sector, four_k_blocks, capacity, gb_capacity;
+
+    capacity = parseInt(jQuery(jq_id + "_capacity").val());
+    end_sector = capacity * 1024 * 1024 / 512 - 1 + start_sector;
+    four_k_blocks = (end_sector + 1 - start_sector) * 512 / 4096;
+
+    jQuery(jq_id + " td:nth-child(2)").text(start_sector);
+    jQuery(jq_id + " td:nth-child(3)").text(end_sector);
+    jQuery(jq_id + " td:nth-child(4)").text(four_k_blocks.toFixed(1));
+    jQuery(jq_id + " td:nth-child(6)").text((capacity / 1024).toFixed(2));
+    return end_sector + 1;
+}
+
+function re_calculate() {
+    var jq_id, sector;
+    
+    for (var i = 1; i <= num_primary_partitions; ++i) {
+        jq_id = "#sda" + i;
+        if (i == 1)
+            sector = parseInt(jQuery("#start_sector").val());
+        sector = calculate_partition_args(jq_id, sector);
+    }
+
+    if (num_logical_partitions < 1)
+        return true;
+
+    for (var i = 0; i <= num_logical_partitions; ++i) {
+        jq_id = "#sda" + (i + 4);
+        sector = calculate_partition_args(jq_id, sector);
+    }
+    
+    return true;
+}
+
+function is_available_partition() {
+    var used_partitions = num_primary_partitions;
+    if (num_logical_partitions > 0)
+        ++used_partitions;
+    if (used_partitions >= 4)
+        return false;
+    return true;
+}
+
+function gen_capacity_input_html(id, value, readonly) {
+    var readonly_attr = (readonly ? " readonly='true' " : '');
+    return "<input id='" + id + "_capacity' type='text' value='" + value +
+        "' size='8' " + readonly_attr + "></input>";
+}
+
+function add_primary() {
+    if (!is_available_partition())
+        return false;
+
+    ++num_primary_partitions;
+    var partition_id = 'sda' + num_primary_partitions;
+    var jq_id = "#" + partition_id;
+
+    var row_html = "<tr id='" + partition_id + 
+        "'><td></td><td></td><td></td><td></td><td></td><td></td></tr>";
+
+    if (num_logical_partitions > 0)
+        jQuery("#sda4").before(row_html);
+    else
+        jQuery("#grid_body").append(row_html);
+    jQuery(jq_id + " td:nth-child(1)").text(partition_id + " (primary)");
+    jQuery(jq_id + " td:nth-child(5)").append(
+        gen_capacity_input_html(partition_id, 1024, false));
+    jQuery(jq_id + "_capacity").change(re_calculate);
+
+    re_calculate();
+}
+
+function add_logical() {
+    if (num_primary_partitions == 0)
+        return false;
+    if (num_logical_partitions == 0 && !is_available_partition())
+        return false;
+
+    if (num_logical_partitions == 0) {
+        jQuery("#grid_body").append("<tr id='sda4'><td>sda4 (extend)</td>" + 
+            "<td></td><td></td><td></td><td></td><td></td></tr>");
+        jQuery("#sda4 td:nth-child(5)").append(
+            gen_capacity_input_html("sda4", 1, true));
+    }
+    
+    ++num_logical_partitions;
+    var partition_id = 'sda' + ( 4 + num_logical_partitions);
+    var jq_id = "#" + partition_id;
+
+    jQuery("#grid_body").append("<tr id='" + partition_id + 
+        "'><td></td><td></td><td></td><td></td><td></td><td></td></tr>");
+    jQuery(jq_id + " td:nth-child(1)").text(partition_id + " (logical)");
+    jQuery(jq_id + " td:nth-child(5)").append(
+        gen_capacity_input_html(partition_id, 1024, false));
+    jQuery(jq_id + "_capacity").change(re_calculate);
+
+    re_calculate();
+}
+
+function clear_grid() {
+    num_primary_partitions = num_logical_partitions = 0;
+    jQuery("#grid_body").empty();
+}
+</script>
+
+<fieldset>
+<legend>SSD fdisk calculator</legend>
+
+<table id="grid" border="1" cellspacing="0" cellpadding="4">
+    <thead>
+        <tr>
+        <th>partition</th>
+        <th>start sector</th>
+        <th>end sector</th>
+        <th>4K blocks</th>
+        <th>MB</th>
+        <th>GB</th>
+        </tr>
+    </thead>
+
+    <tbody id="grid_body">
+    </tbody>
+</table>
+
+<div style="margin:1em 0">
+    <div>
+    First partition start sector: 
+    <input id="start_sector" type="text" value="2048" onchange="re_calculate()"/>
+    </div>
+    <button onclick="add_primary()">Add primary</button>
+    <button onclick="add_logical()">Add logical</button>
+    <button onclick="clear_grid()">Clear</button>
+</div>
+</fieldset>
+
+<p>
+fdisk 可能會抱怨分割區的結束磁區不在磁柱(cylinder)邊界上。但 SSD 並沒有磁柱這種硬體結構，不影響效能。
+</p>
+
+<h6>算式</h6>
+<p>
+Align: (end_sector + 1 - start_sector) * 512 / 4096 。 需為整數 (4K-blocks)。
+</p>
+
+<p>
+MB容量: (end_sector + 1 - start_sector) * 512 / 1024 / 1024
+</p>
+
+<p>
+速記值:	
+sector 應以 8 為增減值距。start_sector 應為偶數，end_sector 應為奇數。	
+2048 sectors = 1MB.	
+</p>
+
+<h6>File system type</h6>
+<ul>
+    <li>83 - linux</li>
+    <li>b - w95 fat32</li>
+</ul>
+
+<h6>其他事項</h6>
+<p>
+我用的分割工具是 linux 一般的 fdisk 。
+</p>
+<p>
+gparted 分割的結果，結束磁區總是對不齊。不建議使用。
+</p>
+<p>
+參考文章:
+</p>
+<ul>
+    <li><a href="https://wiki.archlinux.org/index.php/Advanced_Format">ArchWiki - Advanced Format</a></li>
+    <li><a href="http://www.ocztechnologyforum.com/forum/showthread.php?48309-Partition-alignment-importance-under-Windows-XP-(32-bit-and-64-bit)..why-it-helps-with-stuttering-and-increases-drive-working-life.&p=335049#post335049">Partition alignment importance under Windows XP</a></li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18853204.html">http://blog.roodo.com/rocksaying/archives/18853204.html</a></div>

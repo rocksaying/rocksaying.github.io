@@ -1,0 +1,118 @@
+---
+title: gedit 外掛程式 - 外部工具 - 執行或編譯程式碼
+category: computer
+old-category: 電腦技術
+tags: [gedit]
+---
+<p>
+在 Linux 桌面中，我寫程式時慣用的文字編輯器是 gedit。
+我寫了一個配合「外部工具」外掛的指令集，可以讓我直接在 gedit 的視窗中直接編譯或執行我正在編寫的程式碼。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+do_cc_cmd<span class="o">()</span> <span class="o">{</span>
+  <span class="nv">CC_CMD</span><span class="o">=</span><span class="sb">`</span>grep -m 1 <span class="s2">"// </span><span class="nv">$CC</span><span class="s2">"</span> <span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span> | sed <span class="s2">"s/</span><span class="se">\/\/</span><span class="s2"> //"</span><span class="sb">`</span>
+  <span class="nv">OUTPUT_NAME</span><span class="o">=</span><span class="k">${</span><span class="nv">GEDIT_CURRENT_DOCUMENT_NAME</span><span class="p">%.*</span><span class="k">}</span>
+
+  <span class="k">if</span> <span class="o">[</span> -z <span class="s2">"</span><span class="nv">$CC_CMD</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then
+    </span><span class="nv">CC_CMD</span><span class="o">=</span><span class="s2">"</span><span class="nv">$CC</span><span class="s2"> -o </span><span class="nv">$OUTPUT_NAME</span><span class="s2"> </span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span>
+  <span class="k">fi
+
+  </span><span class="nb">echo</span> <span class="nv">$CC_CMD</span>
+  <span class="sb">`</span><span class="nv">$CC_CMD</span><span class="sb">`</span>
+  <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then</span>
+    ./<span class="nv">$OUTPUT_NAME</span>
+  <span class="k">fi</span>
+<span class="o">}</span>
+
+<span class="k">case</span> <span class="nv">$GEDIT_CURRENT_DOCUMENT_TYPE</span> <span class="k">in</span>
+<span class="s2">"application/x-php"</span><span class="p">)</span>
+  <span class="nb">echo</span> <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span> | grep <span class="s2">"Test.php"</span> &gt; /dev/null
+  <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
+    </span>phpunit <span class="nv">$GEDIT_CURRENT_DOCUMENT_NAME</span>
+  <span class="k">else
+    </span>php <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span>
+  <span class="k">fi</span>
+  <span class="p">;;</span>
+<span class="s2">"text/x-python"</span><span class="p">)</span>
+  python <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
+<span class="s2">"application/x-ruby"</span><span class="p">)</span>
+  ruby <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
+<span class="s2">"application/x-perl"</span><span class="p">)</span>
+  perl <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
+<span class="s2">"application/javascript"</span><span class="p">)</span>
+  gjs <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
+<span class="s2">"application/x-shellscript"</span><span class="p">)</span>
+  sh <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
+
+<span class="s2">"text/x-csrc"</span><span class="p">)</span>
+  <span class="nv">CC</span><span class="o">=</span>gcc
+  do_cc_cmd
+  <span class="p">;;</span>
+<span class="s2">"text/x-vala"</span><span class="p">)</span>
+  <span class="nv">CC</span><span class="o">=</span>valac
+  do_cc_cmd
+  <span class="p">;;</span>
+
+<span class="k">*</span><span class="p">)</span>
+  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_TYPE</span><span class="s2">]"</span>
+  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_URI</span><span class="s2">]"</span>
+  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_NAME</span><span class="s2">]"</span>
+  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">]"</span>
+  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_DIR</span><span class="s2">]"</span>
+  <span class="nb">echo</span> <span class="s2">"[</span><span class="k">${</span><span class="nv">GEDIT_CURRENT_DOCUMENT_NAME</span><span class="p">%.*</span><span class="k">}</span><span class="s2">]"</span>
+<span class="k">esac</span>
+</code></pre>
+
+
+<p>
+複製上列指令集的內容後，參考下圖，將這個指令集加入 gedit 外部工具的項目中。我指定 F5 作為此外部工具指令集的捷徑鍵。
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/2047145_pisjvfk_l.png" alt="gedit設定新的外部工具" />
+
+<ul>
+    <li>*.sh: sh
+    </li>
+    <li>*Test.php: phpunit
+    </li>
+    <li>*.php: php
+    </li>
+    <li>*.py: python
+    </li>
+    <li>*.pl: perl
+    </li>
+    <li>*.rb: ruby
+    </li>
+    <li>*.js: gjs
+    </li>
+    <li>*.c: gcc
+    </li>
+    <li>*.vala: valac
+    </li>
+</ul>
+
+<p>
+這個指令集會依據文件的型態判斷需要調用哪一個外部工具。例如我正在寫一個 shell script，當我按下 F5 鍵時，gedit 就會調用 <dfn>sh</dfn> 執行這份 shell script 並將輸出結果顯示在 gedit 的底部面板；寫 php 程式碼就會調用 <dfn>php</dfn>。如果文件是 C 程式碼，它也有法子調用 gcc 編譯與執行編譯後的程式。
+</p>
+
+<p>
+針對 C/Vala 的程式碼，我的指令集會先找尋程式碼第一列的註解是否指示編譯方式。例如下列範例。
+如果第一列註解指示了編譯內容，就會按照指示調用編譯器編譯程式碼。若無指示，則按預設方式編譯，C 程式碼調用 <code>gcc -o $OUTPUT_NAME $GEDIT_CURRENT_DOCUMENT_PATH</code>；Vala 程式碼調用 <code>valac -o $OUTPUT_NAME $GEDIT_CURRENT_DOCUMENT_PATH</code>。
+</p>
+
+<pre class="highlight"><code><span class="c1">// gcc -o helo -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -lglib-2.0 hello.c
+// 第一行就是編譯方式。
+</span><span class="cp">#include &lt;glib.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">g_printf</span><span class="p">(</span><span class="s">"hello</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+當我編寫單一文件就能寫完的小程式時，這個指令集省了我不少時間。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/18790684.html">http://blog.roodo.com/rocksaying/archives/18790684.html</a></div>

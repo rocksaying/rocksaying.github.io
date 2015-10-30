@@ -1,0 +1,99 @@
+---
+title: PHP 5.4 新功能
+category: programming
+old-category: PHP
+tags: [php,trait,mix-in]
+---
+<h4>
+Traits
+</h4>
+
+<p>
+多年前，我在《<a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%E4%B9%8B%E5%8F%AF%E8%A1%8C%E6%80%A7.html">PHP 實踐 mix-in 概念之可行性</a>》中嘗試著用 PHP 實現「Mix-in (混成)」能力。現在，PHP 5.4 終於提供了這個功能，它稱為「<a href="http://php.net/traits">Traits</a>」。
+</p>
+
+<!--more-->
+<p>
+PHP Traits 嚴格說來僅及 Ruby Mix-in 一半的功力。例如我當年在《<a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%20part%202%20-%20MixableClass.html">PHP 實踐 mix-in 概念 part 2 - MixableClass</a>》實作的 <dfn>MixableClass</dfn> 所具有的動態增刪方法的能力，Traits 便做不到。Traits 目前僅提供靜態的混成。儘管如此，對大多數的程式人員而言，Traits 仍然是相當強大的語言能力，可以讓我們更有效地組織演算法，又避免多重繼承的陷阱。
+</p>
+
+<p>
+先以《<a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%E4%B9%8B%E5%8F%AF%E8%A1%8C%E6%80%A7.html">PHP 實踐 mix-in 概念之可行性</a>》的範例程式來看，現在用 Traits 的寫法將如下所示:
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nx">trait</span> <span class="nx">sayBar</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">bar</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">O</span> <span class="p">{</span>
+    <span class="k">use</span> <span class="nx">sayBar</span><span class="p">;</span> <span class="c1">// using a trait!
+</span>
+    <span class="k">private</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
+<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">bar</span><span class="p">();</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+更多關於 Traits 的內容，請詳閱《<a href="http://php.net/traits">PHP 手冊：Traits</a>》。
+</p>
+
+<h4>
+內建 Web 伺服器
+</h4>
+
+<p>
+哇，這真是令人興奮的新功能。雖然目前還只建議用於開發測試階段，但仍比以往還要自己裝 Apache 方便了。對於習慣在 Windows 平台上撰寫 PHP 程式後再上傳的程式人員來說，這個新功能免去了在 Windows 上安裝 Apache 的負擔。測試時也更方便了，只要在專案的工作目錄執行 PHP 內建 Web 伺服器，就可以進行專案的功能測試。不用放在 Apache 的公開網頁路徑下。
+</p>
+
+<p>
+對了，PHP 內建 Web 伺服器還提供了 router 功能。我可以指定一個 PHP 程式負責安排 URL 的路徑。這個 router 實際上就是一些 PHP framework 的 index.php 。例如我自己寫的 <a href="http://code.google.com/p/schema-database/source/browse/trunk/web/index.php">CommonGateway</a> 框架，就可以做為 PHP 內建 Web 伺服器的 router ，簡直是絕配啊。真是太妙了。
+</p>
+
+<p>
+請詳閱《PHP 手冊：<a href="http://php.net/manual/features.commandline.webserver.php">Built-in web server</a>》。
+</p>
+
+<h4>
+其他
+</h4>
+
+<p>
+除了以上兩個特別顯著的功能外，PHP 5.4 還增加了一些新的語法。
+新增語法讓一些程式碼變得更簡潔易讀，或是讓本來不能寫成一行的語法變成可以一行寫完。
+</p>
+
+<p>
+以下列出我以往曾經抱怨 PHP 語法不支援，但這次新增的語法項目:
+</p>
+
+<ul>
+    <li>陣列縮寫語法:<br/>
+    我終於可以少打「a, r, r, a, y」這5個英文字母了。現在可以用 <code>[ ]</code> 來定義一個陣列。傳統寫法: <code>array(1 => 'abc')</code>；新縮寫法: <code>[1 => 'abc']</code>。
+    </li>
+    <li>二進位數字表示法:<br/>
+    可用 <code>0b</code> 為前綴，表達一個二進位數字，例如 <code>0b001010</code> 。
+    </li>
+    <li>調用類別方法時，方法名稱支援以變數表達。例如 <code>MyClass::$method()</code>。
+    </li>
+    <li>允許類別實體化後直接存取其成員。以前要寫兩行的動作: <code>$tmp = new foo; $tmp->bar();</code>；現在可以寫成一行: <code>(new foo)->bar();</code>。
+    </li>
+</ul>
+
+<p>
+完整異動內容，請詳閱《<a href="http://php.net/ChangeLog-5.php">Change Log</a>》。
+</p>
+
+<p>
+這些新語法與原有語法沒有任何衝突。至於 PHP 5.4 移除掉的語法，我個人很久以前就沒在用了，完全沒影響，就不列出了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/19048648.html">http://blog.roodo.com/rocksaying/archives/19048648.html</a></div>

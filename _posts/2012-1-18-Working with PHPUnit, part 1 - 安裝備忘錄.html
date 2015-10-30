@@ -1,0 +1,63 @@
+---
+title: Working with PHPUnit, part 1 - 安裝備忘錄
+category: programming
+old-category: PHP
+tags: [tdd,phpunit,unittest]
+---
+<p>
+近來的軟體開發流程強調「測試驅動開發 (Test-Driven Develope)」，對於單元測試 (unit test) 發展出了一些系統化的作法和工具，這類單元測試工具俗稱 xUnit ，例如 C 語言的 CUnit ， Java 的 JUnit ， .NetFramework 的 NUnit 。 PHP 也有 <a href="http://www.phpunit.de/">PHPUnit</a> 。
+</p>
+<p>
+安裝 PHPUnit 其實很簡單，基本上按 PHPUnit 的《<a href="http://www.phpunit.de/manual/3.4/en/installation.html">Installation</a>》的步驟即可完成安裝。只是我在 Windows 平台上做了一些修改。
+</p>
+<div class="note">
+初版: 2006-12-25。<br/>
+最近更新: 2012-01-18。修正參考連結，補充安裝方式。
+</div>
+
+<!--more-->
+<p>
+Debian/Ubuntu Linux 正式套件庫中，皆提供 <dfn>phpunit</dfn> 套件，可以 apt-get 或 synaptic 直接安裝。但套件庫中的版本一般不是最新的。若想使用 PHPUnit 最新版本，需參考後述內容手動安裝。
+</p>
+
+<p>
+從未安裝過 PHPUnit 的使用者，需要先將 PHPUnit package 的伺服器位置 (pear.phpunit.de) 告知 PEAR 。這個動作只需要做一次。
+</p>
+<pre class="language-text">
+$ pear channel-update pear.php.net
+$ pear channel-discover pear.phpunit.de
+</pre>
+<p>
+曾經安裝過 PHPUnit 2 版的使用者，需要先移除舊版的 PHPUnit 。
+</p>
+<pre class="language-text">
+$ pear uninstall phpunit/PHPUnit2
+</pre>
+<p>
+安裝 PHPUnit 3 。由於 PHPUnit 3 使用了一些其他的 PEAR package ，所以我添加了 <code>--alldeps</code> 參數要求 PEAR 一併安裝。
+</p>
+<pre class="language-text">
+$ pear install --alldeps phpunit/PHPUnit
+</pre>
+<p>
+在 Windows 平台上，執行 PHPUnit 工具的命令檔是 phpunit.bat 。而我一向不把 php.exe 的路徑加到 <code>PATH</code> 環境變數中 (但我在 Linux 平台上，會按預設方式安裝，把 php 執行檔放在 /usr/bin 或 /usr/local/bin 中) ，所以我編輯了 phpunit.bat 使其中的指令能夠找到 php.exe 。我的 phpunit.bat 內容如下。
+</p>
+<pre class="language-text">
+@echo off
+set PATH=%PATH%;"C:\Program Files\Developer\PHP5";
+set PHPBIN="C:\Program Files\Developer\PHP5\php.exe"
+%PHPBIN% "C:\Program Files\Developer\PHP5\pear\PHPUnit\TextUI\Command.php" %*
+</pre>
+<p>
+我使用 <a href="http://www.pspad.com/en/">PSPad</a> 作為程式編輯器，所以我在 PSPad 的「工具面板」中增加了一個「PHPUnit」的項目，使我可以直接在 PSPad 的編輯環境下調用 PHPUnit 測試項目。設定內容如圖。
+</p>
+<img src="http://blog.roodo.com/rocksaying/190b5594.png" alt="路徑指向 phpunit.bat ，參數為 %Name%，並勾選擷取輸出結果" title="在 PSPad 工具面板中增加 PHPUnit 項目"/>
+<p>
+關於 PSPad 調用編譯器、外部工具的設定方式，可參考《<a href="{{ site.baseurl }}/archives/2006/Borland%20C%2B%2B%205.5%20Compiler%20with%20PSPad.html">Borland C++ 5.5 Compiler with PSPad</a>》。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/%E5%85%88%E8%AA%AA%E6%95%85%E4%BA%8B%E5%86%8D%E5%8B%95%E6%89%8B%E8%A8%AD%E8%A8%88%2C%20%E5%BE%9E%E4%B8%80%E5%80%8B%E7%B0%A1%E5%96%AE%E6%95%85%E4%BA%8B%E7%9C%8B%20Test%20Driven%20Development.html">先說故事再動手設計, 從一個簡單故事看 Test Driven Development</a></li>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html">Working with PHPUnit3, part 2 - 撰寫測試案例</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2599757.html">http://blog.roodo.com/rocksaying/archives/2599757.html</a></div>
