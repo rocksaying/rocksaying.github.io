@@ -1,0 +1,146 @@
+---
+title: Php-dbus extension with ByteArray support
+category: programming
+old-category: PHP
+tags: [php,D-Bus,dbus,bytearray]
+---
+<p>
+php-dbus 是來自 <a href="http://pecl.php.net/package/DBus">PECL DBus</a> 的 PHP 擴展項目，其用途在於讓 PHP 支援 DBus 功能。
+</p>
+<p>
+我為 php-dbus 添加了一個新類別: <dfn>ByteArray</dfn> ，再讓它的 DBus 方法支援 <dfn>ByteArray</dfn> 類別。我改寫過的 php-dbus 源碼位於「<a href="http://rocksources.googlecode.com/svn/trunk/php/dbus/">http://rocksources.googlecode.com/svn/trunk/php/dbus/</a>」。或是點擊此連結「<a href="http://code.google.com/p/rocksources/source/browse/#svn%2Ftrunk%2Fphp%2Fdbus">Browse php-dbus</a>」瀏覽源碼。
+</p>
+
+<!--more-->
+<h4>
+ByteArray
+</h4>
+
+<p>
+<dfn>ByteArray</dfn> 基本上是一個獨立的項目。只是我目前將它和 php-dbus 的程式碼放在一起，所以你需要取回我改寫過的 php-dbus 源碼，再按「<a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">Write a PHP DBus client</a>」所說明的方式，安裝 php-dbus 擴展項目，才能使用 <dfn>ByteArray</dfn> 類別。
+</p>
+
+<p>
+<dfn>ByteArray</dfn> 可以視為 PHP 字串的 box 類別。在大多數場合可以直接當成字串運算。
+</p>
+
+<p>
+建構時需要傳給它一個字串。其他時候和一般字串沒兩樣。用例如下:
+</p>
+
+<pre class="highlight"><code>$src = '123456';
+
+$ba = new ByteArray($src);
+       
+echo get_class($ba), "\n"; // ByteArray
+
+echo count($ba), "\n";  // array behavior
+echo strlen($ba), "\n"; // string behavior
+
+echo "interpolate $ba\n";;
+
+echo $ba[0], "\n";  // indexer get.
+echo $ba[-1], "\n"; // I allow negative position.
+
+echo isset($ba[1]) ? 'yes' : 'no', \n";
+
+$ba[0] = 'a';       // indexer set.
+$ba[-1] = 'z';
+
+</code></pre>
+
+
+<p>
+參考「<a href="http://code.google.com/p/rocksources/source/browse/trunk/php/dbus/ByteArrayTest.php">ByteArrayTest.php</a>」了解 <dfn>ByteArray</dfn> 現行可用的方法。
+</p>
+
+<h4>
+用於 DBus 的場合
+</h4>
+
+<p>
+示範用 DBus 服務 'com.transtep.sample.Hello'，提供兩個方法。
+</p>
+<ul>
+    <li>int SayAy(array); 傳入一個陣列，回傳陣列大小。
+    </li>
+    <li>ByteArray RetAy(filepath); 傳入一個檔案路徑，回傳檔案內容 (binary string)。 
+    </li>
+</ul>
+
+<pre class="highlight"><code>$sample_service = 'blog.rock.sample.Hello';
+$sample_object_path = '/blog/rock/sample/Hello';
+$sample_interface = 'blog.rock.sample.Hello';
+
+$d = new Dbus(Dbus::BUS_SYSTEM);
+ 
+$proxy = $d-&gt;createProxy(
+    $sample_service, $sample_object_path, $sample_interface);
+
+$a = new ByteArray("sf\0sfs f");
+echo $a, "\n";
+echo strlen($a), "\n";
+
+$res = $proxy-&gt;SayAy(array(1,2,3,4)); // pass a DBusArray
+echo $res, "\n";    // return length of array.
+
+$res = $proxy-&gt;SayAy($a);   // pass a ByteArray
+echo $res, "\n";    // return length of array.
+
+$filepath = "/home/rock/Pictures/wallpaper/1.jpg";
+
+$s = file_get_contents($filepath);
+
+echo "size of file: ", strlen($s), "\n";
+
+$res = $proxy-&gt;SayAy(new ByteArray($s));
+echo $res, "\n";
+
+$a = $proxy-&gt;RetAy($filepath); // return the content of file.
+echo get_class($a), "\n";
+echo strlen($a), "\n";
+
+</code></pre>
+
+
+<p>
+在沒有 <dfn>ByteArray</dfn> 之時，我們必須先將 binary 字串中的每個字元依序取出內碼(使用 <dfn>chr</dfn> 函數)，放入一個 PHP 陣列中， php-dbus 才能正確地傳遞給 DBus 服務。
+這帶來額外的效能問題，還牽扯到一個 PHP 內部記憶體管理的問題。請看下列 PHP 程式，各位猜猜這個 PHP 程式要配置多少記憶體？
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$l</span> <span class="o">=</span> <span class="mi">500000</span><span class="p">;</span> <span class="c1">// 500KB
+</span>
+<span class="nv">$a</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$l</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span>
+    <span class="nv">$a</span><span class="p">[]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="nb">sleep</span><span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">5</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+執行上述程式後，它會睡眠5分鐘不動。各位可以用記憶體觀察程式，例如 Linux 可用 top 指令或 gnome-system-monitor ，查看這個程式為長度 500000 的陣列耗用多少記憶體。我自己觀察到的結果是 100MB 起跳，遠遠超過 500KB 。
+</p>
+<p>
+使用 <dfn>ByteArray</dfn> 就可以避免上述兩個問題。
+</p>
+
+<p>
+請參考下列文章，了解更多 PHP DBus 的使用說明。
+</p>
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2010/php-dbus%200.1.0%20%E6%92%B0%E5%AF%AB%20DBus%20service%20%E7%9A%84%E4%BD%BF%E7%94%A8%E7%B6%93%E9%A9%97.html">
+    php-dbus 0.1.0 撰寫 DBus service 的使用經驗</a></li>
+    <li><a href="{{ site.baseurl }}/archives/2010/PHP%20D-Bus%20%E8%88%87%20Gearman%20%E4%B9%8B%E6%AF%94%E8%BC%83.html">
+    PHP D-Bus 與 Gearman 之比較</a></li>
+    <li><a href="{{ site.baseurl }}/archives/2011/php-dbus%20unboxing.html">
+    php-dbus unboxing</a></li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/Php-dbus%20extension%20with%20ByteArray%20support%2C%20r101_r108%20update.html">Php-dbus extension with ByteArray support, r101 update</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/21315764.html">http://blog.roodo.com/rocksaying/archives/21315764.html</a></div>

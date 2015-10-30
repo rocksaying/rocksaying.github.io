@@ -1,0 +1,74 @@
+---
+title: Grub2 設定以 Linux LiveCD 的 ISO 檔啟動系統
+category: computer
+old-category: 電腦技術
+tags: [linux,ubuntu,debian,grub2,clonezilla]
+---
+<p>對 Linux 的使用者來說，一般會使用 CloneZilla 備份與還原硬碟資料。而 CloneZilla 的承載媒體不外是 CD 或 USB 隨身碟。也因此，我們常常碰到系統出了問題需要用 CloneZilla 還原資料，卻又突然忘了 CloneZilla CD 或 USB 隨身碟放在哪的情形？此外，像是沒有光碟機可用的筆記型電腦，則非常需要不用光碟機的啟動途徑。</p>
+
+<p>必較常見的作法是在硬碟中分出一個獨立的小分割區，然後將 CloneZilla USB 隨身碟版本的檔案內容，整個複製到硬碟的小分割區上。再透過 Grub 的設定，將 CloneZilla 加入 Grub 的開機啟動項目中。如此一來，就不必另外準備一片 CloneZilla CD 或 USB 隨身碟了。只要系統不是整顆硬碟報銷，那就隨時都可以啟動 CloneZilla 備份與還原硬碟上的主系統內容。但缺點是會浪費一個小分割區。不過 Grub2 支援了 CD ISO 的啟動形式。利用這個功能，我們可以讓 grub2 以硬碟內的 CloneZilla live ISO 檔啟動 CloneZilla ，省下一個安裝 CloneZilla 的小分割區。</p>
+
+<div class="note">
+最近更新日期: 2014-10-2 。簡化 CloneZilla 參數。加上 Ubuntu 12.04 參數。
+</div>
+
+<!--more-->
+<p>設定 Grub2 的 CloneZilla live ISO 啟動項目的具體作法，大致會作下列準備:</p>
+
+<ul>
+<li>將硬碟分成至少兩個分割區，一個是主系統分割區，另一個是備份資料分割區。
+老練的 Linux 用戶會分三個，即主系統 root 區、主系統 home + var 區、及備份資料區。
+本文的例子是分兩個分割區，代碼是 sda1 和 sda5 。</li>
+<li>從 CloneZilla 網站下載一個 <a href="http://clonezilla.nchc.org.tw/clonezilla-live/download/sourceforge/">CloneZilla 的 live ISO 檔</a> 。注意，不是 zip 檔。</li>
+<li>將第2步下載的 live ISO 檔，放置到備份資料區。在本文的例子，是放在備份資料區的 /backup 目錄下。</li>
+<li>最後設定 Grub2 的組態文件，加入 CloneZilla Live ISO 的啟動項目。</li>
+</ul>
+
+<p>這個技法也可以套用在其他的 Linux LiveCD 的 ISO 上，例如 Ubuntu LiveCD 。Ubuntu 10.04 起，它的安裝光碟的第一片，就具有 LiveCD 功能。只要啟動後選擇「試用」(Try)，就會進入 LiveCD 模式。</p>
+
+<p>例如我現在準備了兩個 Linux liveCD 的 ISO 。一份是 CloneZilla live ISO (clonezilla-live-1.2.8-23-i486.iso)，另一份是 Ubuntu Lucid live ISO (就是一般的Ubuntu 10.04 Desktop 安裝光碟， ubuntu-10.04-desktop-amd64.iso) 。
+現在我要在 Grub2 的組態文件中，加入這兩個系統的 ISO 啟動項目。</p>
+
+<p>在 Debian 或 Ubuntu 系統中，Grub2 的自訂啟動項目通常是寫在 <dfn>/etc/grub.d/40_custom</dfn> 。完整內容如下列所示:</p>
+
+<pre class="language-term">
+#!/bin/sh
+exec tail -n +3 $0
+# This file provides an easy way to add custom menu entries.  Simply type the
+# menu entries you want to add after this comment.  Be careful not to change
+# the 'exec tail' line above.
+
+insmod loopback
+
+menuentry "CloneZilla" {
+    set isofile="/backup/clonezilla-live-1.2.8-23-i486.iso"
+    loopback loop (hd0,5)$isofile
+    linux (loop)/live/vmlinuz boot=live config noswap noprompt nosplash vga=788 ip=frommedia findiso=$isofile
+    initrd (loop)/live/initrd.img
+}
+
+menuentry "Ubuntu LiveCD (10.04-amd64)" {
+    set isofile="/backup/ubuntu-10.04-desktop-amd64.iso"
+    loopback loop (hd0,5)$isofile
+    linux (loop)/casper/vmlinuz boot=casper noswap noprompt toram=filesystem.squashfs iso-scan/filename=$isofile
+    initrd (loop)/casper/initrd.lz
+}
+
+menuentry "Ubuntu LiveCD (12.04.5-amd64)" {
+    set isofile="/backup/ubuntu-12.04.5-desktop-amd64.iso"
+    loopback loop (hd0,5)$isofile
+    linux (loop)/casper/vmlinuz.efi boot=casper noswap noprompt noeject iso-scan/filename=$isofile
+    initrd (loop)/casper/initrd.lz
+}
+</pre>
+
+<p>有些系統安裝的 grub 不會載入 loopback 模組，所以遇到 loop 檔案名稱錯誤時，要加上 <code>insmod loopback</code> 。</p>
+
+<p>重點是 <code>set isofile</code> 和 <code>loopback</code> 的設置。在 Grub2 中，硬碟代號的對應是從 0 開始， sda 為 0、sdb 為 1，以下遞增。而分割區代號卻是從 1 開始，sda1 為 (hd0,1) 、sda5 為 (hd0,5)、 sdb2 為 (hd1,2)，以下類推。
+所以上面的設置便是將 ISO 檔放在 sda5 ( <em>(hd0,5)</em> ) 分割區的 /backup 目錄下。</p>
+
+<p>必較麻煩的是 <code>linux</code> 和 <code>initrd</code> 的設置，這會依不同的 ISO 建置方式而調整。基本上不同版本的 Linux LiveCD 會不一樣。如果本文例子所用的設置參數無法啟動你的 LiveCD ISO ，只能請你自己上網找了。Ubuntu 的內容請參考 <a href="https://help.ubuntu.com/community/Grub2/ISOBoot/Examples">Grub2/ISOBoot/Examples - Ubuntu Help Wiki</a> 。</p>
+
+<p>修改後，記得要執行 <code>update-grub2</code> 更新狀態。</p>
+
+<p>用 LiveCD ISO 的形式啟動，不需要佔用額外的分割區。要用 CloneZilla 備份還原系統時，不需要再到處找 CD 或 USB 隨身碟。需要一個 LiveCD 系統緊急修復主電腦系統的問題時，也不需要再弄張 CD 或光碟機。方便多了。</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25246722.html">http://blog.roodo.com/rocksaying/archives/25246722.html</a></div>

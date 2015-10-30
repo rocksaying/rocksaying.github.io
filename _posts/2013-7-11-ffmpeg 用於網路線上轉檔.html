@@ -1,0 +1,185 @@
+---
+title: ffmpeg 用於網路線上轉檔
+category: programming
+old-category: PHP
+tags: [php,ffmpeg]
+---
+<p>
+假設我要做一個視訊網站服務，讓使用者上傳視訊檔供其他人觀賞。
+但是顧慮到視訊有著像 rmvb, avi, 3gp, mod, mkv, mp4 等等格式的多樣性，為了讓其他人可以順利地觀賞視訊，故打算將上傳的視訊統一轉成目前使用率最普遍的 mp4 格式。
+</p>
+
+<p>
+欲達此目的，最簡單的作法就是上傳完成後，再執行轉檔工具。缺點是轉檔要花點時間，故使用者上傳後不能馬上觀賞轉檔後的 mp4 。不過只要對 CGI 規格有所了解的人，就會知道要實現一邊上傳一邊轉檔的功能，其實是一件簡單的事。
+</p>
+
+<!--more-->
+<h4>基本概念
+</h4>
+
+<p>
+基於普遍性，選擇 ffmpeg 為轉檔工具。ffmpeg 的輸入檔名若為 <strong>-</strong> 號，就會從 stdin 讀取資料。 CGI 這一端只要一邊接收上傳資料，一邊將接收到的資料透過 pipe 寫到 ffmpeg 的 stdin 端即可。概念類似下列的命令列操作:
+</p>
+
+<pre class="language-term">
+$ cat uploaded_file | ffmpeg -i  -  -codec copy output.mp4
+</pre>
+
+<p>
+只是目前多數的 CGI 實作品(<span class="Onote">所有的 Web 開發框架或工具，都屬於 CGI 實作品</span>)不會讓使用者接觸到如此「低階」、「原始」的處理步驟。以 PHP 為例， Apache + mod-php 內定的檔案上傳策略就是先把上傳資料儲存為檔案後，才開始執行 PHP script 。在這個過程中，使用者不會接觸到上傳中的資料串流，只會摸到上傳完成後的成品。
+所以對透過 mod-php 執行的 PHP script 來說，它只適合這樣做:
+</p>
+
+<pre class="highlight"><code>$uploadfile = '/uploaded/files_' . $rnd;
+move_uploaded_file($_FILES['userfile']['tmp_name'], $uploadfile)
+system("ffmpeg -i $uploadfile -codec copy output.mp4");
+</code></pre>
+
+
+<p>
+若是用 CGI 模式執行 PHP script ，要實現一邊上傳一邊轉檔的線上轉檔功能就簡單了。你只需要拋開 Web 開發框架帶給你的思想制約，就會發現這件事。
+</p>
+
+<h4>
+ffmpeg
+</h4>
+
+<p>安裝 ffmpeg 套件。在 Debian 或 Ubuntu 下，需下列套件:
+</p>
+
+<ul>
+    <li>ffmpeg
+    <li>libavcodec-extra-52 或 libavcodec52 或 libavcodec 或 libavcodec-extra-53 。
+不同的套件名稱提供不同的 codec 。
+</ul>
+
+<p>
+ffmpeg 有新舊版本不同的參數語法，請執行 <code>ffmpeg -h</code> 自行查看。
+</p>
+
+<p>
+此外，ffmpeg 在編譯時就會決定它可用的 codec 內容。
+不同的 Linux 散佈套件所啟用的 codec 也會不同，也要自己查看。
+有兩種參數語法可以查看你安裝的 ffmpeg 支援的 codec 。
+第一種是: <code> ffmpeg -formats</code> ；有些版本則是用第二種: <code> ffmpeg -codecs</code> 。
+</p>
+
+<p>
+查詢結果第一欄的 D 表示此 codec 可用於解碼(Decode)。
+第二欄的 E 表示此 codec 可用於編碼(Encode)。
+第三欄的 V 或 A 表示此 codec 用於處理視訊(video)或音訊(audio)。
+以 MP4 為例，建議的 codec 組合是: <code>-vcodec libx264 -acodec libvo_aacenc</code> 。
+不過並非每一種 ffmpeg 編成品都提供 libx264 和 libvo_aacenc 這兩種編碼器。
+</p>
+
+<p>
+可參考「<a href="{{ site.baseurl }}/archives/2013/ffmpeg_avconv%20%E8%BD%89%E6%AA%94%E8%88%87%E5%BD%B1%E7%89%87%E9%80%A3%E6%8E%A5%E7%AF%84%E4%BE%8B.html">ffmpeg 轉檔與影片連接範例</a>」了解其他 ffmpeg 的使用範例。
+</p>
+
+<h4>PHP 實作
+</h4>
+
+<p>ffmpeg.cgi 是用於線上轉檔的 PHP script 。這不一定要用 PHP 實作，你有興趣的話，會發現用 C 語言來寫也不難。
+</p>
+
+<p>
+ffmpeg.cgi 預設的輸出目錄是 /tmp ，轉檔後的視訊檔名的主檔名同上傳檔的主檔名。
+例如上傳 123.avi ，那麼轉檔後的視訊檔會是 /tmp/123.mp4 。
+當然實務上不會這麼直接地儲存，這就看實作者的設計了。
+</p>
+
+<pre class="highlight"><code>#!/usr/bin/php
+Content-Type: text/plain
+
+<span class="cp">&lt;?php</span>
+
+<span class="nv">$boundary</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nx">STDIN</span><span class="p">);</span>
+<span class="nv">$end_boundary</span> <span class="o">=</span> <span class="nb">rtrim</span><span class="p">(</span><span class="nv">$boundary</span><span class="p">)</span> <span class="o">.</span> <span class="s2">"--</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="nv">$headers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">while</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nx">STDIN</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span> <span class="c1">// head end line.
+</span>        <span class="k">break</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/(^[\w\-]+): (.*)/'</span><span class="p">,</span> <span class="nv">$s</span><span class="p">,</span> <span class="nv">$m</span><span class="p">))</span>
+        <span class="nv">$headers</span><span class="p">[</span><span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="nv">$m</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<span class="p">}</span>
+
+<span class="nv">$filename</span> <span class="o">=</span> <span class="s1">'test.mp4'</span><span class="p">;</span>
+
+<span class="c1">// Get filename of upload file.
+</span><span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$headers</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$disposition</span> <span class="o">=</span> <span class="nv">$headers</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">];</span>
+    <span class="k">echo</span> <span class="s1">'Content-Disposition: '</span><span class="p">,</span> <span class="nv">$disposition</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/filename="(.*)\.[\w]+"$/'</span><span class="p">,</span> <span class="nv">$disposition</span><span class="p">,</span> <span class="nv">$m</span><span class="p">))</span>
+        <span class="nv">$filename</span> <span class="o">=</span> <span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">.</span> <span class="s1">'.mp4'</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// You may save this filename.
+</span><span class="k">echo</span> <span class="nv">$filename</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="nv">$out_stream</span> <span class="o">=</span> <span class="nb">popen</span><span class="p">(</span><span class="s1">'ffmpeg -i - -vcodec libx264 -b:v 500000 -s 640x360 
+    -acodec libvo_aacenc -b:a 128000 -ar 48000 -y /tmp/'</span> <span class="o">.</span> <span class="nv">$filename</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">);</span>
+<span class="c1">#$out_stream = popen('ffmpeg -i - -vcodec mpeg4 -vb 1000k -r 25 -s 640x360 \
+#    -acodec mp2 -ab 96k -ar 22050 -y /tmp/' . $filename, 'w');
+</span>
+<span class="k">if</span> <span class="p">(</span><span class="nv">$out_stream</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"Could not invoke ffmpeg.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nv">$data_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$out_buffer</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+<span class="k">while</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nx">STDIN</span><span class="p">))</span> <span class="p">{</span>
+    <span class="c1">#if (strpos($s, $boundary) === 0)
+</span>    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">==</span> <span class="nv">$end_boundary</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">#echo "BREAK\n";
+</span>        <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$out_stream</span><span class="p">,</span> <span class="nv">$out_buffer</span><span class="p">);</span>
+    <span class="nv">$data_len</span> <span class="o">+=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$out_buffer</span><span class="p">);</span>
+    <span class="nv">$out_buffer</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">fwrite</span><span class="p">(</span><span class="nv">$out_stream</span><span class="p">,</span> <span class="nb">substr</span><span class="p">(</span><span class="nv">$out_buffer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">));</span> <span class="c1">// strip end mark (\r\n).
+</span><span class="nb">pclose</span><span class="p">(</span><span class="nv">$out_stream</span><span class="p">);</span>
+
+<span class="nv">$data_len</span> <span class="o">+=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$out_buffer</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
+
+<span class="c1">// Output read bytes to browser.
+</span><span class="k">echo</span> <span class="nv">$data_len</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+查看 Apache 的組態文件，啟用 CGI 設定。
+將 ffmpeg.cgi 放在 CGI 目錄下。
+ffmpeg.cgi 要設置可執行屬性，以便執行。(<span class="Onote">因為要用 CGI 模式執行，所以 Debian/Ubuntu 必須安裝 php5-cli 套件</span>)
+根據你安裝的 ffmpeg 的參數語法與可用的 codec 內容，修改 ffmpeg.cgi 中呼叫 ffmpeg 的參數內容。
+</p>
+
+<p>
+ffmpeg.html 則是示範用的檔案上傳頁面。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">'/cgi-bin/ffmpeg.cgi'</span> <span class="na">method=</span><span class="s">'POST'</span> 
+	<span class="na">enctype=</span><span class="s">'multipart/form-data'</span><span class="nt">&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">name=</span><span class="s">"data"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;br/&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>
+選擇一個檔案上傳， ffmpeg.cgi 就會一邊讀取上傳的內容，一邊將已讀取的資料內容交給 ffmpeg 轉檔。
+轉換後的新檔會放在 /tmp 目錄下 (可以修改參數的儲存路徑)。
+</p>
+
+<p>
+基本上，除非你是區域網路上傳，否則在一般 Internet 環境下，轉檔速度通常快過上傳速度。所以上傳完成時，同時就完成傳換格式的工作了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25362202.html">http://blog.roodo.com/rocksaying/archives/25362202.html</a></div>

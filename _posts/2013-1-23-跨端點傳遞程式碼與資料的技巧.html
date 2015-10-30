@@ -1,0 +1,181 @@
+---
+title: 跨端點傳遞程式碼與資料的技巧
+category: programming
+old-category: JavaScript
+tags: [javascript,eval]
+---
+<p>
+我先前寫了篇「<a href="{{ site.baseurl }}/archives/2012/%E6%92%B0%E5%AF%AB%E4%B9%BE%E6%B7%A8%E7%9A%84%20eval%20%E7%A8%8B%E5%BC%8F%E7%A2%BC%E7%9A%84%E6%8A%80%E5%B7%A7.html">撰寫乾淨的 eval 程式碼的技巧</a>」，其中一個應用領域是在不同的 JavaScript 端點間傳遞要執行的程式碼。
+但我同事又碰到另一個狀況，他不只要傳遞程式碼，同時程式碼中還要有一段從本地端點產生的資料。
+由於資料中包含複雜結構與字串，他原先的做法一直碰到斷句或是逸出字元錯誤的困擾。
+於是我又在「<a href="{{ site.baseurl }}/archives/2012/%E6%92%B0%E5%AF%AB%E4%B9%BE%E6%B7%A8%E7%9A%84%20eval%20%E7%A8%8B%E5%BC%8F%E7%A2%BC%E7%9A%84%E6%8A%80%E5%B7%A7.html">撰寫乾淨的 eval 程式碼的技巧</a>」這之上擴充了可以放入資料的內容。
+</p>
+
+<!--more-->
+<p>
+首先看看我同事所要做的事。基本上可以簡化成下列 issue-1.js 展現的形式:
+</p>
+<pre class="highlight"><code><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="nx">a</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">;</span>
+    <span class="p">});</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'output3'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+他要把上列的程式碼傳給其他 JavaScript 端點執行。程式碼的內容套用我在「<a href="{{ site.baseurl }}/archives/2012/%E6%92%B0%E5%AF%AB%E4%B9%BE%E6%B7%A8%E7%9A%84%20eval%20%E7%A8%8B%E5%BC%8F%E7%A2%BC%E7%9A%84%E6%8A%80%E5%B7%A7.html">撰寫乾淨的 eval 程式碼的技巧</a>」寫的 <dfn>_script()</dfn> 來做沒問題。但這段程式碼中卻有一個變數 <var>a</var> ，<var>a</var> 的內容也要由本地端點產生再連帶程式碼一併傳給其他端點。這就有問題了。
+</p>
+
+<p>
+說起來， JavaScript 在不同端點間傳遞資料的技巧很早之前就出現了，那就是如今大家耳熟能詳的 JSON 。
+所以 issue-1.js 要連帶資料傳給其他端點的做法，可如下列所示:
+</p>
+
+<pre class="highlight"><code><span class="c1">// ---- at local host ----</span>
+<span class="kd">var</span> <span class="nx">code</span> <span class="o">=</span> <span class="nx">_script</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="nx">a</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">;</span>
+        <span class="p">});</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'output3'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">sum</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+<span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]);</span>
+
+<span class="nx">pass_to_remote_host</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+
+<span class="c1">// ---- at remote host ----</span>
+<span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">recv_code_data</span><span class="p">();</span>
+<span class="nx">func</span> <span class="o">=</span> <span class="nx">req</span><span class="p">.</span><span class="nx">code</span><span class="p">;</span>
+<span class="nx">func</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>  <span class="c1">// data is already unserialized.</span>
+
+</code></pre>
+
+
+<p>
+不過這樣的解決方式限制頗多，而且有點不直覺、不便利。
+所以我又想了一個比較直觀的作法。這個作法借用以值傳遞(Pass by value)的概念，用「竄改」(interpolate)的方式，直接將資料夾帶入程式碼中。使用者唯一需要記住的是，要加一個 <dfn>$</dfn> 符號在資料的代表變數名稱前。
+</p>
+
+<p>
+下列是我擴充改寫後的新 <dfn>_script()</dfn> ，再加碼送另一個 <dfn>_script_valist()</dfn>。兩套方法任君選擇。
+</p>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">_script</span><span class="p">(</span><span class="nx">f</span><span class="p">,</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
+    <span class="kd">var</span> <span class="nx">k</span><span class="p">;</span>
+    <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\$[\$\w]</span><span class="sr">+/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">k</span> <span class="o">=</span> <span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">?</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">])</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">ctx</span><span class="p">;</span>
+    <span class="cm">/*
+    string.replace() with replace function:
+    see ECMA-262 3rd edition, 15.5.4.11 String.prototype.replace, page 102.
+    */</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">_script_valist</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
+    <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">;</span>
+    <span class="c1">// 讓 args 指向參數清單，以便讓 ctx.replace 取得</span>
+    <span class="kd">var</span> <span class="nx">idx</span><span class="p">;</span>
+    <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
+    <span class="k">return</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\$\d</span><span class="sr">/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 這個範圍的 arguments 指向這個匿名函數的參數清單，</span>
+        <span class="c1">// 而不是 _script_valist 的參數清單</span>
+        <span class="nx">idx</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">idx</span><span class="p">]</span> <span class="p">?</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">idx</span><span class="p">])</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
+    <span class="p">});</span>
+    <span class="cm">/*
+    arguments:
+    see ECMA-262 3rd edition, 10.1.6 Activation Object, page 38.
+    */</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<p>
+PHP 或 Perl 等語言的使用者應該很熟悉像 <code>"hello $name"</code> 這種在字串中夾入變數值的語法。而我在此使用的表達方式也是相同的。使用者的程式碼中，以 $ 符號標示出要帶入變數值的符號名稱，然後我的 <dfn>_script</dfn> 與 <dfn>_script_valist</dfn> 就會將變數值帶入符號位置，產生完整可用的程式碼文字出來，讓使用者傳遞給其他端點。
+</p>
+
+<p>
+sample.html 示範這兩個函數的用法與實際產出。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;script&gt;</span>
+// 此處省略 _script 與 _script_valist 的定義。
+
+function test() {
+    var res;
+
+    var b = 123;
+    var c = [3,2,1];
+
+    res = _script(function(){
+        var s = "hello world";
+        s += ' rock fdsa ds af sa';
+        f2($a, $b, $c);
+    }, 
+    {
+        'a': 'hello $b, world',
+        'b': b,
+        'c': c
+    });
+    document.getElementById('output1').innerHTML = res;
+
+    res = _script_valist(function(){
+        var s = 'hello world';
+        s += ' rock' + 'fdsa ds af sa';
+        f2($1, $2, $3, $4);
+    }, 
+        'hello $2 world', b, c, {'mail': 'rock@123'}
+    ); 
+    document.getElementById('output2').innerHTML = res;
+
+    eval(_script_valist(function(){
+        var sum = 0;
+        ($1).forEach(function(v) {
+            sum += v;
+        });
+        document.getElementById('output3').innerHTML = sum;
+    },
+    [1,2,3,4,5]
+    ));
+}
+<span class="nt">&lt;/script&gt;</span>
+<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">"test();"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;pre</span> <span class="na">id=</span><span class="s">"output1"</span><span class="nt">&gt;&lt;/pre&gt;</span>
+
+<span class="nt">&lt;pre</span> <span class="na">id=</span><span class="s">"output2"</span><span class="nt">&gt;&lt;/pre&gt;</span>
+
+<span class="nt">&lt;pre</span> <span class="na">id=</span><span class="s">"output3"</span><span class="nt">&gt;&lt;/pre&gt;</span>
+
+<span class="nt">&lt;/html&gt;</span>
+
+</code></pre>
+
+
+<p>
+<dfn>$</dfn> 符號是 JavaScript 的合法符號表達字元之一，所以不會造成任何語法解釋的錯誤。
+</p>
+<p>
+<dfn>_script()</dfn> 傳遞資料的方式是用「鍵/值」組 ，所以第二個參數是一個「鍵/值」組的陣列。其中鍵的名稱會對應到程式碼中的「$符號」，接著將值替換到這個位置上。
+</p>
+
+<p>
+<dfn>_script_valist()</dfn> 傳遞資料的方式則是用參數清單，第二個參數及其以後的內容都視為要傳遞(替換入程式碼)的資料。參數清單是用順序位置表示各個資料項目，又資料項目是從第二個參數位置開始，所以 <var>$1</var> 代表第二個參數，餘類推。
+</p>
+
+<p>
+<dfn>_script_valist()</dfn> 的好處是可以省下輸入「鍵/值」的功夫。缺點是資料項目多時，滿目的 $1, $2, $3 不容易聯想它們的意義與預期內容。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/21307942.html">http://blog.roodo.com/rocksaying/archives/21307942.html</a></div>

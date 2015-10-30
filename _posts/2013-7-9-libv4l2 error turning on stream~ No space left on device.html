@@ -1,0 +1,101 @@
+---
+title: libv4l2 error turning on stream~ No space left on device
+category: computer
+old-category: 電腦技術
+tags: [linux,webcam,v4l2,uvc]
+---
+<p>
+當開啟兩隻以上的 USB Video Camera (WebCam) 時，有時會發生 "No space left on device" 的錯誤。
+</p>
+
+<p>
+使用 guvcview 即可再現錯誤情境。步驟如下:
+</p>
+
+<ol>
+    <li>準備兩隻 WebCam 。
+    <li>執行 guvcview -d /dev/video0 -f yuyv -s 1280x720 。開啟一隻 WebCam ，保持執行狀態。
+    <li>接著執行 guvcview -d /dev/video1 -f yuyv -s 1280x720 。開啟第二隻 WebCam 。
+    <li>此時第二個執行的 guvcview 不會顯示影像。而終端機上會印出下列錯誤訊息:
+</ol>
+
+<!--more-->
+<pre class="language-term">
+libv4l2: error turning on stream: 裝置上已無多餘空間
+VIDIOC_STREAMON - Unable to start capture: 裝置上已無多餘空間
+libv4l2: error turning on stream: 裝置或系統資源忙碌中
+VIDIOC_STREAMON - Unable to start capture: 裝置或系統資源忙碌中
+
+libv4l2: error turning on stream: No space left on device
+VIDIOC_STREAMON - Unable to start capture: No space left on device
+libv4l2: error turning on stream: Device or resource busy
+VIDIOC_STREAMON - Unable to start capture: Device or resource busy
+</pre>
+
+<p>
+「無多餘空間」並不是指磁碟與記憶體沒有空間，而是 USB 的資料頻寬。
+關於 WebCam 影像傳輸所需的資料頻寬可參考下列文章。
+</p>
+
+<blockquote>
+    <p>
+    Apparently it's caused by webcams requesting all the available bandwidth on the USB host controller. With that in mind I decided to run wireshark and capinfos to see just how much bandwidth a single camera used.
+    </p>
+    <ul>
+        <li>4 megabits per second at 320x240
+        <li>14 megabits per second at 640x480
+        <li>32 megabits per second at 1280x720
+    </ul>
+    <p>
+    Interesting! That might explain why two cameras at 320x240 work but any higher resolution fails.
+    </p>
+    <cite>at <a href="http://superuser.com/questions/431759/using-multiple-usb-webcams-in-linux">Using multiple USB webcams in Linux</a></cite>
+</blockquote>
+
+<p>
+愈大的影像解析度，就要求更多的資料傳輸速率。
+故當我要開啟第二隻 WebCam 時， USB 沒有足夠的資料頻寬傳輸資料，就發生 <q>No space left on device</q> 的錯誤了。
+</p>
+
+<blockquote>
+    <p>
+    Most likely there is USB bandwidth contention reported by the driver of the video capture device. Check if the pixel format is YUYV, which happens to be uncompressed. On the contrary, if the pixel format is MJPG (compressed), it is possible to have multiple devices on the same USB channel.
+    </p>
+    <cite>at <a href="http://stackoverflow.com/questions/9781770/capturing-multiple-webcams-uvcvideo-with-opencv-on-linux">Capturing multiple webcams (uvcvideo) with OpenCV on Linux</a></cite>
+</blockquote>
+
+<p>
+故解決方案是降低 WebCam 的資料傳輸速率。可控制的項目有三:
+</p>
+
+<ul>
+    <li>
+    要求 WebCam 使用壓縮過的像素格式 (compressed pixel format) 。<br/>
+    大多數的 WebCam 會同時支援兩種像素格式，即 YUYV 和 MJPG 。YUYV 是 lossless (無折損) 格式，MJPG 則是 lossy-compressed (折損壓縮)格式。YUYV 的資料傳輸速率比 MJPG 更大。故選擇 MJPG 格式以避免 USB 資料頻寬不足。<br/>
+    至於 MJPG 影像內容的折損程度，視 WebCam 內建的演算模組而定，需要從肉眼或其他圖學計算工具評估。
+
+    <li>
+    選擇較低的影像解析度，例如 640x480 。較小的解析度使用較低的資料傳輸速率，但也會縮小影像可視面積。
+    
+    <li>選擇較低的 fps 。其法對資料傳輸速度的降低幅度有限，且畫面效果于人遲頓感。
+</ul>
+
+<p>
+下列指令可以查看 WebCam 提供的像素格式 (pixel format):
+</p>
+
+<pre class="language-term">
+$ v4l2-ctl -d /dev/video0 --list-formats 
+</pre>
+
+<p>實驗。重複開頭所提的4步驟，但 guvcview 執行參數改用 <code>-f MJPG</code> ，指定使用 MJPG 格式。
+</p>
+
+<pre class="language-term">
+$ guvcview -d /dev/video0 -f MJPG -s 1280x720
+$ guvcview -d /dev/video1 -f MJPG -s 1280x720
+</pre>
+
+<p>
+此時通常可以同時開啟兩隻 WebCam 。如果還是不行，那就要調低解析度。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25359530.html">http://blog.roodo.com/rocksaying/archives/25359530.html</a></div>

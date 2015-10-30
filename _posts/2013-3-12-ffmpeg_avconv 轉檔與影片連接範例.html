@@ -1,0 +1,158 @@
+---
+title: ffmpeg/avconv 轉檔與影片連接範例
+category: computer
+old-category: 電腦技術
+tags: [flash,mp4,ffmpeg,mkv,avconv]
+---
+<h4>
+ffmpeg/avconv 常用參數
+</h4>
+
+<p>
+2014-01-28更新: 我最近更新了 Windows 上使用的轉檔工具，改用 avconv 。avconv 是 ffmpeg 的後繼工具，絕大部份的參數相同。本文所用到的參數，基本上都是兩者通用。
+另外也修正了一些新、舊版本 ffmpeg 參數位置的變化。
+</p>
+
+<h5>通用</h5>
+<ul>
+    <li>-codecs : 查詢目前提供哪些編碼器、解碼器。你必須用這個參數查看你安裝的 ffmpeg/avconv 可用的編碼器與解碼器項目。不是每個版本都提供相同的編碼器與解碼器。
+    <li>-i <var>輸入源</var> : 此參數通常必須放在第一位(參數順序有影響)，每一個輸入源必須配合一個 -i 。
+    <li>-codec copy : 不改變編碼器，直接複製視訊與音訊。
+    <li>-ss <var>time_off</var> : start time offset. 從開頭算起第幾秒開始處理。也可以用 hh:mm:ss[.ss] 的格式，例如: 01:30:10.30 表示從1小時30分10.30秒處開始。
+    <li>-t <var>duration</var> : duration seconds of video/audio. 視訊/音訊秒數。也可以用 hh:mm:ss[.ss] 的格式，例如: 00:00:50.50 表示取 50.5 秒長度。
+</ul>
+
+<!--more-->
+<p>
+範例: 將 Flash 影片 (.flv/.f4v) 轉為 MP4 。
+</p>
+<pre class="language-term">
+ffmpeg -i source.f4v -codec copy output.mp4
+
+avconv -i source.f4v -codec copy output.mp4
+</pre>
+
+<p>
+範例: 從影片第30秒起，截取45秒內容存為 slice.mp4 。
+</p>
+<pre class="language-term">
+ffmpeg -ss 30 -i test.f4v -codec copy -t 45 slice.mp4
+
+avconv -ss 30 -i test.f4v -codec copy -t 45 slice.mp4
+</pre>
+
+<p>
+在近期的版本中， -ss 應該放在 -i 參數前； -t 必須放在輸出檔名之前。否則截取出的內容，可能會發生影像與聲音不同步的情形；又或者是截取到錯誤位置與長度。
+</p>
+
+<h5>Video 選項:</h5>
+<ul>
+    <li>-vcodec <var>視訊編碼器</var> : <dfn>libx264</dfn> (MPEG-4 AVC) 可被多數顯示晶片的視訊加速(硬體解壓縮)所支援。<dfn>copy</dfn> 表示不改變來源編碼器，單純複製視訊。
+    <li>-vf yadif : 視訊解交錯濾器，DVD轉檔所需。
+    <li>-b:v <var>bit_rate</var> : 視訊位元傳輸率，單位是 bits 。故要取 1000KBps 位元傳輸率的話，這裡要設 1000000 或是寫作 1000k 。
+    <li>-s <var>size</var> : frame size, WxH or abbreviation. 指定輸出的視訊長寬。
+    <li>-vframes <var>num</var> : 視訊幀率，通常是 25 或 30。低於20會出現明顯跳格感。
+    <li>-aspect <var>aspect_ratio</var> (4:3, 16:9, etc)
+</ul>
+
+<h5>Audio 選項:</h5>
+<ul>
+    <li>-acodec <var>音訊編碼器</var> : 常見項目為 <dfn>libvo_aacenc</dfn> (AAC), <dfn>libmp3lame</dfn> (MP3)。<dfn>copy</dfn> 表示不改變來源編碼器，單純複製音訊。
+    <li>-b:a <var>bit_rate</var> : 音訊位元傳輸率，單位是 bits ，所以要取 192KBps 位元傳輸率的話，這裡要設 192000 或 192k 。多數DVD影片的音訊碼流率在 256KBps(AAC) ~ 320KBps(MP3)間。
+    <li>-ar <var>rate</var> : audio sampling rate (in Hz). 48000 (DVD規格), 44100 (CD規格), 22050 (Tape規格)。
+    <li>-aq <var>quality</var> : audio quality (codec-specific)
+</ul>
+
+<p>
+範例: 將 DVD 中的某一段內容轉為 MP4 。
+</p>
+<pre class="language-term">
+ffmpeg -i VTS_01_4.VOB -vcodec libx264 -vf yadif -b:v 2000k \
+       -acodec libvo_aacenc -b:a 192k d:\dvd_01_4.mp4
+
+avconv -i VTS_01_4.VOB -vcodec libx264 -vf yadif -b:v 2000k \
+       -acodec libvo_aacenc -b:a 192k d:\dvd_01_4.mp4
+</pre>
+
+<p>
+範例: 將一份 1080P 影片轉為 360P 影片，並降低音訊規格為 128k, 22050hz 。
+</p>
+<pre class="language-term">
+ffmpeg -i 1080p.mkv -vcodec libx264 -s 640x360 \
+       -acodec libvo_aacenc -b:a 128k -ar 22050 360p.mp4
+
+avconv -i 1080p.mkv -vcodec libx264 -s 640x360 \
+       -acodec libvo_aacenc -b:a 128k -ar 22050 360p.mp4
+</pre>
+
+<h4>
+影片連接
+</h4>
+
+<p>
+DVD 通常會將影片內容切成數份 .vob 。
+某些線上影像網站，如 youku ，也會將影片切成數份 .f4v 。
+碰到這些情形，我們通常會希望把它們連接成一份影片檔。
+</p>
+
+<h5>
+DVD rip
+</h5>
+
+<p>
+範例: 使用 ffmpeg (<span class="Onote">concat 語法必須要 ffmpeg 1.0 或更新的版本</span>)將整片 DVD 轉為一份 MP4 。假設 DVD 內分成 4 份 .vob 。
+</p>
+
+<pre class="language-term">
+ffmpeg -i "concat:VTS_01_1.VOB | VTS_01_2.VOB | VTS_01_3.VOB | VTS_01_4.VOB" \
+       -map 0:v:0 -map 0:a:0 -acodec libvo_aacenc -b:a 192k \
+       -vcodec libx264 -b:v 2000k d:\movie.mp4
+</pre>
+
+<p>
+注意，不是所有的影片格式都可以上述用法直接連接。如果你使用的 ffmpeg/avconv 版本連接失敗的話，請參考下一段。
+</p>
+
+<h5>
+片段的 Flash 影片或 MP4 。
+</h5>
+
+<p>
+如果來源是 MP4 時，我個人偏好使用 mkvmerge (<span class="Onote">由 <a href="http://www.bunkus.org/videotools/mkvtoolnix/">mkvtoolnix</a> 提供的命令列工具</span>) 連接影片內容。
+被切成片段的 Flash 影片，我會先轉成 MP4 ，再用 mkvmerge 連接。
+</p>
+
+<p>
+範例: 使用 mkvmerge 連接被切成 2 份 MP4 的影片。
+</p>
+<pre class="language-term">
+mkvmerge -o one.mkv 001.mp4 \
+  +002.mp4 --track-order "0:1,0:2" --append-to "1:1:0:1,1:2:0:2"
+</pre>
+
+<p>
+若被切割的來源內容的視訊與音訊軌道位置都一樣，可以省略 --track-order 與 --append-to 參數。上例通常可簡化如下:
+</p>
+<pre class="language-term">
+mkvmerge -o one.mk4 001.mp4 +002.mp4 +003.mp4 +004.mp4
+</pre>
+
+<p>
+mkvmerge 有一個名叫 mmg 的 GUI 前端程式。使用 add 的效果是輸出多軌影片，使用 append 的效果才是連接多段影片。
+</p>
+ 
+<p>
+如果堅持要用 ffmpeg 連接 MP4 影片，要多次操作才行，參考「<a href="http://ffmpeg.org/trac/ffmpeg/wiki/How%20to%20concatenate%20%28join,%20merge%29%20media%20files">How to concatenate, join, merge media files</a>」。範例如下:
+</p>
+<pre class="language-term">
+ffmpeg -i 001.mp4 -codec copy -bsf:v h264_mp4toannexb -f mpegts 001.ts
+
+ffmpeg -i 002.mp4 -codec copy -bsf:v h264_mp4toannexb -f mpegts 002.ts
+
+ffmpeg -i "concat:001.ts|002.ts" -codec copy -bsf:a aac_adtstoasc one.mp4
+</pre>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/ffmpeg%20%E7%94%A8%E6%96%BC%E7%B6%B2%E8%B7%AF%E7%B7%9A%E4%B8%8A%E8%BD%89%E6%AA%94.html">ffmpeg 用於網路線上轉檔</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/22568176.html">http://blog.roodo.com/rocksaying/archives/22568176.html</a></div>

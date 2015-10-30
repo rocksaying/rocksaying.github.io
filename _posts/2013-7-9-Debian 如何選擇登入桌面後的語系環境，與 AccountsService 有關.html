@@ -1,0 +1,118 @@
+---
+title: Debian 如何選擇登入桌面後的語系環境，與 AccountsService 有關
+category: computer
+old-category: 電腦技術
+tags: [linux,language,debian,gdm,desktop,gdm3]
+---
+<p>
+我安裝 Linux 桌面系統的習慣是安裝時系統預設使用英文語系。等到 GDM 登入時，才選擇中文語系環境。
+不過這個使用習慣在我前陣子升級到 Debian 7 時，差點破功。因為 GDM3 的登入畫面竟然沒有語系選單了。
+同樣的狀況也出現在採用 LigthDM 的桌面系統，例如 Ubuntu 12 。
+</p>
+
+<p>
+原因與系統改用 AccountsService 管理使用者資訊有關。本文說明我的解決方式。 gdm3 switch language 。
+</p>
+
+<!--more-->
+<h4>
+基於 GDM3/LightDM 的語系選擇途徑
+</h4>
+
+<p>
+GDM2 時代，使用 $HOME/.dmrc 記錄使用者登入時選擇的桌面與語系設定。不過 GDM3 徹底捨棄了 .dmrc ，引入了新的 AccountsService DBus 服務取代。
+</p>
+
+<p>
+AccountsService 是由程式 accounts-daemon 提供的 DBus 服務。它提供了比原本 .passwd 形式更豐富的使用者設置資訊，其中包括了使用者慣用的桌面語系環境。舉例來說，下列命令就可以改變你的桌面環境為正體中文語系(zh_TW.utf8)，重新登入後就會生效。
+</p>
+
+<pre class="language-term">
+dbus-send --system --print-reply --dest=org.freedesktop.Accounts \
+  /org/freedesktop/Accounts/User`id -u` \
+  org.freedesktop.Accounts.User.SetLanguage string:"zh_TW.utf8"
+</pre>
+
+<p>
+GUI 的操作方式則必須透過系統設定中心(gnome-control-center)的「地區與語言」選擇，如下圖:
+</p>
+
+<img src="http://pcdn1.rimg.tw/photos/3746571_lq4gdxl_l.jpg" alt="系統設定中心「地區與語言」" />
+
+
+<p>
+大部份的網路文章都僅提到修改 '/var/lib/AccountsService/users/$USERNAME' 檔案的方式。但這不是完全正確的方式。事實上，'/var/lib/AccountsService/users/$USERNAME' 的內容僅是 AccountsService 的狀態存檔。GDM/LightDM 登入時，實際上是透過 DBus 向 AccountsService 查詢使用者使用的語系設置，而不是去讀 '/var/lib/AccountsService/users/$USERNAME' 。如果你直接修改 '/var/lib/AccountsService/users/$USERNAME' 的內容，必須要重新開機，讓 AccountsService 重新讀取狀態才會生效。這還不如上段所說的指令方便。
+</p>
+
+<p>
+附帶一提，查詢你的 AccountsService 資訊的指令範例如下:
+</p>
+
+<pre class="language-term">
+# 查詢全部狀態
+$ dbus-send --system --print-reply --dest=org.freedesktop.Accounts \
+  /org/freedesktop/Accounts/User`id -u` \
+  org.freedesktop.DBus.Properties.GetAll \
+  string:"org.freedesktop.Accounts.User"
+
+# 查看語系設置
+$ dbus-send --system --print-reply --dest=org.freedesktop.Accounts \
+  /org/freedesktop/Accounts/User`id -u` \
+  org.freedesktop.DBus.Properties.Get \
+  string:"org.freedesktop.Accounts.User" string:"Language"
+
+</pre>
+
+<p>
+AccountsService 實用的設置項目:
+</p>
+
+<ul>
+    <li>Language<br/>
+        桌面的語系環境。
+    <li>IconFile<br/>
+        使用者的登入圖像。可以用 png 格式，顯示時會自動縮放。
+    <li>PasswordHint<br/>
+        登入時的密碼提示。
+    <li>SystemAccount<br/>
+        是否為系統帳號。系統帳號不會顯示在登入畫面的帳號清單中。
+</ul>
+
+
+<h4>
+基於 xsessionrc 的語系選擇途徑
+</h4>
+
+<p>
+$HOME/.dmrc 廢棄無用。但傳統的 $HOME/.xsessionrc 語系環境變數設置方式依然有效。下列範例使用中文語系:
+</p>
+
+
+<pre class="language-text">
+export LANG=zh_TW.utf8
+export LANGUAGE=zh_TW
+</pre>
+
+
+
+
+
+<h4>
+補充: 安裝正體中文語系
+</h4>
+
+<p>
+安裝時選擇預設英文語系的話，則安裝後，還需要執行 <code>dpkg-reconfigure locales</code> 以加選正體中文語系。然後再安裝下列選用性的軟體套件:
+</p>
+
+<ul>
+    <li>xfonts-wqy - 文泉驛 X11 字體
+    <li>ttf-wqy-zenhei - 文泉驛正黑體(TrueType)
+    <li>ttf-wqy-microhei - 文泉驛微米黑體(TrueType)
+    <li>fonts-arphic-ukai - 文鼎楷書體 X11 字型設置
+    <li>fonts-arphic-uming - 文鼎明體 X11 字型設置
+    <li>ttf-arphic-ukai - 文鼎楷書體 (TrueType)
+    <li>ttf-arphic-uming - 文鼎明體 (TrueType)
+    <li>ibus - ibus 輸入法框架。當然你也可以選擇 scim 或你慣用的輸入法。
+    <li>kde-l10n-zhtw - KDE 用的。
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25356702.html">http://blog.roodo.com/rocksaying/archives/25356702.html</a></div>

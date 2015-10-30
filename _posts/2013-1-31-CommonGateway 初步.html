@@ -1,0 +1,229 @@
+---
+title: CommonGateway 初步
+category: programming
+old-category: PHP
+tags: [php,restful,rest,common-gateway]
+---
+<p><dfn>CommonGateway</dfn> (以下簡稱 <dfn>CG</dfn>) 概念請參閱「<a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E4%BB%8B%E7%B4%B9.html">CommonGateway 介紹</a>」。源碼託管於 github : <a href="https://github.com/shirock/rocksources/tree/master/web/common-gateway">common-gateway</a> ，主要程式碼只有一個 index.php 。或者參考下列命令列操作下載。但建議使用 git 管理。
+</p>
+
+<pre class="language-term">
+wget https://raw.githubusercontent.com/shirock/rocksources/master/web/common-gateway/index.php
+</pre>
+
+<p>把 <dfn>CG</dfn> (也就是那份 index.php) 放在網頁根目錄下，然後以瀏覽器開啟網頁。本文範例的網頁根目錄是 <code>/home/rock/web/cg</code> ，瀏覽器開啟的 URL 是 <code>http://localhost/cg/index.php</code> 。開啟後，會看到下列的提示內容:
+</p>
+
+<pre class="language-text">
+index.php/{control_name}/{object_id}.
+
+You may put your controller class in controllers/{class_name}.php.
+</pre>
+
+<!--more-->
+<p>看到提示了嗎？根據提示，建立 <dfn>controllers</dfn> 子目錄，再於 controllers 子目錄下建立 book.php ，用以撰寫本文示範用的 <dfn>Book</dfn> 控制項。 controllers/book.php 最初內容如下:
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>再用瀏覽器開啟 URL <code>http://localhost/cg/index.php/book</code> (以下提到 URL 時，會省略 index.php 前的部份)，<dfn>CG</dfn> 就會根據 URL 後面的路徑 "book" 去找 book.php 並執行它。因為我還沒在 <dfn>Book</dfn> 類別中實作任何東西，所以 <dfn>CG</dfn> 會顯示下列內容:
+</p>
+
+<pre class="language-text">
+501 This service does not implement get or index method.
+</pre>
+
+<p>以瀏覽器直接開啟 URL 時，預設的請求方法(<dfn>REQUEST_METHOD</dfn>)就是 <dfn>GET</dfn> ，所以 <dfn>CG</dfn> 會去調用 <code>get()</code> 或 <code>index()</code> 方法。而 <code>get()</code> 與 <code>index()</code> 的差異表現在語意上。 <code>index()</code> 用於列出 <dfn>Book</dfn> 記錄的索引列表，所以它不需給予參數。而 <code>get()</code> 至少要一個參數指示取回哪一筆 <dfn>Book</dfn> 記錄。
+</p>
+
+<p>我先寫 <code>index()</code>。就簡單列出兩筆書名記錄吧。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// $books = $query-&gt;from('book')-&gt;select();
+</span>        <span class="nv">$index_model</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'books'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+                <span class="k">new</span> <span class="nx">BookModel</span><span class="p">(</span><span class="s1">'123'</span><span class="p">,</span> <span class="s1">'book 123'</span><span class="p">),</span>
+                <span class="k">new</span> <span class="nx">BookModel</span><span class="p">(</span><span class="s1">'456'</span><span class="p">,</span> <span class="s1">'Book XYZ'</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="s1">'time'</span>  <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'Y-m-d H:i:s'</span><span class="p">)</span>
+        <span class="p">);</span>
+        <span class="k">return</span> <span class="nv">$index_model</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">BookModel</span> <span class="p">{</span>
+    <span class="k">var</span> <span class="nv">$isbn</span><span class="p">;</span>
+    <span class="k">var</span> <span class="nv">$title</span><span class="p">;</span>
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$isbn</span><span class="p">,</span> <span class="nv">$title</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span> <span class="o">=</span> <span class="nv">$isbn</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="nv">$title</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>再次用瀏覽器讀取 index.php/book ，會看到下列內容:
+</p>
+
+<pre class="language-text">
+Template is missing. Missing views/book/index.phtml.
+</pre>
+
+<p>根據提示，建立子目錄 views/book 。這裡將放置 <dfn>Book</dfn> 控制項所需要的視圖(View)。繼續建立視圖文件 index.phtml ，內容如下:
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+    <span class="cp">&lt;?php foreach ($books as $book): ?&gt;</span>
+    <span class="nt">&lt;li&gt;</span><span class="cp">&lt;?=$book-&gt;isbn?&gt;</span> : <span class="cp">&lt;?=$book-&gt;title?&gt;</span>
+    <span class="nt">&lt;/li&gt;</span>
+    <span class="cp">&lt;?php endforeach ?&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;p&gt;</span>
+Index date: <span class="cp">&lt;?=$time?&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>我的 <code>index()</code> 回傳了一個陣列 <var>$index_model</var>， <dfn>CG</dfn> 就會把它的內容展開變成視圖 index.phtml 中的區域變數內容，變數名稱就是陣列的鍵。所以在 index.phtml 會出現 <var>$books</var> 和 <var>$time</var> 兩個變數。然後用 PHP 的樣板語法印出 <var>$books</var> 和 <var>$time</var> 的內容。
+</p>
+
+<p>再次讀取 idnex.php/book ，終於出現能看的內容了。
+</p>
+
+<pre class="language-text">
+
+    123 : book 123
+    456 : Book XYZ
+
+Index date: 2013-01-30 06:33:05
+</pre>
+
+
+<p>繼續實作 <code>get()</code> 方法，它需要一個 ISBN 參數以便查詢。這個參數內容會由 <dfn>CG</dfn> 根據 URL 路徑第二節的內容指派過來，我的 <dfn>Book</dfn> 不需要處理這件事。
+</p>
+
+<pre class="highlight"><code>class Book {
+    function index() {
+        // 省略...
+    }
+
+    var $book;
+    function get($isbn) {
+        /*
+        $book = $query-&gt;from('book')-&gt;
+                    -&gt;where(array('isbn' =&gt; $isbn))
+                    -&gt;select();
+        */
+        if ($isbn != '123') {
+            HttpResponse::exception(HttpResponse::NOT_FOUND);
+        }
+        $this-&gt;book = new BookModel('123', 'book 123');
+        return;
+    }
+}
+</code></pre>
+
+
+<p>建立 <dfn>GET</dfn> 對應的 get.phtml 視圖。由於 <code>get()</code> 方法沒有回傳值，所以 <dfn>CG</dfn> 會直接將 <dfn>Book</dfn> 當成資料模型(Model)，將它的公開屬性成員(<var>$this->book</var>)變成視圖 get.phtml 內的區域變數 <var>$book</var>。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;h2&gt;</span><span class="cp">&lt;?=$book-&gt;title?&gt;</span><span class="nt">&lt;/h2&gt;</span>
+<span class="nt">&lt;p&gt;</span>ISBN of this book: <span class="cp">&lt;?=$book-&gt;isbn?&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>用瀏覽器開啟 index.php/book/123 ，會出現下列內容:
+</p>
+
+<pre class="language-text">
+book 123
+
+ISBN of this book: 123
+</pre>
+
+<p>到此目前，我已經建立了一個非常基本的 <dfn>Book</dfn> 查詢功能的 Web 服務了。
+</p>
+
+
+<h5>問答時間
+</h5>
+
+<p>本問答中沒提到的內容，可能在「<a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E4%BB%8B%E7%B4%B9.html">CommonGateway 介紹</a>」就說明了。也請參考。
+</p>
+
+<h6>
+等等，我的控制項的父類別是什麼？
+</h6>
+
+<p>
+使用過其他框架的使用者，應該會注意到本文的控制項類別 <dfn>Book</dfn> 沒有繼承任何父類別。
+</p>
+
+<p>
+大部份框架確實需要使用者實作的控制項繼承它們指定的控制項父類別。但 <dfn>CG</dfn> 不需要。
+<dfn>CG</dfn> 有很多把資源塞給控制項的途徑，所以你的控制項不需要繼承任何類別。
+<dfn>CG</dfn> 把類別繼承關係的決定權還給你，
+</p>
+
+<h6>
+我一定要實作 index 方法嗎？
+</h6>
+<p>
+不需要。如果你的控制項原本就不打算提供索引服務，那就不需要實作 index 方法。
+GET, POST, PUT, DELETE 或其它方法也一樣，如果你不需要，你就不必留個位子。
+</p>
+
+<p>
+當客戶端請求的方法未實作時，<dfn>CG</dfn> 會按 HTTP 協定的標準作法，回應 <code>501 Not implemented</code> 訊息給客戶端。
+</p>
+
+<h6>
+我不用載入視圖與指派視圖的資料嗎？
+</h6>
+
+<p><dfn>CG</dfn> 會根據使用方法自動載入對應的視圖(View)。
+</p>
+
+<p>你只要在 <code>views</code> 子目錄建立符合預期名稱的目錄與視圖文件即可；也就是相同控制項名稱的子目錄，以及相同方法名稱的視圖文件。例如 <dfn>CG</dfn> 調用 <dfn>Book</dfn> 控制項的 <code>get()</code> 方法之後，就會自動載入 views/book/get.phtml 視圖。
+</p>
+
+<p>視圖也是一份 PHP 文件，所以它的副檔名首字冠上 'p' 以便和一般文件區隔。而副檔名後的內容則表示回傳給客戶端的視圖的文件型態。瀏覽器預設要求的文件型態是 <dfn>html</dfn> ，所以本文建立的視圖副檔名都是 <dfn>.phtml</dfn> 。稍後的文章會說明如何回傳像 JSON, XML 的文件給客戶端。
+</p>
+
+<p>最後，從 <dfn>CG</dfn> 的立場來看，它與控制項的關係是它調用了控制項的方法，所以控制項方法應該會把結果回傳給它。
+因此 <dfn>CG</dfn> 會自己從控制項方法的回傳內容決定最後要呈現給客戶端的資料是什麼，並將資料塞到視圖中。故你也不需要指派視圖的資料。
+</p>
+
+<h6>
+這裡說明了控制項和視圖的處理策略，但好像沒有規劃資料模型?
+</h6>
+
+<p>因為我設計 <dfn>CG</dfn> 時，主要搭配資料庫處理函數 <a href="https://schema-database.googlecode.com/">schema-database</a> 使用。
+而 schema-database 提供一個泛用型資料類別，可以映射資料庫的表格欄位成為資料模型(model)的屬性，也就不需要特地為了資料庫表格而建立一個關聯的資料模型類。
+因此 <dfn>CG</dfn> 沒有設計資料模型的處理策略。
+</p>
+
+<p>本文範例中的 BookModel 只是示範用。如果實際搭配 schema-database ，我不用定義 BookModel 類別。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E5%88%9D%E6%AD%A5%E7%AC%AC%E4%BA%8C%E7%AF%87%20-%20JSON%20%E7%9A%84%E8%99%95%E7%90%86%E8%88%87%E8%B3%87%E6%96%99%E4%B8%8A%E5%82%B3.html">CommonGateway初步第二篇 - JSON 的處理與資料上傳</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/CommonGateway%20%E6%8E%A7%E5%88%B6%E9%A0%85%E5%8B%95%E4%BD%9C%E5%87%BD%E6%95%B8%E5%9B%9E%E5%82%B3%E7%8B%80%E6%85%8B%E7%A2%BC%E7%9A%84%E4%BD%9C%E6%B3%95%E4%B9%8B%E4%BA%8C.html">CommonGateway 控制項動作函數回傳狀態碼的作法之二</a></li>
+<li><a href="{{ site.baseurl }}/archives/2015/CommonGateway%20JSON%20%E8%99%95%E7%90%86%E4%B9%8B%E8%87%AA%E5%8B%95%E5%9B%9E%E5%82%B3.html">CommonGateway JSON 處理之自動回傳</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/21320836.html">http://blog.roodo.com/rocksaying/archives/21320836.html</a></div>

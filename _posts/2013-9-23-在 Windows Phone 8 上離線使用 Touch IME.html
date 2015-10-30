@@ -1,0 +1,134 @@
+---
+title: 在 Windows Phone 8 上離線使用 Touch IME
+category: computer
+old-category: 電腦技術
+tags: [輸入法,array30,行列,windows phone,ime]
+---
+<p>
+我先前曾經為了在 Samsung Bada 手機上使用行列30輸入法，而寫了一個 ar30web 。
+但前陣子，我把手機換成了 Nokia Lumia 720 ，跑的是 Windows Phone 8 系統，它不提供行列30輸入法。
+可是 IE10 不允許用 file:// 存取網頁，因此 ar30web 不能像 Samsung Bada 那樣把整個檔案資料複製上去使用。若放在網頁空間上，又變成要連網才能使用，既浪費時間也浪費金錢(我不是3G吃到飽用戶)。
+</p>
+
+<p>
+原本我用手寫輸入倒也還好，不過我最近以 ar30web 為基礎改寫了一款「<a href="{{ site.baseurl }}/archives/2013/Touch%20%E8%BC%B8%E5%85%A5%E6%B3%95%20%28HTML5%20%E8%A7%B8%E6%8E%A7%E5%BC%8F%E8%BC%B8%E5%85%A5%E6%B3%95%29.html">Touch IME</a>」，提供了更多的輸入法(包含行列30)。這個 Touch IME 原本是以平板或 Kiosk 這類僅提供觸控螢幕的操作環境所設計，而我在測試相容性時，一直都拿自己的 Nokia Lumia 720 測試 IE10 與手機的適用性。測試證明 Touch IME 同樣可用於 IE10 和手機。既然都寫了也測了，那就把 Touch IME 搬到 Nokia Lumia 720 上用吧。
+</p>
+
+<!--more-->
+<p>
+基本上，用手機的 IE10 直接連上網路，打開 Touch IME 的網頁就可以使用。但我對於輸入法有個要求，它必須可以離線使用:
+</p>
+<ul>
+    <li>離線使用，節省流量。
+    <li>直接從手機記憶卡上讀取字根，反應才快。
+    <li>最重要的是，要輸入文字的場所，可能沒網路連線。如果不能離線使用，那就廢掉了。
+</ul>
+
+<p>
+因此，我利用了 HTML5 中的 Cache 機制，做了一些設定，讓手機上的 IE10 將 Touch IME 內容儲存在手機的儲存空間中。幾個步驟就輕鬆地實現離線使用 Touch IME 的目的了。
+</p>
+
+<h4>
+Cache Manifest
+</h4>
+
+<p>
+首先，我要先準備一份快取報關單 (<span class="Onote">Cache manifest ，我唸國貿的，Manifest 習慣翻成「報關單」</span>)。這份快取報關單記載著呈報給瀏覽器，請求瀏覽器儲存在本地儲存空間的文件清單。我將此份快取報關單取名為 <a href="http://code.google.com/p/rocksources/source/browse/trunk/web_input_method/touch-ime.manifest">touch-ime.manifest</a> 。內容為 Touch IME 主程式以及全部的輸入法字根表、鍵盤表。
+</p>
+
+<pre class="highlight"><code>CACHE MANIFEST
+
+# version: 20130809
+#
+# server config:
+#  add 'text/cache-manifest  manifest' in your mime.types.
+#
+# page:
+#  add '&lt;html manifest="touch-ime.manifest"&gt;
+#
+
+touch-ime.js
+ascii.tab
+en.tab
+s.tab
+w.tab
+en-tbl.js
+en-keyboard.js
+enShift-tbl.js
+enShift-keyboard.js
+pinyin-tbl.js
+pinyin-keyboard.js
+quick-tbl.js
+quick-keyboard.js
+zhuyin-tbl.js
+zhuyin-keyboard.js
+array30-tbl.js
+array30-keyboard.js
+email-tbl.js
+email-keyboard.js
+</code></pre>
+
+
+<p>
+接著，我準備了一份新的 Touch IME 使用頁面。這個頁面調整了版面安排，並設置了我個人慣用的輸入法設定(以行列30為預設輸入法)。由於是要離線使用的，所以我將此使用頁面取名為 <a href="http://code.google.com/p/rocksources/source/browse/trunk/web_input_method/offline.html">offline.html</a> 。最重要的一點，要在 offline.html 的 <dfn>&lt;html&gt;</dfn> 標籤中，加上 <var>manifest</var> 屬性，以本文為例，內容如 <code>&lt;html manifest="touch-ime.manifest"&gt;</code> 。這讓瀏覽器知道這份 HTML 還有其他附帶內容請求快取。注意，快取報關單列出的其他文件的文件路徑，應位於 HTML 所在目錄以其子目錄下。
+</p>
+
+<p>
+最後，我要找個網頁空間，擺放 Touch IME 將使用的文件內容，即 touch-ime.js 程式、各輸入法字根與鍵盤表、使用頁面(offline.html) 和快取報關單(touch-ime.manifest)。這對我來說不是什麼難事，因為我的 Linux 桌面本身就裝了 Apache httpd 提供網頁服務，我只要用手機連線開啟我的 Linux 桌面主機的網頁空間即可。至於觀看本文後想嘗試看看的讀者，就請你自己找網頁空間吧(<span class="Onote">Touch IME 儲放的 google code 只能讓各位下載文件，而不讓各位當網頁空間開啟</span>)。
+</p>
+
+<h4>
+操作
+</h4>
+
+<p>
+我用手機上的 IE10 開啟桌面主機網頁空間的 Touch IME offline.html ，畫面如下。
+</p>
+
+<img src="https://w2u4gg.blu.livefilestore.com/y2por0m7xutkRjMW3HuqrH00zIiVaKEZL9bF6wM9qGdDrEt2UTbgClzpDBSjB6tkjf0k4C5lriki-G-Z-5jKXEFclr56nVUYE3suhi2pv2zpqU/wp_ss_20130917_0002.png?psid=1" alt="手機開啟 Touch IME offline.html" />
+
+<p>
+點擊顯示目前輸入法的清單控制項。在手機的 IE10 上，會自動跳出一個全畫面清單讓使用者選取。
+基本上，主流的手機瀏覽器軟體都實作了這種 UI 機制，而這種 UI 機制需要搭配 HTML5 新增的表單屬性標記。兩相配合，才能帶給使用者更方便的操作體驗。
+</p>
+
+<img src="https://w2t7ug.blu.livefilestore.com/y2pElh9kblfl8B0PUZ_XYYD02qiGe1nQ1Q3nsRFXDLy-DvXbr-HP_efCgwT3BuK5ilmrWasfBN-wV6S0-Gd6PuwWyCxK01gVjygYF8JmgEwGfA/wp_ss_20130917_0001.png?psid=1" alt="選擇輸入法的畫面" />
+
+<p>
+在剛剛的選擇畫面中，選擇「英數」切換到英數輸入法，此時鍵盤內容也跟著換成英數鍵盤配置。
+</p>
+<img src="https://w2sddg.blu.livefilestore.com/y2pGh3ziBSgT9ORzU2n2MDxVFMcZHwFxwibPts0KAJAAtAgF5dsdON4oawWPRSOh6qWa3-JdF0JETnMBCyaSNQ7OwqSntIbJtjft5hl1ne0uCE/wp_ss_20130917_0003.png?psid=1" alt="切換到英數，輸入英文" />
+
+<h4>
+說明
+</h4>
+
+<p>
+第一次操作時，我會切換每一個輸入法以及特殊符號表，以確保瀏覽器載入並保存它們。
+</p>
+
+<p>
+整個快取操作的過程，大致為瀏覽器載入 offline.html ，從 <dfn>&lt;html&gt;</dfn> 標籤的 <var>manifest</var> 屬性中得知快取報關單的名稱 touch-ime.manifest 。於是瀏覽器再載入 touch-ime.manifest 。最後，在我操作 Touch IME 的過程中所載入的文件，若是列在快取報關單之中，瀏覽器就會將之保存在本地的儲存空間。瀏覽器日後載入文件時，都會優先使用被保存在本地儲存空間的內容。
+</p>
+
+<p>
+通過快取報關單所保存的文件內容，基本上會持續存在，直到使用者刪除。 WP8 的 IE 可從進階設定項目的「管理儲存空間」，清除快取的內容。如下圖:
+</p>
+
+<img src="https://w2swxw.blu.livefilestore.com/y2pu5HJqv28ArWf4vmtD106wHB6jJVRcxCjVkdwOeJo-uCqQ6LQBte0yg7uRCZZxbbQZNNJyBuGJUmbFy603_s6RZ_FIX-wf2GBo-P2tfXPRNE/wp_ss_20130917_0004.png?psid=1" alt="由「管理儲存空間」處，可清除快取的內容" />
+
+<p>
+我可以先在輸入框中，完成整篇我想輸入的文字內容，然後點擊「Select」，就會將整份文字內容複製到剪貼簿，我再切換到其他軟體貼上內容即可(<span class="Onote">
+我在 offline.html 中設置了文字輸入框的 readonly 屬性，這抑制了系統自動帶出系統虛擬鍵盤的機制。此外，IE10 允許 JavaScript 將內容複製到系統剪貼簿，所以我可以實現自動複製的動作
+</span>)。
+最後，我故意關閉手機的 Wifi 與 3G 數據傳輸等所有網路連線，繼續輸入文字與切換輸入法。一切如常。
+</p>
+
+<p>
+雖然在使用時需要切換軟體，但因 Windows Phone 目前並未開放輸入法 API ，這是現在唯一可用的擴充輸入法的途徑。各位在 Windows Phone 市集上找到的輸入法 App 也是這樣複製、貼上。
+至於打包成 Windows Phone App 這事就算了。透過簡單的 Cache 儲存機制就能實現的事，我何必繞遠路地打包成 App ，對我來說太麻煩了。
+</p>
+
+<div class="note">
+本文提及的 Touch IME 所有源碼文件，都在「<a href="http://code.google.com/p/rocksources/wiki/TouchInputMethod">Rock's Sources</a>」，請自行下載。
+</div><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25709686.html">http://blog.roodo.com/rocksaying/archives/25709686.html</a></div>

@@ -1,0 +1,50 @@
+---
+title: Php-dbus extension with ByteArray support, r101/r108 update
+category: programming
+old-category: PHP
+tags: [php,dbus,bytearray]
+---
+<p>
+「<a href="{{ site.baseurl }}/archives/2013/Php-dbus%20extension%20with%20ByteArray%20support.html">Php-dbus extension with ByteArray support</a>」程式碼更新。更新內容詳見「<a href="http://code.google.com/p/rocksources/source/detail?r=101">rocksources r101</a>」和「<a href="http://code.google.com/p/rocksources/source/detail?r=108">rocksources r108</a>」。
+</p>
+
+<p>
+PHP 5.4 版起，移除了 <var>default_properties</var> 項目。依「<a href="https://wiki.php.net/internals/engine/objects">internals:engine:objects [PHP Wiki]</a>」的示範，應該改用 <var>object_properties_init()</var> ，而這也正是 dbus.c 的巨集 <var>INIT_OBJ_PROP</var> 所做的事。故修改變數名稱，以便改用 <var>INIT_OBJ_PROP</var> 完成 <dfn>ByteArray</dfn> 的初始化工作。 r108 則修正了 PHP 5.4 釋放 ByteArray 時會發生記憶體存取錯誤的嚴重Bug。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="cp">#if PHP_MINOR_VERSION &gt; 3
+# define INIT_OBJ_PROP	object_properties_init(&amp;intern-&gt;std, class_type);
+#else
+# define INIT_OBJ_PROP	zend_hash_copy(intern-&gt;std.properties, \
+</span>  <span class="o">&amp;</span><span class="n">class_type</span><span class="o">-&gt;</span><span class="n">default_properties</span><span class="p">,</span> <span class="p">(</span><span class="n">copy_ctor_func_t</span><span class="p">)</span> <span class="n">zval_add_ref</span><span class="p">,</span> <span class="err">\</span>
+  <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">zval</span> <span class="o">*</span><span class="p">));</span>
+<span class="cp">#endif
+</span>
+<span class="c1">// r108
+</span><span class="kt">void</span> <span class="nf">bytearray_free_storage</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">object</span> <span class="n">TSRMLS_DC</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">bytearray_object</span> <span class="o">*</span><span class="n">this</span> <span class="o">=</span> <span class="p">(</span><span class="n">bytearray_object</span> <span class="o">*</span><span class="p">)</span><span class="n">object</span><span class="p">;</span>
+    <span class="n">efree</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="n">zend_object_std_dtor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">std</span> <span class="n">TSRMLS_CC</span><span class="p">);</span>
+    <span class="c1">//zend_hash_destroy(this-&gt;std.properties);
+</span>    <span class="c1">//FREE_HASHTABLE(this-&gt;std.properties);
+</span>    
+    <span class="n">efree</span><span class="p">(</span><span class="n">this</span><span class="p">);</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<p>
+<del>PHP Wiki 使用 <code>PHP_VERSION_ID &lt; 50399</code> (5.3.99) 判別。而 dbus.c 取巧地使用 <code>PHP_MINOR_VERSION &gt; 3</code> 。我暫時不想更動 <dfn>ByteArray</dfn> 以外的部份，故保留之。</del>(r108 已修改)
+</p>
+
+<p>
+另外， PHP 5.4 也完全移除了 <var>function_entry</var> 項目。所有 <var>function_entry</var> 都應更名為 <var>zend_function_entry</var> 。 <dfn>ByteArray</dfn> 實作時用了 <var>function_entry</var> ，此次一併修正。
+</p>
+<p>
+r108 修正了 PHP 5.4 釋放 ByteArray 時會發生記憶體存取錯誤的嚴重Bug ，還修改了一處 DBus API 宣告廢棄的項目(dbus_message_iter_get_array_len)。增加了 DBus service/client 的測試案例。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25736040.html">http://blog.roodo.com/rocksaying/archives/25736040.html</a></div>
