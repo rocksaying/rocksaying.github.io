@@ -1,0 +1,109 @@
+---
+title: JavaScript print format
+category: programming
+old-category: JavaScript
+tags: [javascript,console]
+---
+<p>
+在 C 語言中， <dfn>printf</dfn> 是一個很方便的輸出函數，在其他程式語言中，也或多或少提供了類似的格式化輸出或是格式化字串功能。
+不過 JavaScript 並沒有定義這種函數，那就自己寫吧。本文說明兩種格式化字串的實作方式。
+</p>
+
+<!--more-->
+<p>
+我直接把格式化函數加到 String 類別中，讓它們變成字串方法。
+這樣就可以 <code>"Hello {0}!".interpolate('rock')</code> 的形式撰寫。
+這種敘述方式符合多數 OOPL 的表達方法。
+</p>
+
+<p>
+第一個方法是用 <code>{n}</code> 包覆要代入的內容，基數從 0 開始。
+這是 C# 式的用法。
+</p>
+
+<pre class="highlight"><code><span class="cm">/**
+A method of String: "format".interpolate(...);
+by {0}, {1}, {2}, ... base from 0.
+ */</span>
+<span class="nb">String</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">interpolate</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// do nothing
+</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">;</span>
+    <span class="c1">// see ECMA-262 3rd edition, 15.5.4.11 String.prototype.replace.
+</span>
+    <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\{\d</span><span class="sr">+</span><span class="se">\}</span><span class="sr">/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">k</span> <span class="o">=</span> <span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nx">matched</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// index base from 0.
+</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">?</span> <span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+第二個方法是用 <code>$n</code> 標示要代入的內容，基數從 1 開始。
+這比較像 shell script 的用法。
+</p>
+
+<pre class="highlight"><code><span class="cm">/**
+A method of String: "format".interpolate(...);
+by $1, $2, ... base from 1.
+ */</span>
+<span class="nb">String</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">interpolate2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">index_offset</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// index base from 1.
+</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span> <span class="k">instanceof</span> <span class="nb">String</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// nothing
+</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">s</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="c1">// notice: arguments is not an array.
+</span>
+        <span class="nx">index_offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="c1">/// nothing
+</span>
+            <span class="k">return</span> <span class="nx">s</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\$[\$\d]</span><span class="sr">+/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">k</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="nx">index_offset</span><span class="p">;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">?</span> <span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+使用如下例。
+</p>
+
+<pre class="highlight"><code><span class="nx">alert</span><span class="p">(</span><span class="s2">"nothing"</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">());</span>
+
+<span class="c1">// 這是 C# 式的用法。基數從0開始。
+</span>
+<span class="nx">alert</span><span class="p">(</span><span class="s2">"hello {0}. {1} + {2} = {3}"</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="s2">"abc{2}"</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+
+<span class="c1">// 這比較像 shell script 的用法，基數從1開始。
+</span>
+<span class="nx">alert</span><span class="p">(</span><span class="s2">"hello $1. $2 + $3 = $4"</span><span class="p">.</span><span class="nx">interpolate2</span><span class="p">(</span><span class="s2">"abc$2"</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+
+</code></pre>
+
+
+<p>
+注意我操作 <code>replace()</code> 的方法，必須要這樣做，才不會重複替換已經代入的內容。
+如果以參數清單做迭代，每次都替換整個字串的話，像上例 "abc{2}" 這種情形就會被再次替換內容，導致非預期結果。
+</p>
+
+
+<div class="note">
+JavaScript 雖然沒有正式的格式化字串或輸出函數，但是非正式的 <dfn>console</dfn> 項目卻實作了格式化功能。可惜的是 console 只能用於輸出內容。參考「<a href="{{ site.baseurl }}/archives/2013/JavaScript console.html">JavaScript console</a>」。
+</div><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25899028.html">http://blog.roodo.com/rocksaying/archives/25899028.html</a></div>

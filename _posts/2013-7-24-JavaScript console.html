@@ -1,0 +1,177 @@
+---
+title: JavaScript console
+category: programming
+old-category: JavaScript
+tags: [javascript]
+---
+<p>
+JavaScript <dfn>console</dfn> 是一項除錯工具。
+完全取代了麻煩的 alert() ，讓開發人員更方便記錄程式執行的各種訊息。
+</p>
+
+<p>
+alert() 最大的困擾在於它會暫停程式執行等待使用者確認。
+當開發人員要輸出的訊息很多時，不斷跳出的 alert() 視窗實在令人不堪其擾。
+而且 alert() 是瀏覽器提供的實作行為，在非瀏覽器環境中沒有 alert() 可用。
+console 則不會干擾程式執行，讓你在不需要時感覺不到它的存在。
+</p>
+
+<p>
+<dfn>console</dfn> is not a standard feature of ECMAScript.
+However it is widely implemented in most of browsers and you could see the propose in CommonJS. (it may be first provided by Firebug)
+It is useful for web developer debugging javascript.
+</p>
+
+<!--more-->
+<h5>
+Common methods
+</h5>
+
+<p>
+<dfn>console</dfn> 並不是一項標準介面，所以不同瀏覽器實作的方法也不儘相同。
+但是目前已知者，都提供下列相同的方法。
+</p>
+
+<ul>
+    <li>log(msg | obj, ...)
+        輸出一行普通的記錄文字。
+    <li>error(msg | obj, ...)
+        輸出一行標記為 <em>error</em> 的記錄文字。
+    <li>info(msg | obj, ...)
+        輸出一行標記為 <em>information</em> 的記錄文字。
+    <li>warn(msg | obj, ...)
+        輸出一行標記為 <em>warning</em> 的記錄文字。
+    <li>dir(obj)<br/>
+        內識個體。
+</ul>
+
+<p>
+除了 dir() ，上列方法都可以接受一個以上的參數，而且不限型態。
+此外，還支援字串替換用法，例如: <code>console.log("count %d", i)</code> 。
+</p>
+
+<p>
+error, information, warning 等標記差異不會影響程式流程，只是方便開發人員在除錯過程中過濾文字內容。
+</p>
+
+<p>
+以 Firefox 為例，按下 Ctrl+Shift+K 召喚網頁主控台。
+然後在主控台下方的文字輸入列，或是再按 Shift+F4 召喚速記本。
+輸入下列範例程式碼，即可觀察 console 的用途。
+</p>
+
+<pre class="highlight"><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"hello console"</span><span class="p">)</span>
+
+<span class="kd">var</span> <span class="nx">someObject</span> <span class="o">=</span> <span class="p">{</span> <span class="na">str</span><span class="p">:</span> <span class="s2">"Some text"</span><span class="p">,</span> <span class="na">id</span><span class="p">:</span> <span class="mi">5</span> <span class="p">};</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">someObject</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">car</span> <span class="o">=</span> <span class="s2">"Dodge Charger"</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s2">"My first car was a %s. The object is: %o."</span><span class="p">,</span> <span class="nx">car</span><span class="p">,</span> <span class="nx">someObject</span><span class="p">);</span>
+
+</code></pre>
+
+
+<h5>
+MS IE Good methods
+</h5>
+
+<p>
+MS IE 實作的 console 提供了 assert() 方法。
+</p>
+
+<ul>
+    <li>assert(expr, failed_msg)
+</ul>
+
+<p>
+assert() 是個好東西，可惜其他瀏覽器沒有實作。
+所幸自己寫一個很簡單。
+</p>
+
+<pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">assert</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">expr</span><span class="p">,</span> <span class="nx">failed_msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">expr</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">failed_msg</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// example of assert()
+</span>
+<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="s2">"abc"</span><span class="p">;</span> <span class="c1">// incorrect word
+</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"excepted length of 'Hello' is 5"</span><span class="p">);</span> <span class="c1">// output an error.
+</span>
+
+<span class="nx">s</span> <span class="o">=</span> <span class="s2">"Hello"</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"excepted length of 'Hello' is 5"</span><span class="p">);</span> <span class="c1">// no log.
+</span>
+
+</code></pre>
+
+
+<h5>
+Firefox Good methods
+</h5>
+
+<ul>
+    <li>time(計時器名稱)
+    <li>timeEnd(計時器名稱)
+</ul>
+
+<p>
+time() 和 timeEnd() 是配對方法(以計時器名稱為配對)，它們提供一組碼錶供開發人員觀察時間間隔。
+</p>
+
+<pre class="highlight"><code><span class="nx">console</span><span class="p">.</span><span class="nx">time</span><span class="p">(</span><span class="s2">"timer1"</span><span class="p">)</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"test time"</span><span class="p">)</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"Accept some thing..."</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">timeEnd</span><span class="p">(</span><span class="s2">"timer1"</span><span class="p">)</span>
+
+</code></pre>
+
+
+<p>
+調用 time() 時建立一個計時器，調用 timeEnd() 時停止計時並顯示經過的時間(單位為千分之一秒)。
+</p>
+
+<pre class="language-text">
+[10:55:42.987] timer1: 計時器已啟動
+[10:55:45.041] test time
+[10:55:45.041] timer1: 2054ms
+</pre>
+
+
+<h5>
+Spec of console
+</h5>
+
+<ul>
+    <li>
+    CommonJS:
+    <a href="http://wiki.commonjs.org/wiki/Console">
+    Console - CommonJS Spec Wiki</a>
+
+    <li>
+    Mozilla:
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/console">
+    console - Web API reference | Mozilla Developer Network</a>
+
+    <li>
+    MS IE:
+    <a href="http://blogs.msdn.com/b/cdndevs/archive/2011/05/26/console-log-say-goodbye-to-javascript-alerts-for-debugging.aspx">
+    Console.Log : Say Goodbye to JavaScript Alerts for Debugging!</a>
+
+    <li>
+    other browsers:
+    <a href="http://stackoverflow.com/questions/4743730/what-is-console-log-and-how-do-i-use-it">
+What is console.log and how do I use it?</a>
+</ul>
+
+<p>
+基本上我這個人不使用 ECMAScript 內容以外的 JavaScript 語言功能 。
+不過 console 實在好用又很普遍，於是我只好通融一下了。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/JavaScript print format.html">JavaScript print format</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25402024.html">http://blog.roodo.com/rocksaying/archives/25402024.html</a></div>
