@@ -1,0 +1,161 @@
+---
+title: VirtualBox 與 Debian/Ubuntu 客端額外功能(Guest Additions)補遺
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,VirtualBox,debian]
+---
+<p>
+本補遺收集的內容是安裝 Debian/Ubutnu 作為 VirtualBox Guest OS 的情形。如果你的 Guest OS 是 Windows 系統，本補遺對你無用。
+</p>
+
+<ul>
+    <li>安裝客端額外功能(Guest Additions)
+    </li>
+
+    <li>滑鼠整合沒作用(Mouse pointer integration not work)
+    </li>
+
+    <li>螢幕解析度可調整項目變少了
+    </li>
+
+    <li>掛載分享資料夾
+    </li>
+</ul>
+
+<!--more-->
+<div class="note">
+最近更新日期: 2010-09-15 <br/>
+首次發佈日期: 2010-01-26
+</div>
+
+<h4>
+必須要先安裝的套件
+</h4>
+
+<h5>
+一、安裝 <dfn>build-essential</dfn>
+</h5>
+<p>
+安裝 <dfn>build-essential</dfn> ，這將用於編譯 VirtualBox 客端功能的 Linux 核心模組。
+</p>
+
+<pre class="language-term">
+$ sudo apt-get install build-essential
+</pre>
+
+<h5>
+二、安裝 dkms
+</h5>
+<p>
+若你的 Guest OS 是 Ubuntu 10.04 Lucid 或更新的散佈版本時，必須安裝 <dfn>dkms</dfn>。它是新的核心模組載入機制。已知 VirtualBox 的滑鼠整合功能模組依賴此機制載入。若未安裝 <dfn>dkms</dfn> ，則滑鼠整合功能不會發生作用。
+</p>
+
+<pre class="language-term">
+$ sudo apt-get install dkms
+</pre>
+
+<p>
+如果你已經安裝了客端額外功能，才發現沒有安裝 dkms 且滑鼠整合功能沒作用，你必須安裝 dkms 之後，再重裝一次客端額外功能。更快捷的方式是在安裝 dkms 之後，直接執行指令 <code>sudo /etc/init.d/vboxadd setup</code>。裝好之後，須重新啟動 Guest OS.
+</p>
+
+<h5>
+三、下載 VirtualBox Guest Additions ISO
+</h5>
+<p>
+當你使用 VirtualBox 選單的「安裝 Guest Additions ...」之後，VirtualBox 通常會自動下載客端額外功能軟體的 CD ISO 影像檔，並且自動掛載。
+</p>
+<p>
+若你碰到未自動下載的情形時，也可自行到官方網站下載: <a href="http://download.virtualbox.org/virtualbox/3.1.6/VBoxGuestAdditions_3.1.6.iso">Download VBoxGuestAdditions_3.1.6.iso</a> 。下載後，再自行透過 CD 裝置掛載該 ISO 影像。
+</p>
+<div class="note">
+Ubuntu 10.04 提供的 VirtualBox 是 3.1.6 OSE 版，所以上列連結提供的是 3.1.6.iso 。如果你安裝的 VirtualBox 版本不是 3.1.6 ，請自行瀏覽 <a href="http://download.virtualbox.org/virtualbox/">http://download.virtualbox.org/virtualbox/</a> 下載合適的版本。
+</div>
+<p>
+掛載 VBoxGuestAdditions CD ISO檔後，開啟它，並以 root 的權限執行其中的 <dfn>VBoxLinuxAdditions-x86.run</dfn> (32bit) ／ <dfn>VBoxLinuxAdditions-amd64.run</dfn> (64bit)。
+</p>
+
+<h4>
+滑鼠整合沒作用(Mouse pointer integration not work)
+</h4>
+
+<p>
+Guest OS 為 Ubuntu 10.04 及之後的版本，請參考上一節第二項關於 <dfn>dkms</dfn> 的內容。
+</p>
+
+<p>
+正常來說，新建的 Guest OS 在安裝「客端額外功能(Guest Additions)」並重新啟動 Guest OS 之後，「滑鼠整合」就會發揮功效。但若你碰到滑鼠整合功能沒有作用的詭異情形時，你需要編輯 /etc/X11/xorg.conf (<span class="Onote">若此文件不存在，則 Guest OS 應該是新版的，請參考上一節 <dfn>dkms</dfn> 的內容</span>)，手動加入下列的設定段落。
+</p>
+
+<pre class="language-text">
+Section "InputDevice"
+        Identifier      "vboxmouse"
+        Driver          "vboxmouse"
+        Option          "CorePointer"
+        Option          "Device"        "/dev/input/mice"
+EndSection
+</pre>
+
+<p>
+See also: <a href="http://www.my-guides.net/en/content/view/157/26/">How to fix mouse pointer integration in Ubuntu 9.04 installed on VirtualBox</a>
+</p>
+<p>
+正常來說，就算 xorg.conf 沒有上述的 InputDevice 段落，滑鼠整合功能依然會作用。
+</p>
+<p>
+我今天新裝了一個 Ubuntu 9.04 Desktop 的 guest 系統，安裝客端額外功能後，滑鼠整合功能竟然沒有發生作用。我覺得很奇怪，已經我先前安裝過數次 Ubuntu Desktop 作為 guest 系統，但都沒發生這問題。查詢後才知道，有時候要自己手動加入上述的設定內容。我開啟先前安裝的 Ubuntu Desktop guset ，把兩邊的 xorg.conf 比對一下，結果先前安裝的 Ubuntu Desktop guest 的 xorg.conf 沒有這一段，但滑鼠整合還是可作用。真是怪哉。
+</p>
+
+<h4>
+螢幕解析度可調整項目變少了
+</h4>
+
+<p>
+首先，如果是 Ubuntu 9.04 的使用者，可以參考我先前寫的<a href="{{ site.baseurl }}/archives/2009/VirtualBox%20%E4%BB%A5%20Ubuntu%20%E4%BD%9C%E7%82%BA%20Guest%20OS%20%E6%99%82%E7%9A%84%E5%AE%A2%E7%AB%AF%E9%A1%8D%E5%A4%96%E5%8A%9F%E8%83%BD%E4%BD%BF%E7%94%A8%E7%AD%86%E8%A8%98.html">使用筆記</a>，按照裡面的步驟修正客端額外功能的安裝程式。 Ubuntu 9.10 的使用者，請參考 Logan 寫的<a href="http://loganthc.blogspot.com/2009/11/ubuntu-910-virtualbox-guest-additions.html">Ubuntu 9.10 + VirtualBox Guest Additions</a>修正。
+</p>
+<p>
+當我安裝額外功能並重新啟動 guest 系統後的第一次晝面，我的螢幕解析度有 1280x768 (按預設 12MB 顯示記憶體)。我啟動 Ubuntu Desktop 的「顯示」控制台，一開始顯示我可以選擇從 1280x768 到 640x480 的5種解析度。接著我將螢幕解析度下調到 1024x768。調整完畢後，我很訝異地發現，在「顯示」控制台內，我可以選擇的解析度只剩下 1024x768 到 640x480 的3種解析度了。我沒有辦法再往上調整更高的解析度了。
+</p>
+<p>
+如果你跟我一樣碰到這種情形，我們需要編輯 /etc/X11/xorg.conf ，手動在 <dfn>Screen</dfn> 段落中，加入 <dfn>Display</dfn> 的子段落，明確地列出我們希望能調整的解析度項目。如下所示:
+</p>
+<pre class="language-text">
+Section "Screen"
+   Identifier   "Default Screen"
+   Monitor      "Configured Monitor"
+   Device      "Configured Video Device"
+
+   DefaultDepth    24
+   SubSection      "Display"
+      Depth           24
+      Modes           "800x600" "1440x900" "1360x768" "1280x1024" "1280x960" "1152x864" "1024x768"
+   EndSubSection
+
+EndSection
+</pre>
+<p>
+上例設定範例，列出7種解析度，那麼在「顯示」控制台中，就會至少出現這7種解析度供我們選擇。不再愈調愈少。
+</p>
+<p>
+登入晝面(GDM)會取 Modes 中的第一個項目作為解析度。所以我把 800x600 放在第一個。
+</p>
+<p>
+See also: <a href="http://forums.virtualbox.org/viewtopic.php?f=3&t=15679">Howto: Install Linux Guest Additions + Xorg config</a>
+</p>
+
+<h4>
+不能掛載分享資料夾
+</h4>
+<p>
+請參考本人另兩篇說明文章。
+</p>
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2008/Mount%20VirtualBox%27s%20shared%20folders%20in%20linux.html">
+    Mount VirtualBox's shared folders in linux</a>
+    </li>
+    <li><a href="{{ site.baseurl }}/archives/2009/VirtualBox%20%E4%BB%A5%20Ubuntu%20%E4%BD%9C%E7%82%BA%20Guest%20OS%20%E6%99%82%E7%9A%84%E5%AE%A2%E7%AB%AF%E9%A1%8D%E5%A4%96%E5%8A%9F%E8%83%BD%E4%BD%BF%E7%94%A8%E7%AD%86%E8%A8%98.html">
+    VirtualBox 以 Ubuntu 作為 Guest OS 時的客端額外功能使用筆記 </a>
+    </li>
+</ul>
+<p>
+See also: <a href="http://forums.virtualbox.org/viewtopic.php?f=29&t=15868">HOWTO: Use Shared Folders</a>.
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11521083.html">http://blog.roodo.com/rocksaying/archives/11521083.html</a></div>

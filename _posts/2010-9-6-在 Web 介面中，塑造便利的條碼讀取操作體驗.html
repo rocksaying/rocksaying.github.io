@@ -1,0 +1,229 @@
+---
+title: 在 Web 介面中，塑造便利的條碼讀取操作體驗
+category: programming
+old-category: Programming
+tags: [kiosk,web,usability,易用性]
+---
+<p>
+在 Kiosk 、旅客導覽系統或門禁系統中，通常只連接有限的資料輸入設備。主要是提供觸控螢幕，允許使用者點選畫面選項，以便操作公開性的服務。進階者，則提供特制數字鍵盤、條碼讀取機、RFID讀取機等輸入設備，讓使用者輸入由數字構成的文字資料。
+</p>
+<p>
+本文說明所用的案例，便是一個提供條碼讀取機的Web介面導覽系統，它會在畫面上顯示一個書籍感應畫面，提示顧客將書籍的背面的ISBN條碼放到條碼讀取處讀取，然後將它的 ISBN 送到後端查詢書籍資訊。
+</p>
+
+<!--more-->
+<h4>
+案例說明
+</h4>
+<p>
+在一般電腦系統的操作經驗中，我們在輸入資料前，要先用滑鼠點取文字輸入框，使得文字輸入框取得輸入焦點，然後我們才能透過鍵盤或條碼機輸入資料。而在這個案例中，我們希望提供更便利的使用者經驗。我們希望顧客不必用滑鼠或觸控螢幕點取輸入框，也不必先注意文字輸入框是否取得輸入焦點。顧客只需要把條碼放在讀取處，資料就會被讀取與送出查詢。我們要讓顧客看不到文字輸入框，又要時時保持輸入焦點，以便隨時接受來自條碼機的資料。
+</p>
+
+<h5>
+掩蔽控制項
+</h5>
+<p>
+我先說明一下標題用「掩蔽」這個詞的用意。HTML 對於控制項的隱藏行為有特殊定義，所以要讓顧客看不到文字輸入框，只能選擇讓控制項不起眼。也就是把控制項掩蔽在畫面環境之中，讓顧客不會注意到它。
+</p>
+
+<p>
+根據 HTML 規範，CSS 屬性為 <dfn>visibility:hidden</dfn> 或 <dfn>display:none</dfn> 的控制項，不能取得輸入焦點，故不能接受來自輸入設備的資料。
+欲隱藏文字輸入控制項，並接受來自輸入設備的資料，可行方式為設定 CSS 屬性之文字顏色與底色相同、無邊框、且寬度為1px (<span class="Onote">對某些瀏覽器而言(如 Google Chrome)，控制項寬度為0時，視同不可見(display:none)，無法輸入。故我們可用的最小寬度為1px</span>) (<dfn>color:white;background:white;border:0;width:1px;</dfn>)。
+</p>
+
+<h5>
+資取讀取動作
+</h5>
+
+<p>
+一個不與 form 綁定的文字輸入控制項，可透過 <dfn>onchange</dfn>, <dfn>onkeypress</dfn> 或 <dfn>onblur</dfn> 事件，捕抓 Enter 的動作。See also: <a href="http://www.w3.org/TR/REC-html40/interact/scripts.html#Intrinsic%20events">HTML4.0 - Intrinsic events</a> 。
+</p>
+
+<ul>
+    <li>
+    onchange -
+    The onchange event occurs when a control loses the input focus and its value has been modified since gaining focus.
+    <br/>
+    只有在內容改變過的情形下失去焦點時，才會觸發事件。
+    例如連續按Enter或連續讀取同一個資料條碼的情形，因為在連按Enter時，並沒有改變控制項，因此只會觸發一次事件。
+    </li>
+
+    <li>
+    onblur -
+    The onblur event occurs when an element loses focus either by the pointing device or by tabbing navigation.
+    <br/>
+    任何將焦點移出文字輸入框的動作，都會觸發此事件。包括按下 Enter 、觸控點擊其他控制項、切換應用程式等等。
+    由於此事件涵蓋內容太廣，經常在非程序員預想狀況下觸發，非最佳選擇。
+    </li>
+
+    <li>
+    onkeypress -
+    鍵值依平台而有所差異，非最佳選擇。 Enter的鍵值通常是 13.
+    </li>
+</ul>
+
+<h5>
+保持輸入焦點
+</h5>
+<p>
+當使用者經由觸控螢幕點擊畫面其他內容時，就會轉移輸入焦點。若不特別處理，則文字輸入框無法接受條碼機讀取的資料。要時時保持文字輸入框的輸入焦點，可以藉由 <dfn>onblur</dfn> 事件處理方法實現。只要文字輸入框失去焦點的事件發生了，就重新讓文字輸入框取得輸入焦點。但因為我們不能在 noblur 事件處理過程中指定輸入焦點，所以還要透過 <dfn>setTimeout()</dfn> 延時指定輸入焦點。
+</p>
+
+<h4>
+實作 OccultReader 與用例
+</h4>
+
+<h5>
+OccultReader.js
+</h5>
+<p>
+我用 JavaScript 實作了一個 OccultReader ，它實現了上述三點：掩蔽控制項、資料讀取以及保持輸入焦點。透過它便可以將 Web 頁面上的一個文字輸入框掩蔽起來；當條碼機讀取到資料後，會調用我們指定的處理函數。
+</p>
+
+<pre class="highlight"><code><span class="c1">// Copyright (c) 2010 rock 遊手好閒的石頭成
+</span>
+<span class="c1">// Licensed by GNU LGPL.
+</span>
+<span class="nx">OccultReader</span> <span class="o">=</span> <span class="k">new</span> <span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">control</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">onchange_handler</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="cm">/**
+     * id: id of element.
+     * args:
+     *  style
+     *  onchange_handler = function(value)
+     */</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">setControl</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">control</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">&amp;&amp;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">onchange_handler</span><span class="p">)</span>
+            <span class="nx">onchange_handler</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">onchange_handler</span><span class="p">;</span>
+
+        <span class="nx">control</span><span class="p">.</span><span class="nx">onchange</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="nx">onchange_handler</span> <span class="p">)</span> <span class="p">{</span>
+                <span class="nx">onchange_handler</span><span class="p">(</span><span class="nx">control</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="nx">alert</span><span class="p">(</span><span class="s2">"Input: "</span> <span class="o">+</span> <span class="nx">control</span><span class="p">.</span><span class="nx">value</span> <span class="o">+</span>
+                    <span class="s2">"\n using args.onchange_handler to set this handler."</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="nx">control</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span> <span class="c1">//reset data
+</span>
+        <span class="p">}</span>
+
+        <span class="c1">//keep focus.
+</span>
+        <span class="nx">control</span><span class="p">.</span><span class="nx">onblur</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">setTimeout</span><span class="p">(</span><span class="s2">"document.getElementById('"</span> <span class="o">+</span>
+                <span class="nx">control</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">"').focus();"</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">&amp;&amp;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">style</span> <span class="k">in</span> <span class="nx">args</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">control</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">style</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">style</span><span class="p">];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="kd">with</span> <span class="p">(</span><span class="nx">control</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">color</span> <span class="o">=</span> <span class="nx">background</span> <span class="o">=</span> <span class="s2">"white"</span><span class="p">;</span>
+                <span class="nx">border</span> <span class="o">=</span> <span class="s2">"0"</span><span class="p">;</span>
+                <span class="nx">width</span> <span class="o">=</span> <span class="s2">"1px"</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="nx">control</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
+        <span class="nx">control</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+
+<p>
+OccultReader 需要調用其方法 <code>setControl()</code> 啟用。第一個參數指定文字輸入控制項的 ID。第二個參數則是一個表，可以在這表中指定控制項的 <dfn>style</dfn> 與 <dfn>onchange_handler</dfn>。<dfn>onchange_handler</dfn> 負責取得資料後的事件處理方法。
+</p>
+
+<div class="note">
+關於 OccultReader 所使用的 JavaScript 資料與方法封裝技巧，請參閱本人另兩篇著作: <a href="{{ site.baseurl }}/archives/2006/%E6%8E%8C%E6%8F%A1%20JavaScript%20%E7%9A%84%E3%80%8C%E5%B0%81%E8%A3%9D%E3%80%8D%E7%89%B9%E6%80%A7%2C%20part%201.html">掌握 JavaScript 的「封裝」特性, part 1 </a> 、<a href="{{ site.baseurl }}/archives/2006/%E6%8E%8C%E6%8F%A1%20JavaScript%20%E7%9A%84%E3%80%8C%E5%B0%81%E8%A3%9D%E3%80%8D%E7%89%B9%E6%80%A7%2C%20part%202.html">掌握 JavaScript 的「封裝」特性, part 2 </a> ，在此不多加說明。
+</div>
+
+<h5>
+isbn_report.php
+</h5>
+<p>
+以下是我實作的 ISBN 查詢系統範例。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$isbn_list</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'9787101070743'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'春秋左傳注'</span><span class="p">,</span> <span class="s1">'楊伯峻'</span><span class="p">,</span> <span class="s1">'Jan 01, 2009'</span><span class="p">),</span>
+    <span class="s1">'9789570809909'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'讀易三種'</span><span class="p">,</span> <span class="s1">'屈萬里'</span><span class="p">,</span> <span class="s1">'Jun 01, 1983'</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="nv">$isbn</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'isbn'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">'isbn'</span><span class="p">]</span> <span class="o">:</span> <span class="k">FALSE</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/^\w+$/'</span><span class="p">,</span> <span class="nv">$isbn</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="nv">$isbn</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"OccultReader.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+<span class="kd">function</span> <span class="nx">form_post</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"isbn"</span><span class="p">).</span><span class="nx">value</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"form1"</span><span class="p">).</span><span class="nx">submit</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">body_loaded</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">OccultReader</span><span class="p">.</span><span class="nx">setControl</span><span class="p">(</span><span class="s2">"isbn_entry"</span><span class="p">,</span>
+        <span class="p">{</span> <span class="na">onchange_handler</span><span class="p">:</span> <span class="nx">form_post</span> <span class="p">}</span>
+        <span class="p">);</span>
+<span class="p">}</span>
+<span class="nt">&lt;/script&gt;</span>
+
+<span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"Content-Type"</span> <span class="na">content=</span><span class="s">"text/html; charset=UTF-8"</span> <span class="nt">/&gt;</span>
+
+<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">"body_loaded();"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;h1&gt;</span>
+書籍查詢 (ISBN Read and Report)
+<span class="nt">&lt;/h1&gt;</span>
+
+<span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="nv">$isbn</span><span class="p">)</span><span class="o">:</span> <span class="cp">?&gt;</span>
+    <span class="nt">&lt;h2&gt;</span>書籍條碼: <span class="cp">&lt;?=</span><span class="nv">$isbn</span><span class="cp">?&gt;</span><span class="nt">&lt;/h2&gt;</span>
+
+    <span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">]))</span><span class="o">:</span> <span class="cp">?&gt;</span>
+        <span class="nt">&lt;p&gt;&lt;em&gt;</span>無此書籍資訊。<span class="nt">&lt;/em&gt;&lt;/p&gt;</span>
+    <span class="cp">&lt;?php</span> <span class="k">else</span><span class="o">:</span> <span class="cp">?&gt;</span>
+        <span class="nt">&lt;p&gt;</span>書名: <span class="cp">&lt;?=</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span><span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;p&gt;</span>作者: <span class="cp">&lt;?=</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">][</span><span class="mi">1</span><span class="p">];</span><span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;p&gt;</span>出版日期: <span class="cp">&lt;?=</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">][</span><span class="mi">2</span><span class="p">];</span><span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
+    <span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span>
+
+    <span class="nt">&lt;hr/&gt;</span>
+<span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>
+請將書籍背面的條碼放到條碼讀取區中。
+<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;</span>等待中...<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"isbn_entry"</span> <span class="na">type=</span><span class="s">"text"</span> <span class="nt">/&gt;</span>
+
+<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">action=</span><span class="s">"isbn_report.php"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"isbn"</span> <span class="na">name=</span><span class="s">"isbn"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+</code></pre>
+
+
+<p>
+當頁面載入完成後，便調用 <code>OccultReader.setControl()</code> ，指示 <dfn>isbn_entry</dfn> 控制項負責資料讀取，指定 <code>form_submit()</code> 為 <dfn>onchange_handler</dfn>。當取得資料後，便會調用 <code>form_submit()</code> ，送出查詢資料。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/8b7d2dde.png" alt="操作示例 - ISBN reader" />
+
+<p>
+控制項的掩蔽效果視瀏覽器而定，大部份瀏覽器只會看到游標閃爍，而不會看到輸入框。
+</p>
+
+<p>
+決定使用者的軟體操作經驗(或稱「<a href="http://en.wikipedia.org/wiki/Usability">易用性</a>」)的關鍵因素，通常不在軟體的功能強弱，而是在一些細微的連貫動作。
+在本文的案例中，便是將設定輸入焦點、取得資料、送出查詢三個動作連貫起來，令使用者不須在螢幕上進行其他操作，就可完成查詢動作。透過這樣小小的改變，就能達成改善操作經驗的目的。這是易於運用在 Kiosk 、旅客導覽系統等操作介面的技巧。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13676325.html">http://blog.roodo.com/rocksaying/archives/13676325.html</a></div>

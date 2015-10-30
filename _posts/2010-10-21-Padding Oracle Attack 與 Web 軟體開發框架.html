@@ -1,0 +1,44 @@
+---
+title: Padding Oracle Attack 與 Web 軟體開發框架
+category: computer
+old-category: 電腦技術
+tags: [web,資訊安全,hack]
+---
+<p>今天在 InfoQ 看到一篇關於破解金鑰加密技術的文章，<a href="http://www.infoq.com/cn/news/2010/10/Padding-Oracle">Padding Oracle 漏洞影响JSF,RoR及ASP.Net</a>。這篇文章的主要檢驗對象，是那些將用戶、表單等資料，經由金鑰加密方式，傳送給 Web 客戶端的 Web 軟體開發框架。破解理論及範例，都可以在作者 Juliano Rizzo & Thai Duong 的網站上找到，請參考 Rizzo 的網站: <a href="http://netifera.com/research/">netifera.com</a> 。
+</p>
+
+<p>利用 Padding Oracle 漏洞 (PO)，攻擊者不需要私鑰，就能在可預期的嘗試次數中，解出加密資料的原始內容。<q>The attack works within a complexity of O(NbW) in order to decrypt the message where W is the number of possible words (typically W = 256)</q>(<cite>Serge Vaudenay, 2002</cite>). 我不懂密碼學的理論，但看了作者示範的破解影像《<a href="http://youtube.com/watch?v=e46A-PUpDvk">Cracking CAPTCHA with Padding Oracle attack</a>》後，我猜想在某些狀態下，破解這種加密方式的通行碼之所需時間，短於破解雜湊法處理的通行碼。
+</p>
+
+<!--more-->
+<p>攻擊者一般使用窮舉法破解 MD5, SHA 這類雜湊法處理的資料(<span class="Onote">因為MD5,SHA是對資料進行雜湊運算，其結果不能還原，故嚴格來說並不是「加密」方法</span>)。就結果而言，不是全對就是全錯。但是對於應用了 RFC 2040 Cipher Block Chaining 演算法加密的資料，攻擊者運用 PO 漏洞，卻可以逐字地還原資料。這也意味著原始資料內容就算是隨機組成的字元、或是二進位資料文件，它都可以有效地還原全部或一部份內容。
+</p>
+
+<p>接著我們看看 Web 軟體開發框架在這方面又犯了什麼毛病？
+</p>
+
+<p>Juliano Rizzo & Thai Duong 的報告中，主要示範的攻擊對象是 JSF，不過 ASP.Net 也有相同的問題。我在以前任職的公司開發過 ASP.Net 的案子，所以對於 ASP.Net 中的 <dfn>ViewStatus</dfn> 仍有著深刻的記憶。ASP.Net 大量地使用 ViewStatus 實現狀態持續機制。各種控制元件的資料(包含變數以及使用者填寫的表單內容)，加密之後，透過 ViewStatus 在客戶端與伺服端之間來回傳遞。這是最受 PO 漏洞喜愛的活動環境。根據 InfoQ 的報導，微軟在收到作者的通知後，緊急在十天後發佈了一項計劃外的安全更新，顯示 ASP.Net 受到地威脅有多麼嚴重。
+</p>
+
+<p>有趣地是，PHP 在這波威脅中，處於低風險區。在我的印象中，PHP 似乎還沒有開發框架透過 ViewStatus 這種途徑支援狀態持續機制，因此 PHP 程序員得要自己處理這事。PHP 程序員在保存使用者狀態時，通常有兩種做法。第一，以明文形式，在客戶端與伺服端之間傳送使用者的狀態資料。第二，用 PHP Session 。
+</p>
+
+<p>第一種的明文方式，就算沒有這篇 PO 漏洞報告，我們也毫無疑義地知道這是一種很愚蠢的方式。不需要討論。
+</p>
+
+<p>第二種的 PHP Session 方式，則是將使用者狀態資料儲存在伺服端；傳送給客戶端的只是一個與使用者資料內容無關的鍵值(SessionID) 。PHP 使用這個鍵值，存取在伺服端的使用者狀態資料。在它的處理過程中，使用者的狀態資料並不會被傳送到客戶端，故而倖免於 PO 漏洞之威脅。
+</p>
+
+<p>Juliano Rizzo & Thai Duong 的報告中提到了幾點防治措施。
+</p>
+
+<ul>
+    <li>關閉你的開發框架預設的錯誤輸出訊息。這其實是一項廣泛而通用的安全守則。開發人員也許很討厭看到 Servlet, ASP.Net 或 PHP 網站丟出的錯誤訊息頁，但是攻擊者很高興看到這些內容。因為那些內容不只提供開發人員除錯的資訊，也為攻擊者提供了入侵方式的提示訊息。PHP 程序員謹記，開發時期將 <a href="http://www.php.net/manual/en/function.error-reporting.php">error_reporting</a> 設為 <dfn>E_ALL</dfn>；部署到客戶系統時，必須將 <dfn>error_reporting</dfn> 設為 0 。</li>
+    
+    <li>如非必要，不要把使用者狀態資料傳送到客戶端。在我的經驗中，還真的很少遇到必須在客戶端保存狀態資料的案例。就算有必要， PHP Session 的解決方案也是更為理想的方案；我大部份時候都用 PHP 開發網站，採用這種方案是天經地義的事。</li>
+    
+    <li>對於傳送到客戶端的狀態相關資訊，確認其完整性。逾時失效就是一種常見的保護。</li>
+    
+    <li>Ruby on Rails: 報告中指出，檢查你用到 <code>ActiveSupport::MessageEncryptor</code> 的程式碼。<q>Fortunately, ActiveSupport::MessageEncryptor is not widely used.</q>(<cite>Juliano Rizzo & Thai Duong, 2010</cite>)</li>
+
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/14245311.html">http://blog.roodo.com/rocksaying/archives/14245311.html</a></div>

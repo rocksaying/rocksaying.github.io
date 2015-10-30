@@ -1,0 +1,188 @@
+---
+title: JavaScript 與 Desktop - WebKit
+category: programming
+old-category: JavaScript
+tags: [web,javascript,gjs,seed,webkit]
+---
+<p>
+繼《<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a> 》，本文將說明 gjs/seed 如何結合 GTK 和 WebKit 設計 GUI。由於本系列文章的重點，放在將 Web UI 的開發經驗延續到桌面軟體的開發上，因此在 GTK 方面僅著墨於如何開啟一個視窗，並加入一個 WebKit 元件；換一個較易理解的說法是，建立一個桌面視窗，並嵌入一個 Web 瀏覽器呈現網頁內容。
+</p>
+
+<!--more-->
+<p>
+gjs/seed 藉由 GNOME GObject Introspection 機制結合既有的 glib bindings ，包括 GTK, WebKit 在內。這使得它們的開發團隊不需要額外維護與擴充自己的函數庫。在 gjs/seed 中使用 GTK, WebKit 等函數庫的方式，和其他程式語言環境相差無幾。對於曾經使用過 GTK, WebKit 的使用者而言，可以延續以往的使用經驗，不需重新學習。當然對於不曾接觸過 GTK 和 WebKit 的使用者而言，還是要學一些東西。
+</p>
+
+<h5>
+GTK and WebKit
+</h5>
+
+<p>
+想要開發一個桌面 GUI 軟體，第一件要做的事，就是建立一個視窗。視窗建立之後，我們才有一個容器，可以讓我們擺放其他的視覺化元件，例如選單、面板、按鍵、表單等等。
+</p>
+<p>
+在 Linux 桌面環境中，有許多 GUI 函數庫，最被廣泛使用的是 GTK 和 Qt 。由於 GTK 和 GNOME Library 的整合度最高，因此基於 GNOME Library 的開發工具通常也採用 GTK 開發 GUI 軟體。gjs/seed 自然也如此。
+</p>
+
+<p>
+Debian/Ubuntu 的使用者需要安裝以下套件: gir1.0-gtk-2.0, gir1.0-webkit-1.0, gir1.0-soup-2.4 。 <dfn>gir</dfn> 是 GObject Introspection Repository 之意。與其綁定的函數庫，可以被其他支援 gir 的程式語言載入。gjs/seed 就是透過這個途徑，使用 GTK, WebKit 等函數庫。
+</p>
+
+<p>
+我們來看看我們的第一個範例程式: gtk.js 。它的工作很簡單，調用 GTK 建立一個視窗，再往上面擺一個 WebKit 元件。至於視窗上的畫面內容，就全部使用 HTML+CSS 設計，交給 WebKit 元件呈現。
+</p>
+
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">Gtk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">WebKit</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">WebKit</span><span class="p">;</span>
+<span class="c1">// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
+</span>
+
+<span class="nx">GLib</span><span class="p">.</span><span class="nx">set_prgname</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">);</span>
+<span class="nx">Gtk</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">();</span>
+
+<span class="c1">//GTK event: destroy
+</span>
+<span class="k">if</span> <span class="p">(</span><span class="s1">'signal'</span> <span class="k">in</span> <span class="nx">w</span><span class="p">)</span> <span class="c1">// Seed implementation
+</span>
+    <span class="nx">w</span><span class="p">.</span><span class="nx">signal</span><span class="p">.</span><span class="nx">hide</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
+<span class="k">else</span>
+    <span class="nx">w</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"destroy"</span><span class="p">,</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebKit</span><span class="p">.</span><span class="nx">WebView</span><span class="p">();</span>
+<span class="nx">w</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">view</span><span class="p">);</span>
+
+<span class="nx">view</span><span class="p">.</span><span class="nx">load_html_string</span><span class="p">(</span><span class="s1">'&lt;p&gt;hello &lt;em&gt;world&lt;/em&gt;. '</span> <span class="o">+</span>
+    <span class="s1">'&lt;a href="http://www.google.com"&gt;Google&lt;/a&gt;&lt;/p&gt;'</span><span class="p">,</span>
+    <span class="s2">"file://null"</span><span class="p">);</span> <span class="c1">//base url
+</span>
+
+<span class="cm">/*
+typedef enum
+{
+  GTK_WIN_POS_NONE,
+  GTK_WIN_POS_CENTER,
+  GTK_WIN_POS_MOUSE,
+  GTK_WIN_POS_CENTER_ALWAYS,
+  GTK_WIN_POS_CENTER_ON_PARENT
+} GtkWindowPosition;
+*/</span>
+<span class="nx">w</span><span class="p">.</span><span class="nx">set_position</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">//GTK_WIN_POS_CENTER
+</span>
+<span class="nx">w</span><span class="p">.</span><span class="nx">show_all</span><span class="p">();</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s2">"Working..."</span><span class="p">)</span>
+<span class="nx">Gtk</span><span class="p">.</span><span class="nx">main</span><span class="p">();</span> <span class="c1">// gtk loop, quit by main_quit().
+</span>
+<span class="nx">print</span><span class="p">(</span><span class="s2">"Goodbye"</span><span class="p">);</span>
+
+</code></pre>
+
+
+<p>
+執行它，就會在畫面中間看到一個我們建立的視窗以及用 HTML 描述的內容。
+</p>
+<pre class="language-term">
+$ gjs gtk.js
+Working...
+Goodbye
+</pre>
+
+<p>
+由於 gjs/seed 都是載入同一個 GNOME GTK Library ，所以兩者的 GTK 使用方式基本相同。但是對於 GTK Signal 的處理方式有所差異。gjs 使用 <dfn>Widget::connect()</dfn> 方法指派 GTK Signal 的傾聽者；seed 則是使用 <dfn>Widget::signal.???.connect()</dfn>。本文基本上以 gjs 為主要工具，故以下範例若無特別說明，皆只適用 gjs 。
+</p>
+
+<p>
+GTK 視窗 API 的參考文件，請見 <a href="http://library.gnome.org/devel/gtk/2.15/GtkWindow.html">GTK+ Reference Manual</a>。WebKitGtk+ API 的參考文件，請見 <a href="http://webkitgtk.org/reference/index.html">WebKitGTK+ Reference Manual</a> 。只是這兩份文件都是 C 語言 API 的文件，不具 C 語言基礎者閱讀時要多花點功夫。
+</p>
+
+
+<h5>
+將既有的 Web 軟體搬到桌面軟體中
+</h5>
+<p>
+為了展示 HTML5 向桌面軟體開發領域延伸的企圖，我曾經用 HTML5 結合 XULRunner 寫了一篇文章，即《<a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a>》。由於 HTML5 是一種與開發環境無關的 UI 描述語言，它所描述的 UI 內容，不只可以被 XULRunner 使用，也可以用於 WebKit。本節將直接使用《<a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a>》所使用的 html,css 等內容於 WebKit 中。我們只需要讓 WebKit 載入我們的首頁。
+</p>
+
+<div class="note">
+XULRunner 和 WebKit 一樣，都是 HTTP client + HTML/CSS render + JavaScript <a href="http://www.google.com/url?q=http://www.w3.org/DOM/">DOM</a> host。所以它們都可以呈現 HTML/CSS 的內容，並提供我們一個以 JavaScript 控制 DOM (W3C Document Object Model) 的環境。
+</div>
+
+<p>
+執行本節的範例程式(gtk-webkit.js)需要下列文件。那些文件都是《<a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a>》用過的，請參考該文，本文不在列出它們的內容。
+</p>
+<ul>
+    <li>index.html</li>
+    <li>site.js</li>
+    <li>jquery-1.4.2.min.js</li>
+    <li>Big_Buck_Bunny_small.ogv</li>
+    <li>butterfly.svg</li>
+</ul>
+<p>
+上列文件內容，我仍然保留著，都存在 /home/rock/hello_xulrunner/chrome/context 的目錄下。我接下來要做的事，就是用 <dfn>WebKitView::load_uri()</dfn> 方法，讓 WebKit 載入我放在那個目錄下的 index.html 。
+</p>
+
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">Gtk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">WebKit</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">WebKit</span><span class="p">;</span>
+<span class="c1">// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
+</span>
+
+<span class="nx">GLib</span><span class="p">.</span><span class="nx">set_prgname</span><span class="p">(</span><span class="s1">'hello webkit'</span><span class="p">);</span>
+<span class="nx">Gtk</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">();</span>
+
+<span class="c1">//GTK event: destroy
+</span>
+<span class="nx">w</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"destroy"</span><span class="p">,</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebKit</span><span class="p">.</span><span class="nx">WebView</span><span class="p">();</span>
+<span class="nx">w</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">view</span><span class="p">);</span>
+
+<span class="c1">// WebKit: for security reason, you must give absolute path.
+</span>
+<span class="nx">view</span><span class="p">.</span><span class="nx">load_uri</span><span class="p">(</span><span class="s2">"file:///home/rock/hello_xulrunner/chrome/content/index.html"</span><span class="p">);</span>
+
+<span class="nx">w</span><span class="p">.</span><span class="nx">set_position</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">//GTK_WIN_POS_CENTER
+</span>
+<span class="nx">w</span><span class="p">.</span><span class="nx">show_all</span><span class="p">();</span>
+
+<span class="nx">Gtk</span><span class="p">.</span><span class="nx">main</span><span class="p">();</span> <span class="c1">// gtk loop, quit by main_quit().
+</span>
+<span class="nx">print</span><span class="p">(</span><span class="s2">"Goodbye"</span><span class="p">);</span>
+
+</code></pre>
+
+
+<img src="http://blog.roodo.com/rocksaying/2ceed40d.png" alt="gjs gtk-webkit.js" />
+
+<p>
+基於安全理由，WebKit 不允許使用相對路徑指向本地文件。所以呼叫 <dfn>load_uri()</dfn> 時，必須給它絕對路徑。而在 index.html 中所使用的其他外部資源，只要以相對路徑描述者，皆使用 <dfn>load_uri()</dfn> 載入之文件的目錄路徑，作為基礎路徑 (base url)。
+</p>
+
+<h5>
+小結
+</h5>
+<p>
+本節的兩個範例，只是示範如何使用 gjs/seed 建立桌面視窗軟體，並透過 WebKit 使用 HTML+CSS 處理 UI。但還只是讓 WebKit 與網路上的資源互動，就像是普通的 Web 軟體一樣。我接下來還會寫一篇文章，說明如何讓 WebKit 中的程式與桌面環境互動，例如調用 D-Bus 。
+</p>
+
+<p>
+我曾經使用 PHP, Ruby 甚至 Python ，結合 Glade 設計 GUI 軟體，例如《<a href="{{ site.baseurl }}/archives/2007/%E4%BB%A5%20PHP-GTK%20%2B%20Glade%20%E8%A8%AD%E8%A8%88%E6%A1%8C%E9%9D%A2%E6%87%89%E7%94%A8%E7%A8%8B%E5%BC%8F%20-%20%E6%B7%B7%E5%90%88%20Web%20%E6%87%89%E7%94%A8%E7%A8%8B%E5%BC%8F%E7%9A%84%20MVC%20%E6%9E%B6%E6%A7%8B%E6%95%8F%E6%8D%B7%E9%80%94%E5%BE%91.html">以 PHP-GTK + Glade 設計桌面應用程式 - 混合 Web 應用程式的 MVC 架構途徑</a> 》。不過結合 WebKit 還是頭一遭。我也還在摸索 WebKit 的使用技巧，歡迎各位提供意見。
+</p>
+
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a> - 本系列文章第一篇</li>
+    <li><a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a></li>
+    <li><a href="http://library.gnome.org/devel/gtk/2.15/GtkWindow.html">GTK+ Reference Manual</a> - GTK 視窗 API 參考文件.</li>
+    <li><a href="http://webkitgtk.org/reference/index.html">WebKitGTK+ Reference Manual</a> - WebKitGtk+ API 參考文件.</li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20Desktop%20and%20WebKit.html">JavaScript 與 Desktop - Desktop and WebKit</a></li>
+<li><a href="{{ site.baseurl }}/archives/2013/Touch%20IME%20%E4%BD%BF%E7%94%A8%E5%9C%A8%E5%B5%8C%E5%85%A5%20WebKit%20%E7%9A%84%E5%A0%B4%E5%90%88.html">Touch IME 使用在嵌入 WebKit 的場合</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/14282187.html">http://blog.roodo.com/rocksaying/archives/14282187.html</a></div>

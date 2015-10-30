@@ -1,0 +1,193 @@
+---
+title: 打造 Windows XP 與 Linux 的雙桌面環境
+category: computer
+old-category: 電腦技術
+tags: [linux,ubuntu,desktop,virtualbox]
+---
+<p>在 Windows XP 主端桌面系統上，安裝 Ubuntu Linux 桌面系統虛擬機器。利用 VirtualBox 的無縫模式與共用資料夾功能，形成雙桌面環境。
+</p>
+<p>
+MS Windows 7 專業版有一個 XP 相容模式。它骨子裡就是跑一個 XP 的虛擬機器，然後用 seamless (無縫模式) 執行 XP 軟體。這個玩法，我十幾年前使用 IBM OS/2 3.0 時就玩過了，那時是把 Windows 3.1 以無縫模式嵌在 OS/2 桌面中，讓 Windows 3.1 的軟體跑起來像其他的 OS/2 軟體。啊，年紀大了就喜歡話當年。<a href="{{ site.baseurl }}/archives/2005/OS_2%20%E7%B5%82%E6%96%BC%E7%B5%90%E6%9D%9F%E4%BA%86....html">用過 OS/2 的人大概沒幾個了</a>。不講古，回正題。
+</p>
+
+<p>
+我在家中的桌面電腦使用的是運作多年的 Windows XP，利用 VirtualBox 安裝了一個 Ubuntu Linux 桌面的虛擬機器。接著，為了實現我的雙桌面目標，我在 Ubuntu 虛擬機器中安裝 VirtualBox 客端額外功能(Guest Additions)，以便啟用無縫模式以及共用資料夾功能。
+</p>
+
+<!--more-->
+<h4>
+雙桌面環境使用情形
+</h4>
+
+<p>
+透過 VirtualBox 的無縫模式， Ubuntu Linux 虛擬機器的桌面環境被嵌入在 Windows XP 的桌面環境中。 Ubuntu Linux 的軟體可以在桌面上隨意移動，剪貼簿的資料也可以在兩邊共用 - 我可以從 Windows 記事本中複製一段文字，然後直接往 Linux Gedit 中貼上那段文字。如果沒有注意到視窗邊框的外觀，旁觀者甚至不會注意到我在用的軟體實際上運行於虛擬機器中。在這個雙桌面環境中，我可以同時使用 Windows 軟體與 Linux 軟體。
+</p>
+<p>
+僅僅是軟體的同時運作還沒有什麼實際的應用價值。配合「共用資料夾」功能，可以將 Windows XP 主端的資料夾內容(甚到是整個磁碟)，都掛載到 Ubuntu Linux  虛擬機器的使用者目錄上。如果安排得當，使用者可以將 Windows 的主要工作資料夾，都一一對應掛載到 Ubuntu 的家目錄工作資料夾。例如 Windows 的「我的文件」掛載到 Ubuntu 的「$HOME/Documents」；「桌面」掛載到「$HOME/Desktop」；其餘類推。兩邊的資料存放處都是同一個地方。如此一來，我使用的 Windows 軟體與 Linux 軟體，實際上看到與操作的文件都會是同一份。我不需要自己把文件複製到虛擬機器之中用 Linux 軟體處理後，再把文件複製出來用 Windows 軟體去處理。這一切都不需要做了。
+</p>
+
+<p>
+下圖是我的雙桌面環境實際運作的擷圖。為了方便左右並列兩邊的軟體，又不至於把文章頁面拉寬，這圖是在螢幕轉90度直立的情況下擷取的。螢幕解析度是 1200x1920，點擊下圖可看原始尺寸的大圖。
+</p>
+
+<a href="http://blog.roodo.com/rocksaying/9bd7d315.png"><img src="http://blog.roodo.com/rocksaying/9bd7d315.png" alt="雙桌面環境運作圖 (點擊看大圖)" width="800" height="1267" /></a>
+
+<p>
+首先請讀者看圖片下方，你會看到兩列工作列，下面一列是 Windwos XP 桌面的工作列，上面一列則是 Ubuntu Linux 桌面的工作列。畫面中，我分別啟動了檔案管理員、影片播放軟體以及系統資源監視器。我排在左方的都是 Windows XP 軟體，排右方的則是 Linux 軟體。
+</p>
+<p>
+從資源監視器可以看出我的桌面電腦的硬體規格很普通。這台電腦差不多是我二年前組裝的。AMD Athlon 4850e CPU， 2GB RAM，Ati Radeon HD4670 1GB記憶體的顯示卡。在運作過程中，兩邊的記憶體用量都還相當有餘裕。在同時播放同一段影片時的 CPU 使用率也都未超過 50%。在實際的操作過程中，我並未察覺哪一邊跑起來有遲頓感。嗯... 好吧，至少有一種情況，虛擬機器這邊跑起來很糟。因為 VirtualBox 不支援 Linux 虛擬機器影像硬體加速播放(硬體解碼)，所以在 Linux 虛擬機器中播放 1080P 影片時，掉格嚴重，播不動。不過 720P 影片還是很順暢，但這要決定於顯示卡的效能規格；如果你是用整合型顯示晶片，可能你的 Linux 虛擬機器還是播不動 720P 影片。
+</p>
+<p>
+再來看到畫面最上方的檔案管理員。因為我用 VirtualBox 的共用資料夾功能，將 Windows XP 的桌面資料夾掛載到 Linux 虛擬機的「$HOME/Desktop」上，所以兩邊的桌面文件內容，其實是一樣的。兩邊桌面上看到的那段影片，就是同一份文件。我用兩邊的軟體同時去播這一段影片。兩邊播放都很順。
+</p>
+
+<h4>
+安裝 Ubuntu Linux 客端桌面
+</h4>
+
+<h5>
+基本安裝
+</h5>
+<p>
+我的 Windows XP 主端桌面，採用的 VirtualBox 版本是 3.1.6。安裝 Ubuntu 10.04 i386 桌面版作為我的 Ubuntu Linux 客端桌面。作為客端的桌面系統，有許多軟體功能都用不到，桌面特效也看不見，所以讀者們可以選擇輕量化的 Linux 桌面套件，例如 Xubuntu, Lubuntu ，甚至自己用 Debian 打造。我因為手上正好就有 Ubuntu 10.04 的 CD ISO 檔就裝這套。裝好後再把用不著的軟體移除或替換，砍成一個輕量化桌面。這些工作其實很簡單，靠套件管理程式(Synaptic)就夠了，不需要手動編輯修改某某檔案。
+</p>
+<p>
+作為客端的桌面系統，我分配給它的資源是 8GB 虛擬硬碟，640MB記憶體，一張音效卡(ICH AC97)，一張 NAT 網路卡，以及啟用無縫模式最低所需的10MB視訊記憶體。至於 Ubuntu 10.04 的安裝過程就不說了。反正會把這篇文章持續看到這一段的人，應該都有 Ubuntu 的使用經驗了。
+</p>
+
+<p>
+按照預設的安裝程序，安裝完成並重新啟動 Ubuntu Linux 虛擬機器後(<span class="Onote">我建議先把系統提示要更新的套件都更新，才進行後續工作</span>)。我們首先要在客端系統中安裝 VirtualBox 的客端額外功能(Guest Additions)。幸運的是，這在 Ubuntu 10.04 中有一組現成的套件可用。請直接安裝套件 <dfn>virtualbox-ose-guest-x11</dfn>、<dfn>virtualbox-ose-guest-utils</dfn>。套件安裝程式會幫我們完成相關工作，裝好之後再重新啟動 Ubuntu 虛擬機器即可(<span class="Onote">如果安裝 VirtualBox 客端額外套件有問題發生，或是你想自己安裝最新版本，你需要手動安裝。我的部落格上有另外兩篇文章記錄了舊版 VirtualBox 安裝客端額外功能時的內容。需要者可以參考</span>)。重新啟動並登入桌面後，你就會發現你可以隨意移動滑鼠、改變虛擬機器的桌面大小，也可以啟用無縫模式。
+</p>
+
+<h5>
+掛載工作資料夾
+</h5>
+<p>
+安裝客端額外功能之後，除了滑鼠整合以及無縫模式之外，還可以使用共用資料夾功能。接著我們要利用共用資料夾功能，將 Windows 主端的資料夾內容掛載到 Ubuntu 客端的對應用途資料夾上，實現兩邊的文件共用目標。
+</p>
+<p>
+在我的環境下，我的工作資料夾對照關係如下表。我的桌面和我的文件的資料夾位置都用 tweakui 調整過，所以不是預設的 C:\Docu.... (略)。另外我的 D 磁碟是一整顆專放各式資料文件的區域，我也把它整個掛上去。
+</p>
+
+<table border="1" cellspacing="0" cellpadding="0">
+    <tr>
+        <th>用途</th>
+        <th>Windows 資料夾</th>
+        <th>VirtualBox 共用資料夾名稱</th>
+        <th>Ubuntu 掛載資料夾</th>
+    </tr>
+    <tr>
+        <td>桌面</td>
+        <td>C:\Desktop</td>
+        <td>DESKTOP</td>
+        <td>/home/rock/Desktop</td>
+    </tr>
+    <tr>
+        <td>我的文件</td>
+        <td>C:\User</td>
+        <td>DOCUMENTS</td>
+        <td>/home/rock/Documents</td>
+    </tr>
+    <tr>
+        <td>最近下載</td>
+        <td>C:\User\Downloads</td>
+        <td>DOWNLOADS</td>
+        <td>/home/rock/Downloads</td>
+    </tr>
+    <tr>
+        <td>我的音樂</td>
+        <td>D:\music</td>
+        <td>MUSIC</td>
+        <td>/home/rock/Music</td>
+    </tr>
+    <tr>
+        <td>D:</td>
+        <td>D:\</td>
+        <td>D_DRIVE</td>
+        <td>/home/rock/Data</td>
+    </tr>
+</table>
+
+<p>
+基於過去使用 fstab mount 的失敗經驗，我選擇將上述共用資料夾的掛載工作，寫進 <dfn>/etc/rc.local</dfn> 之中。我用了一些 mount.vboxsf 的額外參數調整掛載後的文件屬性。參數用途與意義請自己查看說明:<kbd>sudo mount.vboxsf --help</kbd>。
+</p>
+
+<pre class="language-text">
+# rc.local
+#
+# 在此省略 /etc/rc.local 原有內容，請不要用這份文件直接覆蓋原有的內容。
+#
+# 請將共用資料夾的掛載指令加在 exit 0 之前。
+#
+
+MOUNT_OPTIONS="-o uid=1000,gid=1000,dmode=755,fmode=644,umask=022"
+MOUNT_CMD=mount.vboxsf
+
+MOUNT="$MOUNT_CMD $MOUNT_OPTIONS DESKTOP /home/rock/Desktop"
+echo $MOUNT; sudo $MOUNT
+
+MOUNT="$MOUNT_CMD $MOUNT_OPTIONS D_DRIVE /home/rock/Data"
+echo $MOUNT; sudo $MOUNT
+
+MOUNT1="$MOUNT_CMD $MOUNT_OPTIONS DOCUMENTS /home/rock/Documents"
+echo $MOUNT; sudo $MOUNT
+
+MOUNT1="$MOUNT_CMD $MOUNT_OPTIONS DOWNLOADS /home/rock/Downloads"
+echo $MOUNT; sudo $MOUNT
+
+MOUNT1="$MOUNT_CMD $MOUNT_OPTIONS MUSIC /home/rock/Music"
+echo $MOUNT; sudo $MOUNT
+
+exit 0
+
+</pre>
+
+<p>
+請各位依自己的情況調整上述的掛載動作。掛載之後，打開兩邊桌面的檔案管理員看看吧。兩邊的文件都將是同一份。
+</p>
+
+<h5>
+輕量化 Ubuntu 桌面
+</h5>
+<p>
+基本上，完成前兩節的動作後，雙桌面環境就成形了。本節的動作只是要調整一些 Ubuntu 客端桌面的效能，讓整個環境運作更順暢。
+</p>
+
+<p>
+我們第一個可以開刀砍掉的東西，就是桌面管理程式。當我們啟用無縫模式之後，Ubuntu 客端系統的桌面就消失了，只剩下工作列(gnome-panel)。這表示客端系統上的桌面管理程式完全用不著，什麼桌面特效也不用看了。像我就移除 compiz ，關掉 nautilus 的桌面管理工作。外觀的桌布也關掉，只留背景色。
+</p>
+<p>
+然後我覺得 GDM 也沒用。客端系統就單一用戶，而且我基本上都不會重新啟動 Ubuntu 客端系統，根本用不著登入。平白無故放一個 GDM 在背景待著，實在很浪費。所以我也把 GDM 關掉了。在 Ubuntu 10.04 關掉 GDM 的方式是將 <dfn>/etc/init/gdm.conf</dfn> 刪除或改變副檔名，例如改名為 gdm.conf-disable(<span class="Onote"><a href="http://serverfault.com/questions/137776/disable-gdm-in-ubuntu-10-04">Disable gdm in Ubuntu 10.04</a></span>)。重新啟動客端系統後，我們就會看到親切的文字終端機登入提示畫面了。開機後先從文字終端機登入 Ubuntu 系統，再執行 <kbd>startx</kbd> 啟動 Ubuntu 桌面。當我要關閉機器時，我是用 VirtualBox 的「儲存機器狀態」的功能關掉，這樣我下次就可以很快地叫出 Ubuntu 客端桌面，而不必再從頭啟動。
+</p>
+
+<p>
+如果你不想自己動手做桌面的精簡化工作，你可以直接選擇 Xubuntu 或 Lubuntu 作為客端的桌面系統。但不論你計劃如何精簡客端桌面的內容，我建議你一定要保留一個工作列程式，例如 gnome-panel 或 lxpanel。因為在 VirtualBox 無縫模式時，Linux 桌面被隱藏起來，你摸不到桌面。所以傳統在 X 畫面空白處按滑鼠右鍵叫出程式選單的方法不能用。你一定要留著一個具有啟動軟體之功能的工作列程式。像我的輕量化桌面的慣用組合是 openbox + tint2 。但因 tint2 不具有啟動軟體的功能，就不適用這個場合。所以我的雙桌面環境是用 openbox + lxpanel。
+</p>
+
+
+<h5>
+參考資料
+</h5>
+
+<ul>
+    <li>
+    <a href="{{ site.baseurl }}/archives/2008/Mount%20VirtualBox%27s%20shared%20folders%20in%20linux.html">Mount VirtualBox's shared folders in linux</a>
+    </li>
+
+    <li>
+    <a href="{{ site.baseurl }}/archives/2009/VirtualBox%20%E4%BB%A5%20Ubuntu%20%E4%BD%9C%E7%82%BA%20Guest%20OS%20%E6%99%82%E7%9A%84%E5%AE%A2%E7%AB%AF%E9%A1%8D%E5%A4%96%E5%8A%9F%E8%83%BD%E4%BD%BF%E7%94%A8%E7%AD%86%E8%A8%98.html">VirtualBox 以 Ubuntu 作為 Guest OS 時的客端額外功能使用筆記</a>
+    </li>
+
+    <li>
+    <a href="{{ site.baseurl }}/archives/2010/VirtualBox%20%E8%88%87%20Debian_Ubuntu%20%E5%AE%A2%E7%AB%AF%E9%A1%8D%E5%A4%96%E5%8A%9F%E8%83%BD%28Guest%20Additions%29%E8%A3%9C%E9%81%BA.html">VirtualBox 與 Debian/Ubuntu 客端額外功能(Guest Additions)補遺</a>
+    </li>
+
+    <li>
+    <a href="http://forums.virtualbox.org/viewtopic.php?f=3&t=15679">Howto: Install Linux Guest Additions + Xorg config</a>
+    </li>
+
+    <li>
+    <a href="http://forums.virtualbox.org/viewtopic.php?f=29&t=15868">HOWTO: Use Shared Folders</a> - gedit 的使用者，有一個已知的 BUG。你無法使用 gedit 修改儲存一份共用資料夾中的文件。
+    </li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/14622671.html">http://blog.roodo.com/rocksaying/archives/14622671.html</a></div>

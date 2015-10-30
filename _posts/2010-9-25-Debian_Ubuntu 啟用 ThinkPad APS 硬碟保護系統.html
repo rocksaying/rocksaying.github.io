@@ -1,0 +1,51 @@
+---
+title: Debian/Ubuntu 啟用 ThinkPad APS 硬碟保護系統
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,debian,thinkpad]
+---
+<p>
+我的 ThinkPad 用了半年以上，前一陣子才注意到 Ubuntu 系統沒有啟動 ThinkPad 的 <a href="http://www.thinkwiki.org/wiki/Active_Protection_System">APS</a> 硬碟保護系統，真是太疏忽大意了。幸好 Ubuntu 10.04 提供了相關套件 (<dfn>hdapsd</dfn>)，直接安裝後即可啟用 APS 功能。其他 Linux 散佈版本的使用者，請參考 ThinkWiki 的《<a href="http://www.thinkwiki.org/wiki/How_to_protect_the_harddisk_through_APS">How to protect the harddisk through APS</a>》。
+</p>
+
+<!--more-->
+<p>
+安裝:
+</p>
+<pre class="language-term">
+$ sudo apt-get install hdapsd
+
+</pre>
+<p>
+安裝後，重新開機。如果你熟悉 Linux 系統，你也可以直接載入 hdaps 模組 (<kdb>insmod hdaps</kdb>)，再啟動 <dfn>/etc/init.d/hdapsd</dfn> ，不須重新開機。開機後查看 dmesg 確認 hdaps 是否成功載入了。出現下列訊息就是載入了。
+</p>
+<pre class="language-term">
+$ dmesg | grep hdaps
+hdaps: device successfully initialized.
+hdaps: driver successfully loaded.
+
+</pre>
+<p>
+如果開機時沒有自動載入 hdaps 模組，你可能需要編輯 <dfn>/etc/modules</dfn> ，自行將 hdaps 加入其中。
+</p>
+<p>
+確定 hdaps 載入後，我們再進一步確定此功能是否會如預期般運作。首先儲存下列的指令稿，並執行它 (它會一直顯示0，直到你按 Ctrl+C中止它)。接著用手拿起你的小黑，輕輕晃動一下。只要 hdaps 正常運作的話，你就會看到執行中的指令稿顯示 "<em>unload disk heads</em>" 的訊息。房間安靜的話，你還會聽到"卡"地一聲。這就表示 hdaps 確實啟動了 APS 系統保護你的硬碟。
+</p>
+
+<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+
+<span class="k">while </span><span class="nb">true</span>; <span class="k">do
+  </span><span class="nv">v</span><span class="o">=</span><span class="sb">`</span>cat /sys/block/sda/device/unload_heads<span class="sb">`</span>
+  <span class="nb">echo</span> <span class="nv">$v</span>
+  <span class="k">if</span> <span class="o">[</span> <span class="s2">"</span><span class="nv">$v</span><span class="s2">"</span> !<span class="o">=</span> <span class="s2">"0"</span> <span class="o">]</span>; <span class="k">then</span>
+    <span class="c">#break</span>
+    <span class="nb">echo</span> <span class="s2">"unload disk heads"</span>
+  <span class="k">fi
+  </span>sleep 1s
+<span class="k">done</span>
+</code></pre>
+
+
+<p>
+附帶一提，如果你也在用 <dfn>tp_smapi</dfn> 模組的話(tp_smapi並不會影響hdaps的運作)，那麼 Ubuntu 10.04 已經提供了很好的整合。你只需要先安裝 <dfn>tp-smapi-dkms</dfn> 套件，再安裝 <dfn>hdapsd</dfn> 套件，不需要手動加入什麼參數。其他版本可能仍然需要在編譯 tp_smapi driver 時加入選項 <code>HDAPS=1</code>。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13873769.html">http://blog.roodo.com/rocksaying/archives/13873769.html</a></div>

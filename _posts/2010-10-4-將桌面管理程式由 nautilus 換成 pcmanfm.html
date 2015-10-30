@@ -1,0 +1,104 @@
+---
+title: 將桌面管理程式由 nautilus 換成 pcmanfm
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,nautilus,pcmanfm]
+---
+<p>
+網路上可以找到許多將桌面管理程式由 nautilus 換成 pcmanfm 的教學文件。方法不一，各有疏漏。在此提供我的作法，供各位參考。
+</p>
+<p>
+我目前使用的桌面環境是 Ubuntu 10.04。
+</p>
+
+<!--more-->
+<h5>
+1. 將桌面管理程式由 nautilus 換成 pcmanfm
+</h5>
+
+<p>
+在 Debian/Ubuntu 桌面環境中，當我們透過 GDM 登入桌面後，它會依序啟動視窗管理程式(window manager)、桌面文件管理程式(desktop file manager)以及面板程式(panel)。實際負責這三個工作的應用程式，係由 GConf 組態中的下列三個項目指定。
+</p>
+<ul>
+    <li>視窗管理程式: /desktop/gnome/session/required_components/windowmanager
+    </li>
+    <li>桌面文件管理程式: /desktop/gnome/session/required_components/filemanager
+    </li>
+    <li>面板程式: /desktop/gnome/session/required_components/panel
+    </li>
+</ul>
+
+<p>
+我們僅需修改組態項目 <dfn>/desktop/gnome/session/required_components/filemanager</dfn> 將其由 nautilus 換成 pcmanfm ，即可改變桌面文件管理程式。你可以使用工具 <dfn>gconf-editor</dfn> 修改，或是使用工具 <dfn>gconftool-2</dfn>，執行 <kbd>gconftool-2 --set /desktop/gnome/session/required_components/filemanager --type string pcmanfm</kbd>。
+</p>
+
+<p>
+修改後重新登入桌面，你將發現桌面一片黑，什麼都沒有。這是正常的。請執行 pcmanfm ，進入「偏好設定 -> 桌面」。看到設定頁面後，勾選「管理桌面並顯示檔案圖示」，桌面上就會出現「我的文件」以及其他位於桌面目錄中之文件的圖示。桌面的桌布圖案也是在此設定頁面中選擇。
+</p>
+
+<p>
+如果你想要在桌面上增加「我的電腦」圖示，可執行下列指令實現: ps. 如果你的桌面的目錄名稱是中文的"桌面"，請自行將 "Desktop" 改成 "桌面"。
+</p>
+<pre class="language-term">
+cp /usr/share/applications/nautilus-computer.desktop ~/Desktop
+touch -d 1980-01-01 ~/Desktop/nautilus-computer.desktop
+</pre>
+
+<p>
+因為 pcmanfm 預設是按「修改日期」排列桌面的圖示，故將桌面之 nautilus-computer.desktop 的日期改成1980-01-01，讓它固定排在第二個位置。
+</p>
+
+<h5>
+2. 將「位置」面板的關聯程式換成 pcmanfm
+</h5>
+<p>
+當我們完成第一步驟後，僅將桌面文件程式換成 pcmanfm 。當你從面板的「位置」(Place)上，點選任一個資料夾時，你將發現它仍然使用 nautilus 顯示資料夾內容。因為「位置」面板是由 gnome-panel 所提供，它另有一套規矩。「位置」面板上各選項實際上對應到不同的程式，其對應關係如下圖所示。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/5fa1f5ba.png" alt="「位置」面板各部說明"/>
+
+<p>
+上圖所列出的對應程式中，pcmanfm 可以接替 nautilus-home.desktop 、nautilus-folder-handler.desktop 這兩項。但 pcmanfm 不支援 nautilus-computer.desktop 與 network-scheme.desktop ，所以這兩項仍然需要執行 nautilus。
+</p>
+
+
+<h6>
+change nautilus-home.desktop
+</h6>
+<p>
+編輯 /usr/share/applications/nautilus-home.desktop ，修改下列內容:
+</p>
+<pre class="language-text">
+#TryExec=nautilus
+#Exec=nautilus --no-desktop
+Exec=pcmanfm --no-desktop $HOME
+</pre>
+
+<h6>
+change nautilus-folder-handler.desktop
+</h6>
+<p>
+編輯 /usr/share/applications/nautilus-folder-handler.desktop ，修改下列內容:
+</p>
+<pre class="language-text">
+#TryExec=nautilus
+#Exec=nautilus --no-desktop %U
+Exec=pcmanfm --no-desktop %U
+</pre>
+
+<p>
+以上兩項修改工作，改完即生效，不須重新登入桌面。若未生效，則請手動執行指令 <kbd>sudo update-desktop-database</kbd>。
+</p>
+
+<h6>
+預設關聯程式清單
+</h6>
+<p>
+gnome-panel 的位置面板，將資料夾視為 MIME 型態為 <dfn>inode/directory</dfn> 與 <dfn>x-directory/normal</dfn> 的文件。點擊位置的資料夾項目時(即圖1 中對應到 nautilus-folder-handle.desktop 的項目)，其實是先查看預設關聯程式清單，發現 <dfn>inode/directory</dfn> 與 <dfn>x-directory/normal</dfn> 關聯到 nautilus-folder-handler.desktop ，才去載入 nautilus-folder-handler.desktop。
+</p>
+<p>
+那麼「預設關聯程式清單」在哪？它有兩處位置。系統預設關聯程式清單位於 /usr/share/applications/defaults.list；使用者個人預設關聯程式清單位於 $HOME/.local/share/applications.defaults.list。
+</p>
+<p>
+若你修改了 nautilus-folder-handle.desktop 之後，點擊位置面板的資料夾項目時卻仍然啟動原先設定的檔案管理程式時，請檢查預設關聯程式清單中，<dfn>inode/directory</dfn> 與 <dfn>x-directory/normal</dfn> 這兩項的內容。也許它們關聯到其他程式去了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13993877.html">http://blog.roodo.com/rocksaying/archives/13993877.html</a></div>

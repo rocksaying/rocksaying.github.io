@@ -1,0 +1,372 @@
+---
+title: Python - Pipe 在 Signal 發生時的處理事項
+category: programming
+old-category: Programming
+tags: [python,multiprocessing,pipe,signal,posix]
+---
+<p>
+當我在 Python 中結合 <dfn>multiprocessing.Pipe</dfn>、<dfn>multiprocessing.Process</dfn> 與 <dfn>signal</dfn> 模組進行傳統的多工行程設計時，我注意到被擱置的管道資料讀取方法(read)，在沒有取得資料的情形下就返回。使得父、子行程之間的互動過程不如預期。錯誤訊息顯示，讀取方法被系統中斷了(Interrupted system call)。<em>read, signal, interrupted system call</em> 這三個關鍵資訊，讓我直覺聯想到我碰到 <dfn>EINTR</dfn> 這個狀況了。當我在錯誤處理的流程中增加 <var>errno</var> 的判斷動作之後，我確認這就是 <dfn>EINTR</dfn> 狀況。
+</p>
+<p>
+一位使用過 C 語言撰寫多工行程程式的程序員，對 <dfn>EINTR</dfn> 這件事絕不陌生。只是我未料想到會在 Python 之中再度碰到這位老朋友。對於這位老朋友，我們的招待原則請看《<a href="{{ site.baseurl }}/archives/2006/%E5%A4%9A%E5%B7%A5%E4%BD%9C%E6%A5%AD%E4%B8%8B%E7%9A%84%E8%B3%87%E6%96%99%E8%AE%80%E5%AF%AB%E8%99%95%E7%90%86%E4%BA%8B%E9%A0%85%20-%20read%28%29_write%28%29%20%E8%A2%AB%20signal%20%E4%B8%AD%E6%96%B7%E7%9A%84%E8%99%95%E7%90%86.html">多工作業下的資料讀寫處理事項 - read()/write() 被 signal 中斷的處理</a> 》。那篇處理事項中，提到 C 語言要準備兩招應付 <dfn>EINTR</dfn> 狀況。不過使用 Python 時則只需要第一招：<q>如果錯誤是因為被 signal 中斷的話，就再讀一次，如果是其他原因導致的錯誤，則視為致命錯誤，應該中止程式繼續</q>。
+</p>
+
+<!--more-->
+<h4>
+典型的擱置式 I/O 處理模式
+</h4>
+
+<p>
+首先，我們先來看看典型的擱置式 I/O 處理模式。請看 blocking_io_without_signal.py。
+</p>
+
+<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
+            <span class="k">return</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+</code></pre>
+
+
+<p>
+這個範例程式，規劃了一對管道端子，分別交給父行程與子行程持有。父行程寫入資料，子行程等待讀取資料。當子行程讀到一行 "END" 之後，則結束子行程。
+</p>
+
+<pre class="language-term">
+$ python blocking_io_without_signal.py 
+sub process recv: fool
+sub process recv: END
+</pre>
+
+<p>
+程式執行5秒後輸出第一行 fool，再過5秒後輸出第二行 END。兩行程結束。
+</p>
+
+<p>
+接著，我要往這個典型的處理程式中，加入訊號。最常見的狀況，就是應用 <dfn>SIGALRM</dfn> 實現計時器的場合。在這個場合中，等待管道輸入資料的擱置中讀取行為，將會因此被訊號 <dfn>SIGALRM</dfn> 提前打斷。加入 SIGALRM 計時器的範例程式: unsafe_blocking_io_with_signal.py。
+</p>
+
+<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">alarm_timer</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"alarm(</span><span class="si">%</span><span class="s">d)"</span> <span class="o">%</span> <span class="n">signum</span><span class="p">)</span>
+        
+    <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">alarm_timer</span><span class="p">)</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c">#signal.siginterrupt(signal.SIGALRM, False)</span>
+    <span class="c"># this does not work perfectly.</span>
+
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
+            <span class="k">return</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="c"># this will be interrupted by any signal.</span>
+    <span class="c"># If you are an expert Unix/POSIX programmer, you will invoke sigaction() </span>
+    <span class="c"># with SA_RESTART to avoid this behaviour. That is modern way.</span>
+    <span class="c"># But Python does not provide this way, therefore you need to use </span>
+    <span class="c"># traditional way.</span>
+    <span class="c"># See also:</span>
+    <span class="c"># http://bugs.python.org/msg102725</span>
+
+    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+</code></pre>
+
+
+<pre class="language-term">
+$ python unsafe_blocking_io_with_signal.py 
+alarm(14)
+Process Process-1:
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/multiprocessing/process.py", line 232, in _bootstrap
+    self.run()
+  File "/usr/lib/python2.6/multiprocessing/process.py", line 88, in run
+    self._target(*self._args, **self._kwargs)
+  File "unsafe_blocking_io_with_signal.py", line 14, in sub_process
+    rc = pipe.recv()
+IOError: [Errno 4] Interrupted system call
+
+</pre>
+
+<p>
+執行後，你將發現子行程未如預期般地於5秒後讀取資料。事實上，它在執行一秒後，就被系統打斷了。原因就是系統觸發了訊號 <dfn>SIGALRM</dfn>。
+</p>
+
+<p>
+在我的試驗過程中，我曾嘗試使用 <dfn>signal.siginterrupt()</dfn> 抑制 <dfn>SIGALRM</dfn> 打斷擱置中的 I/O 行為之事。可惜效果不如預期，它仍然被打斷了。
+</p>
+
+
+<h4>
+實作較安全的 Pipe 替代品
+</h4>
+
+<p>
+Python 的 <dfn>multiprocessing.Pipe</dfn> 是一個工廠方法，它會生產一對管道讀寫端子。這對管道讀寫端子是 <dfn>multiprocessing.Connection</dfn> 的實體。我嘗試過幾種重構寫法後，採用的寫法是實作一個包覆 <dfn>multiprocessing.Connection</dfn> 的新類別 <dfn>SignalSafeConnection</dfn> 與一個替代的工廠方法 - <dfn>SignalSafePipe</dfn>。
+<dfn>SignalSafeConnection</dfn> 將我需要的 I/O 處理方法，包裹在<q>如果錯誤是因為被 signal 中斷的話，就再讀一次，如果是其他原因導致的錯誤，則視為致命錯誤，應該中止程式繼續</q>的處理原則中。<dfn>SignalSafePipe</dfn> 則會生產一對 <dfn>SignalSafeConnection</dfn> 類的管道讀寫端子；我用它替代 <dfn>multiprocessing.Pipe</dfn> 方法。
+</p>
+
+<p>
+完整的實作範例，為 safe_blocking_io_with_signal.py。
+</p>
+
+<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span>
+
+<span class="k">class</span> <span class="nc">SignalSafeConnection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="n">handle</span>
+
+    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="c"># this is a traditional skill of unix programming,</span>
+        <span class="c"># but be careful to use it.</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># unexcepted error, re-raise</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">rc</span>
+
+    <span class="k">def</span> <span class="nf">recv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># unexcepted error, re-raise</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">rc</span>
+
+    <span class="k">def</span> <span class="nf">fileno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">timeout</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">current_time</span> <span class="o">&gt;</span> <span class="n">end_time</span><span class="p">:</span>
+                        <span class="n">rc</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="k">break</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
+                    <span class="n">timeout</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">current_time</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># unexcepted error, re-raise</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">rc</span>
+    
+    <span class="k">def</span> <span class="nf">send_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">buffer</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">send_bytes</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># unexcepted error, re-raise</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">rc</span>
+
+    <span class="k">def</span> <span class="nf">recv_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxlength</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">send_bytes</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># unexcepted error, re-raise</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">rc</span>
+
+
+<span class="k">def</span> <span class="nf">SignalSafePipe</span><span class="p">(</span><span class="n">duplex</span><span class="p">):</span>
+    <span class="n">pipe1</span><span class="p">,</span> <span class="n">pipe2</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="n">duplex</span><span class="p">)</span>
+    <span class="n">sspipe1</span> <span class="o">=</span> <span class="n">SignalSafeConnection</span><span class="p">(</span><span class="n">pipe1</span><span class="p">)</span>
+    <span class="n">sspipe2</span> <span class="o">=</span> <span class="n">SignalSafeConnection</span><span class="p">(</span><span class="n">pipe2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sspipe1</span><span class="p">,</span> <span class="n">sspipe2</span>
+
+
+<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">alarm_timer</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"alarm(</span><span class="si">%</span><span class="s">d)"</span> <span class="o">%</span> <span class="n">signum</span><span class="p">)</span>
+        
+    <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">alarm_timer</span><span class="p">)</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c">#signal.siginterrupt(signal.SIGALRM, False)</span>
+    <span class="c"># this does not work perfectly.</span>
+
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
+            <span class="k">return</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="c">#rpipe, wpipe = multiprocessing.Pipe(False)</span>
+
+    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">SignalSafePipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+</code></pre>
+
+
+<pre class="language-term">
+$ python safe_blocking_io_with_signal.py 
+alarm(14)
+SIGIO, Interrupted system call, restart
+    ... (省略)
+sub process recv: fool
+alarm(14)
+SIGIO, Interrupted system call, restart
+    ... (省略)
+sub process recv: END
+
+</pre>
+
+<p>
+程式執行5秒後輸出第一行 fool，再過5秒後輸出第二行 END。在等待的同時，計時器也會每秒觸發一次，這讓我們可以在等待的過程中，抽空做別的事情。這就是 process, pipe, signal 三者合作下進行多工作業程式設計的傳統技藝。
+</p>
+
+<h4>
+基於線程的並行模式
+</h4>
+<p>
+前幾節提到的基於訊號(signal)的並行模式，是傳統的設計模式。隨著現代作業系統逐漸實現線程(thread, 或稱執行緒)功能後，現代的並行設計模式主要是以線程來實現。
+</p>
+<p>
+例如 unsafe_blocking_io_with_signal.py 的內容，<em>在沒有意外的情況下</em>，完全可以使用 <dfn>threading.Timer</dfn> 取代 <dfn>signal.setitimer</dfn>。如下列所示:
+</p>
+
+<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span><span class="o">,</span><span class="nn">threading</span>
+
+<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">alarm_timer</span><span class="p">(</span><span class="n">interval</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">"sub process alarm"</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+        
+    <span class="c">#signal.signal(signal.SIGALRM, alarm_timer)</span>
+    <span class="c">#signal.setitimer(signal.ITIMER_REAL, 1, 1)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">alarm_timer</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
+            <span class="k">return</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
+    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+</code></pre>
+
+
+<p>
+如果你的程式中不需要利用訊號處理並行作業，那麼 Python 可以保證線程在運行時，不會干擾到 Pipe 的擱置行為。你便不需要考慮 <dfn>EINTR</dfn> 的狀況。
+</p>
+
+<h4>
+後記
+</h4>
+
+<h5>
+GIL?
+</h5>
+
+<p>
+上一節中，我強調<em>在沒有意外的情況下</em>可以用線程取代訊號實現並行作業，這是因為我很不幸地碰到了意外情況。當我使用 Python 設計一個稍微複雜的服務程式時，我在主行程上配置的 <dfn>threading.Timer</dfn> 沒有運作。儘管 <dfn>active_thread()</dfn> 與 <dfn>Timer.is_alive()</dfn> 都顯示這個計時器還活著，但它就是沒有執行。直到子行程結束時，主行程的計時器才突然醒過來。我懷疑這是 <a href="http://wiki.python.org/moin/GlobalInterpreterLock">Global Interpreter Lock</a> 在搞鬼。最後我祭出了傳家法寶，用訊號實現我的需求。也因此與 <dfn>EINTR</dfn> 再會，並產生了這篇文章。
+</p>
+
+<h5>
+重構寫法
+</h5>
+
+<p>
+我原本嘗試用 Ruby 式 open class 寫法，直接修改 <dfn>_multiprocessing.Connection</dfn> 這個類別。然而 Python 向我抱怨這是一個原生的內容，不允許修改它的行為。即使我參考了《<a href="http://blog.ianbicking.org/2007/08/08/opening-python-classes/">Opening python classes</a>》的寫法也不行。Python 告訴我參考文章中使用的某些方法並不存在。我想或許是我用的 Python 版本比較舊吧。我用的是 Python 2.6。
+</p>
+
+<h5>
+預防行程無盡等待
+</h5>
+<p>
+當我們把 I/O 行為包入一個不被訊號所終止的迴圈時，我們要小心處理這個迴圈。因為我們缺乏資訊得知打斷擱置狀態的訊號是哪一個。這表示連使用者主動發出的訊號，也可能被忽視。例如你可能希望用 <dfn>SIGALRM</dfn> 增加一個逾時終止的功能，讓 <dfn>SIGALRM</dfn> 主動打斷一個等候太久的資料讀取行為。這時，我們的處理方式就會忽視這個訊號，導致行程陷入無盡地等待迴圈中。
+</p>
+<p>
+這個狀況有解決方案，就是用 <dfn>poll()</dfn>。我們通常配合 <dfn>poll()</dfn> 使用 <dfn>read()</dfn>，可以指定最長擱置時間，以免行程陷入無盡地等待迴圈。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/14644791.html">http://blog.roodo.com/rocksaying/archives/14644791.html</a></div>
