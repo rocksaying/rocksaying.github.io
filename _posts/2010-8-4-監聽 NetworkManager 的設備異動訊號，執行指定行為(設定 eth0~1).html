@@ -1,0 +1,169 @@
+---
+title: 監聽 NetworkManager 的設備異動訊號，執行指定行為(設定 eth0~1)
+category: computer
+old-category: 電腦技術
+tags: [linux,python,networkmanager,d-bus]
+---
+<p>
+我的 ThinkPad 安裝 Ubuntu 桌面系統，配合使用需求，我的有線網路設備除了啟用 DHCP 之外，還額外設定了虛擬介面連接內部網路。概略如下列所示:
+</p>
+<pre class="language-text">
+eth0    inet addr:(DHCP)
+
+eth0:1  inet addr:10.1.2.3
+</pre>
+<p>
+但是，因為我的網路設備是由 NetworkManager 所管理，基於 NetworkManager 以及筆記型電腦的操作特性，每當我切換桌面使用者亦或是筆電進入睡眠狀態，都會導致網路設備重置，使得 eth0:1 的設置消失。為此，我寫了一個小程式，透過 NetworkManager 提供的 D-Bus 服務，監聽 eth0 主設備的狀態，每當 eth0 被啟用亦或重新啟用，都能立即執行 ifconfig 設定 eth0:1 。
+</p>
+<p>
+附帶一提，希望有人可以教我如何在 NetworkManager 中設定 eth0:1 ，感激不盡。
+</p>
+
+<!--more-->
+<p>
+考慮到系統的普及性，這個小程式 (eth0.1.up) 是用 Python 寫的。我個人認為，就語法易學度與軟體普及度來看，在 Linux 桌面環境上，python 足以取代 perl 做為撰寫 script 程式的首選了。在 Debian/Ubuntu 桌面環境上，執行這個小程式的相關套件，都是預設安裝項目。通常不必再額外安裝套件便可使用。
+</p>
+
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<span class="c">### BEGIN INIT INFO</span>
+<span class="c"># Provides: eth0.1.up</span>
+<span class="c"># Required-Start: network-manager   </span>
+<span class="c"># Required-Stop:</span>
+<span class="c"># Default-Start:</span>
+<span class="c"># Default-Stop:</span>
+<span class="c"># Short-Description: Raise eth0:1 network interface.</span>
+<span class="c">### END INIT INFO</span>
+
+<span class="c"># usage:</span>
+<span class="c">#  -foreground (or --foreground): run in foreground</span>
+
+<span class="n">LAN_SETTINGS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">'eth0'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">'address'</span><span class="p">:</span> <span class="s">"10.1.2.3"</span><span class="p">,</span>
+        <span class="s">'netmask'</span><span class="p">:</span> <span class="s">"255.255.255.0"</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">ETH_V1_UP</span><span class="o">=</span><span class="s">"/sbin/ifconfig </span><span class="si">%</span><span class="s">s:1 inet </span><span class="si">%</span><span class="s">s netmask </span><span class="si">%</span><span class="s">s up"</span>
+
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">dbus</span><span class="o">,</span> <span class="nn">gobject</span>
+<span class="kn">from</span> <span class="nn">dbus.mainloop.glib</span> <span class="kn">import</span> <span class="n">DBusGMainLoop</span>
+ 
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">"-foreground"</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">"Foreground mode running..."</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c">#run this program in background.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fork</span><span class="p">()</span>
+    <span class="k">except</span> <span class="nb">OSError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">NetworkManagerServiceName</span> <span class="o">=</span> <span class="s">"org.freedesktop.NetworkManager"</span>
+<span class="n">NetworkManagerObjectPath</span> <span class="o">=</span> <span class="s">"/org/freedesktop/NetworkManager"</span>
+<span class="n">NetworkManagerInterface</span> <span class="o">=</span> <span class="s">"org.freedesktop.NetworkManager"</span>
+<span class="n">NetworkManagerDeviceInterface</span> <span class="o">=</span> <span class="s">"org.freedesktop.NetworkManager.Device"</span>
+<span class="n">DBusPropertiesInterface</span><span class="o">=</span><span class="s">"org.freedesktop.DBus.Properties"</span>
+ 
+<span class="n">NM_DEVICE_STATE_ACTIVATED</span><span class="o">=</span><span class="mi">8</span>
+ 
+<span class="k">class</span> <span class="nc">ActivatedHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_instance</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device_instance</span> <span class="o">=</span> <span class="n">device_instance</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">device_instance</span><span class="o">.</span><span class="n">GetAll</span><span class="p">(</span><span class="n">NetworkManagerDeviceInterface</span><span class="p">,</span> 
+            <span class="n">dbus_interface</span><span class="o">=</span><span class="n">DBusPropertiesInterface</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s">'Interface'</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device_instance</span><span class="o">.</span><span class="n">connect_to_signal</span><span class="p">(</span><span class="s">"StateChanged"</span><span class="p">,</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">,</span> 
+            <span class="n">dbus_interface</span><span class="o">=</span><span class="n">NetworkManagerDeviceInterface</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">old_state</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">new_state</span> <span class="o">==</span> <span class="n">NM_DEVICE_STATE_ACTIVATED</span><span class="p">:</span>
+            <span class="c">#print "%s activated" % self.name</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">ETH_V1_UP</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> 
+                <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s">'address'</span><span class="p">],</span> 
+                <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s">'netmask'</span><span class="p">]))</span>
+ 
+<span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+ 
+<span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">nm_instance</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">NetworkManagerServiceName</span><span class="p">,</span> <span class="n">NetworkManagerObjectPath</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">dbus</span><span class="o">.</span><span class="n">DBusException</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">"connect to NetworkManager error."</span>
+    <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ 
+<span class="n">handlers</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="n">devices</span> <span class="o">=</span> <span class="n">nm_instance</span><span class="o">.</span><span class="n">GetDevices</span><span class="p">(</span><span class="n">dbus_interface</span><span class="o">=</span><span class="n">NetworkManagerInterface</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">devices</span><span class="p">:</span>
+    <span class="n">device_instance</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">NetworkManagerServiceName</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="n">props</span> <span class="o">=</span> <span class="n">device_instance</span><span class="o">.</span><span class="n">GetAll</span><span class="p">(</span><span class="n">NetworkManagerDeviceInterface</span><span class="p">,</span> 
+        <span class="n">dbus_interface</span><span class="o">=</span><span class="n">DBusPropertiesInterface</span><span class="p">)</span>
+    <span class="n">device_name</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s">'Interface'</span><span class="p">]</span> <span class="c"># eg. "eth0"</span>
+    <span class="k">if</span> <span class="n">device_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LAN_SETTINGS</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="k">if</span> <span class="n">props</span><span class="p">[</span><span class="s">'State'</span><span class="p">]</span> <span class="o">==</span> <span class="n">NM_DEVICE_STATE_ACTIVATED</span><span class="p">:</span>
+        <span class="c">#print "%s activated" % device_name</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">ETH_V1_UP</span> <span class="o">%</span> <span class="p">(</span><span class="n">device_name</span><span class="p">,</span> 
+            <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="n">device_name</span><span class="p">][</span><span class="s">'address'</span><span class="p">],</span> 
+            <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="n">device_name</span><span class="p">][</span><span class="s">'netmask'</span><span class="p">]))</span>
+    <span class="n">handlers</span><span class="p">[</span><span class="n">device_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ActivatedHandler</span><span class="p">(</span><span class="n">device_instance</span><span class="p">)</span>
+
+<span class="n">devices</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="c">#print "Working..."</span>
+<span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre>
+
+<p>
+NetworkManager 的 D-Bus 服務，稱得上是目前 D-Bus 服務提供者的經典設計。它可以為每個連接設備實體化一個專責的 D-Bus 服務個體，因此我們首先需要透過主服務介面的 GetDevices() 方法查詢目前活動中的 D-Bus 服務個體的路徑(object path)。再透過此路徑，去接收 eth0 設備的狀態異動訊號(<dfn>StateChanged</dfn> signal)。每當狀態改變為 <dfn>NM_DEVICE_STATE_ACTIVATED</dfn> (設備已啟用)之後，便調用外部程式 ifconfig 設定 eth0:1 。
+</p>
+
+<p>
+儲存上列的 Python 程式碼。以本文為例，命令為 eth0.1.up ，並賦予它可執行權限。接著找個目錄放置，例如 /etc/init.d 。
+</p>
+<p>
+在此提供兩種方法，令它可在系統啟動後自動執行。
+</p>
+<h6>
+set in rc.local
+</h6>
+<p>
+最簡單的方式，就是手動編譯 /etc/rc.local ，把它的執行指令加到 /etc/rc.local 內。例如:
+</p>
+<pre class="highlight"><code><span class="c"># rc.local</span>
+
+<span class="c"># Enable eth0:1 virtual network interface.</span>
+/etc/init.d/eth0.1.up
+
+<span class="nb">exit </span>0
+</code></pre>
+
+
+<p>
+記得把指令加到 rc.local 最後一行的 <code>exit 0</code> 之前。
+</p>
+
+<h6>
+set by update-rc.d
+</h6>
+<p>
+第二種作法，就是使用指令 update-rc.d ，將 eth0.1.up 加到 rc?.d 的啟動清單中。通常自定的指令稿都給予第99號啟動順序。如下例:
+</p>
+<pre class="language-term">
+$ sudo update-rc.d eth0.1.up defaults 99
+ Adding system startup for /etc/init.d/eth0.1.up ...
+   /etc/rc0.d/K99eth0.1.up -> ../init.d/eth0.1.up
+   /etc/rc1.d/K99eth0.1.up -> ../init.d/eth0.1.up
+   /etc/rc6.d/K99eth0.1.up -> ../init.d/eth0.1.up
+   /etc/rc2.d/S99eth0.1.up -> ../init.d/eth0.1.up
+   /etc/rc3.d/S99eth0.1.up -> ../init.d/eth0.1.up
+   /etc/rc4.d/S99eth0.1.up -> ../init.d/eth0.1.up
+   /etc/rc5.d/S99eth0.1.up -> ../init.d/eth0.1.up
+</pre>
+<p>
+注意，使用 update-rc.d 時，指令稿必須儲放於 /etc/init.d 目錄內 ，否則 update-rc.d 找不到。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13345505.html">http://blog.roodo.com/rocksaying/archives/13345505.html</a></div>
