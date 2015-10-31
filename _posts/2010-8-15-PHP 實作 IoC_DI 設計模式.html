@@ -1,0 +1,383 @@
+---
+title: PHP 實作 IoC/DI 設計模式
+category: programming
+old-category: PHP
+tags: [spring,ioc,依賴注射]
+---
+<p>
+當我們將許多個體組合為一個新的個體時，按一般的個體導向程式設計模式，我們會在新個體的型態定義內部明確地描述其組合元件的來源。而控制反轉(<a href="http://en.wikipedia.org/wiki/Inversion_of_control">IoC</a>) 又稱依賴注入(Dependency Injection)模式，則將組合元件的來源從定義內部挪到定義外部。在靜態型別程式語言中， IoC 設計模式有相當重要的地位。在 Java 世界中重要的 Spring framework 就是因為採用 IoC 為核心設計模式，才突破 Java 語言的僵固狀態，為那些 Java 教士帶來新的福音。不過在動態型別程式語言中，實現 IoC 設計模式倒是一件簡單的事，我們不會特別注意它，甚至不會想到原來自己用了 IoC 設計模式。
+</p>
+
+<p>
+日前公司同事找我討論在 PHP 實作 IoC 模式的問題。因為他之前寫 Java 程式，接觸 Spring framework 後，覺得那實在是很棒的東西，也想用 PHP 寫一套出來用。我對他說，PHP 要實作 IoC 不會很難，但是你不會感受到 Java 加上 Spring framework 之後生產力突飛猛進的雀躍感。在討論過程中，我順手用 PHP 寫了一段採用屬性注入(setter injection)的 IoC 類別與範例。實作時間不到二小時。這個 IoC 類別基本上模仿了 Spring framework ，所以本文說明時的用語，將會借用 Spring framework 的用語。
+</p>
+
+<!--more-->
+<h5>
+範例所用的類別
+</h5>
+
+<p>
+在開始實作 IoC 類別之前，我先寫兩個很簡單的類別 <dfn>MyClass1, MyClass2</dfn>，就像 Java 的 POJO 一樣很普通的類別。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// lib.php
+// Somebody designs those classes.
+</span><span class="k">class</span> <span class="nc">MyClass1</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">getValue</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">MyClass2</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">getValue</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s1">'2'</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+接著，假設我要用 MyClass1 與 MyClass2 組合一個新的類別 MyClass3 。在一般的設計模式中，我可能會寫出下列的程式碼。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">MyClass3</span> <span class="p">{</span>
+    <span class="k">var</span> <span class="nv">$c1</span><span class="p">;</span>
+    <span class="k">var</span> <span class="nv">$c2</span><span class="p">;</span>
+
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//你需要在類別內指出 c1,c2 是怎麼來的。
+</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass1</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass2</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c2</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+上列程式碼的建構行為中，明確地描述了屬性 <var>c1, c2</var> 之來源為新建的 MyClass1, MyClass2 實體。這就是在新個體與其依賴元件之間的耦合。而 IoC 則要將這個控制行為反轉，移到外部進行。
+</p>
+
+<p>
+按照 IoC 設計模式改寫 MyClass3 ，結果為下列程式碼。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// MyClass3.php
+//You design this class which contains two items, but you don't need to know
+//what those items exactly are.
+</span><span class="k">class</span> <span class="nc">MyClass3</span> <span class="p">{</span>
+    <span class="cm">/*
+    @Autowired
+    MyClass1 c1;
+    */</span>
+    <span class="k">static</span> <span class="nv">$Autowired</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'myClass1'</span><span class="p">,</span> <span class="c1">// 為 bean 名稱，且令屬性為同名。
+</span>            <span class="s1">'a1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass1'</span><span class="p">)</span>
+        <span class="p">);</span>
+    <span class="k">var</span> <span class="nv">$c1</span><span class="p">;</span>
+    <span class="k">var</span> <span class="nv">$c2</span><span class="p">;</span>
+
+    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c2</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+改寫後的 MyClass3 程式碼，最明顯的差異就是配置 c1, c2 的程式碼消失了。因為我們把它移到外部了。我們現在不必知道那兩個屬性實際上到底是什麼。至於 <var>$Autowired</var> 則是我待會要實作的另一種屬性注入方式所需的關鍵。
+</p>
+
+
+<h5>
+實作 IoC 類別
+</h5>
+<p>
+配合 IoC 設計模式，我實作了一個 <dfn>BeanFactory</dfn> 類別。它只實現了屬性注入能力，可以做到以下三件事:
+</p>
+<ul>
+    <li>
+    根據組態文件，建立 bean 與 class 的對照關係。我實作的這個 IoC 模式中，屬性的依賴對象是 bean ，而不是實際的類別。
+    </li>
+    <li>
+    根據 bean 的組態內容，在配置 bean 時，為它的屬性注入依賴的 bean 實體。
+    </li>
+    <li>
+    根據類別定義的 <var>$Autowired</var> 內容(若存在時)，注入依賴的 bean 實體。
+    </li>
+</ul>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// BeanFactory.php
+</span><span class="k">class</span> <span class="nc">BeanFactory</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="nv">$context</span> <span class="o">=</span> <span class="nx">False</span><span class="p">;</span>
+
+    <span class="k">function</span> <span class="nf">LoadContext</span><span class="p">(</span><span class="nv">$context</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">self</span><span class="o">::</span><span class="nv">$context</span> <span class="o">=</span> <span class="nv">$context</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// New is keyword, using Alloc to instead.
+</span>    <span class="k">function</span> <span class="nf">Alloc</span><span class="p">(</span><span class="nv">$beanName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="nv">$context</span> <span class="k">or</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nx">self</span><span class="o">::</span><span class="nv">$context</span><span class="p">[</span><span class="nv">$beanName</span><span class="p">][</span><span class="s1">'class'</span><span class="p">]))</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nx">ErrorException</span><span class="p">(</span><span class="s2">"Bean '</span><span class="nv">$beanName</span><span class="s2">' not found."</span><span class="p">);</span>
+        <span class="nv">$beanContext</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nx">self</span><span class="o">::</span><span class="nv">$context</span><span class="p">[</span><span class="nv">$beanName</span><span class="p">];</span>
+
+        <span class="nv">$class</span> <span class="o">=</span> <span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'class'</span><span class="p">];</span>
+        <span class="nv">$instance</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$class</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'property'</span><span class="p">])</span>
+          <span class="k">and</span> <span class="nb">is_array</span><span class="p">(</span><span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]))</span>
+        <span class="p">{</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$instance</span><span class="o">-&gt;</span><span class="nv">$name</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">Wire</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">property_exists</span><span class="p">(</span><span class="nv">$class</span><span class="p">,</span> <span class="s1">'Autowired'</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">//foreach ($class::$Autowired as $name =&gt; $value) {
+</span>            <span class="c1">//PHP 5.3 才支援上一列的寫法，PHP 5.2 要用下兩列。
+</span>            <span class="nv">$class_vars</span> <span class="o">=</span> <span class="nb">get_class_vars</span><span class="p">(</span><span class="nv">$class</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$class_vars</span><span class="p">[</span><span class="s1">'Autowired'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">is_int</span><span class="p">(</span><span class="nv">$name</span><span class="p">))</span>
+                    <span class="c1">// $value 即為 bean 名稱，且令屬性為同名。
+</span>                    <span class="nv">$instance</span><span class="o">-&gt;</span><span class="nv">$value</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">Alloc</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+                <span class="k">else</span>
+                    <span class="nv">$instance</span><span class="o">-&gt;</span><span class="nv">$name</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">Wire</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$instance</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">Wire</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$value</span><span class="p">)</span> <span class="k">and</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">'ref'</span><span class="p">]))</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">self</span><span class="o">::</span><span class="na">Alloc</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">'ref'</span><span class="p">]);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$value</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h5>
+組織 bean 與類別的關係
+</h5>
+
+<p>
+下列內容定義了 bean 與類別的關係，這份內容將會提供給 <dfn>BeanFactory</dfn> 使用。其組織方式模仿了 Spring framework ，請參考《<a href="http://static.springsource.org/spring/docs/3.0.x/spring-framework-reference/html/beans.html">Introduction to the Spring IoC container and beans</a>》。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// bean-config
+</span><span class="cm">/*
+&lt;beans&gt;
+    &lt;bean id="myClass1" class="MyClass1"&gt;
+    &lt;/bean&gt;
+    &lt;bean id="myClass2" class="MyClass2"&gt;
+    &lt;/bean&gt;
+    &lt;bean id="myClass3" class="MyClass3"&gt;
+        &lt;property name="c1"&gt;&lt;ref bean="myClass1"/&gt;&lt;/property&gt;
+        &lt;property name="c2"&gt;&lt;ref bean="myClass2"/&gt;&lt;/property&gt;
+        &lt;property name="c3"&gt;&lt;value&gt;hello&lt;/value&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+&lt;/beans&gt;
+*/</span>
+<span class="nv">$myContext</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'myClass1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass1'</span>
+        <span class="p">),</span>
+    <span class="s1">'myClass2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass2'</span>
+        <span class="p">),</span>
+    <span class="s1">'myClass3'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass3'</span><span class="p">,</span>
+        <span class="s1">'property'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'c1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass1'</span><span class="p">),</span>
+            <span class="s1">'c2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass2'</span><span class="p">),</span>
+            <span class="s1">'c3'</span> <span class="o">=&gt;</span> <span class="s1">'hello'</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+實務上，我們會選擇將此設定內容以 JSON 表達與儲存。使用時再從文件內讀取。
+如果你想虛擲歲月，你也可以採用 Spring 的XML格式。
+</p>
+
+<h5>
+應用 IoC 的範例
+</h5>
+<h6>
+應用一
+</h6>
+<p>
+以下是一個應用上述實作的 IoC 模式的範例，它將透過 BeanFactory 配置一個 myClass3 bean (按組態文件，它關聯到 MyClass3 類別) 的實體，傾印它的內部結構，呼叫它的 dump() 及其屬性的 getValue()。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// main.php
+</span><span class="k">require_once</span> <span class="s1">'lib.php'</span><span class="p">;</span>
+<span class="k">function</span> <span class="nf">__autoload</span><span class="p">(</span><span class="nv">$className</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">require_once</span> <span class="nv">$className</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
+    <span class="c1">//echo "load ", $className, "\n";
+</span><span class="p">}</span>
+<span class="k">require_once</span> <span class="s1">'BeanFactory.php'</span><span class="p">;</span>
+
+<span class="k">require_once</span> <span class="s1">'bean-config.ini'</span><span class="p">;</span>
+<span class="c1">//$myContext = json_decode(file_get_contents('bean-config.json'));
+</span><span class="nx">BeanFactory</span><span class="o">::</span><span class="na">LoadContext</span><span class="p">(</span><span class="nv">$myContext</span><span class="p">);</span>
+
+<span class="nv">$obj</span> <span class="o">=</span> <span class="nx">BeanFactory</span><span class="o">::</span><span class="na">Alloc</span><span class="p">(</span><span class="s1">'myClass3'</span><span class="p">);</span>
+
+<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$obj</span><span class="p">);</span>
+
+<span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">dump</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">c3</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="c1">// Autowired
+</span><span class="k">echo</span> <span class="s1">'$obj-&gt;a1-&gt;getValue(): '</span><span class="p">,</span> <span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">a1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'$obj-&gt;myClass1-&gt;getValue(): '</span><span class="p">,</span> <span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">myClass1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+執行結果如下所示。BeanFactory 確實根據組態文件的內容，將 <var>c1, c2</var>兩個屬性注入指定的 bean 實體；根據 <var>$Autowired</var> 的指示，注入 <var>myClass1, a1</var> 兩個屬性。
+</p>
+<pre class="language-term">
+object(MyClass3)#1 (5) {
+  ["c1"]=>
+  object(MyClass1)#2 (0) {
+  }
+  ["c2"]=>
+  object(MyClass2)#3 (0) {
+  }
+  ["c3"]=>
+  string(5) "hello"
+  ["myClass1"]=>
+  object(MyClass1)#4 (0) {
+  }
+  ["a1"]=>
+  object(MyClass1)#5 (0) {
+  }
+}
+1
+2
+hello
+
+</pre>
+<p>
+有經驗的程序人員將注意到，在 MyClass3 中完全不知道 c1, c2 實際上是什麼東西，所以從程式碼來看，不能保證這兩個屬性具有 getValue() 方法。
+實務上，我們有兩條路可以確保 c1, c2 兩個屬性都擁有這裡用到的行為:
+</p>
+<ol>
+    <li>寫一個 test case.</li>
+    
+    <li>在 BeanFactory 類處理的 $context 之中添加更多可用資訊，例如
+   指定 bean 的介面，然後自己用反射機制檢查。</li>
+</ol>
+<p>
+從實務經驗來看，既然我們並不是在用 Java 語言，便沒有必要把 Java 語言學到的壞習慣帶過來，因此第一條路比較簡單而且可靠。
+</p>
+<blockquote>
+<p>
+對於錯誤捕捉之事。靜態語言仰賴各種宣告資訊，提供 compiler 在編譯時期核對。但我因為以往有 C 語言實作的經驗，所以向來不太倚重 interface 防錯能力。
+</p>
+<p>
+另一方面，動態語言沒有編譯時期，它們在執行時期才能確定個體資訊，故必須仰賴更動態的處理策略。現行最有效的策略就是玩真的，提供 test case 供 tester 在執行時期測試。
+</p>
+<p>
+為什麼我在寫動態語言程式時，不像寫 C/C++ 那麼強調型態宣告，卻不覺得程式會出錯？後來想到了，那是因為有 TDD。而且 tester 所產生的結果更可靠。
+</p>
+<cite><a href="{{ site.baseurl }}/archives/2007/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E4%B8%AD%E7%9A%84%E4%BB%8B%E9%9D%A2%EF%BC%8C%E5%9C%A8%E5%80%8B%E9%AB%94%E4%B9%8B%E9%96%93%E5%8D%94%E8%AD%B0%E4%BA%92%E5%8B%95%E8%A1%8C%E7%82%BA%E7%9A%84%E5%A4%9A%E7%A8%AE%E5%BD%A2%E5%BC%8F.html">個體之間協議互動行為的多種形式</a></cite>
+</blockquote>
+
+<h6>
+應用二
+</h6>
+<p>
+第二個應用，我將新增一個 <dfn>MyClass22</dfn> 。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// MyClass22.php
+</span><span class="k">class</span> <span class="nc">MyClass22</span> <span class="k">extends</span> <span class="nx">MyClass2</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">getValue</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s1">'ext'</span> <span class="o">.</span> <span class="k">parent</span><span class="o">::</span><span class="na">getValue</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+修改組態文件 bean-config.ini ，將 myClass2 bean 的關聯類別改為 MyClass22。其他的程式碼，包含 main.php 都不更動任何地方。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// bean-config
+</span><span class="nv">$myContext</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'myClass1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass1'</span>
+        <span class="p">),</span>
+    <span class="s1">'myClass2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass22'</span> <span class="c1">//我修改了這個bean實際關聯的類別為 MyClass22
+</span>        <span class="p">),</span>
+    <span class="s1">'myClass3'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass3'</span><span class="p">,</span>
+        <span class="s1">'property'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'c1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass1'</span><span class="p">),</span>
+            <span class="s1">'c2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass2'</span><span class="p">),</span>
+                <span class="c1">//屬性的依賴對象是 bean，而不是類別，所以這裡不動。
+</span>            <span class="s1">'c3'</span> <span class="o">=&gt;</span> <span class="s1">'hello'</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+
+<p>
+在其他程式碼不變的情形下，再次執行 main.php 的結果如下:
+</p>
+<pre class="language-term">
+object(MyClass3)#1 (5) {
+  ["c1"]=>
+  object(MyClass1)#2 (0) {
+  }
+  ["c2"]=>
+  object(MyClass22)#3 (0) {
+  }
+  ["c3"]=>
+  string(5) "hello"
+  ["myClass1"]=>
+  object(MyClass1)#4 (0) {
+  }
+  ["a1"]=>
+  object(MyClass1)#5 (0) {
+  }
+}
+1
+ext2
+hello
+
+</pre>
+<p>
+myClass2 bean 關聯的類別改變了，而原本由 c2 的 getValue() 輸出的結果也從 2 變為 ext2 。
+</p>
+<p>
+在沒有 IoC 的狀況下，要達成上述結果，你得要回頭修改 MyClass3 的程式碼，將 c2 的實體從 MyClass2 改成 MyClass22 。如果你有十個其他類別用到 MyClass2 ，而且你也要改用 MyClass22 的話，你還要修改那十個類別的程式碼。
+藉由 IoC 設計模式，你將原先散佈在其他類別內的依賴元件的配置動作，集中在同一個地方控制(<span class="Onote">在此例中，由 BeanFactory 根據 bean 的組態文件控制</span>)，就不必為了改變依賴關係，而修改原有的程式碼。依賴注入模式將產生依賴元件的責任，從新個體反轉到外部，實現「控制反轉」，降低程式碼的耦合度。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/PHP%20%E8%87%AA%E8%A8%82%E8%A8%BB%E8%A8%98%E8%88%87%E5%B1%AC%E6%80%A7%E6%B3%A8%E5%85%A5%E5%8A%9F%E8%83%BD.html">PHP 自訂註記與屬性注入功能</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13454601.html">http://blog.roodo.com/rocksaying/archives/13454601.html</a></div>
