@@ -1,0 +1,258 @@
+---
+title: Vala 程式語言入門
+category: programming
+old-category: C/C++/C#/Java
+tags: [vala]
+---
+<h4>
+介紹
+</h4>
+
+<p>
+如果你知道 "<a href="http://en.wikipedia.org/wiki/C%2B%2B">C with Classes</a>" 甚至曾經用過，那麼對於 <a href="http://en.wikipedia.org/wiki/Vala_%28programming_language%29">Vala</a> 的運作方式，想必也會感到熟悉。我認為「 Vala 是 "C with GObject" 的編譯器」 (Vala is a C with GObject compiler) 是非常貼切的介紹描述。
+</p>
+<blockquote>
+Vala is a new programming language that allows modern programming techniques to be used to write applications that run on the GNOME runtime libraries, particularly GLib and GObject.
+<br/>
+<cite><a href="http://live.gnome.org/Vala/Tutorial">Vala Tutorial</a></cite>
+</blockquote>
+
+<!--more-->
+<p>
+介紹 Vala 之前，我先說個關於 C++ 的故事。
+Bjarne Stroustrup 最初設計了一套型別機制，具有類別與繼承能力，同時設計了一個搭配的程式語法。一開始，Bjarne Stroustrup 先寫了一個前置編譯器，稱為 C with Classes 。 C with Classes 先將新語法程式碼編譯成 C 程式碼，再交給 C 編譯器編譯為機器碼。隨著這套型別機制與程式語法的普及，人們賦予它一個更易記憶的名字，那就是 C++。
+</p>
+<p>
+今天的主角 Vala ，也跟 C++ 具有類似的背景。當初 GNOME 專案使用 C 語言發展了一套新的型別機制，稱為 <a href="http://en.wikipedia.org/wiki/GObject">GObject</a>。它具有許多現代程式語言型別系統的特徵，如類別、繼承、泛型、執行時期型別識別等。但是它並沒有同時出現一個配合的新程式語法，而是讓程序員用 C 語言一磚一瓦地開始堆砌。曾經用 C 語言實作自己的型別系統的程序員，應該不難想像這個基礎工作有多麻煩。建立型別系統結構、定義新的型別與類別、註冊自定類別與方法等等，都要使用者在程式碼中寫出。這使得 GObject 非常難以入門，轉換門檻甚至高於純 C 語言程序員學習 C++ 。
+</p>
+<p>
+所幸 Vala 的出現改變了這一切。 Vala 就是搭配 GObject 系統的新程式語言，它大量地借用了 C# 的語法來表示 GObject 的內容，它還實作了記憶體管理機制。 Vala 編譯器 (valac) 的運作方式則非常類似 C with Classes: 先將 Vala 程式碼編譯成 C 語言碼，再交給 C 編譯器編譯為機器碼。在 Vala 編譯器眼中，Vala 程式碼文件與 C 程式碼文件的地位相同。透過適當地宣告，我們可以直接在 Vala 程式碼中調用 C 程式碼定義的函數，也可以在 C 程式碼中調用 Vala 定義的方法。有些案例顯示，程序員會用 Vala 語言撰寫程式，由 valac 產生 C 程式碼文件後，將產生的 C 程式碼文件與其他人撰寫的 C 程式碼文件一併提交到版本控制庫(VCS repository)與建置系統(nightly builder server)，讓建置系統用 gcc 編譯出產品。
+</p>
+
+<h4>Hello vala
+</h4>
+<p>
+Debain/Ubuntu 系統提供了 valac 套件。安裝之後即可使用 Vala 編譯器。接著完成我們的 Vala 版 hello world 吧。
+</p>
+<pre class="highlight"><code><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Hello world</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    
+    <span class="n">var</span> <span class="n">ht</span> <span class="o">=</span> <span class="n">new</span> <span class="n">HashTable</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">null</span><span class="p">,</span> <span class="n">null</span><span class="p">);</span> <span class="c1">//型別推斷與泛型容器
+</span>    <span class="n">ht</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">ht</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+    <span class="n">ht</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"c"</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="n">ht</span><span class="p">.</span><span class="n">foreach</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="c1">//lambda
+</span>        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Key: %s; Value: %u</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="o">*</span><span class="p">)</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">v</span><span class="p">);</span>
+        <span class="c1">// C 編譯器在此可能會發出警告
+</span>    <span class="p">});</span>
+    <span class="n">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="n">in</span> <span class="n">ht</span><span class="p">.</span><span class="n">get_values</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+基本上，你只需要使用 valac 就可以直接產生執行檔。如果你想知道 valac 產生的 C 程式碼內容，請加上 <code>-C</code> 參數，它就只做 Vala 程式碼編譯成 C 程式碼的動作。
+</p>
+<pre class="language-term">
+$ valac hello.vala
+$ ./hello
+Hello world
+Key: b; Value: 2
+Key: a; Value: 1
+Key: c; Value: 10
+10
+1
+2
+
+$ valac -C hello.vala     # 輸出結果為 hello.c
+$ cat hello.c
+</pre>
+
+<h4>
+類別與方法
+</h4>
+<p>
+我們來看看 Vala 如何借用 C# 語法表示 GObject 的型別系統。
+</p>
+<p>
+下列程式碼定義了兩個類別，其中 BClass 繼承 AClass。內容使用了 property 語法以及特殊方法的語法支援，例如定義了 <code>T2 get(T1 k)</code> 方法，就允許我們以 <code>[ k ]</code> 的索引語法取值。相當於 C# 的 indexer method 或是 C++ 的 <code>operator[]</code>。
+</p>
+<pre class="highlight"><code><span class="n">public</span> <span class="n">class</span> <span class="n">AClass</span> <span class="o">:</span> <span class="n">Object</span> <span class="p">{</span>
+    <span class="c1">//property
+</span>    <span class="n">public</span> <span class="kt">int</span> <span class="n">a</span> <span class="p">{</span><span class="n">get</span><span class="p">;</span> <span class="n">set</span><span class="p">;</span> <span class="k">default</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">new</span> <span class="kt">int</span> <span class="n">get</span><span class="p">(</span><span class="n">string</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//Method Hiding
+</span>        <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="s">"a"</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">a</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">public</span> <span class="n">class</span> <span class="n">BClass</span> <span class="o">:</span> <span class="n">AClass</span> <span class="p">{</span>
+    <span class="n">public</span> <span class="kt">int</span> <span class="n">b</span> <span class="p">{</span><span class="n">get</span><span class="p">;</span> <span class="n">set</span><span class="p">;</span> <span class="k">default</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+    <span class="n">public</span> <span class="n">new</span> <span class="kt">int</span> <span class="n">get</span><span class="p">(</span><span class="n">string</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="s">"b"</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">b</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">base</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">//Methods With Syntax Support - string
+</span>    <span class="n">public</span> <span class="n">string</span> <span class="n">to_string</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="err">@</span><span class="s">"{a: $a; b: $b}"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">var</span> <span class="n">b</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BClass</span><span class="p">();</span>
+    <span class="n">b</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+    <span class="n">b</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
+    
+    <span class="c1">//Methods With Syntax Support - Indexer
+</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%d, %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">b</span><span class="p">[</span><span class="s">"a"</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="s">"b"</span><span class="p">]);</span> 
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%d, %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">b</span><span class="p">);</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">puts</span><span class="p">(</span><span class="err">@</span><span class="s">"$b</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<p>
+上述內容看來平凡無奇。接著我們用 valac 產生 C 語言程式碼文件，讓我們看看如果直接用 C 語言配合 GObject 要堆砌多少程式碼才能達成上述內容完成的工作。答案是 348 行 C 程式碼，其中約 300 行都是用於建立 GObject 型別結構與註冊類別表、方法表。
+</p>
+
+<p>
+當我們產生 C 程式碼後，可以直接使用 gcc 編譯出執行檔。因為我們使用了 GObject ，所以還要告知 gcc 去哪找尋 GObject 所需的 header files 與 lib 。在大多數的主流 Linux 散佈版本中，我們都可以執行 <code>pkg-config --cflags --libs gobject-2.0</code> 得到 gcc 所需的額外參數 (<span class="Onote">pkg-config 是 GNOME 開發套件的一部份</span>)。
+</p>
+<pre class="language-term">
+$ valac -C class.vala
+$ cat class.c
+
+$ gcc `pkg-config --cflags --libs gobject-2.0` -o class class.c
+$ ./class
+100, 200
+100, 200
+{a: 100; b: 200}
+
+</pre>
+
+<div class="note">
+<p>
+如果你的 shell 不支援指令輸出替換語法，你需要先以 pkg-config 取得參數內容，再手動添加到 gcc 的參數中。
+</p>
+<pre class="language-term">
+$ pkg-config --cflags --libs gobject-2.0
+-pthread -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
+-pthread -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0  
+
+# 複製那一段參數到 gcc 參數...
+
+$ gcc -pthread -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
+   -pthread -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 \
+   -o class class.c
+
+</pre>
+</div>
+
+<h4>
+與 C 程式碼合體
+</h4>
+<p>
+在介紹中提到 <q>Vala 程式碼文件與 C 程式碼文件的地位相同。透過適當地宣告，我們可以直接在 Vala 程式碼中調用 C 程式碼定義的函數</q>。此節將舉一例說明如何實作。
+</p>
+<p>
+我先寫一份 C 程式碼文件，它實作了一個 md5sum() 的函數，此函數將呼叫 openssl 函數庫(<span class="Onote">在Debain/Ubuntu中，這是預裝項目，連接器所需參數為 <code>-lcrypto</code></span>) 提供的 MD5() 產生字串的 Digest 內容，並轉為以16進位代碼顯示的字串。
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;openssl/md5.h&gt;
+</span>
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span>
+<span class="nf">md5sum</span><span class="p">(</span><span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">len</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">md</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"d = [%s], len = [%lu]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+    <span class="c1">//unsigned char bufstr[MD5_DIGEST_LENGTH * 2 + 1];
+</span>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">MD5_DIGEST_LENGTH</span><span class="p">];</span>
+    
+    <span class="n">MD5</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p1</span><span class="p">,</span> <span class="o">*</span><span class="n">p2</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">p1</span> <span class="o">=</span> <span class="n">buf</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">md</span><span class="p">;</span> 
+         <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MD5_DIGEST_LENGTH</span><span class="p">;</span> 
+         <span class="o">++</span><span class="n">i</span><span class="p">,</span> <span class="o">++</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="o">+=</span><span class="mi">2</span><span class="p">)</span> 
+    <span class="p">{</span>
+        <span class="n">sprintf</span><span class="p">(</span><span class="n">p2</span><span class="p">,</span> <span class="s">"%02x"</span><span class="p">,</span> <span class="o">*</span><span class="n">p1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
+    <span class="c1">//printf("%s\n", md);
+</span>    <span class="k">return</span> <span class="n">md</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+再寫一份調用 md5sum() 函數的 Vala 程式碼。
+</p>
+<pre class="highlight"><code><span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">=</span> <span class="mi">32</span><span class="p">;</span>
+
+<span class="p">[</span><span class="n">CCode</span> <span class="p">(</span><span class="n">cname</span><span class="o">=</span><span class="s">"md5sum"</span><span class="p">)]</span>
+<span class="k">static</span> <span class="k">extern</span> <span class="n">unowned</span> <span class="n">uchar</span><span class="o">*</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">uchar</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="n">ulong</span> <span class="n">len</span><span class="p">,</span> <span class="n">uchar</span> <span class="o">*</span><span class="n">md</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"hello 石頭成"</span><span class="p">;</span>
+    <span class="n">var</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">to_utf8</span><span class="p">();</span>
+    <span class="n">var</span> <span class="n">mdbuf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">uchar</span><span class="p">[</span><span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"1[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf</span><span class="p">.</span><span class="n">length</span><span class="p">,</span> <span class="n">mdbuf</span><span class="p">)</span> <span class="p">);</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"2[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">mdbuf</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+<dfn>CCode</dfn> 是 Vala 專屬的 attribute (<span class="Onote">C#/Vala 的 attribute 作用與 Java 的 annotation 類似，都可以調整某些編譯行為</span>)，主要用於調整 Vala 產生的 C 程式碼內容。在此，我用 <dfn>extern</dfn> 宣告 md5sum() 是使用外部程式語言定義的函數，並用 CCode 的 cname 參數，告知 valac 此函數在外部語言中的符號名稱叫 md5sum 。
+</p>
+<p>
+最後，我將 test-md5.vala 與 md5sum.c 一併交給 valac 編譯。並用 <code>-X -lcrypto</code> 傳遞額外要給 gcc 的連接器參數。
+</p>
+<pre class="language-term">
+$ valac -X -lcrypt test-md5.vala md5sum.c
+$ ./test-md5
+d = [hello 石頭成], len = [15]
+1[19d63df7a195f5a3a847bd3a54831b97]
+2[19d63df7a195f5a3a847bd3a54831b97]
+
+</pre>
+
+<h4>
+參考文件
+</h4>
+<p>
+由於 Vala 語言主要借用了 C# 的語法，且 Vala 官方文件中也沒有系統化地整理出整套語言規格，因此大家可以從 C# 的語法書中，學習 Vala 的語言內容。本文不教授這些基本內容。
+</p>
+<p>
+C# 語法書中，我推薦的是 <a href="http://www.ecma-international.org/publications/standards/Ecma-334.htm">Standard ECMA-334 - C# Language Specification</a>。此文件是 C# 的開放規格，可以免費下載。而且是純語言書籍，不像市面上的C# 書籍總是夾雜一堆 .Net Framework 的內容。那些書籍反而像是在說明 .Net Framework API，而不是 C# 語言。
+</p>
+
+<p>
+至於 Vala 專屬的規格，請參考下列文件。
+</p>
+
+<ul>
+    <li><a href="http://live.gnome.org/Vala/">Vala - GNOME Live!</a> - Vala 官網</li>
+    <li><a href="http://live.gnome.org/Vala/Tutorial">Vala Tutorial</a> - 教學</li>
+    <li><a href="http://valadoc.org/">Valadoc Online API Documentation</a></li>
+    <li><a href="http://www.vala-project.org/doc/vala-draft/index.html">Vala Reference Manual [Draft]</a> - Vala 參考手冊。仍在草稿階段，內容不齊。</li>
+    <li><a href="http://rodney.id.au/dev/vala/hackers.html">Hackers' Guide to Vala</a></li> 
+    <li><a href="http://live.gnome.org/Vala/Bindings">Vala/Bindings!</a> - 擴充 C/Vala library 的指南。</li>
+</ul>
+<p>
+在 Linux 平台，gedit 和 MonoDeveloper IDE 都支援 Vala 。Windows 平台，也有 Vala 使用者提供 binary 安裝套件: <a href="http://live.gnome.org/Vala/ValaOnWindows">Vala on Windows</a>。 
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/Vala%20-%20load%20dynamic%20library%20_%20shared%20object.html">Vala - load dynamic library / shared object</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/Vala%20with%20GNU%20gettext.html">Vala with GNU gettext</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13551839.html">http://blog.roodo.com/rocksaying/archives/13551839.html</a></div>

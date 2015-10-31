@@ -1,0 +1,136 @@
+---
+title: Vala - Time and Log
+category: programming
+old-category: C/C++/C#/Java
+tags: [vala]
+---
+<p>
+This article describes two things about <a href="http://en.wikipedia.org/wiki/Vala_%28programming_language%29">Vala</a> programming. First, how to get current time and output it as a formatted timesamp. Second, how to design custom log.
+</p>
+
+<!--more-->
+<h5>
+What Time Is It?
+</h5>
+<p>
+Vala provides two way to get time (it represents the  number  of  seconds  elapsed since 00:00:00 on January 1, 1970, UTC). They are <dfn><a href="http://valadoc.org/glib-2.0/GLib.TimeVal.html">TimeVal</a></dfn> and <dfn><a href="http://valadoc.org/glib-2.0/time_t.html">time_t</a></dfn>.
+<dfn>time_t</dfn> represents time by seconds. <dfn>TimeVal</dfn> represents more precise time, with seconds and microseconds.
+</p>
+<p>
+<dfn>time_t</dfn> does not provide any methods to format as string. We should use <dfn><a href="http://valadoc.org/glib-2.0/GLib.Time.html">Time</a></dfn> to do this.
+</p>
+<p>
+The following is an example to get current time and to output it as a formatted timestamp.
+</p>
+<pre class="highlight"><code><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">TimeVal</span> <span class="n">nowv</span> <span class="o">=</span> <span class="n">TimeVal</span><span class="p">();</span>
+    <span class="n">nowv</span><span class="p">.</span><span class="n">get_current_time</span><span class="p">();</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">nowv</span><span class="p">.</span><span class="n">to_iso8601</span><span class="p">());</span>
+
+    <span class="c1">// man ctime
+</span>    <span class="n">Time</span> <span class="n">now1</span> <span class="o">=</span> <span class="n">Time</span><span class="p">();</span>
+    <span class="n">now1</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span> <span class="kt">time_t</span><span class="p">()</span> <span class="p">);</span> <span class="c1">// get current time.
+</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now1</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+
+    <span class="c1">// man strftime
+</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now1</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="s">"%F %H:%M:%S"</span><span class="p">));</span>
+
+    <span class="kt">time_t</span> <span class="n">t</span> <span class="o">=</span> <span class="n">nowv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">;</span> <span class="c1">// get time from TimeVal.
+</span>    <span class="n">now1</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span> <span class="n">t</span> <span class="p">);</span>
+    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now1</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<pre class="language-term">
+rock@desktop:~$ valac what_time_is_it.vala
+rock@desktop:~$ ./what_time_is_it
+It is 2010-08-24T08:10:18.484744Z.
+It is 2010-08-24 16:10:18.
+It is 2010-08-24 16:10:18.
+It is 2010-08-24 16:10:18.
+
+</pre>
+
+<h5>
+Custom Your Log
+</h5>
+<p>
+When we design a background daemon, we usually need to log some informations to file. The simple way is just redirect stdout (or stderr) to our log file, then we could simply log our informations via printf or puts.
+</p>
+<p>
+The following is a custom log example. It also adds a timestamp (see above) to log messages.
+</p>
+
+<pre class="highlight"><code><span class="c">#if 0
+namespace Log {
+    void puts(string msg) {
+        Time now = Time();
+        now = Time.local(time_t()); 
+        stderr.printf("[%s] %s\n", now.to_string(), msg);
+        stderr.flush();
+    }
+}
+#endif
+</span>
+<span class="n">public</span> <span class="n">class</span> <span class="n">Log</span> <span class="p">{</span>
+    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">puts</span><span class="p">(</span><span class="n">string</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">Time</span> <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">();</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span><span class="kt">time_t</span><span class="p">());</span> 
+        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"[%s] %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span> <span class="n">msg</span><span class="p">);</span>
+        <span class="n">stdout</span><span class="p">.</span><span class="n">flush</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">//redirect stdout to /tmp/test.log
+</span>    <span class="n">stdout</span> <span class="o">=</span> <span class="n">FileStream</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="s">"/tmp/test.log"</span><span class="p">,</span> <span class="s">"ab"</span><span class="p">);</span>
+    
+    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"world"</span><span class="p">;</span>
+    <span class="n">Log</span><span class="p">.</span><span class="n">puts</span><span class="p">(</span><span class="err">@</span><span class="s">"error message about $s."</span><span class="p">);</span>
+    
+    <span class="n">var</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+    <span class="n">var</span> <span class="n">j</span> <span class="o">=</span> <span class="s">"jack"</span><span class="p">;</span>
+    <span class="n">Log</span><span class="p">.</span><span class="n">puts</span><span class="p">(</span><span class="err">@</span><span class="s">"i is $i, j is $j."</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<pre class="language-term">
+rock@rock-desktop:~$ ./time_log 
+rock@rock-desktop:~$ cat /tmp/test.log 
+[2010-08-24 16:26:01] error message about world.
+[2010-08-24 16:26:01] i is 10, j is jack.
+
+</pre>
+
+<h5>
+How about GLib.log
+</h5>
+
+<p>
+By default way, GLib.log(), GLib.message(), GLib.error(), GLib.warning(), and etc, will directly output message to /dev/stderr. We could not use FileStream to redirect those. You may invoke <a href="http://valadoc.org/glib-2.0/GLib.Log.set_default_handler.html">GLib.Log.set_default_handler()</a> or  GLib.Log.set_handler() to change handler.
+</p>
+
+<pre class="highlight"><code><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">var</span> <span class="n">log_stream</span> <span class="o">=</span> <span class="n">FileStream</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="s">"/tmp/test2.log"</span><span class="p">,</span> <span class="s">"ab"</span><span class="p">);</span>
+    
+    <span class="n">Log</span><span class="p">.</span><span class="n">set_default_handler</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="n">Time</span> <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">();</span>
+            <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span><span class="kt">time_t</span><span class="p">());</span> 
+            <span class="n">log_stream</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"[%s] %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span> <span class="n">message</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+    <span class="n">message</span><span class="p">(</span><span class="s">"%s"</span><span class="p">,</span> <span class="s">"hello"</span><span class="p">);</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<pre class="language-term">
+rock@rock-desktop:~$ ./time_log2 
+rock@rock-desktop:~$ cat /tmp/test2.log 
+[2010-08-24 16:48:27] time_log2.vala:11: hello
+
+</pre><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13543703.html">http://blog.roodo.com/rocksaying/archives/13543703.html</a></div>

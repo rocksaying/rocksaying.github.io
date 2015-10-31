@@ -1,0 +1,187 @@
+---
+title: Ubuntu 10.04 的 Music Player 評價
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,數位訊源,FLAC,Foobar2000,thinkpad]
+---
+<p>
+我使用了幾套 Ubuntu 10.04 版提供的音樂播放軟體，在此記錄其支援格式、播放清單評價、介面整合能力以及記憶體用量。
+目的是為了我帶著 小黑(ThinkPad) X200s 筆記型電腦出門時，可以用一套最省電的音樂播放軟體聽音樂。
+</p>
+<p>
+本文的使用環境是 ThinkPad X200s 筆電，安裝 Ubuntu 10.04 64bit 桌面版。選用的播放軟體，都是由 Ubuntu 10.04 套件清單所提供者，僅用套件管理程式即可完成安裝。
+</p>
+
+<!--more-->
+<h4>項目說明</h4>
+<ul>
+    <li><dfn>support</dfn>: 支援的音樂格式，不列出要自行下載插件的格式。 cue+ 指的是支援 cue+wav, cue+flac 或其他壓縮格式；這是一種常見的 CD rip 格式。我因為有自行轉錄許多 CD 為數位音樂檔，所以需要支援這個格式。</li>
+    <li><dfn>play list</dfn>: 播放清單介面的可用性。我是用檔案目錄管理音樂檔的，所以不要求播放清單提供歸檔與專輯管理這類的功能。只要求方便拖放、加入或移除大量曲目，並且可以調整顯示的內容與排列。</li>
+    <li><dfn>GNOME Shortcuts</dfn>: 是否整合GNOME鍵盤捷徑鍵。小黑的鍵盤上有一組 Fn + 多媒體控制鍵 (Stop/Play/Prev/Next)，GNOME桌面可以整合這一組多媒體控制鍵。若播放軟體整合了 GNOME Shortcuts ，我就可以直接用鍵盤換曲，不必切換程式畫面。</li>
+    <li><dfn>tray icon</dfn>: 最小化後，是否會收到狀態列的 tray 區。</li>
+    <li><dfn>memory usage</dfn>: 記憶體用量。這直接關係到播放軟體的資源用量，進而影響電池用電量。數值是用 top -p 觀察所得。res 指的是一般記憶體用量，shm 則是共享記憶體用量。</li>
+</ul>
+
+<h4>Multi-media Player</h4>
+<p>
+首先，我先測試用多媒體播放軟體來播放音樂。我選用的是 totem 和 vlc 。
+</p>
+<h5>totem: version 2.30.2
+</h5>
+<p>
+<a href="http://projects.gnome.org/totem/">http://projects.gnome.org/totem/</a> 
+</p>
+<ul>
+    <li>support: flac, ogg. plugin support: mp3.</li>
+    <li>play list: 尚可 ☆☆</li>
+    <li>GNOME Shortcuts: yes</li>
+    <li>tray icon: no</li>
+    <li>memory usage: res 50 ~ 55m; shr 22m</li>
+</ul>
+<p>
+totem 底層是 gstreamer 架構，可以藉由安裝 gstreamer 插件擴充支援的音樂格式。雖然支援的音樂格式很多，但用來播放音樂顯得太肥了，而且它的播放清單介面不合用。
+</p>
+
+<h5>vlc: version 1.0.6
+</h5>
+<p>
+<a href="http://www.videolan.org/vlc/">http://www.videolan.org/vlc/</a> 
+</p>
+<ul>
+    <li>    support: flac, ogg, mp3, aac, wma, musepack, tta.</li>
+    <li>    play list: 差 ☆</li>
+    <li>    GNOME Shortcuts: no</li>
+    <li>    tray icon: yes</li>
+    <li>    memory usage: res 60 ~ 70m; shr 25m</li>
+</ul>
+<p>
+vlc 原生支援多種音樂格式，不必另裝插件。但用來播放音樂也太肥，它的播放清單介面更是難用。
+</p>
+
+<h4>Music Player</h4>
+<p>
+此節我選用的是純正的音樂播放軟體。
+</p>
+<h5>audacious: version 2.3</h5>
+<p>
+<a href="http://audacious-media-player.org/">http://audacious-media-player.org/</a> 
+</p>
+<ul>
+    <li>    support: flac, ogg, mp3, cue+, aac, wma, musepack, tta.</li>
+    <li>    play list: 普通 ☆☆☆</li>
+    <li>    GNOME Shortcuts: yes (enable by plugin Gnome Shortcuts or Global Hotkey)</li>
+    <li>    tray icon: yes (enable by plugin Status Icon)</li>
+    <li>    memory usage: res 20 ~ 24m; shr 14m</li>
+</ul>
+<p>
+優秀的播放軟體，音樂格式支援之廣，幾乎可比及 foobar2000 ，連 cue+ 也支援。資源用量也是本節三種純音樂播放軟體中最低的。唯一的缺點就是它的播放清單功能較單純，僅符合我的最低標準。
+</p>
+<div class="note">
+<ol>
+<li>
+audacious-plugin 2.3 版的播放清單不會記憶 cue+ 的分曲。當你關閉 audacious 再重新啟動後，cue+ 的多個曲目會變成一個 cue 項目 。
+</li>
+<li>
+audacious-plugin 2.3 版的 FLACng 插件似乎有 bug，有些包含高頻的 flac 文件在播放時會破音。如果你碰到這種情況，可以關閉此插件。因為 audacious 還有內建模組可以播放 flac 文件，所以關閉 FLACng 插件的動作不會影嚮 flac 文件的播放功能。
+</li>
+</ol>
+<p>
+以上兩個問題，在 audacious 2.4 版已經修正了。敢於嘗試者，可參考 <a href="http://www.ubuntuupdates.org/packages/show/249048">http://www.ubuntuupdates.org/packages/show/249048</a> ，經由第三方套件庫更新。
+</p>
+</div>
+
+<h5>wine + foobar2000: 1.0</h5>
+<p>
+<a href="http://www.foobar2000.org/">http://www.foobar2000.org/</a> 
+</p>
+<ul>
+    <li>    support: flac, ogg, mp3, cue+, aac, wma, musepack, tta.</li>
+    <li>    play list: 好 ☆☆☆☆</li>
+    <li>    GNOME Shortcuts: no</li>
+    <li>    tray icon: yes</li>
+    <li>    memory usage: res 43 ~ 50m; shr 22m<br/>
+              foobar2000: 25 ~ 30m;     11m<br/>
+              wine:       18 ~ 20m;     10m
+    </li>
+</ul>
+<p>
+foobar2000 永遠不會出垷 linux 版本，但是可以透過 WINE 安裝。對我而言，它是無可取代的音樂播放軟體。不但能播放，還能轉換音樂格式、或將 cue 音樂按曲目分割為多個音樂文件。播放清單的介面調整功能非常彈性。我都是用 Album List + Library Viewer Selection 版面配置，再加上 Album Art Viewer 的頁面。唯一可惜的是它強調的高音質播放能力，在 WINE 的模擬層級上表現不出來。
+</p>
+
+<h5>rhythmbox: version 0.12.8</h5>
+<p>
+<a href="http://projects.gnome.org/rhythmbox/">http://projects.gnome.org/rhythmbox/</a> 
+</p>
+<ul>
+    <li>    support: flac, ogg, mp3.</li>
+    <li>    play list: 優 ☆☆☆☆☆</li>
+    <li>    GNOME Shortcuts: yes</li>
+    <li>    tray icon: yes</li>
+    <li>    memory usage: res 65 ~ 80m; shr 38m</li>
+</ul>
+<p>
+rhythmbox 是 Ubuntu 10.04 預裝的音樂播放軟體，底層是 gstreamer 架構，可以藉由安裝 gstreamer 插件擴充支援的音樂格式。它唯一的優點是強大的音樂庫與專輯管理功能。不過它的管理方式跟我的習慣不合，我用不慣。而且它太慢了。
+</p>
+
+<h4>Text UI Music Player</h4>
+<p>
+本節選用的是文字介面的音樂播放軟體。說到輕量化軟體，沒有任何 GUI 介面的軟體可以比文字介面更輕的了。文字介面的音樂播放軟體適合極致輕量化桌面或無桌面環境的筆電。
+</p>
+<p>
+大部份的文字介面音樂播放軟體都僅支援 mp3, ogg 格式，這些軟體我都略過了。
+</p>
+
+<h5>cmus: version 2.2.0</h5>
+<p>
+<a href="http://freshmeat.net/projects/cmus/">http://freshmeat.net/projects/cmus/</a> 
+</p>
+<ul>
+    <li>    support: flac, ogg, mp3, aac, wma, musepack, wav.</li>
+    <li>    memory usage: res 10m; shr 6m</li>
+</ul>
+<p>
+還不錯的播放軟體。只是它的操作風格傾向 vi 風格，用命令模式進行操作。
+</p>
+
+<h5>moc: version 2.5.0</h5>
+<p>
+<a href="http://moc.daper.net/">http://moc.daper.net/</a> 
+</p>
+<ul>
+    <li>    support: flac, ogg, mp3, wma, musepack, wav.</li>
+    <li>    memory usage: res 14m; shr 9m<br/>
+            front-end:     6m;     4m<br/>
+            server:        8m;     5m
+    </li>
+</ul>
+<p>
+它的執行方式相當特殊，它會自己分成兩個行程，一個是服務行程(server)，另一個是 UI 行程。當你按 <kdb>q</kdb> (Detach from server only, keep playing.) 或關閉終端機時，它僅會結束 UI 行程。而 server 仍然在背景持續播放音樂。當你再次執行 mocp 後，UI 會接續顯示目前的播放狀態。唯有在 UI 中按 <kdb>Q</kdb> (Quit) ，才會同時結束 server 。
+</p>
+<p>
+在單獨運行 server 行程的情況下，它是本文所有音樂播放軟體中，資源用量最少的。
+</p>
+
+<h4>結語</h4>
+<p>
+我目前在 Ubuntu 10.04 下的音樂播放軟體，一般情況下，是用 audacious ；電池模式時則用 moc 。
+</p>
+<p>
+影響用電量的主要項目，應該是 CPU。不過所有的播放軟體在播放模式下的 CPU 用量都差不多，不到 1%。但是像 Rhythmbox 這種兼具音樂管理功能的軟體，在啟動時會花費額外的資源整理它的音樂庫，所以會耗費更多的電量。
+</p>
+<p>
+此外，如果播放軟體有 resample 功能的話，請儘量關閉。因為 resample 動作會耗費加倍的 CPU 資源與電量。近期的音效晶片都支持 44.1 khz 直入，不再需要我們強制 resample 到 48 khz 。你可以觀察 <em>/proc/asound/card<var>?</var>/pcm0p/sub0/hw_params</em> 的內容，得知你的音訊播放動作是否有 resample.
+</p>
+<pre class="language-term">
+$ cat /proc/asound/card0/pcm0p/sub0/hw_params
+access: MMAP_INTERLEAVED
+format: S16_LE
+subformat: STD
+channels: 2
+rate: <em>44100 (44100/1)</em>
+period_size: 44100
+buffer_size: 88200
+
+</pre>
+<p>
+<var>card0</var> 是第一張音效卡，<var>card1</var> 是第二張音效卡，餘類推。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13650407.html">http://blog.roodo.com/rocksaying/archives/13650407.html</a></div>
