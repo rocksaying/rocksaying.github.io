@@ -1,0 +1,76 @@
+---
+title: HTML Label 元件在 M$IE 上運作的狀況
+category: programming
+old-category: JavaScript
+tags: [webdev,w3c]
+---
+<div class="tags" style="display:none">Tags: webdev w3c</div>
+<p>
+jaceju 在《<a href="http://blog.roodo.com/jaceju/archives/3091221.html">終於用 jQuery 做了一個有趣的服務</a>》中提到： <q>光是要把 input:radio 隱藏卻要能動作的部份，足足花了我半個多小時</q> 。他說若 Input 元件之 display 樣式設為 none ，或是 visibility 樣式設為 hidden ，表單送出時就會完全忽略它。所以他就把 Radio button 放到 Label 後面用背景遮住。
+</p>
+<p>
+其實他是碰到了一個 IE 的 bug 。IE 對 Label for 的支援其實有 bug 存在，必須用 Label onclick 修正。
+</p>
+
+<!--more-->
+<p>
+根據 W3C 規範，一個設定 display 樣式為 none 的表單元件依然會被送出。
+</p>
+<blockquote>
+A successful control is "valid" for submission.<br/>
+... and controls that are not rendered because of style sheet settings may still be successful.<br/>
+<cite>W3C Recommendation: <a href="http://www.w3.org/TR/html4/interact/forms.html#h-17.13.2">Successful controls</a></cite>
+</blockquote>
+
+<pre class="highlight"><code><span class="nt">&lt;style</span> <span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+/*input[type="radio"]*//*IE6不支援 attribute selector*/
+input {
+    display: none;
+}
+<span class="nt">&lt;/style&gt;</span>
+
+<span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">"POST"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"type1"</span><span class="nt">&gt;</span>Type1<span class="nt">&lt;/label&gt;</span>
+  <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"type2"</span><span class="nt">&gt;</span>Type2<span class="nt">&lt;/label&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"radio"</span> <span class="na">id=</span><span class="s">"type1"</span> <span class="na">name=</span><span class="s">"type[]"</span> <span class="na">value=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"radio"</span> <span class="na">id=</span><span class="s">"type2"</span> <span class="na">name=</span><span class="s">"type[]"</span> <span class="na">value=</span><span class="s">"2"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>送出<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+<span class="nt">&lt;pre&gt;</span>
+<span class="err">&lt;</span>?php
+if (isset($_POST))
+    var_dump($_POST);
+?&gt;
+<span class="nt">&lt;/pre&gt;</span>
+</code></pre>
+
+
+<p>
+我上述示範的 Label 用例，也是 W3C HTML 規範示範的用法。瀏覽器可以動作才是正常的，不能動作則我視為bug。
+</p>
+<p>
+關於 Label 與 for 屬性的效果， IE 的實作並不完整(有bug)。我不能掌握它的動作。例如，如果我把 Radio button 放在 Label 之中，但 Label 沒加 for 屬性。IE竟然沒作用。
+</p>
+<p>
+再者，當我設定 Label for 關聯的 Radio button 為可見時，點擊 Label 時將勾選 Radio button。但當設定內容為不可見(display=none or visibility=hidden)時， IE 竟無視 Label for 的作用而不勾選關聯的 Radio button (IE要用 onclick 修正)。在 FireFox 與 Opera 則完全可以運作。
+</p>
+<p>
+各位還可參考 jaceju <a href="http://blog.roodo.com/jaceju/archives/3116303.html">關於 HTML label 元素無法作用</a> 的心得，了解更多關於 IE 運行 Label 元件的實際效果。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">"POST"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"type1"</span>
+         <span class="na">onclick=</span><span class="s">"document.getElementById('type1').checked=true;"</span><span class="nt">&gt;</span>
+    Type1<span class="nt">&lt;/label&gt;</span>
+  <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"type2"</span>
+         <span class="na">onclick=</span><span class="s">"document.getElementById('type2').checked=true;"</span><span class="nt">&gt;</span>
+    Type2<span class="nt">&lt;/label&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"radio"</span> <span class="na">id=</span><span class="s">"type1"</span> <span class="na">name=</span><span class="s">"type[]"</span> <span class="na">value=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"radio"</span> <span class="na">id=</span><span class="s">"type2"</span> <span class="na">name=</span><span class="s">"type[]"</span> <span class="na">value=</span><span class="s">"2"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>送出<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+<p>
+上例示範為 Label 添加 onclick 處理動作，以修正 IE 對 Label for 效果實作不足的缺點。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3154125.html">http://blog.roodo.com/rocksaying/archives/3154125.html</a></div>

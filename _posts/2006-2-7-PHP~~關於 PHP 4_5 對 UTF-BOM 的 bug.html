@@ -1,0 +1,49 @@
+---
+title: PHP~~關於 PHP 4/5 對 UTF-BOM 的 bug
+category: programming
+old-category: PHP
+tags: [utf-8,字元編碼]
+---
+<div class="tags" style="display:none">utf-8 字元編碼</div>
+<p>
+在 Windows 系統下，有些以 utf-8 編碼儲存的文件，交由 PHP4/5 處理時，會發生非預期的結果。
+</p>
+<p>原因在於 Windows 下的記事本 (notepad) 儲存 utf-8 編碼文件時，會加上 BOM 檔頭，而 PHP 4/5 會把 BOM 視為一般字元輸出，連帶影嚮整個網頁的輸出結果。這個問題，其實早經由使用者反應給 PHP 開發團隊，但令人遺憾的是， PHP 開發團隊的答案是 PHP6 「就會正式支援 unicode 」，到時就不會有 BOM 問題了。
+</p>
+
+<!--more-->
+<blockquote>
+[22 Aug 2005 6:35pm CEST] derick@php.net<br />
+This will come with Unicode support in PHP 6.0<br />
+<cite><a href="http://bugs.php.net/bug.php?id=22108">Bug #22108	php doesn't ignore the utf-8 BOM</a></cite>
+</blockquote>
+
+<p>
+其實要解決這個問題並不困難，目前似乎 Microsoft 的軟體 (如 Notepad) 才會一律在 utf-8 編碼的文件中寫入 BOM 檔頭。其他軟體則都可選擇要不要加入 BOM 。只要改用如 Ultraedit 或 PSPad, NotePad++ 這些支援 utf-8 編碼且不會寫入 BOM 檔頭的編輯器即可。 Unix/Linux 系統下可選擇的就更多了。但不幸的是， Notepad 身為 Windows 預設的文字編輯器，且是少數早期就開始支援 unicode 編碼的編輯器，使用者還真是不少，有不少文件就這麼被 Notepad 加上 BOM 檔頭了。
+</p>
+<p>
+說了半天，什麼是 BOM ？請看 Unicode 組織的解釋。
+</p>
+<blockquote>
+<h3>Byte Order Mark (BOM) FAQ</h3>
+<h4>Q: What is a BOM?</h4>
+<p>
+A: A byte order mark (BOM) consists of the character code U+FEFF at the beginning of a data stream, where it can be used as a signature defining the byte order and encoding form, primarily of unmarked plaintext files. Under some higher level protocols, use of a BOM may be mandatory (or prohibited) in the Unicode data stream defined in that protocol.
+</p>
+<cite><a href="http://www.unicode.org/faq/utf_bom.html#29">FAQ - UTF-8, UTF-16, UTF-32 & BOM</a></cite>
+</blockquote>
+<blockquote>
+<p>
+UTF-8不需要BOM来表明字节顺序，但可以用BOM来表明编码方式。字符"ZERO WIDTH NO-BREAK SPACE"的UTF-8编码是EF BB BF（读者可以用我们前面介绍的编码方法验证一下）。所以如果接收者收到以EF BB BF开头的字节流，就知道这是UTF-8编码了。
+</p>
+<p>
+Windows就是使用BOM来标记文本文件的编码方式的。
+</p>
+<cite><a href="http://fmddlmyy.home4u.china.com/text6.html">谈谈Unicode编码，简要解释UCS、UTF、BMP、BOM等名词</a></cite>
+</blockquote>
+<p>
+雖然絕大多數情形下， BOM 的存在並不會有什麼影嚮，但其實還是存在誤判的情形。這裡舉一個例子，在 Big5 碼系統下 (如繁體中文Windows) ，開啟一種文字編輯器 (例如 Notepad ) 輸入「嚜蹂」兩字，然後選擇 ANSI 編碼格式存檔後關閉檔案，再重新開啟剛剛儲存的文件，就會發現 Notepad 誤判文件編碼，而無法正確顯示內容。事實上，連 Ultraedit 這套編輯器也會栽在這上頭。 PSPad 倒是少數不會被玩倒的編輯器。這是因為「嚜」的 Big5 編碼是 EF BB ，「蹂」的 Big5 編碼是 BF E4 ，儲存後是 EF BB BF E4 ，前 3 個位元組剛好就是 BOM ，以致許多支援 utf-8 的軟體誤判文件編碼。
+</p>
+<p>
+由於存在上述的誤判可能性，我個人並不建議在 utf-8 文件中加上 BOM 檔頭。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1096340.html">http://blog.roodo.com/rocksaying/archives/1096340.html</a></div>

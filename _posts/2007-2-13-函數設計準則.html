@@ -1,0 +1,76 @@
+---
+title: 函數設計準則
+category: programming
+old-category: Programming
+tags: [programming,程式設計]
+---
+<div class="tags" style="display:none">programming 程式設計</div>
+<p>
+我們在設計函數時，通常要考量函數之中發生錯誤時應如何處理？這一方面的知識沒有捷徑，通常需要仰賴足夠的設計經驗以為準則。概略而言可分兩部份來談：其一是錯誤回報；其二是資源回收。
+</p>
+<p>
+由於此文是我回應 Tokimeki 的 <a href="http://blog.pixnet.net/HACGIS/post/2557644">PHP 文章</a>之內容整理而來，故會夾雜一些 PHP 的例子。
+</p>
+
+<!--more-->
+<h3>錯誤回報</h3>
+<p>
+錯誤回報亦即回傳 (<code>return</code>) 或擲出 (<code>throw</code>) 錯誤狀況給調用者。回傳或擲出錯誤狀況之策略選擇，依設計經驗而有明確的使用情境。
+</p>
+<ol>
+<li>在 setter 或 construct 中發生的錯誤一般採擲出處理。因為 setter 一般宣告無回傳值的函數，而 construct 的結果只能是指定類別之實例，所以只能將錯誤狀況擲出。
+</li>
+<li>
+如果成功的結果是一個唯一值而失敗有許多原因時，採回傳處理。 <code>return 0;</code> 表示成功，其他值為失敗代號。<br/>
+See also: <a href="http://tw.php.net/manual/en/function.exit.php">exit()</a>, <a href="http://tw.php.net/manual/en/function.proc-close.php">proc_close()</a>.
+</li>
+<li>
+如果成功的可能結果之集合不含 <var>FALSE</var> 且錯誤原因只有一個或不重要時，則採回傳處理。<code>return FALSE;</code> 表示錯誤， 其他值表示成功。<br/>
+See also: <a href="http://tw.php.net/manual/en/function.strpos.php">strpos()</a>.
+</li>
+<li>
+如果錯誤原因有多個且重要時且成功的可能結果是一個集合 (不論是否含 <var>FALSE</var>)，則採擲出處理。因為我們不能用回傳值區別錯誤原因， <code>throw</code> 是唯一能夠告知調用者錯誤原因的途徑。
+</li>
+<li>
+例外情形: 如果是一個函數成員且個體中另有一個可以表示錯誤原因的資料成員。當成功的可能結果之集合不含 <var>FALSE</var> ，而錯誤原因有多個且重要時，一般採回傳處理。 <code>return FALSE;</code> 表示失敗，失敗原因儲放在另一個資料成員中。但此法通常不保證 Multi-thread 作業安全。
+</li>
+</ol>
+
+<p>
+函數回傳方式於 PHP manual 中的慣用說明形式。通常看到某函數的說明形式時，就可以判斷該函數的錯誤處理策略。
+</p>
+<dl>
+<dt>第一種情形: <code>void myfunc();</code></dt>
+<dd><pre class="language-text">try {
+    myfunc();
+}
+catch (MyException $e) {
+    echo $e;
+}</pre></dd>
+<dt>第二種情形: <code>bool myfunc();</code> <code>int myfunc();</code></dt>
+<dt>第三種情形: <code>mixed myfunc();</code></dt>
+<dd><pre class="language-text">if (($result = myfunc()) === FALSE) {
+    echo 'Error';
+}</pre>
+</dd>
+<dt>第四種情形: <code>mixed myfunc(); throw exception</code></dt>
+<dd><pre class="language-text">try {
+    $results = myfunc();
+}
+catch (MyException $e) {
+    echo $e;
+}</pre>
+</dd>
+</dl>
+
+<h3>資源回收</h3>
+<p>
+函數式語言中規定函數不可以有副作用。在程序式語言中同樣可以如此檢視一個函數是否設計得宜。所謂沒有副作用，簡單地說是指在調用函數之前後，除了函數回傳值外，沒有其他狀態改變。通常我們會檢查函數在回傳前，是否釋放了其配置之資源。
+</p>
+<p>
+同理，當函數之中發生錯誤時，函數也應該先釋放它先前要求配置的資源之後，才進行錯誤回報動作。如果發生錯誤後便直接回傳或擲出錯誤，而沒有先釋放函數中配置的資源，那麼程式中便會同時存在兩個以上的狀態變動，一是錯誤狀態，其他就是資源配置狀態 之變動。除增加整個錯誤處理程序的複雜度，也將為程式主體帶來副作用。
+</p>
+
+<p>
+本文以我個人的設計經驗為主，而我是從 BASIC (我指的是 QuickBASIC 而非 VisualBASIC), Assembly, C/C++ 一路走過來的，大部份設計經驗是在這一段時間中定型。基本上不只適用 PHP ，也適用於其他程式語言。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2721973.html">http://blog.roodo.com/rocksaying/archives/2721973.html</a></div>

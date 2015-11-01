@@ -1,0 +1,272 @@
+---
+title: Make 工具使用簡介
+category: programming
+old-category: Programming
+tags: []
+---
+<p>
+Make 是一個歷史悠久且普遍的專案管理工具，從 DOS/Windows 到 Unix 都看得到其蹤影。儘管各系統上的 Make 工具不儘相同，但其描述方式，則大致相通。本文若未指明的內容，皆適用在 GNU make 、 BSD pmake 與 Microsoft nmake 。
+</p>
+<p>
+此文是我以過去所整理的 Microsoft nmake 使用方法的文章為基礎所重編，後來的修改部份，主要在納入關於 GNU make 的內容。
+</p>
+
+<!--more-->
+<h3>
+1. 目標與成員的依存關係描述
+</h3>
+<blockquote>
+<p>
+簡單就是 make 欲達成的目標：在你變更原始碼檔案之後，想要重建你的程式或其他輸出檔案之際，make 會檢查時間戳記，找出遭到變更的檔案並進行必要的重建動作，因此不會浪費時間去重建其他檔案。但為了達到簡單這個目標，make 提供了許多選項讓你得以操作多個目錄、為不同的平台建造不同版本的程式，以及自訂建造方法。
+</p>
+<cite><a href="http://www.oreilly.com.tw/product_unix.php?id=a164">GNU Make 專案開發工具 第三版</a></cite>
+</blockquote>
+<p>
+在正式的軟體專案中，一個軟體會由數個原始程式碼文件構成。然而建置時，通常只需要重新 compile 有修改過的原始碼文件，沒有更動的原始碼文件就不需 compile 。因此 Make 的基本運作概念便是藉由描述一組目標檔案與成員檔案的依存關係，由 Make 依據目標檔案與成員檔案間的時間戳記 (檔案修改時間) 差異，決定程式建置過程中實際需要執行的指令內容，以節省 programmer 建置軟體的時間 (輸入指令的時間、 compile 的時間等) 。
+</p>
+<p>
+基於 GNU Make 可見於多種平台的優勢， GNU Make 稱得上是 Make 工具的工業標準，「<a href="http://www.gnu.org/software/make/manual/">GNU Make Manual</a>」是必要的參考文件。
+O'Reilly 臺灣網站上，提供了「<a href="http://www.oreilly.com.tw/product_unix.php?id=a164">GNU Make 專案開發工具 第三版</a>」第一章試讀版，不妨看看。
+</p>
+
+<p>
+一個依存關係的定義，始於一個新的 label ， label 通常包含目標檔和成員檔兩部份，而且必須寫在同一行中。接下來以 &lt;tab&gt; 字元開頭的每一行，都視為此依存關係的組成動作。在 label 以下第一個不是 &lt;tab&gt; 開頭的內容，如空白行，視為結束此依存關係。而分號 (;) 視為換行。像下面的描述，就是最基本的定義方式。 Make 比較成員檔與目標檔間之新舊關係，若成員檔比目標檔新，則執行組成動作，產生新的目標檔。
+</p>
+<pre class="highlight"><code>目標檔1: 成員檔 [成員檔...]
+	組成動作
+	組成動作...
+</code></pre>
+
+
+<p>
+下例依存關係，描述了目標檔 sample.obj 是由成員檔 sample.asm 及 sample.inc 所組成，而組成的動作是將 sample.asm 交由 MASM 組譯。 Make 會查看 sample.obj 、 sample.asm 和 sample.inc 的時間戳記，當成員檔中的任何一個 (sample.asm 或 sample.inc) 之時間戳記晚於 sample.obj ， Make 就會執行組成動作。
+</p>
+<pre class="highlight"><code>sample.obj: sample.asm sample.inc
+	masm sample.asm;
+</code></pre>
+
+
+<p>
+Make 預設的文件名稱是 'Makefile' 。撰寫時， label 必須從一行的第一字開始寫起，接下來的依存關係之描述，每行都要以一個 &lt;tab&gt; 字元開頭，而不能用 &lt;space&gt; 字元。在一個 label 中只有目標而沒有指定任何的成員時，稱為 Phony Targets ，其組成動作視為無條件執行。在執行組成動作時，如果其中一個動作回傳錯誤訊息，例如編譯動作傳回語法錯誤，則 Make 會中止組成動作。如果希望忽視一個組成動作的錯誤，就在這個組成動作前加上一個 '-' 符號，即要求 Make 忽視這個動作的錯誤，即使這個動作有錯誤傳回，亦不理會而繼續執行下個動作。在一行的第一個字加上 # 符號，則 # 符號後的內容視為註解。最後，可以使用 '\' 接續多行內容 (C 語言式的字串定義銜接語法) ，使之被視為一行。
+</p>
+<p>
+依存關係的撰寫順序，採倒敘法，即先定義最終目標的依存關係，再定義上一級的依存關係。最初的原始程式文件的依存關係，最後定義。例如一個軟體專案最後要產生的執行檔為 sample.exe ，其是由 sample1.obj 和 sample2.obj 連結而來。又 sample1.obj 的原始程式文件是 sample1.asm ； sample2.obj 則為 sample2.bas 。則先定義 sample.exe 的依存關係，最後定義 sample1.obj 和 sample2.obj 的依存關係。
+</p>
+<p>
+熟悉 GNU/Linux 相關自由軟體專案的 programmer ，會注意到這些專案的 Makefile 有一些慣例的 Phony Targets 用法，如 'make all', 'make install' ，請參閱「<a href="http://www.gnu.org/prep/standards/standards.html#Standard-Targets">GNU Coding Standards - 7.2.6 Standard Targets for Users</a>」。
+</p>
+<h4>
+Sample of Makefile
+</h4>
+<pre class="highlight"><code># Make 並產生執行檔
+sample.exe: sample1.obj sample2.obj
+	link sample2.obj+sample1.obj,,nul,BCOM45.LIB
+
+sample1.obj: sample1.asm
+	masm sample1;
+
+sample2.obj: sample2.bas
+	bc /o sample2;
+
+#上述的LINK動作中，sample1.obj及sample2.obj被列在sample.exe的成員檔
+#中，當sample.exe比成員檔舊時(或不存在)，則執行組成動作，而link中的
+#BCOM45.LIB不在成員檔中，所以就算sample.exe比BCOM45.LIB舊，亦不會重
+#新組成。
+
+clear:
+    -del sample.exe
+    -del sample1.obj
+    -del sample2.obj
+#沒有指定成員檔時，目標被視為一個單純的識別符號。
+#當執行 'make clear' 時，就會無條件執行其中定義的檔案刪除動作。
+</code></pre>
+
+
+<h3>
+2.變數 (Variables) 與隱性規則 (Implicit Rules)
+</h3>
+<p>
+使用變數和隱性規則，可以簡化 Makefile 的內容，並讓它更有彈性。然而這也是各版本 Make 工具的主要差異所在，此處僅說明通用部份。 GNU make 的使用者，請參考 <a href="http://www.gnu.org/software/make/manual/make.html">GNU make manual</a> 查閱 GNU make 提供的更多特有規則。
+</p>
+<p>
+以 '變數名稱 = 變數內容' 的方式定義變數及內容。使用時，以 '$' 符號開頭，將變數名稱以小括號括起，即 '$(變數名稱)'。其他事項如下列清單:
+</p>
+<ol>
+<li>變數名稱無視大小寫的差異。但習慣上以全大寫表示。</li>
+<li>變數若不設值，預設為空字串。</li>
+<li>可在 Makefile 或 make 命令參數字串中定義。</li>
+<li>環境變數亦可視同變數，故 $(PATH) 有效。</li>
+<li>每個變數定義獨佔一行。</li>
+<li>若變數內容含有空格，則須將整個內容以雙括號括起。</li>
+</ol>
+
+<p>
+Make 也提供了一些預設的變數，或稱自動變數 (Automatic Variables)。同樣的，不同版本的 Make 工具，提供的預設變數也不盡相同，不見得互通。下列清單列出普遍的通用預設變數。
+</p>
+<ol>
+<li>$*<br/>目標檔之主檔名</li>
+<li>$@<br/>目標檔之全檔名</li>
+<li>$&lt;<br/>成員檔中，比目標檔還新的檔案</li>
+</ol>
+
+<pre class="highlight"><code>PROG = sample
+SRC = a1.c a2.c a3.c
+$(PROG): $(SRC)
+	gcc -o $(PROG) $(SRC)
+
+sample2: $*.c
+	gcc -o $* $*.c
+</code></pre>
+
+
+<p>
+隱性規則中，以「字尾規則」最為常見。這是以文件的副檔名，做為依存關係的規則。先寫成員檔的副檔名，再寫目標檔的副檔名。當 Make 碰到副檔名符合的依存關係時，便會引用此規則。如下例:
+</p>
+<pre class="highlight"><code>OBJS = \
+  sample1.obj sample2.obj
+
+.asm.obj:
+	masm $*
+
+.c.obj:
+    gcc -c $*.c
+
+sample.exe:	$(OBJS)
+	link $(OBJS)
+
+sample1.obj: sample1.asm
+
+sample2.obj: sample2.c
+</code></pre>
+
+<p>
+下例是一個取自 <a href="http://home.educities.edu.tw/fbtip/">FBTIP</a> 的 'Makefile' 範例。
+</p>
+<pre class="highlight"><code>CC = gcc
+CFLAGS = -O2
+INCLUDE = ./bbslib
+
+LD = /usr/bin/ld
+LDCONFIG = /sbin/ldconfig
+INSTALL = /usr/bin/install
+
+COBJS = \
+	file/fileutil.o file/lockfile.o file/record.o file/safe_rw.o file/db_i.o \
+	ipc/bcache.o ipc/netsocket.o \
+	lib/bbslog.o lib/chtime.o lib/parsdate.o lib/sysconf.o \
+	strexp/buffer.o strexp/ci_strcmp.o strexp/genpasswd.o strexp/md5ap.o \
+	strexp/parse.o strexp/pool.o strexp/rowconv.o \
+	mime/base64.o mime/qp.o mime/mime.o mime/mfile.o \
+	user/userec.o user/homefile.o
+
+SRCS = bbslib/*.h bbslib/*.in \
+	tmp/*.c tmp/*.h util/*.c \
+	file/*.c file/Readme \
+	ipc/*.c ipc/Readme \
+	lib/*.c lib/parsdate.y lib/Readme \
+	strexp/*.c strexp/Readme \
+	mime/*.c mime/Readme \
+	user/*.c user/Readme
+
+OTHERS = bbslib.h Makefile Makefile.lite Copyright License
+
+SONAME = libbbslib.so.2
+ARCHIVENAME = libbbslib.a
+
+.c.o: ; $(CC) $(CFLAGS) $(DEFINES) -I$(INCLUDE) -fPIC -c $*.c -o $*.o
+
+#--------------------- Dependency starts here -------------------
+
+bbslib: so
+#bbslib: static
+
+static: $(ARCHIVENAME)
+
+$(ARCHIVENAME): $(COBJS)
+	@echo "Making $(ARCHIVENAME)..."
+	ar ruv $(ARCHIVENAME) $(COBJS)
+
+so: $(SONAME)
+
+$(SONAME): $(COBJS)
+	@echo "Making $(SONAME)..."
+	$(LD) $(LDFLAGS) -x -o $(SONAME) $(COBJS) $(LIBS)
+
+tgz:
+	-tar czvf bbslib2.tgz $(OTHERS) $(SRCS)
+
+clean:
+	-rm -f $(ARCHIVENAME) $(SONAME)
+	-rm -f file/*.o ipc/*.o lib/*.o mime/*.o strexp/*.o user/*.o
+
+CYGWIN:
+	make static \
+		DEFINES="$(DEFINES) -DCYGWIN" LIBS="$(LIBS) -lmd5"\
+		CFLAGS="-pipe $(CFLAGS)"
+
+LINUX:
+	make bbslib LDFLAGS="$(LDFLAGS) -shared"\
+		DEFINES="$(DEFINES) -DLINUX -DHAS_SYSVIPC" LIBS="$(LIBS) -lmd5"\
+		CFLAGS="$(CFLAGS)"
+
+BSD44:
+	make bbslib LDFLAGS="$(LDFLAGS) -Bshareable"\
+		DEFINES="$(DEFINES) -DBSD44 -DHAS_SYSVIPC" LIBS="$(LIBS) -lcrypt"\
+		CFLAGS="$(CFLAGS)"
+
+SUNOS:
+	make bbslib LDFLAGS="$(LDFLAGS) -Bshareable"\
+		DEFINES="$(DEFINES)" LIBS="$(LIBS)" CFLAGS="$(CFLAGS)"
+
+SOLARIS:
+	make bbslib LDFLAGS="$(LDFLAGS) -G"\
+		DEFINES="$(DEFINES) -DSOLARIS -DSYSV" LIBS="$(LIBS) -lsocket -lnsl"\
+		CFLAGS="$(CFLAGS)"
+</code></pre>
+
+
+<h3>
+3.Make 命令列參數
+</h3>
+<pre class="language-text">
+Microsoft nmake
+
+make [參數] [巨集指命定義] [描述檔檔名]
+
+參數
+/D	檢查檔案日期的同時，顯示各檔案日期
+/I	不管各動作是否成功，都繼續下個動作
+/N	只列出組成動作命令字串，而不實際執行組成動作
+/S	執行組成動作時，不列出組成動作的命令字串
+</pre>
+<pre class="language-text">
+GNU make
+make [參數] [巨集指令定義] [-f 描述檔檔名]
+
+參數
+-h	顯示參數說明
+-i	忽略動作的錯誤訊息，依然進行下個動作
+-n	只列出組成動作命令字串，而不實際執行組成動作
+-s	執行組成動作時，不列出組成動作的命令字串
+-t	修改各目標檔的時間，而不重新產生
+-j n	同時產生 n 個行程去處理，若不指定 n 之值，表示由 make
+	儘可能地產生多個行程處理產生動作。
+	注意，在低階系統上，此參數的使用，有可能造成系統負載過重，
+	而使系統 crash 。
+</pre>
+<p>
+當不指定描述檔檔名時， make 會自動在工作目錄下，找尋檔名為'Makefile'、'makefile'或'MAKEFILE'的檔案。
+</p>
+<p>
+透過 Make 命令列定義巨集的方法如下:
+</p>
+<pre class="language-text">
+make ABC=123 XYZ='"Hello world"' CFLAGS='-O -DNOLIMIT'
+</pre>
+<address>
+作者: 遊手好閒的石頭成<br/>
+E-Mail: shirock@educities.edu.tw<br/>
+First-edition: May 1, 1995<br/>
+Last-modified: Feb 16, 2000<br/>
+Last-modified: Sep 14, 2006
+</address><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2145750.html">http://blog.roodo.com/rocksaying/archives/2145750.html</a></div>

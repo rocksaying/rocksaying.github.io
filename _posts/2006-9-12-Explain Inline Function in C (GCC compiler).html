@@ -1,0 +1,585 @@
+---
+title: Explain Inline Function in C (GCC compiler)
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+在 C++ 剛出現的時候，大多數 C++ compiler 引入了一個新關鍵字 '<span class="dfn">inline</span>' ，用於解決個體行為 (methods of object) 的部份效率瓶頸。直到 ISO C99 時，才正式將 <span class="dfn">inline</span> 定於規範之中。不過多數的 C/C++ compiler 只將 <span class="dfn">inline</span> 用於 C++ program 中，並未延伸到 C program (*1)。'inline' is a keyword of ANSI/ISO C99. Some C/C++ compilers do not allow to use this in C program. '__inline__' is a keyword of GNU GCC. Some compilers use '__inline'.
+</span>)。
+GCC 最晚在 2.9 版 ，為 C program 加入了一個擴充關鍵字 '<span class="dfn">__inline__</span>' (*2)，使得 programmer 可以在 C program 中使用 inline function 。請參考 GNU GCC Info document setcion '<a href="http://sunsite.ualberta.ca/Documentation/Gnu/gcc-3.0.2/html_node/gcc_102.html">An Inline Function is As Fast As a Macro</a>'. 說明文件意簡言骸，我將配合程式碼說明 inline function 在 C program 中運作的相關細節。
+</p>
+
+<!--more-->
+<div class="note">
+<ol>
+<li>
+GCC 為 C program 提供了 <span class="dfn">__inline__</span> 擴充關鍵字，有些 compiler 則是用 <span class="dfn">__inline</span>。
+</li>
+<li>
+印象中，我在 1998-99 年時，便已在 C program 中使用了 <span class="dfn">__inline__</span> 關鍵字，見 <a href="http://home.educities.edu.tw/fbtip/">FBTIP</a>。因此 GCC 是在 ISO C99 規範出現前，先提供了這個擴充關鍵字供 programmer 使用。
+</li>
+</ol>
+</div>
+<h3>
+Codes of Case
+</h3>
+<h4>
+c_inline_case1.h
+</h4>
+<p>
+Case 1, combination of <span class="dfn">inline</span> and <span class="dfn">static</span>.
+</p>
+<pre class="highlight"><code><span class="cp">#if !defined( C_INLINE )
+</span>
+<span class="cp">#define  C_INLINE    static __inline__
+</span>
+<span class="cp">#endif	// defined( C_INLINE )
+</span></code></pre>
+
+
+<h4>
+c_inline_case2.h
+</h4>
+<p>
+Case 2, combination of <span class="dfn">inline</span> and <span class="dfn">extern</span>.
+</p>
+<pre class="highlight"><code><span class="cp">#if !defined( C_INLINE )
+</span>
+<span class="cp">#define  C_INLINE    extern __inline__
+</span>
+<span class="cp">#endif	// defined( C_INLINE )
+</span></code></pre>
+
+
+<h4>
+c_inline_case3.h
+</h4>
+<p>
+Case 3, <span class="dfn">inline</span> only.
+</p>
+<pre class="highlight"><code><span class="cp">#if !defined( C_INLINE )
+</span>
+<span class="cp">#define  C_INLINE    __inline__
+</span>
+<span class="cp">#endif	// defined( C_INLINE )
+</span></code></pre>
+
+
+<h4>
+strcase.h
+</h4>
+<pre class="highlight"><code><span class="cp">#if !defined( __STRCASE_H )
+#define __STRCASE_H
+</span>
+<span class="n">C_INLINE</span> <span class="kt">char</span><span class="o">*</span><span class="nf">lcase</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kt">char</span><span class="o">*</span><span class="n">c</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">s</span><span class="p">;</span>
+		<span class="k">while</span><span class="p">(</span><span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">if</span><span class="p">(</span> <span class="o">*</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="sc">'A'</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="sc">'Z'</span><span class="p">)</span>
+				<span class="o">*</span><span class="n">c</span> <span class="o">+=</span> <span class="sc">'\x20'</span> <span class="cm">/* 'A' - 'a' */</span><span class="p">;</span>
+			<span class="o">++</span><span class="n">c</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">C_INLINE</span> <span class="kt">char</span><span class="o">*</span><span class="nf">ucase</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kt">char</span><span class="o">*</span><span class="n">c</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">s</span><span class="p">;</span>
+		<span class="k">while</span><span class="p">(</span><span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">if</span><span class="p">(</span> <span class="o">*</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="sc">'a'</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="sc">'z'</span><span class="p">)</span>
+				<span class="o">*</span><span class="n">c</span> <span class="o">-=</span> <span class="sc">'\x20'</span><span class="p">;</span>
+			<span class="o">++</span><span class="n">c</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cp">#endif	// defined( __STRCASE_H )
+</span></code></pre>
+
+
+<h4>
+case_l.c
+</h4>
+<p>
+Call inline function 'lcase' directly. 第 19 行展示了 inline function 可以回傳值的特性。用 MACRO 的方式，在此無法通過。
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+</span>
+<span class="cp">#if defined(USE_CASE2)
+</span>    <span class="cp">#include "c_inline_case2.h"
+#elif defined(USE_CASE3)
+</span>    <span class="cp">#include "c_inline_case3.h"
+#else
+</span>    <span class="cp">#include "c_inline_case1.h"
+#endif
+#include "strcase.h"
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span><span class="o">*</span><span class="n">hello</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="mi">1024</span><span class="p">);</span>
+
+    <span class="n">strcpy</span><span class="p">(</span><span class="n">hello</span><span class="p">,</span> <span class="s">"Hello World</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span> <span class="n">lcase</span><span class="p">(</span><span class="n">hello</span><span class="p">)</span> <span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h4>
+case_u.c
+</h4>
+<p>
+Call inline function 'ucase' via pointer of function. 第 17 行展示了 inline function 可以用於函數指標、遞迴的特性。同樣地，用 MACRO 也無法做到。
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+</span>
+<span class="cp">#if defined(USE_CASE2)
+</span>    <span class="cp">#include "c_inline_case2.h"
+#elif defined(USE_CASE3)
+</span>    <span class="cp">#include "c_inline_case3.h"
+#else
+</span>    <span class="cp">#include "c_inline_case1.h"
+#endif
+#include "strcase.h"
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span><span class="o">*</span><span class="n">hello</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="mi">1024</span><span class="p">);</span>
+    <span class="kt">char</span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="n">ucase</span><span class="p">;</span>
+
+    <span class="n">strcpy</span><span class="p">(</span><span class="n">hello</span><span class="p">,</span> <span class="s">"Hello World</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span> <span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="n">hello</span><span class="p">)</span> <span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h3>
+Works only in optimizing compilation
+</h3>
+<blockquote>
+<p>
+Inlining of functions is an optimization and it really "works" only in optimizing compilation. If you don't use '-O', no function is really inline.
+</p>
+<p>
+When a function is both inline and static, if all calls to the function are integrated into the caller, and the function's address is never used, then the function's own assembler code is never referenced. In this case, GCC does not actually output assembler code for the function, unless you specify the option `-fkeep-inline-functions'. Some calls cannot be integrated for various reasons (in particular, calls that precede the function's definition cannot be integrated, and neither can recursive calls within the definition). If there is a nonintegrated call, then the function is compiled to assembler code as usual. The function must also be compiled as usual if the program refers to its address, because that can't be inlined.
+</p>
+<cite><a href="http://sunsite.ualberta.ca/Documentation/Gnu/gcc-3.0.2/html_node/gcc_102.html">An Inline Function is As Fast As a Macro</a></cite>
+</blockquote>
+<p>
+以 '-S' 指示 gcc 將程式碼譯為組合語言碼 (assembler code) ，以便觀察有無啟用最佳化選項 (-O) 的影嚮。
+</p>
+<pre class="language-text">
+# gcc -DUSE_CASE1 -S -o case_l_1a.asm case_l.c
+# gcc -DUSE_CASE1 -O -S -o case_l_1b.asm case_l.c
+# gcc -DUSE_CASE1 -O -S -o case_u_1b.asm case_u.c
+</pre>
+<h4>
+case_l_1a.asm
+</h4>
+<p>
+第 39-69 行是 lcase 的 assembler code ，第 32 行顯示此處依然使用 call 調用 lcase ，而非直接展開 (inline) 。這表示在未啟用最佳化選項時， GCC 不會展開 inline function 的內容。
+</p>
+<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"case_l.c"</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">___main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">section</span> <span class="p">.</span><span class="n">rdata</span><span class="p">,</span><span class="s">"dr"</span>
+<span class="n">LC0</span><span class="o">:</span>
+	<span class="p">.</span><span class="n">ascii</span> <span class="s">"Hello World</span><span class="se">\12\0</span><span class="s">"</span>
+	<span class="p">.</span><span class="n">text</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_main</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_main</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">subl</span>	<span class="err">$</span><span class="mi">24</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">andl</span>	<span class="err">$</span><span class="o">-</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">addl</span>	<span class="err">$</span><span class="mi">15</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">addl</span>	<span class="err">$</span><span class="mi">15</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">shrl</span>	<span class="err">$</span><span class="mi">4</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">sall</span>	<span class="err">$</span><span class="mi">4</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">-</span><span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">call</span>	<span class="n">__alloca</span>
+	<span class="n">call</span>	<span class="n">___main</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1024</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_malloc</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="n">LC0</span><span class="p">,</span> <span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_strcpy</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_lcase</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">leave</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_lcase</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_lcase</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">subl</span>	<span class="err">$</span><span class="mi">4</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">cmpl</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L3</span>
+	<span class="n">movl</span>	<span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">)</span>
+<span class="n">L4</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L3</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">jle</span>	<span class="n">L6</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">90</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">jg</span>	<span class="n">L6</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">),</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">addb</span>	<span class="err">$</span><span class="mi">32</span><span class="p">,</span> <span class="o">%</span><span class="n">dl</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">dl</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+<span class="n">L6</span><span class="o">:</span>
+	<span class="n">leal</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">incl</span>	<span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">jmp</span>	<span class="n">L4</span>
+<span class="n">L3</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">leave</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_puts</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_strcpy</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_malloc</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+</code></pre>
+
+<h4>
+case_l_1b.asm
+</h4>
+<p>
+第 17-39 行是 lcase 展開後的內容，這表示 GCC 啟用最佳化選項時，才會展開 inline function 。由於同時搭配 <span class="dfn">static</span> 關鍵字，在沒有需要時， GCC 不會產生 assembler code ，所以在此看不到 lcase 的 assembler code (<q>In this case, GCC does not actually output assembler code for the function</q>)。
+</p>
+<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"case_l.c"</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">___main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">text</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_main</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_main</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">subl</span>	<span class="err">$</span><span class="mi">4</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">andl</span>	<span class="err">$</span><span class="o">-</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">call</span>	<span class="n">__alloca</span>
+	<span class="n">call</span>	<span class="n">___main</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1024</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_malloc</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1819043144</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1867980911</span><span class="p">,</span> <span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">174353522</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">testl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">je</span>	<span class="n">L2</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L2</span>
+<span class="n">L6</span><span class="o">:</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">65</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">25</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">ja</span>	<span class="n">L5</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">addb</span>	<span class="err">$</span><span class="mi">32</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">al</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+<span class="n">L5</span><span class="o">:</span>
+	<span class="n">incl</span>	<span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+	<span class="n">jne</span>	<span class="n">L6</span>
+<span class="n">L2</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">leave</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_puts</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_malloc</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+</code></pre>
+
+<h4>
+case_u_1b.asm
+</h4>
+<p>
+儘管啟用了最佳化選項，但此例是透過函數指標 (pointer of function) 調用 ucase ，所以第 28-55 行中， GCC 依然產生了 ucase 的 assembler code (<q>The function must also be compiled as usual if the program refers to its address, because that can't be inlined.</q>)。 GCC 仍然會在可以展開之處展開 inline function ，但在不能展開之處，則用 call 調用。在第 21 行中，便是用 call 調用 ucase 。可以注意到，第 21 行並不是透過原先指定的變數，而是直接取用 ucase 的 address ，這是因為在最佳化情形下， GCC 判斷可以直接取用 ucase 的 address 。
+</p>
+<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"case_u.c"</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">___main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">text</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_main</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_main</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">subl</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">andl</span>	<span class="err">$</span><span class="o">-</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">call</span>	<span class="n">__alloca</span>
+	<span class="n">call</span>	<span class="n">___main</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1024</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_malloc</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1819043144</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1867980911</span><span class="p">,</span> <span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">174353522</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_ucase</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">leave</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_ucase</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_ucase</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">movl</span>	<span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">testl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">je</span>	<span class="n">L3</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">ebx</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L3</span>
+<span class="n">L7</span><span class="o">:</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">97</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">25</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">ja</span>	<span class="n">L6</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">32</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">al</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+<span class="n">L6</span><span class="o">:</span>
+	<span class="n">incl</span>	<span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+	<span class="n">jne</span>	<span class="n">L7</span>
+<span class="n">L3</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">popl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">popl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_puts</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_malloc</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+</code></pre>
+
+
+<h3>
+Combination of inline and extern
+</h3>
+<blockquote>
+<p>
+If you specify both inline and extern in the function definition, then the definition is used only for inlining. In no case is the function compiled on its own, not even if you refer to its address explicitly. Such an address becomes an external reference, as if you had only declared the function, and had not defined it.
+</p>
+<p>
+This combination of inline and extern has almost the effect of a macro.
+</p>
+<cite><a href="http://sunsite.ualberta.ca/Documentation/Gnu/gcc-3.0.2/html_node/gcc_102.html">An Inline Function is As Fast As a Macro</a></cite>
+</blockquote>
+<p>
+當 <span class="dfn">inline</span> 和 <span class="dfn">extern</span> 搭配使用時， GCC 完全不產生 inline function 的 assembler code ，即使是無法展開 inline function 的場合，也僅僅試圖以外部符號調用外部的 assembler code 。因此在此例中，雖可通過 compile ，但 linker 會丟出參照符號未定義的錯誤。
+</p>
+<pre class="language-text">
+# gcc -DUSE_CASE2 -O -o case_u_2 case_u.c
+ccymaaaa.o(.text+0x40):case_u.c: undefined reference to 'ucase'
+gcc: ld returned 1 exit status
+
+# gcc -DUSE_CASE2 -O -S -o case_u_2.asm case_u.c
+</pre>
+<h4>
+case_u_2.asm
+</h4>
+<p>
+此例係透過函數指標調用 ucase ，無法直接展開。故在第 28 行中宣告 ucase 是一個外部符號，第 21 行中用 call 調用。完全不產生 ucase 的 assembler code ，而認為其可透過連結其他 object files 獲得。
+</p>
+<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"case_u.c"</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">___main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">text</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_main</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_main</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">subl</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">andl</span>	<span class="err">$</span><span class="o">-</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">call</span>	<span class="n">__alloca</span>
+	<span class="n">call</span>	<span class="n">___main</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1024</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_malloc</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1819043144</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1867980911</span><span class="p">,</span> <span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">174353522</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_ucase</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">leave</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_puts</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_ucase</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_malloc</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+</code></pre>
+
+
+<h3>
+Only inline
+</h3>
+<blockquote>
+<p>
+When an inline function is not static, then the compiler must assume that there may be calls from other source files; since a global symbol can be defined only once in any program, the function must not be defined in the other source files, so the calls therein cannot be integrated. Therefore, a non-static inline function is always compiled on its own in the usual fashion.
+</p>
+<cite><a href="http://sunsite.ualberta.ca/Documentation/Gnu/gcc-3.0.2/html_node/gcc_102.html">An Inline Function is As Fast As a Macro</a></cite>
+</blockquote>
+<p>
+單獨使用 <span class="dfn">inline</span> 時， GCC 一定會產生 inline function 的 assembler code ，並宣告為全域符號 (global symbol) 。在此例中，其立即而明顯的問題在於，每一個引入 strcase.h 的 C source files ，其 object file 中都會包含相同的全域符號 'lcase' 和 'ucase' ，在連結多個 object files 時， linker 會丟出符號定義重覆的錯誤。
+</p>
+<pre class="language-text">
+# gcc -DUSE_CASE3 -O -S -o case_l_3.asm case_l.c
+</pre>
+<h4>
+case_l_3.asm
+</h4>
+<p>
+第 5-32 行是 lcase 的 assembler code ，第 3 行宣告 'lcase' 為全域符號 (global symbol)。第 35-62 行是 ucase 的 assembler code ，第 33 行宣告 'ucase' 為全域符號 (global symbol)。第 77-99 行處，由於可以展開 inline function ，故展開之。
+</p>
+<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"case_l.c"</span>
+	<span class="p">.</span><span class="n">text</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_lcase</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_lcase</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_lcase</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">movl</span>	<span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">testl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">je</span>	<span class="n">L2</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">ebx</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L2</span>
+<span class="n">L6</span><span class="o">:</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">65</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">25</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">ja</span>	<span class="n">L5</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">addb</span>	<span class="err">$</span><span class="mi">32</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">al</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+<span class="n">L5</span><span class="o">:</span>
+	<span class="n">incl</span>	<span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+	<span class="n">jne</span>	<span class="n">L6</span>
+<span class="n">L2</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">popl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">popl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">ret</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_ucase</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_ucase</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_ucase</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">movl</span>	<span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">testl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">je</span>	<span class="n">L9</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">ebx</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L9</span>
+<span class="n">L13</span><span class="o">:</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">97</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">25</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">ja</span>	<span class="n">L12</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">32</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">al</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+<span class="n">L12</span><span class="o">:</span>
+	<span class="n">incl</span>	<span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+	<span class="n">jne</span>	<span class="n">L13</span>
+<span class="n">L9</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">popl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">popl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">___main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">_main</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_main</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">2</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+<span class="n">_main</span><span class="o">:</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebp</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">esp</span><span class="p">,</span> <span class="o">%</span><span class="n">ebp</span>
+	<span class="n">pushl</span>	<span class="o">%</span><span class="n">ebx</span>
+	<span class="n">subl</span>	<span class="err">$</span><span class="mi">4</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">andl</span>	<span class="err">$</span><span class="o">-</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">esp</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">16</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">call</span>	<span class="n">__alloca</span>
+	<span class="n">call</span>	<span class="n">___main</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1024</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_malloc</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1819043144</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1867980911</span><span class="p">,</span> <span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">174353522</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">testl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">je</span>	<span class="n">L16</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">eax</span><span class="p">,</span> <span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">eax</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="n">L16</span>
+<span class="n">L20</span><span class="o">:</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">subb</span>	<span class="err">$</span><span class="mi">65</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">25</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">ja</span>	<span class="n">L19</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">addb</span>	<span class="err">$</span><span class="mi">32</span><span class="p">,</span> <span class="o">%</span><span class="n">al</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">al</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+<span class="n">L19</span><span class="o">:</span>
+	<span class="n">incl</span>	<span class="o">%</span><span class="n">edx</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">edx</span><span class="p">)</span>
+	<span class="n">jne</span>	<span class="n">L20</span>
+<span class="n">L16</span><span class="o">:</span>
+	<span class="n">movl</span>	<span class="o">%</span><span class="n">ebx</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">esp</span><span class="p">)</span>
+	<span class="n">call</span>	<span class="n">_puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">movl</span>	<span class="o">-</span><span class="mi">4</span><span class="p">(</span><span class="o">%</span><span class="n">ebp</span><span class="p">),</span> <span class="o">%</span><span class="n">ebx</span>
+	<span class="n">leave</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_puts</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+	<span class="p">.</span><span class="n">def</span>	<span class="n">_malloc</span><span class="p">;</span>	<span class="p">.</span><span class="n">scl</span>	<span class="mi">3</span><span class="p">;</span>	<span class="p">.</span><span class="n">type</span>	<span class="mi">32</span><span class="p">;</span>	<span class="p">.</span><span class="n">endef</span>
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/C%20Macro%20%E4%BC%BC%E4%B9%8E%E5%8F%AA%E5%89%A9%E4%B8%8B%E8%AE%93%20programmer%20%E5%B0%91%E6%89%93%E4%BA%9B%E5%AD%97%E7%9A%84%E5%8A%9F%E8%83%BD.html">C Macro 似乎只剩下讓 programmer 少打些字的功能</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2139426.html">http://blog.roodo.com/rocksaying/archives/2139426.html</a></div>

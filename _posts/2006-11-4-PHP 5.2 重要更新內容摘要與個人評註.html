@@ -1,0 +1,92 @@
+---
+title: PHP 5.2 重要更新內容摘要與個人評註
+category: programming
+old-category: PHP
+tags: []
+---
+<p>
+PHP 5.2 新版發佈的時間 (2006-11-02) 真是快的超乎我預期，重大功能加了不少。我摘要重要內容加以說明並評註一番。 PHP 5.2 UPDATE 全文請見《<a href="http://tw.php.net/UPDATE_5_2.txt">PHP 5.2 UPDATE</a>》。
+</p>
+
+<!--more-->
+<h3>新增的 Extensions</h3>
+<p>新增三個重要的 extensions 。</p>
+<p>
+一、正式納入 JSON extension ，預設可用。參閱《<a href="{{ site.baseurl }}/archives/2006/PHP~~JSON%20in%20PHP.html">JSON in PHP</a>》。
+</p>
+
+<p>
+二、新增 Filter extension 用於查驗及過濾使用者輸入的資料，這使得我們可以用委派形式檢查使用者輸入的各種資料 (例如網頁表單資料) ，不再將檢查動作的 code 四處散佈在 PHP script 之中。
+</p>
+
+<p>
+三、新增 Zip extension ，我們可以通透地讀、寫 ZIP 壓縮檔的內容。這不是僅僅讓我們直接讀寫 ZIP 壓縮檔那麼簡單，事實上，這是讓 PHP script 可以通透地處理未來的 Office 文件所必備的 extension 。未來的 Office 文件，例如 Open Document Format (ODF - (ISO/IEC 26300) 或是 Microsoft Office Open XML ，實際上都是 ZIP 壓縮檔，以 ZIP 壓縮格式做為 xml 文件的容器。有了這個 Zip extension ， PHP script 就可以直接自 Office 文件中取出文件內容，修改後再寫回 Office 文件。以 OpenOffice 的 .ods (sheets) 文件為例，我目前做上述動作時，要先將 .ods 用 Zip 解壓縮 [system()] ，讀寫試算表內容 (content.xml) ，再用 Zip 封裝。以後通通可免。
+</p>
+
+<h3>效能與功能</h3>
+<p>
+[改善] 改善記憶體管理機制。
+</p>
+
+<p>
+[新增] 針對 include 敘述增加 allow_url_include 設置指令。以往將引入操作 (include) 和檔案操作 [fopen(), readfile(), file(), etc] 對遠端檔案的處理原則放在同一個設置指令中 (allow_url_fopen) 。現在將引入操作對遠端檔案的處理原則劃歸到 allow_url_include 。如此一來你就可以允許本地 PHP script 操作遠端檔案，同時又可禁止引入遠端檔案。這是 PHP 5.2 的預設組態。
+</p>
+
+<p>
+[新增] 支援 RFC2397 所規範的資料串流 (data: stream) URL 方案 (http://www.faqs.org/rfcs/rfc2397.html) 。但在 Windows 平台上，特別是在 NTFS 檔案系統中，可能需要改用 'file:' 協定，以免你的檔案名稱中包含 'data:' 以致 PHP 誤判為資料串流。這真是一個好功能，現在你可以直接把一個小影像檔轉成資料串流，嵌在回傳給瀏覽器的 HTML 資料中，而不必在另外處理一個影像連結的 request 。
+</p>
+<fieldset>
+<legend>
+以前
+</legend>
+<pre class="highlight"><code>echo '<span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">"http://example.com/example.php?makePostKey"</span> <span class="na">alt=</span><span class="s">"key"</span><span class="nt">&gt;</span>';
+
+if (isset($_GET['makePostKey'])) {
+    $postKeyImage = makePostKey('VLDK');
+    Header('Content-type: image/jpg');
+    imageJpeg($postKeyImage);
+}
+</code></pre>
+
+</fieldset>
+<br/>
+<fieldset>
+<legend>
+應用資料串流 (data: stream) 的方式:
+</legend>
+<pre class="highlight"><code>$postKeyImage = makePostKey('VLDK');
+
+ob_start();
+imageJpeg($postKeyImage);
+$postKeyDataStream = base64_encode(ob_get_contents());
+ob_end_clean();
+
+echo '<span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">"data:image/jpg;base64,', $postKeyDataStream, '"</span> <span class="na">alt=</span><span class="s">"key"</span><span class="nt">/&gt;</span>';
+</code></pre>
+
+</fieldset>
+
+<p>
+[新增] 針對時區支援， PHP 5.2 新增兩種對應到 Date/Time functions 的 class ，即 'DateTime' 和 'DateTimeZone', See Standard PHP Library (SPL).
+</p>
+
+<h3>
+OOP 相關改變
+</h3>
+<p>
+[新增] 為了改善例外處理機制的錯誤回報，在錯誤回報 (error_reporting) 指令中，新增 E_RECOVERABLE_ERROR 一項，用於歸類可由例外處理機制掌握 (catch/handle) 的錯誤訊息。發生這類錯誤時，若被例外處理機制掌握及修復，則不會回報錯誤訊息；反之未被例外處理機制掌握時 (並未處於 catch 區塊中) ，將被視為 E_ERROR 類型的錯誤回報，並記錄為 'Catchable fatal error'.
+</p>
+<p>
+[新增] 允許介面宣告建構者 (constructor) ，並增加介面建構者 (constructors in interfaces) 的簽名 (signature) 查核動作。現在實作介面內容的類別，其建構者的簽名 (即參數與回傳值型態) 必須與介面建構者的簽名一致。
+</p>
+<p>
+[修改] 當你的類別實作了神奇行為 __toString() 時，現在可在程式需要一個字串的情形下自動調用。例如以類別實例 $regexObj 和 $myObj 作為調用 preg_match() 的第一、二個參數時 [preg_match($regexObj, $myObj)] ，因為這兩個參數都需要字串，所以 PHP 此時會自動調用 $regexObj 和 $myObj 的 __toString() 。這個改變與 JavaScript 對 toString() 的處理方式一致。注意一點，目前 __toString() 仍然不能被應用於將個體作陣列的 key 的情形，亦即不允許 $a[ $myObj ] 的語法。
+</p>
+<p>
+[移除] 移除抽象靜態類別函數 (Dropped abstract static class functions).
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/JSON%20in%20PHP%20-%20PHP%205.2%20%E6%AD%A3%E5%BC%8F%E7%B4%8D%E5%85%A5%20JSON%20extension.html">JSON in PHP - PHP 5.2 正式納入 JSON extension</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2418270.html">http://blog.roodo.com/rocksaying/archives/2418270.html</a></div>

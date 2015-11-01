@@ -1,0 +1,121 @@
+---
+title: A note of creating XML document by SimpleXML
+category: programming
+old-category: PHP
+tags: [php,xml,spreadsheet,simplexml]
+---
+<div class="tags" style="display:none">php xml spreadsheet simplexml</div>
+<p>
+本文嚐試利用 PHP5 提供的 <a href="http://tw.php.net/manual/en/ref.simplexml.php">SimpleXML 函數組</a> ，建立一份可供 MS Excel 2000/XP 版本使用的 XML 文件。
+</p>
+<p>
+需求起因於資料庫之資料匯出需求。以往大都採用 CSV 格式匯出，然而 CSV 文件用於保存 Big5 內碼編碼之資料時水土不服，容易發生分欄錯誤之情況。儘管我們將字元編碼改為 UTF-8 後便可避免此問題，但是卻又面臨 MS Excel 2000/XP 無法以正確之字元編碼讀取 CSV 文件的窘境。因此我需要一個可為 OpenOffice 以及 MS Excel 2000/XP 兩者共同辨識的資料格式。經我測試後，確認 MS Excel 2000/XP 之 XML 試算表格式符合此需求。
+</p>
+
+<!--more-->
+<p>
+接下來將以 MS Excel 2000/XP 之 XML 格式為準，撰寫一個以 SimpleXML 建立 XML 文件的測試程式，並說明 SimpleXML 之部份使用事項。
+</p>
+<p>下例是 MS Excel 2000/XP 最基本的 XML 試算表範例:</p>
+<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
+<span class="nt">&lt;Workbook</span> <span class="na">xmlns=</span><span class="s">"urn:schemas-microsoft-com:office:spreadsheet"</span>
+ <span class="na">xmlns:o=</span><span class="s">"urn:schemas-microsoft-com:office:office"</span>
+ <span class="na">xmlns:x=</span><span class="s">"urn:schemas-microsoft-com:office:excel"</span>
+ <span class="na">xmlns:ss=</span><span class="s">"urn:schemas-microsoft-com:office:spreadsheet"</span>
+ <span class="na">xmlns:html=</span><span class="s">"http://www.w3.org/TR/REC-html40"</span><span class="nt">&gt;</span>
+ <span class="nt">&lt;Worksheet</span> <span class="na">ss:Name=</span><span class="s">"Sheet1"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;Table&gt;</span>
+   <span class="nt">&lt;Row&gt;</span>
+    <span class="nt">&lt;Cell&gt;&lt;Data</span> <span class="na">ss:Type=</span><span class="s">"Number"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/Data&gt;&lt;/Cell&gt;</span>
+    <span class="nt">&lt;Cell&gt;&lt;Data</span> <span class="na">ss:Type=</span><span class="s">"String"</span><span class="nt">&gt;</span>測試<span class="nt">&lt;/Data&gt;&lt;/Cell&gt;</span>
+   <span class="nt">&lt;/Row&gt;</span>
+  <span class="nt">&lt;/Table&gt;</span>
+ <span class="nt">&lt;/Worksheet&gt;</span>
+<span class="nt">&lt;/Workbook&gt;</span>
+</code></pre>
+
+<p>
+試算表中的工作表元素由 <code>&lt;Worksheet&gt;</code>及<code>&lt;Table&gt;</code> 組成，其中 <code>&lt;Worksheet&gt;</code> 必須具備屬性 <var>ss:Name</var>。工作表之下為「列(<code>&lt;Row&gt;</code>)」，列之下為「儲存格(<code>&lt;Cell&gt;</code>)」。
+</p>
+
+<p>
+下列為利用 SimpleXML 建立 XML 文件的測試程式。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SimpleXMLElement</span><span class="p">(</span>
+<span class="s1">'&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40"&gt;&lt;/Workbook&gt;'</span>
+<span class="p">);</span>
+
+<span class="c1">//&lt;Worksheet ss:Name="Sheet1"&gt;
+//&lt;Table&gt;
+</span><span class="nv">$worksheetNode</span> <span class="o">=</span> <span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Worksheet'</span><span class="p">);</span>
+
+<span class="c1">//$worksheetNode-&gt;addAttribute('ss:Name', 'sheet1');//BUG?
+</span><span class="nv">$worksheetNode</span><span class="p">[</span><span class="s1">'ss:Name'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'sheet1'</span><span class="p">;</span>
+
+<span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span><span class="c1">//add a child with value '' by setter
+//$tableNode = $worksheetNode-&gt;addChild('Table');/add a child by addChild()
+</span>
+<span class="c1">//&lt;Row&gt;
+</span><span class="nv">$row</span> <span class="o">=</span> <span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Row'</span><span class="p">);</span>
+
+<span class="c1">//&lt;Cell&gt;&lt;Data ss:Type="Number"&gt;1&lt;/Data&gt;&lt;/Cell&gt;
+</span><span class="nv">$cell</span> <span class="o">=</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span>
+
+<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="c1">//shorthand
+//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell-&gt;Data = 2; //fullpath
+//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell[0]-&gt;Data = 2;
+//$cell-&gt;addChild('Data', 2);
+</span>
+<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span><span class="c1">//shorthand
+//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell-&gt;Data['ss:Type'] = 'String';//fullpath
+//$cell-&gt;Data-&gt;addAttribute('ss:Type', 'String'); //BUG?
+</span>
+<span class="nv">$cell</span> <span class="o">=</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span> <span class="c1">//shorthand
+//$cell = $doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;addChild('Cell'); //fullpath
+</span>
+<span class="c1">//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell[1]-&gt;Data = 'hello';
+//$row-&gt;Cell[1]-&gt;Data = 'hello';
+</span><span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="s1">'hello'</span><span class="p">;</span>
+<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span>
+
+<span class="nv">$cell</span> <span class="o">=</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span> <span class="c1">//shorthand
+</span><span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="nb">iconv</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">,</span> <span class="s1">'中文測試'</span><span class="p">);</span>
+<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span>
+
+<span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">asXML</span><span class="p">(</span><span class="s1">'test1.xml'</span><span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+首先，我提供一份空白試算表的 XML 內容給 <code>SimpleXMLElement</code> 建立最本的 SimpleXML 文件結構。<var>$doc</var> 便指向此文件之根節點 <code>&lt;Workbook&gt;</code> 。接著我以 <code>addChild()</code> 在根節點之下添加子節點 <code>&lt;Worksheet&gt;</code> 。
+</p>
+<p>
+由於 <code>&lt;Worksheet&gt;</code> 必須具有屬性 <var>ss:Name</var> ，所以我接下來嚐試以 <code>addAttribute()</code> 為 <code>&lt;Worksheet&gt;</code> 設定屬性。然而此時我碰到了一個疑似 bug 的狀況。除了 <code>addAttribute()</code> 外，我們也可以透過陣列索引子，以 setter 直接增加新屬性。通常以 setter 直接設定新屬性之方式與 addAttribute() 之效果相同，但對於屬性名稱結合名稱空間之處理方式有所差異(Maybe a bug of addAttribute())。在此例中(attribute with namespace)， <code>addAttribute()</code> 會忽略屬性名稱的名稱空間 'ss'，故其輸出之 XMLString 的 <code>&lt;Worksheet&gt;</code> 之屬性名稱為 <var>Type</var> 而非 <var>ss:Type</var>。但以 setter 設定時，則可忠實保留屬性名稱及名稱空間。故我接下來皆以 setter 方式直接增加屬性。
+</p>
+<p>
+子節點之增加，除了 <code>addChild()</code> 外，亦可以 setter 直接建立。故第18行直接以 setter 增加 <code>&lt;Table&gt;</code> 節點。但此方式僅限單一子節點。
+</p>
+<p>
+第一個子節點可藉由 setter 直接建立，無須先以 <code>addChild()</code> 建立子節點。然而第二個以後之同名子節點便不能由 setter 直接建立，必須以 <code>addChild()</code> 添加。故第36及44行之第2及第3儲存格 <code>&lt;Cell&gt;</code> 皆須以 <code>addChild()</code> 方法加入。
+</p>
+<p>
+使用 SimpleXML 存取節點之途徑很多。我們可透過類似 XPath 之語法描述之根節點到目標節點的路徑存取，也可以透過子節點之參照以速記方式存取子節點以下之目標節點。我將之並列於程式碼中供各位參考。
+</p>
+<p>
+最後使用 <code>asXML()</code> 方法將 SimpleXML 個體轉成 XML 字串，並存入指定的檔案 <var>test1.xml</var> 中。該 XML 文件可以 MS Excel 2000/XP 與 OpenOffice 開啟，試算表中包含一行三列之內容。
+</p>
+<div class="note">
+本文是 <a href="{{ site.baseurl }}/archives/2007/php-SpreadsheetReader.html">php-SpreadsheetReader</a> 專案之一部工作。
+</div>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E4%BB%A5%20SimpleXML%20%E5%B0%87%20CSV%20%E6%96%87%E4%BB%B6%E8%BD%89%E6%8F%9B%E6%88%90%20MS%20Excel%202k_XP%20XML%20%E6%96%87%E4%BB%B6.html">以 SimpleXML 將 CSV 文件轉換成 MS Excel 2k/XP XML 文件</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2981347.html">http://blog.roodo.com/rocksaying/archives/2981347.html</a></div>

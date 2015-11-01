@@ -1,0 +1,173 @@
+---
+title: 分組統計的二種查詢敘述
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<p>
+使用 inner join 和 sum() 統計進貨數量。由於要進行分組合計，遂有兩種可行且結果相同的查詢敘述。但這兩種查詢敘述的 explain 和效能有所差異，視資料庫系統的查詢引擎而定。
+</p>
+
+<!--more-->
+<p>
+有兩份 data table ， pos110 為商品主檔， pos803 為進貨明細。
+</p>
+<table border='1'>
+<thead>
+<caption>
+pos110 (商品主檔)
+</caption>
+</thead>
+<tbody>
+<tr>
+	<th>條碼</th>
+	<th>品名</th>
+	<th>單位</th>
+</tr>
+<tr>
+	<th>uno</th>
+	<th>name</th>
+	<th>unit</th>
+</tr>
+<tr>
+	<td>471321654</td>
+	<td>好吃速食麵1</td>
+	<td>包</td>
+</tr>
+<tr>
+	<td>471321613</td>
+	<td>好吃速食麵2</td>
+	<td>包</td>
+</tr>
+<tr>
+	<td>471321625</td>
+	<td>好吃速食麵3</td>
+	<td>包</td>
+</tr>
+</tbody>
+</table>
+
+<table border='1'>
+<thead>
+<caption>
+pos803 (進貨單)
+</caption>
+</thead>
+<tbody>
+<tr>
+	<th>條碼</th>
+	<th>供應商代號</th>
+	<th>成本</th>
+	<th>建議售價</th>
+	<th>配置店號</th>
+	<th>進貨量</th>
+	<th>進貨單號</th>
+	<th>下單時間</th>
+</tr>
+<tr>
+	<th>uno</th>
+	<th>supp_id</th>
+	<th>cost</th>
+	<th>list_price</th>
+	<th>cno</th>
+	<th>qty</th>
+	<th>tr_no</th>
+	<th>tr_date</th>
+</tr>
+<tr>
+	<td>471321654</td>
+	<td>A654</td>
+	<td>7.5</td>
+	<td>12.0</td>
+	<td>K0201</td>
+	<td>120</td>
+	<td>C200610200023</td>
+	<td>2006-10-20 10:23:21</td>
+</tr>
+<tr>
+	<td>471321654</td>
+	<td>A654</td>
+	<td>7.0</td>
+	<td>12.0</td>
+	<td>K0201</td>
+	<td>150</td>
+	<td>C200602110002</td>
+	<td>2006-02-11 11:32:11</td>
+</tr>
+<tr>
+	<td>471321654</td>
+	<td>A654</td>
+	<td>7.2</td>
+	<td>12.0</td>
+	<td>K0202</td>
+	<td>100</td>
+	<td>C200507010001</td>
+	<td>2005-07-01 16:32:21</td>
+</tr>
+<tr>
+	<td>471321613</td>
+	<td>A654</td>
+	<td>7.5</td>
+	<td>12.0</td>
+	<td>K0201</td>
+	<td>120</td>
+	<td>C200610200023</td>
+	<td>2006-10-20 10:23:21</td>
+</tr>
+<tr>
+	<td>471321613</td>
+	<td>A654</td>
+	<td>7.2</td>
+	<td>12.0</td>
+	<td>K0202</td>
+	<td>100</td>
+	<td>C200507010001</td>
+	<td>2005-07-01 16:32:21</td>
+</tr>
+<tr>
+	<td>471321625</td>
+	<td>A412</td>
+	<td>8.0</td>
+	<td>12.0</td>
+	<td>K0201</td>
+	<td>120</td>
+	<td>C200610200023</td>
+	<td>2006-10-20 10:23:21</td>
+</tr>
+</tbody>
+</table>
+
+<h4>Method 1: 不使用子查詢</h4>
+<p>
+全部聯結後再行統計與條件篩選。
+</p>
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">unit</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">pos803</span><span class="p">.</span><span class="n">qty</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_qty</span>
+<span class="k">FROM</span> <span class="n">pos110</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">pos803</span>
+<span class="k">ON</span> <span class="n">pos803</span><span class="p">.</span><span class="n">uno</span> <span class="o">=</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span>
+<span class="k">WHERE</span> <span class="n">cno</span> <span class="o">&gt;=</span> <span class="s1">'K0201'</span> <span class="k">AND</span> <span class="n">cno</span> <span class="o">&lt;=</span> <span class="s1">'K0205'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">unit</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
+</code></pre>
+
+
+<h4>Method 2: 使用子查詢</h4>
+<p>
+先以子查詢統計與篩選進貨明細後，再將統計結果與商品主檔聯結。
+</p>
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">carry</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">carry</span><span class="p">.</span><span class="n">total_qty</span> <span class="k">FROM</span> <span class="n">pos110</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="p">(</span>
+	<span class="k">SELECT</span> <span class="n">pos803</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">pos803</span><span class="p">.</span><span class="n">tqy</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_qty</span>
+	<span class="k">FROM</span> <span class="n">pos803</span>
+	<span class="k">WHERE</span> <span class="n">cno</span> <span class="o">&gt;=</span> <span class="s1">'K0201'</span> <span class="k">AND</span> <span class="n">cno</span> <span class="o">&lt;=</span> <span class="s1">'K0205'</span>
+	<span class="k">GROUP</span> <span class="k">BY</span> <span class="n">pos803</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span>
+<span class="p">)</span> <span class="k">AS</span> <span class="n">carry</span>
+<span class="k">ON</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span> <span class="o">=</span> <span class="n">carry</span><span class="p">.</span><span class="n">uno</span><span class="p">;</span>
+<span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
+</code></pre>
+
+</fieldset>
+
+<p>
+許多分組統計的案例都會出現上述的查詢方法選擇，不同的資料庫系統查詢引擎會有不同的處理方式，且相關表格的記錄數量亦會影嚮處理效率，故效能差異視實際情況而定，應運用查詢分析工具 (query analyzer) 進行調整。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2357655.html">http://blog.roodo.com/rocksaying/archives/2357655.html</a></div>

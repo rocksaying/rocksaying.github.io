@@ -1,0 +1,56 @@
+---
+title: 檔案插入指定字串(Find 與檔案操作)
+category: programming
+old-category: Ruby
+tags: [find,google analytics]
+---
+<div class="tags" style="display:none">Tags: Find Google_Analytics</div>
+<p>
+日前為了掌握公司網站內容的使用狀況，以公司帳號申請了 <a href="http://www.google.com/analytics/zh-TW/">Google Analytics</a> 服務 (See also: <a href="http://blog.roodo.com/rocksaying/archives/3006221.html">部落格小玩意5: 加入 Google Analytics 分析程式碼</a>)。接著就要將 Google 提供的 Analytics 程式碼植入網站的網頁中。然而公司網站早期係以靜態網頁形式建置，每個網站下包含子目錄，擁有數十個靜態頁面內容。若以人工作業方式植入甚為不便。故以 Ruby 撰寫一個小程式，掃描指定目錄之下的所有網頁內容，將 Google Analytics 程式碼植入不含 Analytics 程式碼的網頁中。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="c1">#usage: inser_ga_code.rb  GA_ID  dir</span>
+<span class="nb">require</span> <span class="s1">'Find'</span>
+
+<span class="n">gaID</span> <span class="o">=</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">gaCode</span> <span class="o">=</span> <span class="sx">%Q{
+&lt;script src="http://www.google-analytics.com/urchin.js" type="text/javascript"&gt;
+&lt;/script&gt;
+&lt;script type="text/javascript"&gt;
+_uacct = "</span><span class="si">#{</span><span class="n">gaID</span><span class="si">}</span><span class="sx">";
+urchinTracker();
+&lt;/script&gt;
+}</span>
+
+<span class="n">dir</span> <span class="o">=</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="no">Find</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">filepath</span><span class="o">|</span>
+<span class="c1">#%w[c:/index.htm c:/index2.html].each do |filepath|  #for test</span>
+    <span class="k">next</span> <span class="k">if</span> <span class="no">FileTest</span><span class="p">.</span><span class="nf">directory?</span> <span class="n">filepath</span>
+    <span class="k">next</span> <span class="k">if</span> <span class="no">File</span><span class="p">.</span><span class="nf">extname</span><span class="p">(</span><span class="n">filepath</span><span class="p">).</span><span class="nf">scan</span><span class="p">(</span><span class="sr">/\.html?$/i</span><span class="p">).</span><span class="nf">empty?</span>
+    <span class="nb">puts</span> <span class="n">filepath</span>
+
+    <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">'rb+'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">fh</span><span class="o">|</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">fh</span><span class="p">.</span><span class="nf">read</span>
+        <span class="k">if</span> <span class="no">Regexp</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="sx">%Q(_uacct = "</span><span class="si">#{</span><span class="n">gaID</span><span class="si">}</span><span class="sx">")</span><span class="p">)</span> <span class="o">=~</span> <span class="n">content</span> <span class="k">then</span>
+            <span class="nb">puts</span> <span class="s1">'ok'</span>
+        <span class="k">else</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">content</span><span class="p">.</span><span class="nf">rindex</span> <span class="sr">/&lt;\/body&gt;/i</span>
+            <span class="k">next</span> <span class="k">unless</span> <span class="n">i</span>
+            <span class="n">fh</span><span class="p">.</span><span class="nf">pos</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="n">fh</span><span class="p">.</span><span class="nf">print</span> <span class="n">gaCode</span><span class="p">,</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">.</span><span class="nf">.</span><span class="n">content</span><span class="p">.</span><span class="nf">length</span><span class="p">]</span>
+            <span class="c1">#fh.rewind</span>
+            <span class="c1">#newContent = content[0...i] + gaCode + content[i..content.length]</span>
+            <span class="c1">#File.open('index.htm.new', 'w') {|nfh| nfh &lt;&lt; newContent}</span>
+            <span class="nb">puts</span> <span class="s1">'add'</span>
+        <span class="k">end</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<h4>筆記</h4>
+<ul>
+<li>Ruby 的 one-liner 執行方式似乎不會深入到子目錄中。</li>
+<li><var>ARGV</var> 陣列之內容不含程式檔名。若未傳遞任何引數時，<var>ARGV.length</var> 為 0。這點與C/C++,PHP等不同。在C/C++,PHP之中，<var>argv</var> 陣列的第一個元素為程式檔名，故其 <var>argv</var> 陣列之長度最小為1。</li>
+<li>在 Windows 平台上，檔案開啟模式若不為 binary mode ，將影嚮 <code>pos, seek</code> 等方法的定位準確度。</li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3031499.html">http://blog.roodo.com/rocksaying/archives/3031499.html</a></div>

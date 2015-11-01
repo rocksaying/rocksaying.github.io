@@ -1,0 +1,100 @@
+---
+title: Case study - 運動會報名表單, 多對多關聯
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<blockquote>
+欲建立一個運動會報名表單，一位選手可報名參加一個以上的項目 (如100公尺、200公尺等) ，資料庫表格應如何設定？
+</blockquote>
+<p>
+我們通常不會在一個選手表格中建立多個比賽項目的關聯欄位，像 game1, game2, game3 這種欄位設置就不太適當。第一、如果多數選手只參與一個項目，則剩下的 game2, game3, etc. 欄位就閒置了，佔用磁碟空間。第二、限定了可參加比賽項目數的上限，如果我只定義到 game3 ，則一位選手最多只能參加 3 個比賽項目。第三、只能用複雜且僵化的查詢語句，例如 <code class="sql">SELECT * FROM "Players"
+INNER JOIN "Games" ON "Games".id = "Players".game1 OR "Games".id = "Players".game2 OR "Games".id = "Players".game3;</code> ，欄位愈多則 <code>OR</code> 條件 串的愈長。當然，如果程式需求限定每位選手至少參加一個項目，最多參加 2 個，那麼用這種方法倒也無妨。
+</p>
+
+<!--more-->
+<p>
+一般這種需求常用多對多關聯處理。首先需要兩個資料庫表格儲存選手及比賽項目的基本資料。其次，建立多對多關聯表格，記錄選手及比賽項目的關聯性。
+</p>
+<h4>選手 (Players) 與比賽項目 (Games) 基本資料表格</h4>
+<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Players"</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">name</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Games"</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">name</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+    <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre>
+
+<h4>選手與比賽項目的關聯表格</h4>
+<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"PlayerOfGame"</span> <span class="p">(</span>
+    <span class="nv">"playerId"</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">REFERENCES</span> <span class="nv">"Players"</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span><span class="p">,</span>
+    <span class="nv">"gameId"</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">REFERENCES</span> <span class="nv">"Games"</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span>
+<span class="p">);</span>
+</code></pre>
+
+<p>
+此處使用了外部鍵值條件約束，串聯選手和比賽項目的紀錄刪除動作，如此當我們自 Players 或 Games 表格中刪除紀錄時，資料庫系統就會自動刪除 PlayerOfGame 表格中的關聯紀錄。在關聯表格中，常用這種串聯動作以簡化程式碼中的 SQL 操作動作。
+</p>
+
+<h4>查詢句</h4>
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="nv">"PlayerOfGame"</span><span class="p">.</span><span class="o">*</span><span class="p">,</span>
+    <span class="nv">"Players"</span><span class="p">.</span><span class="n">name</span> <span class="k">AS</span> <span class="nv">"playerName"</span><span class="p">,</span>
+    <span class="nv">"Games"</span><span class="p">.</span><span class="n">name</span> <span class="k">AS</span> <span class="nv">"gameName"</span>
+<span class="k">FROM</span> <span class="nv">"Players"</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="p">(</span><span class="nv">"PlayerOfGame"</span>
+    <span class="k">INNER</span> <span class="k">JOIN</span> <span class="nv">"Games"</span>
+    <span class="k">ON</span> <span class="nv">"PlayerOfGame"</span><span class="p">.</span><span class="nv">"playerId"</span> <span class="o">=</span> <span class="nv">"Games"</span><span class="p">.</span><span class="n">id</span>
+<span class="p">)</span>
+<span class="k">ON</span> <span class="nv">"PlayerOfGame"</span><span class="p">.</span><span class="nv">"playerId"</span> <span class="o">=</span> <span class="nv">"Players"</span><span class="p">.</span><span class="n">id</span>
+<span class="c1">-- WHERE "Players".id = @id
+-- WHERE "Games".id = @id
+</span></code></pre>
+
+<p>
+查詢全部選手與比賽項目的關聯資料。添加 WHERE 條件句便可查詢特定選手參加的比賽項目或是比賽項目中有多少位選手報名參加。
+</p>
+<p>
+我們還可將全部資料的查詢結果再整理成對照表 (array or map) 。例如在 PHP 中可以處理成兩個關聯陣列，如下例。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$playerOfGames</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="nv">$gameWithPlayers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">while</span><span class="p">(</span><span class="nv">$row</span> <span class="o">=</span> <span class="nv">$stmt</span><span class="o">-&gt;</span><span class="na">fetch</span><span class="p">())</span> <span class="o">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$playerOfGAmes</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'playerId'</span><span class="p">]]))</span> <span class="o">:</span>
+        <span class="nv">$playerOfGames</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'playerId'</span><span class="p">]][</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$row</span><span class="p">[</span><span class="s1">'playerName'</span><span class="p">];</span>
+        <span class="nv">$playerOfGames</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'playerId'</span><span class="p">]][</span><span class="s1">'games'</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="k">endif</span><span class="p">;</span>
+    <span class="nb">array_push</span><span class="p">(</span><span class="nv">$playerOfGAmes</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'playerId'</span><span class="p">]][</span><span class="s1">'games'</span><span class="p">],</span> <span class="nv">$row</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$gameWithPlayers</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'gameId'</span><span class="p">]]))</span> <span class="o">:</span>
+        <span class="nv">$gameWithPlayers</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'gameId'</span><span class="p">]][</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$row</span><span class="p">[</span><span class="s1">'gameName'</span><span class="p">];</span>
+        <span class="nv">$gameWithPlayers</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'gameId'</span><span class="p">]][</span><span class="s1">'players'</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="k">endif</span><span class="p">;</span>
+    <span class="nb">array_push</span><span class="p">(</span><span class="nv">$gameWithPlayers</span><span class="p">[</span><span class="nv">$row</span><span class="p">[</span><span class="s1">'gameId'</span><span class="p">]][</span><span class="s1">'players'</span><span class="p">],</span> <span class="nv">$row</span><span class="p">);</span>
+<span class="k">endwhile</span><span class="p">;</span>
+
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$playerOfGames</span> <span class="k">as</span> <span class="nv">$playerId</span> <span class="o">=&gt;</span> <span class="nv">$player</span><span class="p">)</span> <span class="o">:</span>
+    <span class="k">echo</span> <span class="s1">'選手'</span><span class="p">,</span> <span class="nv">$player</span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span> <span class="s1">'之報名項目有: '</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$player</span><span class="p">[</span><span class="s1">'games'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$game</span><span class="p">)</span> <span class="o">:</span>
+        <span class="k">echo</span> <span class="nv">$game</span><span class="p">[</span><span class="s1">'gameName'</span><span class="p">],</span> <span class="s1">','</span><span class="p">;</span>
+    <span class="k">endforeach</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="s2">"&lt;br/&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">endforeach</span><span class="p">;</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$gameWithPlayers</span> <span class="k">as</span> <span class="nv">$gameId</span> <span class="o">=&gt;</span> <span class="nv">$game</span><span class="p">)</span> <span class="o">:</span>
+    <span class="k">echo</span> <span class="s1">'比賽項目'</span><span class="p">,</span> <span class="nv">$game</span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span> <span class="s1">'之報名選手有: '</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$game</span><span class="p">[</span><span class="s1">'players'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$player</span><span class="p">)</span> <span class="o">:</span>
+        <span class="k">echo</span> <span class="nv">$player</span><span class="p">[</span><span class="s1">'playerName'</span><span class="p">],</span> <span class="s1">','</span><span class="p">;</span>
+    <span class="k">endforeach</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="s2">"&lt;br/&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">endforeach</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2606029.html">http://blog.roodo.com/rocksaying/archives/2606029.html</a></div>

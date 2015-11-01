@@ -1,0 +1,84 @@
+---
+title: 動態語言關於參數宣告的寫作風格
+category: programming
+old-category: Programming
+tags: []
+---
+<p>
+tokimeki 日前回應的文章中提到 <q><a href="{{ site.baseurl }}/archives/2007/PHP5%20%E7%9A%84%E5%8B%95%E6%85%8B%E5%87%BD%E6%95%B8_%E8%A1%8C%E7%82%BA%E8%AA%BF%E7%94%A8%E6%95%88%E7%8E%87%E6%B8%AC%E8%A9%A6.html#comment-3839884">然後在函數內作過濾參數動作</a></q> ，讓我想起在不同程式語言對參數宣告一事有著不同的寫作風格。我就從參數宣告的寫作風格中，展現一下不同程式語言的各種風貌吧。
+</p>
+
+<!--more-->
+<p>
+從 BASIC, C, Pascal 所延襲的傳統參數宣告形式要求我們定義函數時須將參數一一列出。到 C++ 採用 overloading 概念後，雖然讓我們不用再為函數編號 (func1, func2, func3, etc.) ，但我們還是要定義多個同名函數。但在動態語言中，我們有不同的思考與寫作風格。
+</p>
+<p>
+BASIC,C, Pascal 的傳統寫作風格要求在定義函數時，須一一列出參數及其型別。如 example.cpp 所示。
+</p>
+<fieldset>
+<legend>example.cpp</legend>
+<pre class="highlight"><code><span class="kt">void</span> <span class="nf">myFunction</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">myFunction</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">myFunction</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">string</span> <span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">myFunction</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">"Hello"</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+</fieldset>
+<p>
+這種傳統寫作風格在動態語言中有所改變。由於動態語言強大的動態性往往使其無法按參數宣告的型別賦于同名函數不同簽名，故執行環境無法依訊息型別決定該調用哪一個同名函數。一一列出參數的傳統宣告方式，反而又為我們帶來編號函數名稱的困擾。再者，動態語言基於動態定義的功能需求，實務上遇到函數同名的狀況時，會以最後定義的函數內容<strong>取代</strong>先前定義的函數內容，而非增加一個複載。由於動態語言的強大動態性，我們傾向將要傳遞給函數的訊息內容包裹成一個參數，於是我們不需要在參數宣告中將參數一一列出。如 example.js 所示。
+</p>
+<fieldset>
+<legend>example.js</legend>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">myFunction</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">throw</span> <span class="s1">'id is required'</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="s1">'value'</span><span class="p">]</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="s1">'src'</span><span class="p">])</span> <span class="p">{</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="s1">'alt'</span><span class="p">])</span> <span class="p">{</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">myFunction</span><span class="p">({</span><span class="na">id</span><span class="p">:</span> <span class="s2">"xyz"</span><span class="p">,</span> <span class="na">src</span><span class="p">:</span> <span class="s2">"xx.jpg"</span><span class="p">,</span> <span class="na">alt</span><span class="p">:</span> <span class="s2">"X"</span><span class="p">,</span> <span class="na">value</span><span class="p">:</span> <span class="mi">0</span><span class="p">});</span>
+</code></pre>
+
+</fieldset>
+<p>
+包裹在一起的作法也有缺點。一、我們從函數宣告中看不出參數的意義。二、在函數定義中增加了許多判斷某一訊息是否有被包裹在參數中的程式碼，亦即多了許多 <code>if (args[x]) {}</code> 的動作。因此在實務上，我們往往採用折衷作法，列出必要的參數，而不必要的參數包裹起來。如 example.php 所示。
+</p>
+<fieldset>
+<legend>example.php</legend>
+<pre class="highlight"><code>function myFunction($id, $args, $value = 0) {
+    if (isset($args['src'])) {
+    }
+    if (isset($args['alt'])) {
+    }
+}
+
+myFuncion('xyz', array('src'=&gt;'xx.jpg', 'alt'=&gt;'X'));
+</code></pre>
+
+</fieldset>
+<p>
+比較 example.js 與 example.php ，我們不難發現列出參數宣告的作法可以省下不必要的函數定義內容。例如在 example.php 中不必檢查必要訊息 id ，也不必檢查訊息 value 是否需要採用預設值。
+</p>
+<p>
+我在本文中使用了三種程式語言，這是因為各種程式語言各有其特性而帶來不同的寫作風格，像 example.js 就不能套用 example.php 的寫法。多了解這些特性將幫助我們寫出更精練的程式碼。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/Example%20of%20Configuration%20Driven%20Development%20with%20PHP.html">Example of Configuration Driven Development with PHP</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2642460.html">http://blog.roodo.com/rocksaying/archives/2642460.html</a></div>

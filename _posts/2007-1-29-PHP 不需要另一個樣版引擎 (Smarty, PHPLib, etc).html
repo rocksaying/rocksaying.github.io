@@ -1,0 +1,54 @@
+---
+title: PHP 不需要另一個樣版引擎 (Smarty, PHPLib, etc)
+category: programming
+old-category: PHP
+tags: [php,template,樣版]
+---
+<div class="tags" style="display:none">php template 樣版</div>
+<p>
+前幾天我看到 phpPatterns 的《<a href="http://www.phppatterns.com/docs/design/templates_and_template_engines">PHP and Templates</a>》，作者舉了很多例子說明 PHP 不需要使用樣版引擎。我個人的經驗與該作者一樣， PHP 確實不需要使用樣版引擎。因為 PHP 本身就是一種樣版引擎，在樣版引擎上再加一個樣版引擎是多此一舉。
+</p>
+
+<!--more-->
+<p>
+先看看 XML 和 XSLT 的例子。對 XML 而言， XSLT 就是它的樣版引擎， XSLT 以樣式規則 ( pattern) 決定一份 XML 文件的呈現時的內容。在某方面而言， XSLT 其實比較像是一個程式語言。然而，沒有人會說我們需要為 XSLT 設計一套樣版引擎。再看看 PHP 設計時的基本用途。 PHP 從一開始就將其定位為 SGML, XML, HTML 等標籤語言 (markup language) 中的指令解析器。因此它按照 SGML 規範的表示法使用 <code>&lt;? / ?&gt;</code> 標示其存在，而不是 ASP, JSP 所用的 <code>&lt;% / %&gt;</code> (這是什麼玩意？) 一如我們用 <code>&lt;?xml ?&gt;</code> 表示標籤中的指令交由 XML 解析器處理，因此用 <code>&lt;?php ?&gt;</code> 便表示此標籤中的指令交由 PHP 解析器處理。而 PHP 解析器在 SGML 中的作用，便是以程式邏輯指令決定文件呈現時的內容。毫無疑問， PHP 就是標籤語言文件的樣版引擎。
+</p>
+
+<p>
+實務上，使用一套樣版引擎便需要學會一套樣版描述語法。然而和 PHP 語法相比，那些樣版語法未必容易理解。看看下面的例子，我用 Smarty 和 PHP 語法並列。有什麼理由說樣版語法比 PHP 語法容易理解與使用呢？使用 PHP 語法就是比樣版語法直接了當。
+</p>
+<pre class="highlight"><code><span class="nt">&lt;title&gt;</span><span class="cp">&lt;?php echo $title?&gt;</span><span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;title&gt;</span>{$title}<span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;table&gt;</span>
+<span class="cp">&lt;?php foreach ($rows as $row): ?&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?php echo $row['poster']?&gt;</span><span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?php echo $row['comment']?&gt;</span><span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?php echo date('Y-m-d', $row['timestamp'])?&gt;</span><span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+<span class="cp">&lt;?php endforeach; ?&gt;</span>
+<span class="nt">&lt;tr</span>
+<span class="err">&lt;/table</span><span class="nt">&gt;</span>
+<span class="nt">&lt;table&gt;</span>
+{foreach from=$rows item=row}
+    <span class="nt">&lt;tr&gt;</span>
+        <span class="nt">&lt;td&gt;</span>{$row.poster}<span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span>{$row.comment}<span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span>{$row.timestamp|date_format:"%Y-%m-%d"}<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+{/foreach}
+<span class="nt">&lt;tr</span>
+<span class="err">&lt;/table</span><span class="nt">&gt;</span>
+</code></pre>
+
+<p>
+還有一點，對大多數網頁編輯環境而言，如 DreamWeaver ， PHP 標籤是可以理解的，而 {/} 標籤沒有意義。 PHP 標籤是一個合於格式的一般標籤，在網頁編輯環境中，如果可以處理就會解析，反之則僅顯示而不處理。如 DreamWeaver 便會將 PHP 標籤的內容顯示為一個 &lt;php&gt; 的圖案。
+</p>
+
+<p>
+或許還有人會舉出一個理由，說 Smarty, PHPLib 可以快取已經解析過的內容，減少資料重覆讀取與解析的動作，提昇系統效能。但是，那是快取功能而不是樣版功能。透過單純的 Cache library 就可以做到，不需要弄來一套樣版引擎卻只用它的快取功能。
+</p>
+
+<p>
+還有一個趨勢可以看出有愈來愈多人認為 PHP 不需要樣版引擎。那就是最近出現的 framework 皆只提供快取功能而不再使用任何樣版引擎。像 CakePHP, Code Igniter 等，它們的設計者都不認為 PHP 需要樣版引擎，在 View 的設計工作中皆直接使用 PHP 語法。現在有愈來愈多 PHP 程序員開始使用 CakePHP 這些 framework 。由於這些 framework 並不使用樣版引擎，因此 PHP 程序員將有更多機會體會到直接使用 PHP 語法會比套用 Smarty, PHPLib 那些樣版引擎更簡單。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2680742.html">http://blog.roodo.com/rocksaying/archives/2680742.html</a></div>

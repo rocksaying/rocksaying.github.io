@@ -1,0 +1,62 @@
+---
+title: 利用 Foobar2000 作軟體升頻器，將 CD 製作成發燒 DVD Audio
+category: computer
+old-category: 電腦技術
+tags: [音響,數位訊源,EAC,Foobar2000]
+---
+<p>
+我在 Myav 上，看到有人提到，很多唱片公司會把以前的錄音，用更高的取樣率重製後再版成 CD, SACD 甚至 DVD Audio 。他就問有沒有辦法自己來做，自己重採樣，把 CD 轉成 DVD Audio ？
+</p>
+<p>
+答案當然是可以，我們手上就有現成又方便的軟體升頻器 (Upsampler) ，那就是 Foobar2000 。有 foobar2000 的 diskwriter 功能，就可以把 44.1khz/16bit 的 CD Audio ，升頻後寫入成 96khz/24bit 的 WAV ，接下來就可以燒成 DVD Audio 了。
+</p>
+<p>
+看我底下的實驗，各位就相信了。
+</p>
+
+<!--more-->
+<h3>
+第一步，製作音樂 CD 的 CD 影像檔
+</h3>
+<p>
+用 EAC 擷取音樂 CD 的 CD 影像檔。這部份我不多說了，請看<a href="{{ site.baseurl }}/archives/2005/WAV%20%E8%BD%89%20APE%20%EF%BC%8C%E9%9F%B3%E8%B3%AA%E4%B8%8D%E6%9C%83%E6%94%B9%E8%AE%8A.html">EAC 備份 CD</a>。製作完成後，將 CDImage.wav 交由 foobar2000 開啟。下圖是檢視 wav 的格式資訊，確定是 44.1khz/16bit 2ch PCM 的 CD Audio 格式。
+</p>
+<img src="http://blog.roodo.com/rocksaying/9e6095b4.png" width="559" height="453" alt="1 利用EAC擷取CD影像檔，foobar開啟 CDImage wav，察看格式" />
+
+<h3>
+第二步，使用 foobar2000 轉換
+</h3>
+<p>
+二之一、開啟 foobar2000 後，如圖設定 diskwriter 的內容。莫要知其然不知其所以然，把握重點觀念：先把音訊送給 DSP 處理後，再寫入檔案。我們在此唯一要用的 DSP 功能就是 Resampler 。<span class="noteRight">** 各位可以選擇要不要用 Dither 去改變聲音走向，這方面要自己一一去試聽後決定。聽說 XRCD 也運用了 dither 去增加音樂性。</span>
+</p>
+<img src="http://blog.roodo.com/rocksaying/c9cc49d1.png" width="728" height="569" alt="2 設定 diskwriter ， 24bit, 經過 DSP 處理(Resampler), 輸出為 WAV" />
+<ol>
+<li>
+輸出成 WAV ，方便後續再處理。其實也就是方便燒錄罷了。
+</li>
+<li>
+選擇 24 bit depth, 取消 keep lossless sources at original bit depth。
+</li>
+<li>
+使用 DSP 。
+</li>
+</ol>
+
+<p>
+二之二、接下來跳到 DSP Settings ，啟用 Resampler (把 Resampler 加到 Active 欄位)。並設定目標採樣率為 96khz 。我個人是用 SSRC resampler ，各位自己憑喜好決定要用哪一個 resampler 吧。
+</p>
+<img src="http://blog.roodo.com/rocksaying/302f0d0f.png" width="719" height="540" alt="3 啟用Resampler 升頻至 96khz" />
+<p>
+二之三、在播放列單的要轉換的音樂上，叫出浮動選單 (按滑鼠右鍵) 。使用 Convert 轉換功能，開始轉換。時間長短視你的 CPU 效率而定。以我的 AMD Duron 1.6G CPU 轉換這個 74分鐘長度的 WAV ，要花 20分鐘左右。
+</p>
+<img src="http://blog.roodo.com/rocksaying/f782c0fd.png" width="722" height="551" alt="4 使用 Convert 轉換" />
+<h3>
+最後，檢視成果。
+</h3>
+<p>
+輸出後的 new_CDImage.wav 果然體積驚人，一個 750 MB 的 44.1khz/16bit WAV 檔，轉換成 96khz/24bit 後要 2.5GB 。 放到 foobar2000 的播放清單中，檢視資訊，確定是 96khz/24bit 的 WAV 。把 Resampler 取消後，在完全不加料的情形下開始播放，音效卡顯示現在在輸出的訊號，是貨真價實的 96khz 訊號，不是 resample 後的喔。
+</p>
+<img src="http://blog.roodo.com/rocksaying/51c19fa8.png" width="725" height="681" alt="5 檢視成果，wav格式 96khz_24bit PCM，在不使用 resampler 的情形下播放，音效卡顯示輸出訊號是 96khz" />
+<p>
+關於燒錄的部份，因為 CUE 中限定只接受 44.1khz/16bit 的 WAV 檔，所以用 EAC 生成的那個 CDImage.cue 是用不到了。實際操作時，我建議先把 CDImage.cue 切割成個別曲目的 WAV ，再一一升頻轉換。就可以用如 Nero Burning 的工具燒錄 DVD-Audio 。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/844633.html">http://blog.roodo.com/rocksaying/archives/844633.html</a></div>

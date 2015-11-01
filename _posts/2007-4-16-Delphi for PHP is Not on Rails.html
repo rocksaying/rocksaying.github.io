@@ -1,0 +1,106 @@
+---
+title: Delphi for PHP is Not on Rails
+category: programming
+old-category: PHP
+tags: []
+---
+<div name="tags" class="tags">Tags: php ruby framework webdev 標籤語言</div>
+<p>
+If today, the tool which CodeGear released is "Delphi for Ruby", the title will be an equivoque.
+</p>
+<p>
+CodeGear (前身 Borland 公司 IDE 部門) 日前發表了 <a href="http://www.codegear.com/Products/Delphi/DelphiforPHP/tabid/237/Default.aspx">Delphi for PHP</a> 。於是我很快的觀看了一遍操作 Demo 。很遺憾，我必須說它並未發揮 PHP 的特色，程式碼寫作方式充滿了 Java/C# 風格，而不是 PHP 風格。
+</p>
+
+<!--more-->
+<p>
+首先看看其 Demo 中的範例程式碼 (節錄主程式部份)。
+</p>
+<fieldset>
+<legend>unit1.php &copy; CodeGear</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Unit1</span> <span class="k">extends</span> <span class="nx">Page</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$ListBox1</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nv">$Button1</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nv">$Edit1</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">Button1</span><span class="p">(</span><span class="nv">$sender</span><span class="p">,</span> <span class="nv">$params</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ListBox1</span><span class="o">-&gt;</span><span class="na">Items</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">Edit1</span><span class="o">-&gt;</span><span class="na">Text</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">global</span> <span class="nv">$application</span><span class="p">;</span>
+<span class="k">global</span> <span class="nv">$Unit1</span><span class="p">;</span>
+<span class="nv">$Unit1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Unit1</span><span class="p">(</span><span class="nv">$application</span><span class="p">);</span>
+<span class="nv">$Unit1</span><span class="o">-&gt;</span><span class="na">loadResource</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">);</span>
+<span class="nv">$Unit1</span><span class="o">-&gt;</span><span class="na">show</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+Delphi for PHP 所展示的框架概念，通常稱為 <strong>event-driven and component-based framework</strong>。Visual Studio 等視覺化IDE 環境所採用的開發框架也是這一類。如果不是變數名稱前面加了個 <code>$</code> ，乍看之下會誤以為是 C#/ASP.Net 。一個熟悉 Delphi 或 Visual Studio 等工具的程序員應該會覺得很親切，親切到不覺得有何不妥。
+</p>
+<p>
+但是，對於我這種不使用 IDE 工具，又在 Web programming 領域打滾許久的程序員而言，一眼可以看出這種設計方式非常不敏捷，與引領目前 Web 開發趨勢的 <a href="http://www.rubyonrails.org/">Ruby on Rails</a>  框架概念相違背。而 Ruby on Rails 的框架概念早已深深影嚮了目前 PHP 框架開發的趨勢，如 <a href="http://www.cakephp.org/">CakePHP</a>, <a href="http://www.codeigniter.com/">Code Igniter</a>, <a href="http://phpontrax.com/">PHP on Trax</a> 等框架皆引入了 Ruby on Rails 的概念 (<span class="Onote"><a href="{{ site.baseurl }}/archives/2006/Framework%20of%20PHP5.html">Framework of PHP5</a></span>)。
+</p>
+<p>
+當我看到 Delphi for PHP 展示的程式碼時，我當下反應<strong>「為什麼我寫程式時要知道那裡有一個 button?」</strong>。一個熟悉 JSP/ASP.Net 等開發工具的程序員也許反應不過來，但了解 MVC 概念並使用過類似 Ruby on Rails 框架的 Agile programmer 應該已經知道我要講什麼了。
+</p>
+<p>
+在我說明之前，請先觀看一段基於 Code Igniter 框架的 Demo 程式。<a href="http://www.codeigniter.com/">Code Igniter</a> 是基於 MVC 概念並引入 Ruby on Rails 概念的 PHP 開發框架。
+</p>
+<fieldset>
+<legend>Blog.php &copy; Code Igniter</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Blog</span> <span class="k">extends</span> <span class="nx">Controller</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">parent</span><span class="o">::</span><span class="na">Controler</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$data</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'My Blog Title'</span><span class="p">;</span>
+        <span class="nv">$data</span><span class="p">[</span><span class="s1">'query'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">db</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'entries'</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">load</span><span class="o">-&gt;</span><span class="na">view</span><span class="p">(</span><span class="s1">'blog_view'</span><span class="p">,</span> <span class="nv">$data</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">function</span> <span class="nf">comments</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$data</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'My Comment'</span><span class="p">;</span>
+        <span class="nv">$data</span><span class="p">[</span><span class="s1">'query'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">db</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'comments'</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">load</span><span class="o">-&gt;</span><span class="na">view</span><span class="p">(</span><span class="s1">'comment_view'</span><span class="p">,</span> <span class="nv">$data</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">function</span> <span class="nf">comment_insert</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'testing...'</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+這種框架主要透過 <code>http://your_server/controller_class/method/arguments</code> 這樣的 URL 形式，調用對應的 method of controller class 以及 view 。不妨就稱為 <strong>Method-driven framework</strong> ，以對應於 <strong>Event-driven framework</strong>。
+</p>
+<p>
+在 Method-driven framework 中，我們將程式視為一個個等待使用者調用的服務，使用者只需透過基於 WS 或 REST (<span class="Onote">WS: Web Service; REST: <a href="http://en.wikipedia.org/wiki/Representational_State_Transfer">Representational State Transfer</a></span>) 之 URL 即可調用 。在這類框架中，程序員在撰寫時根本不考慮使用者介面的內容，當然<strong>更不必知道那裡有一個 button </strong>。
+</p>
+<p>
+<strong>Is there a button, or any UI component else?  I Don't Need To Know!</strong>
+</p>
+<p>
+我甚至不用修改任何應用程式碼，只需替換一下 loader ，令原本的 URL call ，在命令列下變成 <code>controller_class method arguments ...</code> 之形式，就可以把一個 Web 服務變成一個 Command line tool 。
+</p>
+<p>
+對程序員 (application programmer) 而言， Event-driven framework 令視覺元件侵入程式碼。修改 UI 之任何動作皆意味著程式碼之修改。於是要加一個 button 就要加一段 <code>public $Button2=null; public function Button2(){}</code> ，加一個 link 就要加一段 <code>public $Link1=null; public function Link(){}</code>。當程序員處於 IDE 環境之下時， IDE 工具在大多數時候會幫程序員處理這些內容。一但程序員脫離 IDE 環境，或是進行某些 IDE 工具未能掌握的編輯行為時，要修改這些程式碼就變成一個重覆性的作業。這自然不夠敏捷。
+</p>
+<p>
+對網頁設計員 (<span class="Onote">Page designer; 或者稱之為 Markup language designer ，See also: <a href="{{ site.baseurl }}/archives/2007/Markup%20language%20%E5%B0%8D%E6%87%89%E7%94%A8%E8%BB%9F%E9%AB%94%E8%A8%AD%E8%A8%88%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BD%B1%E5%9A%AE%EF%BC%8C%E4%BB%A5%E5%8F%8A%E5%BE%AE%E8%BB%9F%E7%9A%84%20WPF_XAML%20%E7%AD%96%E7%95%A5.html">Markup language 對應用軟體設計工作的影嚮</a></span>) 而言，Method-driven framework 亦較 Event-driven framework 敏捷。在 Method-driven framework 之下，網頁設計員要添加一個視覺元件時，不必修改任何程式碼、不必知會程序人員、甚至不必使用奇怪的標籤 (<span class="Onote">如 &lt;asp&gt;, &lt;jsp&gt; 等等，See also: <a href="{{ site.baseurl }}/archives/2007/PHP%20%E4%B8%8D%E9%9C%80%E8%A6%81%E5%8F%A6%E4%B8%80%E5%80%8B%E6%A8%A3%E7%89%88%E5%BC%95%E6%93%8E%2C%20part%202%20-%20%E8%A3%9C%E5%85%85%E8%88%87%E5%9B%9E%E6%87%89.html">PHP 不需要另一個樣版引擎, part 2</a></span>)。網頁設計員只需要操作他們熟悉的編輯器，使用著編輯器所能理解的標籤。網頁設計員可以自由添加、移除任何視覺元件。他們所需要做的只是：增加一個 button 標籤、一個 link 標籤或任何視覺元件標籤，叫出標籤屬性編輯頁面，然後將要調用的服務之 WS/REST URL 輕巧地填入 URL 欄位即可。
+</p>
+<p>
+在 Delphi for PHP (或是 ASP.Net, JSP) 所展示的設計方式之下，網頁設計員和程序員之間的作業隔離性不足，將為了修改一部份的內容而疲於溝通及互相等待。
+</p>
+<p>
+雖然 CodeGear 將 Delphi for PHP 視為邁向動態語言族群的重要一步，然而我卻未看到它吸納動態語言的敏捷優點。它要吸引 PHP 族群尚且不足，若繼續以此模式推出 Delphi for Ruby ，那麼就真的會出現 "Delphi for Ruby is Not on Rails" 的文章了。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/Delphi%20for%20PHP%20%E7%99%BC%E8%A1%A8%E6%9C%83%E6%84%9F%E6%83%B3%20-%20Show%20Me%20The%20Delphi%20for%20Ajax.html">Delphi for PHP 發表會感想 - Show Me The Delphi for Ajax</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3016263.html">http://blog.roodo.com/rocksaying/archives/3016263.html</a></div>

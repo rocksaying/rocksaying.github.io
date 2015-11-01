@@ -1,0 +1,88 @@
+---
+title: Function.prototype.call() and Function.prototype.apply()
+category: programming
+old-category: JavaScript
+tags: []
+---
+<p>
+JavaScript 調用 function object 的方式，除了傳統的 <code>() 算符</code> [若用 C++ 的表達方式，即 <code>operator()</code> ]，還可以藉由 <code>call()</code> 和 <code>apply()</code> 兩種個體行為調用。
+</p>
+
+<!--more-->
+<p>
+<code>call()</code> 和 <code>apply()</code> 的差別主要在於 <code>call()</code> 只接受一個參數，即 <code>call(thisArg)</code> ；而 <code>apply()</code> 接受兩個參數，即 <code>apply(thisArg, argArray)</code> 。透過 <code>call()</code> 和 <code>apply()</code> 調用函數的主要目的，在於改變函數內部的 <code>this</code> 名稱所指涉的對象。對一般函數而言，當 programmer 在函數內部使用 <code>this</code> 名稱時，指涉對象是 <code>global object</code> 。<code>global object</code> 是運行環境中最頂層的個體，在瀏覽器環境中，<code>global object</code> 就是 <code>window</code> 此一個體。但是 <code>call()</code> 和 <code>apply()</code> 可以改變 <code>this</code> 名稱所指涉的對象。
+</p>
+<blockquote>
+If thisArg is <strong>null</strong> or <strong>undefined</strong>, the called function is passed the global object as the <strong>this</strong> value. Otherwise, the called function is passed ToObject(thisArg) as the <strong>this</strong> value.
+<cite>ECMAScript Language Specification - Standard ECMA-262 3rd Edition. 15.3.4.3 & 15.3.4.4 </cite>
+</blockquote>
+<p>
+首先，先來一段測試程式實證上面的標準規範內容。
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">myFunc</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">toString</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="nx">myFunc</span><span class="p">();</span>
+
+<span class="kd">var</span> <span class="nx">hello</span> <span class="o">=</span> <span class="s1">'hello world'</span><span class="p">;</span>
+<span class="nx">myFunc</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">hello</span><span class="p">);</span>
+ 
+</code></pre>
+
+<p>
+結果證實規範內容所言無誤。因此，我們可以利用 <code>call()</code> 和 <code>apply()</code> 改變函數內部的 <code>this</code> 名稱所指涉的對象。此一技巧最常運用在事件處理函數中，例如《<a href="{{ site.baseurl }}/archives/2006/Rendering%20images%20with%20title%20and%20box.html">Rendering images with title and box</a>》就是這種技巧的實踐。在該例中，使用 <code>call()</code> 調用 renderImage() ，而將圖像索引值設定為屬性 myIndex 。其實像這種需要傳遞參數的情形，可以改用 <code>apply()</code> ，將要傳遞給 function object 的參數按順序放置在 apply() 行為的第二個 <code>argArray</code> 參數中。因此《<a href="{{ site.baseurl }}/archives/2006/Rendering%20images%20with%20title%20and%20box.html">Rendering images with title and box</a>》用 <code>apply()</code> 改寫如下所示。
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">renderImage</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">box</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'div'</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">styleName</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span><span class="nx">box</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">styleName</span><span class="p">]</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">styleName</span><span class="p">];}</span>
+        <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="p">}</span>
+    <span class="kd">with</span> <span class="p">(</span><span class="nx">box</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">className</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">className</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">border</span> <span class="o">=</span> <span class="s1">'1px solid #FF0000'</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">padding</span> <span class="o">=</span> <span class="s1">'5px'</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">backgroundColor</span> <span class="o">=</span> <span class="s1">'#D3D3D3'</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">width</span><span class="p">;</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">box</span><span class="p">,</span> <span class="k">this</span><span class="p">));</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'br'</span><span class="p">));</span>
+        <span class="c1">//appendChild(document.createTextNode('Image.'.concat(this.myIndex+1, ': ', this.alt)));</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="s1">'Image.'</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">index</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s1">': '</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">alt</span><span class="p">)));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">images</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+    <span class="nx">i</span> <span class="o">&lt;</span> <span class="nb">document</span><span class="p">.</span><span class="nx">images</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+    <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">images</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span>
+<span class="p">{</span>
+    <span class="c1">//img.myIndex = i;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">img</span><span class="p">.</span><span class="nx">complete</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'already loaded'</span><span class="p">);</span>
+        <span class="c1">//renderImage.call(img);</span>
+        <span class="nx">renderImage</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">img</span><span class="p">,</span> <span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">src</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="s1">' [alt='</span><span class="p">,</span><span class="k">this</span><span class="p">.</span><span class="nx">alt</span><span class="p">,</span><span class="s1">'] is loaded.'</span><span class="p">));</span>
+                <span class="c1">//renderImage.call(this);</span>
+                <span class="nx">renderImage</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+            <span class="p">}</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">onerror</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">src</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="s1">' [alt='</span><span class="p">,</span><span class="k">this</span><span class="p">.</span><span class="nx">alt</span><span class="p">,</span><span class="s1">'] can not be loaded.'</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="c1">//}).call(img);</span>
+        <span class="p">}).</span><span class="nx">apply</span><span class="p">(</span><span class="nx">img</span><span class="p">,</span> <span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+由於 <code>apply()</code> 的第二個 <code>argArray</code> 參數必須是陣列形式，所以要將 i 放入陣列中。其次， <code>apply()</code> 是按照變數在 <code>argArray</code> 陣列中的順序代換參數列的變數，故參數列的第一個參數內容，等於 <code>argArray</code> 中的第 0 個元素，以下類推。因此在上例中 renderImage(index) 中的 index 等於 <code>argArray</code> 中的第 0 個元素 (即 i) 。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/The%20practice%20of%20anonymous%20recursion%20function%20in%20JavaScript.html">The practice of anonymous recursion function in JavaScript</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2532303.html">http://blog.roodo.com/rocksaying/archives/2532303.html</a></div>

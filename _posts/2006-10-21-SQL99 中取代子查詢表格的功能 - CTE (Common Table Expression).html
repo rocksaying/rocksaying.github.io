@@ -1,0 +1,71 @@
+---
+title: SQL99 中取代子查詢表格的功能 - CTE (Common Table Expression)
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<p>
+隨著 IBM DB2 v8,v9; Oracle9i release 2; 以及 Microsoft SQL Server 2005 相關文件出現，我注意到它們都有提供一個由 SQL:1999 (簡稱 SQL-99 或 SQL3) 所規範的 CTE (Common Table Expression) 查詢語法。 CTE 查詢語法簡化了以往「<a href="{{ site.baseurl }}/archives/2006/SQL~~%E4%BB%A5%20AS%20%E5%B0%87%E5%AD%90%E6%9F%A5%E8%A9%A2%E7%B5%90%E6%9E%9C%E4%BD%9C%E7%82%BA%E4%B8%BB%E6%9F%A5%E8%A9%A2%E7%9A%84%E5%8F%83%E8%80%83%E8%A1%A8%E6%A0%BC.html">子查詢表格</a>」的複雜語法與難讀敘述。不妨試著解讀《<a href="{{ site.baseurl }}/archives/2006/SQL~~%E4%B8%80%E5%80%8B%E8%BC%83%E8%A4%87%E9%9B%9C%E7%9A%84%E8%A1%A8%E6%A0%BC%E8%81%AF%E7%B5%90%20%28join%29%20%E7%AF%84%E4%BE%8B.html">一個較複雜的表格聯結 (join) 範例</a>》一文的範例，想看出裡面有四個子查詢表格確實不是件容易的事。
+</p>
+
+<!--more-->
+<h3>簡潔易讀的語法</h3>
+<p>
+CTE 是以 WITH 為查詢關鍵字，在主查詢進行前先以 WITH 宣告暫時性表格的內容，緊接著進行主查詢。這點與傳統的子查詢表格被夾雜在主查詢中的語法相比，在語法上顯得更為簡潔易讀。
+</p>
+<fieldset>
+<legend>子查詢表格語法</legend>
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">s</span><span class="p">.</span><span class="o">*</span><span class="p">,</span> <span class="n">rooms</span><span class="p">.</span><span class="n">id</span> <span class="k">FROM</span> <span class="p">(</span><span class="k">SELECT</span> <span class="n">id</span> <span class="k">AS</span> <span class="n">student_id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="n">students</span><span class="p">)</span> <span class="k">AS</span> <span class="n">s</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">rooms</span> <span class="k">ON</span> <span class="n">rooms</span><span class="p">.</span><span class="n">student_id</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">student_id</span><span class="p">;</span>
+</code></pre>
+
+</fieldset>
+<br/>
+<fieldset>
+<legend>Common Table Expression</legend>
+<pre class="highlight"><code><span class="k">WITH</span> <span class="n">s</span> <span class="p">(</span><span class="n">student_id</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">AS</span> <span class="p">(</span><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="n">students</span><span class="p">)</span>
+<span class="k">SELECT</span> <span class="n">s</span><span class="p">.</span><span class="o">*</span><span class="p">,</span> <span class="n">rooms</span><span class="p">.</span><span class="n">id</span> <span class="k">FROM</span> <span class="n">s</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">rooms</span> <span class="k">ON</span> <span class="n">rooms</span><span class="p">.</span><span class="n">student_id</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">student_id</span><span class="p">;</span>
+</code></pre>
+
+</fieldset>
+<h3>查詢效能的改善</h3>
+<p>
+從 CTE 的語義上看，理論上對查詢效能也有所助益。當主查詢中重覆使用同一個暫時性表格時， CTE 的語義將明確指示查詢引擎只需為暫時性表格進行一次 SELECT 動作。雖然就我個人的實務經驗來看，多數資料庫系統查詢引擎已經針對這種情形進行了最佳化處理，當查詢引擎發現查詢句中有重覆的子查詢時，它實際上只會對重覆的子查詢進行一次 SELECT 動作而已。所以對查詢效能的幫助可能不會很顯著。
+</p>
+<h3>Recursive query</h3>
+<p>
+我在 PostgreSQL 的 mailing-list 中，找到了一個 CTE 做得到而子查詢表格做不到的功能，即暫時性表格的遞迴查詢 (SQL-99 Recursive query) [<a href="http://archives.postgresql.org/pgsql-general/2000-06/msg00479.php">SQL3 recursive unions</a>，請留意並非支援 CTE 的資料庫系統就支援遞迴查詢]。 遞迴查詢是指 CTE 在宣告暫時性表格的敘述中，又參照了自己的情形。範例如下，請注意第 8 行， rpl 參照了自己。
+</p>
+<pre class="highlight"><code><span class="k">WITH</span> <span class="n">rpl</span> <span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">subpart</span><span class="p">,</span> <span class="n">quantity</span><span class="p">)</span> <span class="k">AS</span>
+<span class="p">(</span>
+    <span class="k">SELECT</span> <span class="n">root</span><span class="p">.</span><span class="n">part</span><span class="p">,</span> <span class="n">root</span><span class="p">.</span><span class="n">subpart</span><span class="p">,</span> <span class="n">root</span><span class="p">.</span><span class="n">quantity</span>
+    <span class="k">FROM</span> <span class="n">partlist</span> <span class="k">AS</span> <span class="n">root</span>
+    <span class="k">WHERE</span> <span class="n">root</span><span class="p">.</span><span class="n">part</span> <span class="o">=</span> <span class="s1">'01'</span>
+    <span class="k">UNION</span> <span class="k">ALL</span>
+    <span class="k">SELECT</span> <span class="n">child</span><span class="p">.</span><span class="n">part</span><span class="p">,</span> <span class="n">child</span><span class="p">.</span><span class="n">subpart</span><span class="p">,</span> <span class="n">child</span><span class="p">.</span><span class="n">quantity</span>
+    <span class="k">FROM</span> <span class="n">rpl</span> <span class="k">AS</span> <span class="n">parent</span>
+    <span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">partlist</span> <span class="k">AS</span> <span class="n">child</span>
+    <span class="k">ON</span> <span class="n">parent</span><span class="p">.</span><span class="n">subpart</span> <span class="o">=</span> <span class="n">child</span><span class="p">.</span><span class="n">part</span>
+<span class="p">)</span>
+<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">rpl</span><span class="p">;</span>
+</code></pre>
+
+<p>
+上述範例的語法，我無法測試。 OpenSource Software 中支援 SQL 標準最好的 PostgreSQL ，一直到目前釋出的 PostgreSQL v8.2 beta 2 為止，仍未支援 CTE 。
+</p>
+<h3>Reference</h3>
+<ul>
+<li>
+<a href="http://www.craigsmullins.com/bp5.htm">Recursion in DB2 V8, V8, V8…</a>
+</li>
+<li>
+<a href="http://www.dba-oracle.com/t_sql99_with_clause.htm">Oracle SQL-99 WITH clause</a>
+</li>
+<li>
+<a href="http://www.theserverside.net/tt/articles/showarticle.tss?id=SQL05RecursiveFunctions">SQL Server 2005 Recursive Functions</a>
+</li>
+<li>
+<a href="http://archives.postgresql.org/pgsql-general/2000-06/msg00479.php">SQL3 recursive unions</a>
+</li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2346392.html">http://blog.roodo.com/rocksaying/archives/2346392.html</a></div>

@@ -1,0 +1,171 @@
+---
+title: PHP 的參照及唯讀參照之實作
+category: programming
+old-category: PHP
+tags: []
+---
+<div name="tags" class="tags">Tags: magic_method 動態語言</div>
+<p>
+這幾天我和 HACGIS (トキメキ) 在討論 PHP 的參照 (reference) 特性。對於參照的功用，我想我們都很清楚了，還不了解的讀者可以先參閱《PHP Manual::<a href="http://tw.php.net/manual/en/language.references.php">Chapter 21. References Explained</a>》以及 HACGIS 的《<a href="http://blog.pixnet.net/HACGIS/post/1880532">使用參照的幾個原則</a>》，HACGIS 的文章是本文討論內容的起點。
+</p>
+
+<!--more-->
+<p>
+基於過去使用 C/C++ 之參照的經驗，我對於 PHP 的參照功能提出兩點個人認為可以改進的地方。
+</p>
+<ol>
+<li>不能宣告唯讀參照。例如：<code>function abc(const &$a);</code> 。
+</li>
+<li>當值為常數時，不會自動建立參照。例如直接傳字串的情形：<code>abc('hello');</code>。
+</li>
+</ol>
+<h3>唯讀參照的定義</h3>
+<p>
+何為「唯讀參照」？我引用 C/C++ 的定義，英文寫作 <q>read-only reference</q> ， C/C++ 則寫作 <code>const&</code> (<span class="Onote">我在回應 HACGIS 時昏了頭，弄混了參照和指標而說「<code>const type&</code> 是指向唯讀內容的參照，<code>type const&</code>是唯讀的參照」。這段話是錯的，對 C/C++ 的參照而言，型態寫在 const 前或後都是一樣意義。在 C/C++ 中，參照本身是唯讀的，是一個隱蔽常數，不需要使用 const 修飾</span>)。參照是指一個符號參考另一個符號而指涉一實體。按 PHP 的說法，參照是為一個變數內容取一個別名，使不同的符號名稱指涉同一變數內容 (<span class="Onote">PHP Manual: <q>References in PHP are a means to access the same variable content by different names</q></span>)。那麼參照冠上 const 關鍵字是什麼意思呢？這是修飾參照的對象之內容不變、唯讀之意，令使用者不可透過參照變更變數內容。
+</p>
+<p>
+我和 HACGIS 對於唯讀參照的看法有所不同。此一看法起因於「唯讀參照是否牽涉到記憶體回收機制？」 HACGIS 認為會，而我認為不會。此一觀點差異，似乎與我們二人對唯讀參照的規格需求不同有關。對我而言，我僅僅認為唯讀參照是一個只可用 getter 而不可用 setter 的參照。因此使用者可以直接地變更變數內容，但不能透過參照去變更內容。但 HACGIS 認為<q>「要考慮PHP在執行階段對於該參照所指涉的變數的readonly特性……對於所指涉的變數內容，必須在某個範圍內保證其不變性」</q>，他希望唯讀參照的參照對象在某個範圍內也是唯讀的。這規格需求超出我所期望者。
+</p>
+<h3>唯讀參照的實作</h3>
+<p>
+為了進一步討論這個問題，我用 PHP 實踐一個唯讀參照類別。因為 PHP5 只能覆載  setter 和 getter ，所以現階段用 PHP 可以「有條件地」實踐我要的唯讀參照。條件是參照對象為關聯陣列 (associative array) 或個體 (object) 。在本文中，我僅實踐參照對象為個體的參照類別。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Reference</span> <span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$_target</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">refer</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$target</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">$target</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$target</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$target</span> <span class="o">!==</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">refer</span><span class="p">(</span><span class="nv">$target</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$property</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span> <span class="o">===</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'無參照對象!'</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span><span class="o">-&gt;</span><span class="nv">$property</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$property</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span><span class="o">-&gt;</span><span class="nv">$property</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">ConstReference</span> <span class="k">extends</span> <span class="nx">Reference</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'read-only reference!'</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">function</span> <span class="nf">showX</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">global</span> <span class="nv">$x</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s1">'$x is '</span><span class="p">;</span>
+    <span class="nb">print_r</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">showX</span><span class="p">();</span>
+
+<span class="nv">$ref</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Reference</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
+<span class="nv">$constRef</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ConstReference</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
+<span class="nv">$ref2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Reference</span><span class="p">(</span><span class="nv">$constRef</span><span class="p">);</span>
+
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(ref) Value of x is </span><span class="si">{</span><span class="nv">$ref</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nv">$ref</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">showX</span><span class="p">();</span>
+
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(constRef) Value of x is </span><span class="si">{</span><span class="nv">$constRef</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nv">$constRef</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">showX</span><span class="p">();</span>
+
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(ref2) Value of x is </span><span class="si">{</span><span class="nv">$ref2</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nv">$ref2</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">300</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">showX</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+HACGIS 則提問：<q>「那麼我若用另一參照指涉過去，此參照是否亦為唯讀參照？繼承此唯讀參照的物件又如何？」</q> 關於參照指涉的問題不難解釋，參照只是變數內容的別名，一個變數內容當然可以有很多參照。當一個變數有許多參照時，透過一般參照才允許更動變數內容，但透過唯讀參照時不允許。再說到參照指涉另一個參照，尤其是 HACGIS 所問的一般參照指涉唯讀參照的情形。這個問題請看 <var>$ref2</var> 那一段程式碼。 <var>$ref2</var> 是一般參照，允許變更變數內容，但它參照的 <var>$constRef</var> 卻是一個唯讀對象。因此雖然調用 <var>$ref2</var> 的 setter 時不會發生例外，但 <var>$ref2</var> 的 setter 要再調用參照對象 <var>$constRef</var> 的 setter 時，就會吃 <var>$constRef</var> 的閉門羹。
+</p>
+<p>
+關於繼承的情形，則需要實踐一個「解除唯讀之唯讀參照」類別以便說明。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">DeconstReference</span> <span class="k">extends</span> <span class="nx">ConstReference</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$property</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span><span class="o">-&gt;</span><span class="nv">$property</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$deconstReferenceRef2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DeconstReference</span><span class="p">(</span><span class="nv">$ref2</span><span class="p">);</span>
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(deconstReferenceRef2) Value of ref2 is </span><span class="si">{</span><span class="nv">$deconstReferenceRef2</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nv">$deconstReferenceRef2</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">400</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">showX</span><span class="p">();</span>
+
+<span class="nv">$deconstReferenceX</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DeconstReference</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(deconstReferenceX) Value of x is </span><span class="si">{</span><span class="nv">$deconstReferenceX</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nv">$deconstReferenceX</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">500</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">showX</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+我發覺 <var>$deconstReference</var> 參照 <var>$ref2</var> 的連續參照例子很有趣，可以觀察參照串列中各個體行為的調用順序。將其結果列於下：
+</p>
+<pre class="language-text">
+(deconstReferenceRef2) Value of ref2 is 100
+exception 'Exception' with message 'read-only reference!' in 參照.php:27
+Stack trace:
+#0 參照.php(17): ConstReference->__set('value', 400)
+#1 參照.php(74): Reference->__set('value', 400)
+#2 參照.php(81): DeconstReference->__set('value', 400)
+#3 {main}
+$x is stdClass Object
+(
+    [value] => 100
+)
+
+---
+(deconstReferenceX) Value of x is 100
+
+$x is stdClass Object
+(
+    [value] => 500
+)
+</pre>
+<h3>結論</h3>
+<p>
+HACGIS 認為<q>「不只是最近的動態語言，像有些 C/C++ 的編譯器，有時需要 2pass 以上去在編譯時確定指標或參照的特性，來決定語法是否正確。所以有些語法，在我們從源碼的角度去審視好像很簡單，但是實做起來就要對各種定義和邊際效益去較真，有時對速度而言是得不償失。」</q> 我以為 HACGIS 對編譯器／解譯器的要求較嚴格，希望它儘可能幫助程序員找出不當語意。但我對此要求較寬鬆。以 <var>DeconstReference</var> 類別為例，其語法合法，而語意在解除 <var>ConstReference</var> 對 setter 所加的禁止事項。然而繼承原則應該是「特化」而非「泛化」，所以 <var>ConstReference</var> 繼承 <var>Reference</var> 就是為了特化 setter 的用途，使 setter 不能作用。但 <var>DeconstReference</var> 繼承 <var>ConstReference</var> 卻是為了解除此一特化而<a href="http://zh.wikipedia.org/wiki/%E8%BF%94%E7%A5%96%E7%8E%B0%E8%B1%A1">返祖化</a>，明顯違背繼承原則。我不要求語言防範這種捅馬蜂窩的行為，因為這不關語言的事，而是程序員的觀念。我喜歡語言允許這種隨興思考。
+</p>
+<p>
+本文的實作顯示， PHP5 可以寬鬆態度實踐唯讀參照。如果此一態度下的唯讀參照不是以類別型式而能以語言特性型式實踐，我想效能會更好。但若要以嚴謹態度，令唯讀參照防範程序員的解唯讀動作，則情況就如 HACGIS 所說將會複雜許多。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2659001.html">http://blog.roodo.com/rocksaying/archives/2659001.html</a></div>

@@ -1,0 +1,21 @@
+---
+title: 以 replace 修正整批記錄的錯字
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<p>
+今天修正了公司客戶資料庫中的電話資料。主要是將中間的連接線 (-) 拿掉，這是人工輸入的，但實際上根本用不著。不是很難的動作，用 replace() 就搞得定。
+</p>
+<p>
+比較麻煩的是電話有二組，但有不少資料記錄漏掉第一組電話。起因於門市人員在建檔時，常常把第一組電話當市話號碼欄位、第二組電話當手機號碼欄位。當碰到客戶只填手機而不填家中電話時，就會空下第一組電話欄位。因為資料庫系統以第一組電話欄位為主要電話，所以這會帶來些麻煩。例如，在列印單據時，如果單據只顯示一個電話時，資料庫系統只會取紀錄中的第一組電話欄位。如此一來就有不少單據上沒有顯示客戶電話。所以這次也順便把那些沒有第一組電話欄位的紀錄一起補上 (以第二組電話補上) ，這就要用 CASE 敘述了。
+</p> 
+<pre class="language-text">
+UPDATE customer
+SET
+	tel1 = REPLACE(CASE WHEN tel1 IS NULL THEN tel2 ELSE tel1 END, '-', '')
+	tel2 = REPLACE(tel2, '-', ''),
+</pre>
+
+<!--more-->
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2815495.html">http://blog.roodo.com/rocksaying/archives/2815495.html</a></div>

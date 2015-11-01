@@ -1,0 +1,80 @@
+---
+title: Delegate in C# and Module in Ruby
+category: programming
+old-category: C/C++/C#/Java
+tags: [ruby,php,c#,delegate,mix-in]
+---
+<div class="tags" style="display:none">ruby php c# delegate mix-in</div>
+<p>
+我在《<a href="{{ site.baseurl }}/archives/2007/%E9%A1%9E%E5%88%A5%E7%B9%BC%E6%89%BF%E3%80%81%E4%BB%8B%E9%9D%A2%E5%AE%A3%E5%91%8A%E8%88%87%E6%A8%A1%E7%B5%84%E6%B7%B7%E6%88%90%28mix-in%29.html">類別繼承、介面宣告與模組混成(mix-in)</a>》中提到 Java 的介面(interface) 無助於提高程式碼再用性。而 <a href="{{ site.baseurl }}/archives/2007/%E9%A1%9E%E5%88%A5%E7%B9%BC%E6%89%BF%E3%80%81%E4%BB%8B%E9%9D%A2%E5%AE%A3%E5%91%8A%E8%88%87%E6%A8%A1%E7%B5%84%E6%B7%B7%E6%88%90%28mix-in%29.html#comment-4188757">jaceju</a> 在回應中提醒我還有 delegate 這種方式。
+</p>
+
+<!--more-->
+<p>
+我當年學的是 Java 1.0 ，那時的 Java 還沒有 delegate 這種概念。對我這個在 C/C++ 中用慣函數指標的人而言，沒有函數指標或類似方式是一件非常彆手彆腳的事。後來我在 C# 中碰過 delegate ，直覺反應這是 C# 版的函數指標。而 Java 則以類別型式的 Delegate 實踐此概念。但是 delegate 與 Ruby 的混成(mix-in)概念相比，還是很麻煩... 非常麻煩，不會比 PHP 好到哪去。
+</p>
+<h3>Ruby 之模組的作法</h3>
+<p>
+首先，我們先看看 Ruby 的混成(mix-in)的作法。我定義了一個模組 <code>MySampleModule</code> 及一個類別 <code>MyClass</code>。<code>MyClass</code> 類之建構子定義了一個實例變數 <var>@title</var>。 Ruby 的實例變數對應於 C++/C#/Java 中的私有資料成員 (See also: <a href="http://zh.wikibooks.org/w/index.php?title=Ruby_Programming/Syntax/Variables_and_Constants&variant=zh-tw#.E5.AF.A6.E4.BE.8B.E8.AE.8A.E6.95.B8.28Instance_Variable.29">Ruby Reference: Instance Variable</a>)。而在 <code>MySampleModule</code> 模組中定義了一個方法 <code>show</code>，請注意到它將顯示 <var>@title</var> 的內容，而 <var>@title</var> 在模組中並未出現。Ruby 對此採動態繫結策略：根據實際調用此方法之個體決定 <var>@title</var> 指涉何者。
+</p>
+
+<pre class="highlight"><code><span class="k">module</span> <span class="nn">MySampleModule</span>
+    <span class="k">def</span> <span class="nf">show</span>
+        <span class="nb">puts</span> <span class="vi">@title</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">MyClass</span>
+    <span class="kp">include</span> <span class="no">MySampleModule</span>
+    <span class="k">def</span> <span class="nf">initialize</span>
+        <span class="vi">@title</span> <span class="o">=</span> <span class="s1">'xyz'</span><span class="p">;</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="no">MyClass</span><span class="p">.</span><span class="nf">new</span>
+<span class="n">x</span><span class="p">.</span><span class="nf">show</span>
+</code></pre>
+
+
+<h3>C# 之 delegate 的作法</h3>
+<p>
+接著我們來看看 C# 的 delegate 作法。實際上，它和 PHP 的作法非常相似，參閱《<a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%E4%B9%8B%E5%8F%AF%E8%A1%8C%E6%80%A7.html">PHP 實踐 mix-in 概念之可行性</a>》。差別僅在於 PHP 以「名」參照，將之稱為 Variable function 。所以 jaceju 說<q><a href="http://blog.roodo.com/jaceju/archives/2832709.html">有點 delegate 味道</a></q>。
+</p>
+<p>
+為了方便閱讀， C#的例子中所用名稱和 Ruby的例子中一樣。與 Ruby 的模組語法相比，不難發現 delegate 的語法冗長多了。它必須先宣告 delegate 函數簽名 <code>methodDeleagte</code>，接著再宣告方法 <code>show</code> 並委派 <code>MySampleModule.show</code> 處理。語法上有兩個缺點。其一、若 <code>MySampleModule</code> 中有多個方法且函數簽名皆不同時，<code>MyClass</code> 就必須宣告多個 delegate 函數簽名。其二、當我們在 <code>MySampleModule</code> 中增加新的方法時，我們也必須在 <code>MyClass</code> 中增添委派的程式碼；Ruby 完全隱藏於 <code>include MySampleModule</code> 之中，我們不須處理。
+</p>
+<pre class="highlight"><code><span class="n">using</span> <span class="n">System</span><span class="p">;</span>
+<span class="n">public</span> <span class="n">class</span> <span class="n">SamplesDelegate</span>  <span class="p">{</span>
+    <span class="n">public</span> <span class="n">class</span> <span class="n">MySampleModule</span>  <span class="p">{</span>
+        <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">show</span><span class="p">()</span>  <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span> <span class="s">"Title: "</span><span class="p">);</span>
+            <span class="c1">//Console.WriteLine( "Title: {0}", this.title);
+</span>            <span class="c1">//ERROR! The solution is the same as PHP.
+</span>        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">class</span> <span class="n">MyClass</span> <span class="p">{</span>
+        <span class="c1">//include Module in Ruby
+</span>        <span class="n">public</span> <span class="n">delegate</span> <span class="kt">void</span> <span class="n">methodDelegate</span><span class="p">();</span>
+        <span class="n">public</span> <span class="n">methodDelegate</span> <span class="n">show</span> <span class="o">=</span> <span class="n">new</span> <span class="n">methodDelegate</span><span class="p">(</span><span class="n">MySampleModule</span><span class="p">.</span><span class="n">show</span><span class="p">);</span>
+
+        <span class="n">private</span> <span class="n">String</span> <span class="n">title</span><span class="p">;</span>   <span class="c1">// @title in Ruby
+</span>        <span class="n">public</span> <span class="nf">MyClass</span><span class="p">()</span> <span class="p">{</span>
+            <span class="n">this</span><span class="p">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">"xyz"</span><span class="p">;</span> <span class="c1">// @title in ruby
+</span>        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">Main</span><span class="p">()</span>  <span class="p">{</span>
+        <span class="n">MyClass</span> <span class="n">x</span> <span class="o">=</span> <span class="n">new</span> <span class="n">MyClass</span><span class="p">();</span>
+        <span class="n">x</span><span class="p">.</span><span class="n">show</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+實際使用時，它所面臨的狀況和 PHP 一樣，不能使用 <var>this</var> 存取活動個體之屬性。<code>MySampleModule</code> 本身是一個類，其中的 <var>this</var> 被認定指涉 <code>MySampleModule</code> 類之實例。即便我們委派 <code>MySampleModule.show</code> 為 <code>MyClass</code> 類之 <code>show</code> 方法，並藉由 <code>MyClass</code> 之實例 <var>x</var> 調用，<code>MySampleModule.show</code> 中之 <var>this</var> 仍不會動態繫結至 <var>x</var>。Ruby 會將實例變數動態繫結至活動個體；JavaScript 也會將 <var>this</var> 動態繫結至活動個體。在 Ruby 與 JavaScript 之方法內出現的屬性存取對象，係依此方法為哪個個體所調用而定 - 若為 <var>x</var> 所調用，則屬性存取對象就是 <var>x</var> 之屬性；若為 <var>y</var> 所調用，則為 <var>y</var> 之屬性。在 C# 中，屬性存取對象則依此方法定義於哪個類別中而定 - 若為 <code>MySampleModule</code> 所定義，則屬性存取對象必須是 <code>MySampleModule</code> 之實例。
+</p>
+<p>
+C#的解決方式也和 PHP 一樣，屬性必須宣告為 public ，並將 <var>this</var> 作為引數傳遞給委派方法。當限制與解決方式相同時，程式碼的行數就是關鍵。C#所需的行數比 PHP 還多出許多， C# 之 delegate 比 PHP 的作法麻煩。與 Ruby 相比就更不用談了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2872705.html">http://blog.roodo.com/rocksaying/archives/2872705.html</a></div>

@@ -1,0 +1,171 @@
+---
+title: ASP.Net~~SqlParameter 和 Ad-Hoc 該用哪種方法？
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>回應「<a href="http://blog.sina.com.tw/dotnet/article.php?pbgid=4907&entryid=11318" target="_blank" class="outside">對SqlParameter的不求甚解</a>」一文。SqlParameter 和 Ad-Hoc 這兩種用法的選擇，嚴格來說是 programmer 的態度與技術問題，而不是安全性問題。我的習慣是 Ad-Hoc ，但我同時強調，資料的驗證與查核是 programmer 的份內工作，所以我的程式風格如下。試問這種 Ad-Hoc 寫法的安全性，會比 SqlParameter 差嗎？
+</p>
+
+<!--more-->
+<h4>
+安全的 Ad-Hoc 程式風格
+</h4>
+<pre class="highlight"><code><span class="n">class</span> <span class="n">Parament</span> <span class="p">{</span>
+    <span class="n">private</span> <span class="n">string</span> <span class="n">xUserID</span><span class="p">;</span>
+    <span class="n">public</span> <span class="n">string</span> <span class="n">UserID</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">xUserID</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="s">""</span>
+             <span class="o">&amp;&amp;</span> <span class="n">Regex</span><span class="p">.</span><span class="n">IsMatch</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="err">@</span><span class="s">"^[a-z][a-z0-9]{2,31}$"</span><span class="p">,</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">IgnoreCase</span><span class="p">)</span> <span class="o">==</span> <span class="nb">false</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">throw</span> <span class="n">new</span> <span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">xUserID</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">private</span> <span class="kt">int</span> <span class="n">xQty</span><span class="p">;</span>
+    <span class="n">public</span> <span class="kt">int</span> <span class="n">Qty</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">xQty</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">throw</span> <span class="n">new</span> <span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">xQty</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">private</span> <span class="n">string</span> <span class="n">xMemo</span><span class="p">;</span>
+    <span class="n">public</span> <span class="n">string</span> <span class="n">Memo</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">xMemo</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">Length</span> <span class="o">&gt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">throw</span> <span class="n">new</span> <span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">xMemo</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">private</span> <span class="n">DateTime</span> <span class="n">xModifyTime</span><span class="p">;</span>
+    <span class="n">public</span> <span class="n">DateTime</span> <span class="n">ModifyTime</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">xModifyTime</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="n">xModifyTime</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">public</span> <span class="n">string</span> <span class="n">SqlEscapeString</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Regex</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="err">@</span><span class="s">"'"</span><span class="p">,</span> <span class="s">"''"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">Parament</span> <span class="n">parament</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Parament</span><span class="p">();</span>
+
+<span class="n">parament</span><span class="p">.</span><span class="n">UserID</span> <span class="o">=</span> <span class="s">"ABC123"</span><span class="p">;</span>
+<span class="n">parament</span><span class="p">.</span><span class="n">Qty</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+<span class="n">parament</span><span class="p">.</span><span class="n">ModifyTime</span> <span class="o">=</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">;</span>
+
+<span class="n">parament</span><span class="p">.</span><span class="n">Memo</span> <span class="o">=</span> <span class="s">"許功蓋abc'xyz--;select"</span><span class="p">;</span>
+<span class="c1">// 如果在 Ad-Hoc 時，省略單引號，那麼這一行可 inject 。
+</span>
+
+<span class="n">string</span> <span class="n">SqlCommand</span> <span class="o">=</span> <span class="n">String</span><span class="p">.</span><span class="n">Format</span><span class="p">(</span><span class="s">"INSERT INTO Example (UserID, Qty, Memo, ModifyTime) VALUES ( '{0}', {1}, '{2}', '{3}')"</span><span class="p">,</span> <span class="n">parament</span><span class="p">.</span><span class="n">UserID</span><span class="p">,</span> <span class="n">parament</span><span class="p">.</span><span class="n">Qty</span><span class="p">,</span> <span class="n">SqlEscapeString</span><span class="p">(</span><span class="n">parament</span><span class="p">.</span><span class="n">Memo</span><span class="p">),</span> <span class="n">parament</span><span class="p">.</span><span class="n">ModifyTime</span><span class="p">.</span><span class="n">ToString</span><span class="p">(</span><span class="s">"s"</span><span class="p">));</span>
+
+<span class="cm">/*
+string SqlCommand = String.Format("INSERT INTO Example (UserID, Qty, Memo, ModifyTime) VALUES ( '{0}', {1}, '{2}', CAST('{3}' AS DATETIME))", parament.UserID, parament.Qty, SqlEscapeString(parament.Memo), parament.ModifyTime.ToString("s"));
+*/</span>
+</code></pre>
+
+
+<p>
+這是我在用 PHP 時就養成的習慣，透過 C# 的 Property 語法，程式碼更簡潔了，但觀念仍然不變。這種程式風格，也可以用 SqlParameter 實現，這稍候再提。請注意到我對 Memo 的處理方式，很多 programmer 不是漏掉 escaping ，就是在 SQL 命令中，省略了括住字串的單引號，這就是 programmer 的態度問題：因為 SQL 語法不強制要求字串一定要用單引號包括起來，就懶得打了。此外，還有其他的好處列於下：
+</p>
+<ol>
+<li>Parament 可被其他 class 使用 (成為其他 class 的成員) ，做為其他 class 和資料庫表格 Example 互動時的端口。</li>
+<li>嚴格的 DataType 檢查。</li>
+<li>程式碼具有自我描述性，在程式碼中，就可以看出 UserID 的資料格式是「英文字母開頭，中間可混用英、數字，最短3字元，最長32字元」， Qty 的允許值範圍是 0 ~ 1000 。</li>
+</ol>
+<h4>
+使用 SqlParameter
+</h4>
+<pre class="highlight"><code><span class="n">class</span> <span class="n">Parament</span> <span class="p">{</span>
+    <span class="c1">// Bacause SqlCommand is sealed, you can use it but cannot inherit.
+</span>    <span class="n">private</span> <span class="n">SqlCommand</span> <span class="n">sqlCommand</span><span class="p">;</span>
+    <span class="n">public</span> <span class="n">SqlCommand</span> <span class="n">Command</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">sqlCommand</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">Parament</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">sqlCommand</span> <span class="o">=</span> <span class="n">new</span> <span class="n">SqlCommand</span><span class="p">();</span>
+        <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"@UserID"</span><span class="p">,</span> <span class="n">SqlDbType</span><span class="p">.</span><span class="n">VarChar</span><span class="p">,</span> <span class="mi">32</span><span class="p">);</span>
+        <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"@Qty"</span><span class="p">,</span> <span class="n">SqlDbType</span><span class="p">.</span><span class="n">Int</span><span class="p">);</span>
+        <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"@Memo"</span><span class="p">,</span> <span class="n">SqlDbType</span><span class="p">.</span><span class="n">VarChar</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
+        <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"@ModifyTime"</span><span class="p">,</span> <span class="n">SqlDbType</span><span class="p">.</span><span class="n">DateTime</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">string</span> <span class="n">UserID</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Convert</span><span class="p">.</span><span class="n">ToString</span><span class="p">(</span><span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@UserID"</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="s">""</span>
+                <span class="o">&amp;&amp;</span> <span class="n">Regex</span><span class="p">.</span><span class="n">IsMatch</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="err">@</span><span class="s">"^[a-z][a-z0-9]{2,31}$"</span><span class="p">,</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">IgnoreCase</span><span class="p">)</span> <span class="o">==</span> <span class="nb">false</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">throw</span> <span class="n">new</span> <span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@UserID"</span><span class="p">].</span><span class="n">Value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="kt">int</span> <span class="n">Qty</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Convert</span><span class="p">.</span><span class="n">ToInt32</span><span class="p">(</span><span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@Qty"</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">throw</span> <span class="n">new</span> <span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@Qty"</span><span class="p">].</span><span class="n">Value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">string</span> <span class="n">Memo</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Convert</span><span class="p">.</span><span class="n">ToString</span><span class="p">(</span><span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@Memo"</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">Length</span> <span class="o">&gt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">throw</span> <span class="n">new</span> <span class="n">System</span><span class="p">.</span><span class="n">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@Memo"</span><span class="p">].</span><span class="n">Value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">DateTime</span> <span class="n">ModifyTime</span> <span class="p">{</span>
+        <span class="n">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Convert</span><span class="p">.</span><span class="n">ToDateTime</span><span class="p">(</span><span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@ModifyTime"</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="n">set</span> <span class="p">{</span>
+            <span class="n">sqlCommand</span><span class="p">.</span><span class="n">Parameters</span><span class="p">[</span><span class="s">"@ModifyTime"</span><span class="p">].</span><span class="n">Value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">Parament</span> <span class="n">parament</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Parament</span><span class="p">();</span>
+
+<span class="n">parament</span><span class="p">.</span><span class="n">UserID</span> <span class="o">=</span> <span class="s">"ABC123"</span><span class="p">;</span>
+<span class="n">parament</span><span class="p">.</span><span class="n">Qty</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+<span class="n">parament</span><span class="p">.</span><span class="n">ModifyTime</span> <span class="o">=</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">;</span>
+
+<span class="n">parament</span><span class="p">.</span><span class="n">Memo</span> <span class="o">=</span> <span class="s">"許功蓋abc'xyz--;select"</span><span class="p">;</span>
+
+<span class="n">parament</span><span class="p">.</span><span class="n">Command</span><span class="p">.</span><span class="n">CommandText</span> <span class="o">=</span> <span class="s">"INSERT INTO Example (UserID, Qty, Memo, ModifyTime) VALUES ( '@UserID', @Qty, '@Memo', '@ModifyTime');"</span><span class="p">;</span>
+
+</code></pre>
+
+<p>
+同樣的程式風格，也可像上面這樣用 SqlCommand 來實作。而這兩種用法外觀上的主要差別，在於少了一個 escaping 的動作。以我的觀點，這個工作本來就是 programmer 應該要加的，<strong>不能因為常常有 programmer 忘了加 escaping ，而斷定 Ad-Hoc 的安全性較差。因為這是 programmer 的態度問題</strong>。追求簡潔的程式碼，和鄉愿地假定輸入的資料都是「善意的」而省略該做的事，是兩碼子事。透過對同一程式風格的兩種不同實現方式，應該更容易了解 SqlParameter 的實作目的。只是我向來對 M$ 感冒的原因之一也在此，為什麼它就不能說清楚為什麼要用 SqlParameter 呢？把 programmer 當笨蛋一樣，好像在說「你用就對了，不需要知道理由」。附帶一提，因為 SqlParameter 不查驗資料格式，而對資料型態的核對則會等到進行查詢時才進行，所以依然應該使用 Property 的方式立即查驗輸入資料的正確性。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1816510.html">http://blog.roodo.com/rocksaying/archives/1816510.html</a></div>

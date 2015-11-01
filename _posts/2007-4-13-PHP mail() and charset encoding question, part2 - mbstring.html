@@ -1,0 +1,44 @@
+---
+title: PHP mail() and charset encoding question, part2 - mbstring
+category: programming
+old-category: PHP
+tags: [php,mail,mbstring]
+---
+<div class="tags" style="display:none">php mail mbstring</div>
+<p>
+在 <a href="{{ site.baseurl }}/archives/2007/PHP%20mail%28%29%20and%20charset%20encoding%20question.html">part1</a> 中提到 <code>mail()</code> 會固定對信件內容進行編碼，而解決之道是改用 PHPMailer, PEAR::Mail 寄送信件。而本文則要繼續探索 <code>mail()</code> 對信件內容編碼之原因。
+</p>
+
+<!--more-->
+<p>
+在一次測試過程中，我很偶然地、不小心地，打錯了 <var>$headers</var> 中 <var>Content-type</var> 的字元集(charset)之值，結果找到 <code>mail()</code> 寄信會造成亂碼的原因。
+</p>
+<p>
+下例將故意字元集之值故意輸入成 'utf-X' (請將範例程式碼以 UTF-8 編碼格式儲存)。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$mailTo</span> <span class="o">=</span> <span class="s1">'your@example.com'</span><span class="p">;</span> <span class="c1">// 請自行替換有效的收件地址
+</span><span class="nv">$message</span> <span class="o">=</span> <span class="s1">'test 測試'</span><span class="p">;</span>
+<span class="nv">$subject</span> <span class="o">=</span> <span class="s1">'TEST 測試'</span><span class="p">;</span>
+<span class="nv">$headers</span> <span class="o">=</span> <span class="s1">'Content-type: text/plain; charset=utf-X'</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nv">$headers</span> <span class="o">.=</span> <span class="s1">'From: my@example.com'</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// 請自行替換寄件地址
+</span><span class="nb">mail</span><span class="p">(</span><span class="nv">$mailTo</span><span class="p">,</span> <span class="nv">$subject</span><span class="p">,</span> <span class="nv">$message</span><span class="p">,</span> <span class="nv">$headers</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+結果 PHP 顯示了一則警告訊息，如下所示:
+</p>
+<pre class="language-text">
+Warning: mb_send_mail(): 
+Unsupported charset "utf-X" - will be regarded as ascii in ...
+</pre>
+<p>
+這下我明白了，凶手就是 <code>mb_send_mail()</code>。原來 <code>mail()</code> 實際上已經被 <code>mb_send_mail()</code> 覆寫了，而 <code>mb_send_mail()</code> 會判讀 <var>header</var> 內容對信件內容編碼。這正是造成亂碼的原因。
+</p>
+<p>
+我直覺想到這與 mbstring extension 有關。只要不載入 mbstring extension 或是在 php.ini 中設定 <code>mbstring.func_overload = 6</code>(not overload mail())，那麼問題便可迎刃而解。我測試後確實可解，取消 <code>mbstring.func_overload</code> 對 <code>mail()</code> 之覆寫動作後， mail() 的行為跟以前一樣，不會對信件內容亂編碼。
+</p>
+<p>
+但在實務上，有不少人是租用虛擬主機空間運行 PHP 程式。而那些虛擬主機供應商不可能允許用戶自行修改 php.ini 之內容。所以此處的解決方式不適合虛擬主機用戶，他們應採用 <a href="{{ site.baseurl }}/archives/2007/PHP%20mail%28%29%20and%20charset%20encoding%20question.html">part1</a> 的解決方式。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2998451.html">http://blog.roodo.com/rocksaying/archives/2998451.html</a></div>

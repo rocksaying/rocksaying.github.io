@@ -1,0 +1,109 @@
+---
+title: Programming with Subversion Quickstart - 安裝 Subversion 服務
+category: programming
+old-category: Programming
+tags: [svn,subversion,版本控制]
+---
+<p>
+Subversion (簡稱 SVN) 是繼 CVS 之後新興的版本控制工具 (version control system) 。對於版本控制工具的諸多概念與名詞，我並不打算說明，因為《<a href="http://svnbook.red-bean.com/">Version Control with Subversion</a>》已經說得很仔細。以我個人的經驗，任何接觸過版本控制工具的 programmer ，都會上癮，深陷其中、不可自拔。誇張地形容， Programmer 可以沒有 IDE 工具，但不能沒有版本控制工具。
+</p>
+
+<!--more-->
+<p>
+如我這類常常接觸 open source software 的 Programmer ，多數皆熟悉 CVS/SVN 這類版本控制工具。我原本預期國內資訊軟體公司會更普遍地使用版本控制工具，但匪夷所思的是國內資訊軟體公司中的資訊工程師似乎對其非常陌生。例如在我過去任職的一間通過 CMMI level-2 認證的資訊軟體公司之中，工程師竟然沒有使用版本控制工具的習慣。我這自學起家的人，完全無法理解國內的程設人才正規養成教育出了什麼問題？為什麼他們不用呢？所以本文預期作為 Subversion 的快速入手指南，使 programmer 可以在自己的桌面環境中安裝 Subversion ，並用它來維護為自己寫的小工具程式。透過這一過程，養成 programmer 使用版本控制工具的習慣。沒錯， Subversion 不是只用在專案軟體開發的大傢伙，就算是為了個人用途撰寫的小工具程式，它都能幫上不少忙。
+</p>
+<p>
+多年前，我在 GNU/Linux 和 FreeBSD 環境下把玩 BBS 程式碼時 (<a href="http://home.educities.edu.tw/fbtip/">Firebird BBS, TIP</a>) ，我就開始接觸 CVS 這個版本控制工具。當我面對組成 BBS 的上百份 C 語言原始檔、上萬行程式碼時， CVS 是不可或缺的工具。沒有 CVS/SVN 這類版本控制工具，任何修改程式碼的動作都會增加 programmer 大腦記憶體的負擔， programmer 將會浪費許多時間在搜尋與比對程式碼的工作之上。就算是撰寫個人使用的小程式，版本控制工具仍然帶給 programmer 許多便利之處。我為自己寫過的小工具不知凡幾，有些程式寫完後又過了好幾個月才會想到再修改。此時版本控制工具的提交 (commit) 記錄功能就能幫我喚起以往撰寫過程中的記憶。分支功能可以讓我無後顧之憂地為我的小工具添加新功能，確認無誤後再合併回主幹。
+</p>
+
+<h3>
+取得安裝套件
+</h3>
+
+<p>
+安裝 Subversion server 其實是件很簡單的事，許多 GNU/Linux distribution 都已經提供 Subversion package ，只要一個安裝指令就能完成安裝動作。雖然大多數使用者並不使用 GNU/Linux 作為桌面環境，而是使用 Microsoft Windows 2k/xp 作為家中的桌面環境。但在這桌面環境下安裝 Subversion 服務仍然是件非常簡單的事。例如本文內容就是在 Microsoft Windows XP 平台上進行 Subversion server 的實際安裝工作。
+</p>
+<p>
+首先，請先到「<a href="http://subversion.tigris.org/">Subversion</a>」網站中取得 Subversion server 的安裝套件。在「<a href="http://subversion.tigris.org/project_packages.html">下載頁面</a>」中列出了多種平台的可執行安裝套件。 Windows 平台使用者，請開啟 <a href="http://subversion.tigris.org/servlets/ProjectDocumentList?folderID=91">Subversion Win32 binaries</a> 之頁面下載。撰寫本文時，下載的是 svn-win32-1.4.0.zip 。這個安裝套件就只是一個 Zip 壓縮包，裡面是一組包含 Subversion server 以及 client 的命令列工具，所以以下的操作過程， GNU/Linux 和 MS Windows 平台皆適用。
+</p>
+
+<h3>
+安裝與啟動 Subversion server
+</h3>
+<p>
+取得 Subversion 安裝套件的壓縮包後，解開其中的檔案放置到你想放的目錄中。此例中放在 "C:\Program Files\svn-win32" 。工具皆在其 bin 目錄中，主要使用到三個工具。
+</p>
+
+<ul>
+<li>
+svnserve<br/>
+Subversion Server 主程式。本文提到「啟動 Subversion server」，意思就是執行 svnserve 此一程式。
+</li>
+
+<li>
+svnadmin<br/>
+Subversion 專案管理工具。負責新增空白專案、刪除專案等動作。
+</li>
+
+<li>
+svn<br/>
+Subversion 專案內容存取工具。舉凡 checkout (提出專案內容), commit (提交修改內容), update, revert 等存取動作，皆使用此工具。
+</li>
+
+</ul>
+
+<p>
+設置 Subversion server 的方法很多，本文只說明最簡單的一種方式，就是單獨運行 svnserve ，只要執行 svnserve 時加上 "--daemon" 參數即可，這種方式適合做為個人用途。若要進行 team work ，請參閱《<a href="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.html">Version Control with Subversion - Chapter 6. Server Configuration</a>》進行配置。另有一個常用的選擇性參數 "--root" 可以指示 Subversion server 搜尋專案貯藏庫 (Repository) 的起點。 MS Windows 平台使用者，可以建立 svnserve.exe 的捷徑，將 "--daemon" 和 "--root" 附加在「目標欄位」，如圖「svnserve 捷徑設定」所示。日後需要使用 Subversion 時，便可直接點擊捷徑啟動 Subversion server 。作為個人用途，這種需要時再啟動的方式也就足夠了。如果你想在不登入桌面的情況下使用 Subversion 服務，請參閱《<a href="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.html">Version Control with Subversion - Chapter 6. Server Configuration</a>》，將 Subversion server 設定為系統服務。 GNU/Linux 可以選擇 inet daemon 和 apache server 兩種設置方式。而 Windows 平台使用者，在 svn-win32 1.40 版之後，可以將 svnserve 設定為 Windows Service (系統服務) ，請參閱《<a href="http://tortoisesvn.net/docs/nightly/TortoiseSVN_en/tsvn-serversetup-svnserve.html#tsvn-serversetup-svnserve-3">TortoiseSVN Manual - Svnserve Based Server</a>》。
+</p>
+
+<a href="http://img204.imageshack.us/my.php?image=svnserveshortla2.png" target="_blank"><img src="http://img204.imageshack.us/img204/900/svnserveshortla2.png" border="0" alt="svnserve 捷徑設定" /></a>
+
+<h3>
+Subversion server 如何尋找專案貯藏庫 (Repository)
+</h3>
+<p>
+Subversion 預設使用專屬的 URL 格式存取專案，其格式為 "svn://主機名稱/專案貯藏庫路徑/" 。本文只在個人桌面環境下使用，所以主機名稱為 localhost 。基本上，你可以將專案貯藏庫 (Repository) 放在任何目錄中。若啟動 Subversion server 時未指定 root 路徑 (未加 "--root") ，則 Subversion server 會將 URL 所指示的專案貯藏庫路徑視為完整的本地檔案路徑。例如 URL 若為 "svn://localhost/repository/project1/" ，則 Subversion server 會認為專案貯藏庫放置在 "/repository/project1" (Windows 則為 "c:\repository\project1") 。 Windows 平台的使用者在此需要注意一點，你只能選擇其中一個磁碟放置 Repository ，預設是 "C:" 。這是因為 Subversion 存取專案內容的 URL 不能包括磁碟代號，因此若你將專案貯藏庫放在其他磁碟中，就必須在啟動 Subversion server 時加上 "--root" 參數指示磁碟代號，例如 "svnserve --daemon --root d:"。將各個專案的貯藏庫集中放置在一個目錄下，其實是個好主意，配合 "--root" 參數指定 root 路徑，可以少記很多字。例如將專案的貯藏庫都放置在 "d:\repository" 的目錄中，那麼啟動 Subversion server 的參數應為 "--daemon --root d:\repository" ，專案貯藏庫的 URL 則簡化為 "svn://localhost/專案貯藏庫目錄/" 。
+</p>
+
+<h3>
+實例測試
+</h3>
+<p>
+所有專案的貯藏庫都存放在 "d:\repository" 目錄之中，故啟動 Subversion server 的命令列內容為 "svnserve --daemon --root d:\repository" 。見圖「svnserve 捷徑設定」。
+</p>
+
+<p>
+現在要建立一個名為「hello world」的專案，故在 "d:\repository" 目錄中，建立一個名為 "hello_world" 的目錄以貯藏專案內容。建立目錄後，再使用命令列工具 "svnadmin" ，配合參數 "create" 於此目錄中建立空白專案貯藏庫 (Repository)，見圖「Create a repository by svnadmin」。已安裝 TortoiseSVN 的使用者，可以用圖形化介面操作，見圖「Create a repository by TortoiseSVN」。 TortoiseSVN 建立專案時，會詢問使用者要以何種方式儲存專案，建議使用預設的「Berkeley database (BDB)」方式。
+</p>
+
+<a href="http://img72.imageshack.us/my.php?image=svnservecreaterepositoraq2.png" target="_blank"><img src="http://img72.imageshack.us/img72/6501/svnservecreaterepositoraq2.png" border="0" alt="Create a repository by svnadmin" /></a>
+
+<a href="http://img62.imageshack.us/my.php?image=svnservecreaterepositortt1.png" target="_blank"><img src="http://img62.imageshack.us/img62/3118/svnservecreaterepositortt1.png" border="0" alt="Create a repository by TortoiseSVN - 1" /></a>
+<a href="http://img65.imageshack.us/my.php?image=svnservecreaterepositorhj1.png" target="_blank"><img src="http://img65.imageshack.us/img65/736/svnservecreaterepositorhj1.png" border="0" alt="Create a repository by TortoiseSVN - 2" /></a>
+
+<p>
+Subversion 工具會自動在 "hello_world" 目錄中產生專案所需的初始檔案。其中最重要的是專案組態檔 "conf/svnserve.conf" 以及密碼檔 "conf/passwd" 。Subversion 提供多種靈活的使用者認證方式，在此只用 Subversion 內建的認證方式。首先應指定未認證者 (annonymous) 及已認證者 (authorized) 的專案存取權限。在此例中因為是個人用途，所以應禁止未認證者存取，設定 "anon-access = none" ；允許已認證者讀取及寫入，設定 "auth-access = write" 。接著用最簡單的密碼檔方式設定認證資訊，只需將使用者識別帳號和密碼寫入密碼檔 "conf/passwd" ，設定 "password-db = passwd" 。見圖「Set configuration of repository」與「Set password of repository」。注意， Subversion server 一經啟動便成為一個網路服務，任何人都可以透過網路連線取得電腦中的專案內容，所以一定要用密碼管制。在個人用途或非公開的開發團隊中，更應為 Subversion server 設置網路防火牆，以阻絕外來使用者的存取企圖。
+</p>
+
+<a href="http://img68.imageshack.us/my.php?image=svnservesetrepositorycojx0.png" target="_blank"><img src="http://img68.imageshack.us/img68/9716/svnservesetrepositorycojx0.png" border="0" alt="Set configuration of repository" /></a>
+
+<a href="http://img54.imageshack.us/my.php?image=svnservesetrepositorypags0.png" target="_blank"><img src="http://img54.imageshack.us/img54/7652/svnservesetrepositorypags0.png" border="0" alt="Set password of repository" /></a>
+
+<p>
+設定組態及密碼後，專案貯藏庫的建立工作便算完成。接下來測試是否可以存取專案貯藏庫。請先啟動 Subversion server 。接下來，此例中將專案貯藏庫放置在 "d:\repository\hello_world" ，且啟動 Subversion server 時已經指定 "d:\repository" 為 root 目錄，所以專案的 URL 應該是 "svn://localhost/hello_world/" ，就以此 URL 向 Subversion server 提出 (checkout) hello_world 專案，提出的內容，稱之為工作複本 (working copy) 。此例將工作複本放在 "d:\src\hello" 。見圖「Checkout a repository」。如果一切無誤，那麼 Subversion 就會在 "d:\src\hello" 之中產生工作複本了。
+</p>
+<a href="http://img56.imageshack.us/my.php?image=svnservecheckoutcmdff4.png" target="_blank"><img src="http://img56.imageshack.us/img56/5385/svnservecheckoutcmdff4.png" border="0" alt="Checkout a repository by svn" /></a>
+
+<a href="http://img218.imageshack.us/my.php?image=svnservecheckouttortoisle5.png" target="_blank"><img src="http://img218.imageshack.us/img218/1592/svnservecheckouttortoisle5.png" border="0" alt="Checkout a repository by TortoiseSVN" /></a>
+
+
+<h3>軟體專案管理的起點</h3>
+<p>
+軟體專案管理之中，充斥了太多理論，有心提高軟體生產品質的使用者，不論是軟體開發團隊的 PM ，亦或是習慣為自己使用而動手寫程式的 programmer ，也許都被那些軟體專案管理的理論弄得昏頭轉向。然而它們的起點，都是從版本控制著手的。透過這篇快速入門，從無到有的設置服務並建立空白專案，只要三個步驟就完成了，相信可以讓各位了解建立一個版本控制服務其實並不難。接下來，我預計還會再完成一篇使用文章，以編寫程式碼的過程為實例，說明 svn 和 TortoiseSVN 的實用功能。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/Programming%20with%20Subversion%20Quickstart%20-%20Direct%20repository%20access.html">Programming with Subversion Quickstart - Direct repository access</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/%E5%9C%A8%20GoogleCode%20%E5%BB%BA%E7%AB%8B%E8%BB%9F%E9%AB%94%E5%B0%88%E6%A1%88%E7%9A%84%E7%AC%AC%E4%B8%80%E6%AD%A5.html">在 GooleCode 建立軟體專案的第一步</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2385729.html">http://blog.roodo.com/rocksaying/archives/2385729.html</a></div>

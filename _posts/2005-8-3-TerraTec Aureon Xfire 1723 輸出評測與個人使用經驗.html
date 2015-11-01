@@ -1,0 +1,111 @@
+---
+title: TerraTec Aureon Xfire 1723 輸出評測與個人使用經驗
+category: computer
+old-category: 電腦技術
+tags: []
+---
+<p>這幾天上 VIA 的網站，抓了 xfire 1723 音效卡的公版驅動程式來測試，結果出了問題。就上網找資料，結果發現 Terrtec 官方的舊版驅動程式反而較好用。我把 XFire 1723 音效卡的輸出評測參考網頁，以及我個人實際聆聽後建議的 foobar2000 設定內容記了下來。xfire 1723 真的是便宜又好用的音效卡。</p>
+
+<!--more-->
+<h3>TerraTec Aureon Xfire 1723 輸出評測與個人使用經驗</h3>
+
+<h4>XFire 1723 SPDIF輸位輸出評測參考網頁:</h4>
+<ul>
+<li>http://sound.zol.com.cn/2005/0512/170120.shtml</li>
+<li>http://www.soomal.com/gb/001/000/00000108.htm</li>
+</ul>
+
+<h4>XFire 1723 硬體規格:</h4>
+<ul>
+<li>主晶片: VIA EVNY24-1723</li>
+<li>24-bit resolution audio format support</li>
+<li>Sampling rates up to 96kHZ</li>
+<li>Bit accurate transfers</li>
+<li>類比輸出規格: 18bit/48khz</li>
+</ul>
+<p>
+VIA EVNY24-1723 支援 44.1 KHz, VT1616 Codec 支援 AC'97 2.2 的多種採樣率規範，加上 Aureon XFire 1723 的雙晶振硬體設計，使 Xfire 1723 能跳過 SRC 直接輸出 44.1KHz 訊號。
+</p>
+
+<h4>驅動程式:</h4>
+<p>
+Aureon driver (Aureon 官版,光碟所附) 優於 VIA driver (VIA 公版 ver.451c)
+</p>
+<ul>
+<li>Aureon driver 失真率優於 VIA driver</li>
+<li>VIA driver 無法輸出 88.2khz/96khz 數位訊號。<br />
+在 foobar 中，使用 Resampler 時，就算 resample 到 88.2khz/96khz ，  數位輸出的信號依然被降為 48khz (我實際使用時，foobar 會跳出錯誤訊息: ks 無法開啟音效設備)
+</li>
+<li>Aureon driver 可正確輸出 88.2hkz/96khz 數位訊號。<br />
+在 foobar 中，可用 Resampler 重採樣到 88.2khz/96khz 並正確輸出數位信號。
+</li>
+</ul>
+
+<h4>foobar 設定建議: </h4>
+<ul>
+<li>Output: Kernel Streaming</li>
+<li>playback output (匯出位元深度): 32bit fixed-point, 不用任何 Dither</li>
+</ul>
+
+<h5>1.啟用 Resampler (SSRC or PHS 依個人喜好):</h5>
+<p>
+重採樣到 88.2khz, 建議使用慢速模式，這樣做並不是為了改善音質，而是<strong>減少傳輸損耗與失真</strong>。(請看評測參考網頁的測試數據)
+</p>
+<p>
+這是專門針對數位輸出的設定。因為 xfire 1723 的類比輸出只支援到 48KHz，所以此設定下，類比輸出沒有聲音...
+</p>
+
+<h5>2.不啟用 Resampler:</h5>
+<p>
+這是同時適用類比輸出與數位輸出(S/PDIF) 的設定，只把 playback 的匯出位元深度設為 32bit ，output 設為 Kernel Streaming 。再參考 Aureon 音效控制 (Audio control panel) 的設定，將訊號輸出為 32bit/44.1khz 。使用類比輸出聆聽的時候，建議採用此設定。一如 foobar 的作者所言， Resampler 並沒有改善音質的功用，而且 xfire 1723 採用 44.1Khz 的設定，就可以跳過 SRC ，所以不必用 Resampler 。
+</p>
+<p>
+大部份 AC97 規格的音效卡，需要用 Resampler 重採樣到 48Khz ，以跳過 SRC 的干擾，但 xfire 1723 的硬體設計本身就可以跳過 SRC ，所以不需要用 Resampler 。
+</p>
+
+<h4>Aureon 音效控制 (Audio control panel): </h4>
+<p>
+數位輸出時: 開啟[數位輸出], 選擇[PCM only]. Sample Rate Select: 開啟 [Automatic] 。
+</p>
+<p>
+ 類比輸出時: Sample Rate Select: 取消 [Automatic], 選定 44.1KHz 。
+</p>
+<p>
+強制設為 44.1 KHz 時，可以跳過 SRC 的干擾，改善音質。數位輸出必須選 [PCM Only] 或 [Loop back into S/PDIF out]，[Sample Rate] 才可以強制指定為 [44.1KHz]. 當[數位輸出]設為[AC3 or PCM with Auto Selection]時，[Sample Rate]固定採[Automatic]設定，這時就無法強制設為 44.1KHz 。
+</p>
+
+<h5>不勾選[Automatic]的原因:</h5>
+<p>
+強制所有訊號 (特別是類別輸出) 以 44.1 KHz 輸出，此時可跳過 SRC 的干擾，改善音質。
+</p>
+<p>
+CD 皆為 44.1KHz, 大部份 MP3/WMA 也是 44.1KHz ，所以音質不受 SRC 干擾。
+</p>
+<p>
+影音檔 (AVI/OGM/MKV/RM) 等音效內容，大部份是 48KHz ，若勾選[Automatic]，則在播放影音檔時，訊號將採 48KHz 輸出，反而會受到 SRC 干擾。因此同樣建議取消[Automatic]，強制改為 44.1KHz 輸出。我實際聆聽的感覺是，強制將影音檔的音效由 48KHz 降為 44.1KHz 輸出的效果比較好，因此在我的系統上，跳過 SRC 可顯著改善音質。 SRC 對音質的干擾結果，視系統與音效卡而定，依自己聆聽的感覺決定要不要跳過 SRC 。
+</p>
+
+<h4>xfire 1723 的實際聆聽音質表現</h4>
+<p>
+就測試數據而言，xfire 1723 和 DMX 6 fire 的數位訊號輸出品質幾乎相等。據測試結果而言，接上同樣的 DAC 後，實際聆聽的音質同樣不分高下。將 xfire 1723 作為純粹的數位輸出訊號卡時，其 C/P 值非常之高，輸出品質更是一流水準。
+</p>
+
+<p>
+xfire 1723 的缺點: 由於搭配的 codec 是 VT1616 ，其類比輸出的音質符合價位，並沒有特別突出的表現。但跟我手上另一張音效卡: Creative PCI-128 Digital 的聲音比起來，我偏好 xfire 1723 的聲音表現。
+</p>
+
+<h4>本人的聆聽設備:</h4>
+<ul>
+<li>音效卡: Aureon XFire 1723</li>
+<li>Driver: Aureon 光碟內附 driver</li>
+<li>喇叭: 淇譽 JS J707AV (已拆掉內建的擴大器，並換 105芯的線材)</li>
+<li>擴大器: SEQ 800 (1300元買的電子街小擴大器)</li>
+<li>以上設備的連接線，全部用 KOKA 的 OFC shield 線材。</li>
+<li>耳機: Labtec ELite 840</li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2005/%E7%91%9E%E9%BA%97%20Sound%20Image%20%E7%81%AB%E7%B6%B21723%20%E9%A9%85%E5%8B%95%E7%A8%8B%E5%BC%8F%E5%AF%A6%E6%B8%AC.html">瑞麗 Sound Image 火網1723 驅動程式實測</a></li>
+<li><a href="{{ site.baseurl }}/archives/2005/RMAA%20%E6%B8%AC%E8%A9%A6%E5%90%8D%E8%A9%9E%E8%88%87%E6%95%B8%E6%93%9A%E7%B0%A1%E8%A6%81%EF%BC%8C%E4%B8%A6%E9%99%84%20Aureon%20xfire%201723%20%E8%BC%B8%E5%87%BA%E7%B5%90%E6%9E%9C.html">RMAA 測試名詞與數據簡要，並附 Aureon xfire 1723 輸出結果</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/333355.html">http://blog.roodo.com/rocksaying/archives/333355.html</a></div>

@@ -1,0 +1,113 @@
+---
+title: 乙級電腦軟體設計技術士應考記
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+上週六，我為了乙級電腦軟體設計技術士的術科測驗，跑了一趟台中，到勤益技術學院應考。
+</p>
+<p>
+說起來，這次應檢經驗非常不愉快啊。明明就是在高雄報名，也在高雄考學科，竟然要我跑到台中考術科，感覺非常不爽，而且基本上是砸鍋了。沒想到出了一題最優路徑選擇演算法的實作題，偏偏我最弱的就是那一點，沒做完那題，是一定不過的。寫了十年 C/C++ 程式，竟然沒考過，實在是太大意了。附帶一提，當年 (民國83年) 丙級電腦設計技術士一開辦，我就考到了，隔了十二年「終於」等到乙級檢定...
+</p>
+
+<!--more-->
+<p>
+在實務上，C 語言程式還是佔大多數，純 C++ 語言的程式反而少。別懷疑，看看 Linux 上的軟體，八成都還是用 C 語言寫作。但不用 C++ 並不表示寫不出個體導向 (Object-Oriented) 的程式。早期接觸個體導向的程式人員，大都會用結構型態與函數指標進行資料封裝。像我用 C 語言同樣能實作繼承、動態連結等功能。再者我接觸 C++ 的時間算早，所以 C++ 後期發展出來的東西，如 template, STL 等，我反而不熟悉，考試時就先吃了虧。
+</p>
+<p>
+而工具的選擇上，更是令我十分不滿。使用工具限定使用 VisualStudio .Net 跟 Borland C++Builder 這兩種，偏偏我都沒用過。我是在 Linux 環境下用 gcc/make 這些工具的。就算在 Win32 環境下，也還有 MinGW32 與 Borland C++ 5.5 command line tool 這兩套可自由取得 C/C++ 編譯工具，為何不能用？害我考試時還要先東摸西摸後，才搞清楚要如何建立專案及生成執行檔。我不清楚考 Java 的人，用的是什麼工具，或許也不是用 JDK 、 IBM VisualAge 或 eclipse。
+</p>
+<p>
+還有一個小插曲。考試時不知為何，我無法使用 cin,cout, istream, ostream 這些東西，明明 include iostream 了，compiler 竟然說未宣告，見鬼了。偏偏題目限定要實作 &gt;&gt;, &lt&lt; 的運算子覆載作輸出入，於是我當場實作了一組最簡單的 In/Out class...
+</p>
+<p>
+考試前，承辦單位事先寄了一份模擬試題。跟實際上的試題比對，大致可以看出術科應檢的重點。前三題都是 C++ 語言在運算子覆載以及動態連結上的應用實作。兩題實作運算子覆載及夥伴函數 (friend function) ，一題實作動態連結。但最後一題才是重點，最後一題一定是演算法，而且是冷門的演算法題型。例如模擬試題中的「最長遞增子串列」，我在 Google 上搜尋許久，才搞清楚那是 LIS ，而我手上的資料結構與演算法相關書籍中，根本沒提到這玩意。這次應檢時，則是出了「最優路徑選擇」，給你一個交通網絡圖，分 A~E 個交通系統及 1~9 個站點。試設計一個程式，可依使用者輸入的任兩站點，計算出最省交通費用的路線。
+</p>
+<p>
+題目一跟題目三類似。我就說一下第三題吧。實作一 fraction 類別 (分子／分母) ，並提供四則運算與大於、小於及等於的運算子。最後再以夥伴函數的功能，實作 &gt;&gt; 及 &lt;&lt; 的輸出入動作。我前面說到不能用 cout/cin 而被迫自己當場實作一組 In/Out class 的事，就是指這題。當然，題目本身並沒有要求考生實作一組 In/Out 。
+</p>
+<pre class="highlight"><code><span class="n">class</span> <span class="n">Fraction</span> <span class="p">{</span>
+<span class="n">private</span><span class="o">:</span>
+  <span class="kt">int</span> <span class="n">fc</span><span class="p">;</span> <span class="cm">/*分子*/</span>
+  <span class="kt">int</span> <span class="n">fm</span><span class="p">;</span> <span class="cm">/*分母，分母不得為0 */</span>
+<span class="n">public</span><span class="o">:</span>
+  <span class="n">Fraction</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">m</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="n">throw</span> <span class="s">"分母不得為0"</span><span class="p">;</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">=</span> <span class="n">m</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">Fraction</span><span class="o">&amp;</span> <span class="n">operator</span><span class="o">+</span> <span class="p">(</span><span class="n">Fraction</span><span class="o">&amp;</span> <span class="n">lv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">cc</span><span class="p">,</span><span class="n">cm</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">!=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">*=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">;</span>
+      <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">*</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span> <span class="o">+</span> <span class="n">lv</span><span class="p">.</span><span class="n">fc</span> <span class="o">*</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+      <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">+=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fc</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kt">int</span> <span class="n">operator</span><span class="o">==</span> <span class="p">(</span><span class="n">Fraction</span><span class="o">&amp;</span> <span class="n">lv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">cc</span><span class="p">,</span><span class="n">cm</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">!=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="p">((</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">*</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">lv</span><span class="p">.</span><span class="n">fc</span> <span class="o">*</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">==</span> <span class="n">lv</span><span class="p">.</span><span class="n">fc</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+題目二，給你一個 publication 類別，衍生 book 及 type 類別，以動態連結實作 getdata() 及 putdata() 兩個方法。
+</p>
+<pre class="highlight"><code><span class="n">class</span> <span class="n">Publication</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">title</span><span class="p">;</span> <span class="cm">/*用 STL 的 string 也行，但我是用慣 C 語言方式的*/</span>
+  <span class="kt">float</span> <span class="n">price</span><span class="p">;</span>
+<span class="n">public</span><span class="o">:</span>
+  <span class="n">Publication</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">price</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">getdata</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">2048</span><span class="p">];</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Enter title: "</span><span class="p">);</span>
+    <span class="n">scanf</span><span class="p">(</span><span class="s">"%s"</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">free</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Enter price: "</span><span class="p">);</span>
+    <span class="n">scanf</span><span class="p">(</span><span class="s">"%f"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">putdata</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">" Title: %s, Price: %.1f "</span><span class="p">,</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span><span class="p">,</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">class</span> <span class="n">Book</span> <span class="o">:</span> <span class="n">public</span> <span class="n">Publication</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">pages</span><span class="p">;</span>
+<span class="n">public</span><span class="o">:</span>
+  <span class="k">virtual</span> <span class="n">getdata</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">Publication</span><span class="o">::</span><span class="n">getdata</span><span class="p">();</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Enter pages: "</span><span class="p">);</span>
+    <span class="n">scanf</span><span class="p">(</span><span class="s">"%d"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">pages</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">virtual</span> <span class="n">putdata</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">Publication</span><span class="o">::</span><span class="n">putdata</span><span class="p">();</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Pages: %d "</span><span class="p">,</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">pages</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/How%20to%20use%20Borland%20C_C%2B%2B%205.5%20Complier.html">How to use Borland C/C   5.5 Complier</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/How%20to%20use%20MinGW%20GNU%20GCC%20and%20with%20PSPad.html">How to use MinGW GNU GCC and with PSPad</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/2006%20%E5%B9%B4%E4%B9%99%E7%B4%9A%E9%9B%BB%E8%85%A6%E8%BB%9F%E9%AB%94%E8%A8%AD%E8%A8%88%E6%8A%80%E8%A1%93%E5%A3%AB%E6%87%89%E8%80%83%E8%A8%98.html">2006 年乙級電腦軟體設計技術士應考記</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1122912.html">http://blog.roodo.com/rocksaying/archives/1122912.html</a></div>

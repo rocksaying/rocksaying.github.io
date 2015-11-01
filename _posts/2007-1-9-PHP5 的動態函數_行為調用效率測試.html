@@ -1,0 +1,126 @@
+---
+title: PHP5 的動態函數/行為調用效率測試
+category: programming
+old-category: PHP
+tags: []
+---
+<div name="tags" class="tags">Tags: variable_function magic_method reflection</div>
+<p>
+我先前為了測試 PHP5 的 <a href="http://tw.php.net/manual/en/language.oop5.reflection.php">reflection</a> 能力，找到《<a href="http://weierophinney.net/matthew/archives/121-Benchmarking-dynamic-functionmethod-calls.html">Benchmarking dynamic function/method calls</a>》為參考文章，寫了一段效率測試碼。剛好今天看到 HACGIS 也做了《<a href="http://blog.pixnet.net/HACGIS/post/1844145">各種呼叫方式的比較</a>》。因為 HACGIS 沒測到 reflection 的部份，所以把我的效率測試碼也放上來供各位參考。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Benchmark</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$counter</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">increase</span><span class="p">(</span><span class="nv">$c</span><span class="p">,</span> <span class="nv">$b</span><span class="p">,</span> <span class="nv">$a</span><span class="p">)</span> <span class="p">{</span>
+       <span class="c1">//echo 'counter a = ', $a, "\n";
+</span>       <span class="c1">//echo 'counter b = ', $b, "\n";
+</span>       <span class="c1">//echo 'counter c = ', $c, "\n";
+</span>       <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">+=</span> <span class="nv">$c</span><span class="p">;</span>
+       <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$times</span> <span class="o">=</span> <span class="mi">1000000</span><span class="p">;</span>
+<span class="nv">$benchmark</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Benchmark</span><span class="p">();</span>
+<span class="nv">$unorderedParameters</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'b'</span> <span class="o">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'a'</span> <span class="o">=&gt;</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="s1">'c'</span> <span class="o">=&gt;</span> <span class="mi">13</span>
+<span class="p">);</span>
+
+<span class="c1">// Get an instance of the ReflectionMethod class by an ojbect
+</span><span class="nv">$funcName</span> <span class="o">=</span> <span class="s1">'increase'</span><span class="p">;</span>
+<span class="nv">$func</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionMethod</span><span class="p">(</span><span class="nv">$benchmark</span><span class="p">,</span> <span class="nv">$funcName</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="nv">$parameters</span> <span class="o">=</span> <span class="nv">$func</span><span class="o">-&gt;</span><span class="na">getParameters</span><span class="p">())</span> <span class="p">{</span>
+    <span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$parameters</span> <span class="k">as</span> <span class="nv">$parameter</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$k</span> <span class="o">=</span> <span class="nv">$parameter</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">();</span>
+        <span class="nv">$orderedParameters</span><span class="p">[</span><span class="nv">$i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="nv">$k</span><span class="p">];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nb">printf</span><span class="p">(</span><span class="s2">"---&gt; Invokation arguments: </span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
+<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$unorderedParameters</span><span class="p">);</span>
+
+<span class="k">echo</span> <span class="s2">"Straight method call: </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$start</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$times</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">increase</span><span class="p">(</span><span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'c'</span><span class="p">],</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'b'</span><span class="p">],</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'a'</span><span class="p">]);</span>
+<span class="p">}</span>
+<span class="nv">$end</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="nv">$elapsed</span> <span class="o">=</span> <span class="nv">$end</span> <span class="o">-</span> <span class="nv">$start</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'result is '</span><span class="p">,</span> <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span><span class="p">,</span> <span class="s1">', elapsed : '</span><span class="p">,</span> <span class="nv">$elapsed</span><span class="p">,</span> <span class="s1">' secs'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+
+<span class="k">echo</span> <span class="s2">"Variable method call: </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$start</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$times</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="nv">$funcName</span><span class="p">(</span><span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'c'</span><span class="p">],</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'b'</span><span class="p">],</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'a'</span><span class="p">]);</span>
+<span class="p">}</span>
+<span class="nv">$end</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="nv">$elapsed</span> <span class="o">=</span> <span class="nv">$end</span> <span class="o">-</span> <span class="nv">$start</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'result is '</span><span class="p">,</span> <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span><span class="p">,</span> <span class="s1">', elapsed : '</span><span class="p">,</span> <span class="nv">$elapsed</span><span class="p">,</span> <span class="s1">' secs'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+
+<span class="k">echo</span> <span class="s2">"invoke method call: </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$start</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$times</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$func</span><span class="o">-&gt;</span><span class="na">invoke</span><span class="p">(</span><span class="nv">$benchmark</span><span class="p">,</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'c'</span><span class="p">],</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'b'</span><span class="p">],</span> <span class="nv">$unorderedParameters</span><span class="p">[</span><span class="s1">'a'</span><span class="p">]);</span>
+<span class="p">}</span>
+<span class="nv">$end</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="nv">$elapsed</span> <span class="o">=</span> <span class="nv">$end</span> <span class="o">-</span> <span class="nv">$start</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'result is '</span><span class="p">,</span> <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span><span class="p">,</span> <span class="s1">', elapsed : '</span><span class="p">,</span> <span class="nv">$elapsed</span><span class="p">,</span> <span class="s1">' secs'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+
+<span class="k">echo</span> <span class="s2">"invokeArgs method call: </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$start</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$times</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$func</span><span class="o">-&gt;</span><span class="na">invokeArgs</span><span class="p">(</span><span class="nv">$benchmark</span><span class="p">,</span> <span class="nv">$orderedParameters</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nv">$end</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="nv">$elapsed</span> <span class="o">=</span> <span class="nv">$end</span> <span class="o">-</span> <span class="nv">$start</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'result is '</span><span class="p">,</span> <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span><span class="p">,</span> <span class="s1">', elapsed : '</span><span class="p">,</span> <span class="nv">$elapsed</span><span class="p">,</span> <span class="s1">' secs'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+
+<span class="k">echo</span> <span class="s2">"call_user_func_array method call: </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$start</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="nv">$m</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$benchmark</span><span class="p">,</span> <span class="nv">$funcName</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$times</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$m</span><span class="p">,</span> <span class="nv">$orderedParameters</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nv">$end</span> <span class="o">=</span> <span class="nb">microtime</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="nv">$elapsed</span> <span class="o">=</span> <span class="nv">$end</span> <span class="o">-</span> <span class="nv">$start</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'result is '</span><span class="p">,</span> <span class="nv">$benchmark</span><span class="o">-&gt;</span><span class="na">counter</span><span class="p">,</span> <span class="s1">', elapsed : '</span><span class="p">,</span> <span class="nv">$elapsed</span><span class="p">,</span> <span class="s1">' secs'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+結論... reflection 這個在 Java/C# 中的高等技巧，在 PHP 這種動態語言中就顯得有些多餘了。當行為名稱及參數個數及順序已知時，傳統調用方法的效率無疑是最好的。當參數個數及順序未知時，使用 <code>call_user_func_array()</code> 也比  <code>Reflection::invokeArgs()</code> 來得好些。
+</p>
+<fieldset>
+<legend>PHP 函數參考</legend>
+<ul>
+<li><a href="http://tw.php.net/manual/en/language.oop5.reflection.php">Reflection</a></li>
+<li><a href="http://tw.php.net/manual/en/function.call-user-func-array.php">call_user_func_array()</a></li>
+<li><a href="http://tw.php.net/manual/en/function.get-class-methods.php">get_class_methods()</a></li>
+</ul>
+</fieldset>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E5%8B%95%E6%85%8B%E8%AA%9E%E8%A8%80%E9%97%9C%E6%96%BC%E5%8F%83%E6%95%B8%E5%AE%A3%E5%91%8A%E7%9A%84%E5%AF%AB%E4%BD%9C%E9%A2%A8%E6%A0%BC.html">動態語言關於參數宣告的寫作風格</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/%E6%B4%BB%E7%94%A8%20PHP5%20%E7%9A%84%20magic%20methods%20-%20__set%28%29%2C%20__get%28%29%20and%20__call%28%29.html">活用 PHP5 的 magic methods - __set(), __get() and __call()</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/%E4%BB%80%E9%BA%BC%E6%98%AF%20Reflection%20%EF%BC%9F.html">什麼是 Reflection ？</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/Reflection%20%E6%96%BC%E8%A8%AD%E8%A8%88%20Framework%20%E6%99%82%E4%B9%8B%E5%AE%89%E5%85%A8%E6%80%A7%E4%BD%9C%E7%94%A8.html">Reflection 於設計 Framework 時之安全性作用</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2633503.html">http://blog.roodo.com/rocksaying/archives/2633503.html</a></div>

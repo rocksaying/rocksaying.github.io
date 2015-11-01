@@ -1,0 +1,57 @@
+---
+title: TWPUG問答 - 如何偵測URL資源是否存在
+category: programming
+old-category: PHP
+tags: [偵測url,http,socket]
+---
+<div class="tags" style="display:none">Tags: 偵測URL http socket</div>
+<p>問: <q>如何偵測網路圖片是否存在?如http://www.example.com/xxx.png。並回傳結果。</q></p>
+<p>
+如果僅需偵測是否存在，而不要下載整份文件。僅需要透過 <a href="http://www.ietf.org/rfc/rfc2616.txt">HTTP 協定 (RFC2616)</a>的 <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4">HEAD method</a> 即可達成目的。依 HTTP 協定之<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10">狀態定義</a>，文件存在時回應代碼 200 ，不存在時回應 404 。我們可以此作為回傳值。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">checkUrl</span><span class="p">(</span><span class="nv">$url</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/^(?P&lt;protocol&gt;[a-z]+):\/\/(?P&lt;hostname&gt;[\w\._-]+)(?P&lt;resource&gt;\/.*)/'</span><span class="p">,</span>
+        <span class="nv">$url</span><span class="p">,</span> <span class="nv">$uriSet</span><span class="p">);</span>
+    <span class="nv">$portMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'http'</span> <span class="o">=&gt;</span> <span class="mi">80</span><span class="p">,</span> <span class="s1">'https'</span> <span class="o">=&gt;</span> <span class="mi">443</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$portMap</span><span class="p">[</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'protocol'</span><span class="p">]]))</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="nv">$port</span> <span class="o">=</span> <span class="nv">$portMap</span><span class="p">[</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'protocol'</span><span class="p">]];</span>
+    <span class="nv">$fh</span> <span class="o">=</span> <span class="nb">fsockopen</span><span class="p">(</span><span class="s1">'tcp://'</span><span class="o">.</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'hostname'</span><span class="p">],</span> <span class="nv">$port</span><span class="p">,</span> <span class="nv">$errno</span><span class="p">,</span> <span class="nv">$errstr</span><span class="p">,</span> <span class="mi">30</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$fh</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//echo "$errstr ($errno)&lt;br /&gt;\n";
+</span>        <span class="nv">$rc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nv">$cmd</span> <span class="o">=</span> <span class="s2">"HEAD </span><span class="si">{</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'resource'</span><span class="p">]}</span> <span class="nx">HTTP</span><span class="o">/</span><span class="mf">1.1</span><span class="nx">\r\n</span><span class="s2">";
+        </span><span class="nv">$cmd</span><span class="s2"> .= "</span><span class="nx">Host</span><span class="o">:</span> <span class="nx">www</span><span class="o">.</span><span class="nx">example</span><span class="o">.</span><span class="nx">com\r\n</span><span class="s2">";
+        </span><span class="nv">$cmd</span><span class="s2"> .= "</span><span class="nx">Connection</span><span class="o">:</span> <span class="nx">Close\r\n\r\n</span><span class="s2">";
+
+        fputs(</span><span class="nv">$fh</span><span class="s2">, </span><span class="nv">$cmd</span><span class="s2">);
+        </span><span class="nv">$response</span><span class="s2"> = fgets(</span><span class="nv">$fh</span><span class="s2">);
+        list(</span><span class="nv">$h</span><span class="s2">, </span><span class="nv">$rc</span><span class="s2">) = explode(' ', </span><span class="nv">$response</span><span class="s2">);
+        while(!feof(</span><span class="nv">$fh</span><span class="s2">))
+            fgets(</span><span class="nv">$fh</span><span class="s2">);
+        fclose(</span><span class="nv">$fh</span><span class="s2">);
+        
+    }
+    return </span><span class="nv">$rc</span><span class="s2">;
+}
+
+echo checkUrl('http://www.google.com.tw/intl/en_com/images/logo_plain.png'), "</span><span class="nx">\n</span><span class="s2">";
+
+echo checkUrl('http://www.google.com.tw/intl/en_com/images/logo_plain.xxx'), "</span><span class="nx">\n</span><span class="s2">";
+
+?&gt;
+</span></code></pre>
+
+<p>
+以<code>fsockopen()</code>開啟TCP網路連線，送出 HTTP HEAD method 請求(第15-17行)。接著讀取伺服器回應，並解析狀態碼(第19-20行)。最後回傳結果。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/TWPUG%E5%95%8F%E7%AD%94%20-%20%E5%A6%82%E4%BD%95%E5%81%B5%E6%B8%ACURL%E8%B3%87%E6%BA%90%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8%2C%20Ajax%20way.html">TWPUG問答 - 如何偵測URL資源是否存在, Ajax way</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3215473.html">http://blog.roodo.com/rocksaying/archives/3215473.html</a></div>

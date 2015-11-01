@@ -1,0 +1,162 @@
+---
+title: PHP 實踐 mix-in 概念之可行性
+category: programming
+old-category: PHP
+tags: [動態語言,php,ruby]
+---
+<div class="tags" style="display:none">動態語言 php ruby</div>
+<p>
+最近在學習 Ruby 的過程中，接觸到<a href="http://zh.wikibooks.org/wiki/Ruby_Programming/Syntax/Classes#.E9.A1.9E.E5.88.A5.E6.B7.B7.E6.88.90.28Mix-in.29">'Mix-in' (混成)</a> 這個新名詞。雖然是個新名詞，但其概念嚴格說來並非 Ruby 所獨有。
+</p>
+<p>
+Mix-in (混成) 之基本概念在令行為抽象化，使其與特定類別或實例無關。我們再將這些抽象行為組成新的類別或個體。早期的模組化編程概念，其實就已經建立了這種概念， Ruby 則是聰明而有效結合模組與類別，增加許多設計彈性。
+</p>
+
+<!--more-->
+<p>
+Ruby 可以這麼做，那其他語言呢？ C/C++ 自然不用說，事實上， C/C++ 可以深入到系統層級實現任何程序員想做的事。說到這就扯遠了，我們當然希望在語言層級上實現混成概念。我想想， JavaScript 可以，那麼 PHP 呢？這篇文章的標題可還寫著 PHP ，當然要談。
+</p>
+<p>
+說明 PHP 能否實踐混成(mix-in)概念之前，我們先來看 JavaScript 怎麼做？
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">bar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'bar: '</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'name'</span><span class="p">:</span> <span class="s1">'abc'</span>
+<span class="p">}</span>
+
+<span class="nx">o</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">bar</span><span class="p">;</span>
+<span class="nx">o</span><span class="p">.</span><span class="nx">foo</span><span class="p">();</span>
+</code></pre>
+
+
+<h4>Invoking variable function without access object context</h4>
+<p>
+儘管 PHP 沒有函數指標、函數個體等功能，但藉著以「名」參照的方式，我們可以使用 <a href="http://tw.php.net/manual/en/functions.variable-functions.php">Variable function</a> 。自 PHP3 以來的長久時間中，我們一直藉 Variable function ，享受動態的函數調用技巧。那麼它能否實踐混成概念呢？首先我們先看一段基本程式。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">bar1</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"bar</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">O</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$k</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$f</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$fp</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$f</span><span class="p">;</span>
+        <span class="nv">$fp</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
+
+<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span> <span class="o">=</span> <span class="s1">'bar1'</span><span class="p">;</span>
+<span class="nv">$foo</span> <span class="o">=</span> <span class="s1">'bar1'</span><span class="p">;</span>
+
+<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
+<span class="nv">$foo</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+首先，我定義了一個獨立的函數<code>bar1</code>。接著定義一個類別<code>O</code>，其中以 <code>__set</code> 指派要混成行為的函數名稱，再以 <code>__call</code> 調用混成的行為。結果證實這是可行的，我們心裡可以先竊喜一下。
+</p>
+
+<h4>How about access object context</h4>
+<p>
+不要高興太早，函數<code>bar1</code>並沒有嘗試存取任何個體成員，它是一個完全獨立的函數。我們目前只證明它可以混成為類別行為。所以接下來我們要嘗試這樣的函數能否存取個體成員，就像開頭那個 JavaScript 程式所做的事一樣。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">bar1</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"bar</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">bar2</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="c1">// Fatal error: Using $this when not in object context.
+</span><span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">bar3</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$this</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="p">)</span>
+        <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="c1">// Fatal error: Using $this when not in object context.
+</span><span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">bar4</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span><span class="p">)</span>
+        <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$This</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">;</span>
+        <span class="c1">// Fatal error: Cannot access private property O::$name
+</span>    <span class="k">else</span>
+        <span class="k">echo</span> <span class="s2">"Not in an object context</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">O</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$k</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$f</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$fp</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$f</span><span class="p">;</span>
+        <span class="nv">$fp</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
+
+<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span> <span class="o">=</span> <span class="s1">'bar4'</span><span class="p">;</span>
+<span class="nv">$foo</span> <span class="o">=</span> <span class="s1">'bar4'</span><span class="p">;</span>
+
+<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
+<span class="nv">$foo</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+一拍兩瞪眼，廢話不多說。從<code>bar2</code> 到 <code>bar4</code> 都發生錯誤。 PHP 的錯誤訊息很明顯地告訴我們，<var>$this</var> 關鍵字不能用在類別以外的函數中，這不像 JavaScript 的 <var>this</var> 會自動依情境指涉關聯個體。
+</p>
+<p>
+儘管如此，函數<code>bar4</code>的錯誤訊息卻透露出了一絲絲曙光，它的訊息是不允許存取成員。這不難想像，畢竟我們宣告該成員為 private ，所以外部函數無法存取。但有 C/C++ 經驗的程序員這時應該聯想到夥伴函數(friend function) 了，如果我們宣告函數<code>bar4</code> 為類別的夥伴不就能存取了嗎？遺憾的是， PHP 不提供夥伴宣告功能，所以目前暫時做不到。
+</p>
+
+<h4>Access public member of instance</h4>
+<p>
+外部函數不能存取受保護的成員，又不能宣告為夥伴，那麼退一步想吧，只要是公開成員就可以做到了吧。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">O2</span> <span class="k">extends</span> <span class="nx">O</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$o2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O2</span><span class="p">(</span><span class="s1">'xyz'</span><span class="p">);</span>
+<span class="nv">$o2</span><span class="o">-&gt;</span><span class="na">foo</span> <span class="o">=</span> <span class="s1">'bar4'</span><span class="p">;</span>
+<span class="nv">$o2</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+類別<code>O2</code>與<code>O</code>類似，差別在其<var>$name</var>為公開成員。這一次終於可行了。
+</p>
+<p>
+到目前為止，雖然 PHP 已經具有比 Java/C# 更良好的設計彈性，但作為一個動態語言還有許多地方需要改進。暫且先期待 PHP6 的成長吧。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E9%A1%9E%E5%88%A5%E7%B9%BC%E6%89%BF%E3%80%81%E4%BB%8B%E9%9D%A2%E5%AE%A3%E5%91%8A%E8%88%87%E6%A8%A1%E7%B5%84%E6%B7%B7%E6%88%90%28mix-in%29.html">類別繼承、介面宣告與模組混成(mix-in)</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/Delegate%20in%20C%23%20and%20Module%20in%20Ruby.html">Delegate in C# and Module in Ruby</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%20part%202%20-%20MixableClass.html">PHP 實踐 mix-in 概念 part 2 - MixableClass</a></li>
+<li><a href="{{ site.baseurl }}/archives/2012/PHP%205.4%20%E6%96%B0%E5%8A%9F%E8%83%BD.html">PHP 5.4 新功能</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2817003.html">http://blog.roodo.com/rocksaying/archives/2817003.html</a></div>

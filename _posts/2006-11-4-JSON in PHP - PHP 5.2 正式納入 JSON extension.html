@@ -1,0 +1,28 @@
+---
+title: JSON in PHP - PHP 5.2 正式納入 JSON extension
+category: programming
+old-category: PHP
+tags: [json]
+---
+<p>
+自 PHP 5.2 起，正式納入 JSON extension 。函數名稱跟 <a href="http://www.json.org/">php-json</a> 一樣是 json_decode()/json_encode() 。稍微要注意 json_decode() 多加了一個選擇性的參數。 PHP 官方的 json_decode() 對於 Object of JSON 的回傳型態是個體 (object) 而不是陣列 (associative array) ，但可以指定第二個參數為 true 以回傳陣列。這個差異是基於 JavaScript 和 PHP 的語法不同。對 JavaScript 而言， obj.member 和 obj['member'] 是等義的，兩者都是個體成員存取操作。對 PHP 而言， $obj->member 和 $obj['member'] 卻是不等義的，前者是個體成員存取操作，後者則是陣列索引子操作。
+</p>
+
+<!--more-->
+<p>
+再次提醒， JSON 規範的字元編碼為 UTF-8 ，如果 PHP script 檔案的儲存編碼格式不是 UTF-8 (事實上， PHP 官方建議以 ISO-8859-1 編碼儲存) ，那麼調用 json_encode() 時，須先轉換編碼。 PHP 官方範例是用 utf8_encode() ，這只適用歐洲語系，對東亞語系而言是錯的! utf8_encode($s) 的結果等於 iconv('iso-8859-1', 'utf-8', $s) 。如果將一個中文字串視為 ISO-8859-1 字元集的內容編碼，那麼結果將是一個不可讀的字串。
+</p>
+<pre class="highlight"><code>$s = '這是一個中文字串'; 
+// save file as Big5 encoding.
+
+$json1 = json_encode(array('name' =&gt; utf8_encode($s)));
+$json2 = json_encode(array('name' =&gt; iconv('big5', 'utf-8', $s)));
+
+echo '<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/ecmascript"</span><span class="nt">&gt;</span><span class="s1">';
+echo "var json1 = {$json1};\n";
+echo "var josn2 = {$json2};\n";
+echo '</span><span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">json1</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span><span class="s1">';//un-readable
+echo '</span><span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">json2</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span><span class="s1">';
+echo '</span><span class="nt">&lt;/script&gt;</span>';
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2418349.html">http://blog.roodo.com/rocksaying/archives/2418349.html</a></div>

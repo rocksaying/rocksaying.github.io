@@ -1,0 +1,88 @@
+---
+title: TWPUG問答 - 如何不將 PDF 回傳給瀏覽器後列印，而直接由印表機印出
+category: programming
+old-category: PHP
+tags: [php,pdf,print]
+---
+<div class="tags" style="display:none">php pdf print</div>
+<blockquote>
+請問 PDF 可以不要顯示在瀏覽器上面，而是直接按下列印鈕(列印)後，直接由印表機印出嗎？<br/>
+<cite>于<a href="http://twpug.net/">Taiwan PHP User Group</a>所見問題</cite>
+</blockquote>
+<p>
+可以，但不要忘了 PHP 是在 server 端執行，所以 PHP 將使用 server 端設定的印表機輸出列印資料。請把設計思維整個切換到 client-server 架構，然後想想你的軟體運作環境是否方便從 server 端的印表機輸出資料。如果是公司內部那就可以，因為公司內部大部份是將資料集中到網路印表機輸出，當然也可以讓 PHP 直接把 PDF 輸出到網路印表機。如果是公開環境，例如使用者坐在自己家裡上網，那就不行了。
+</p>
+
+<!--more-->
+<p>
+聰明的 programmer 不喜歡包山包海，他們會儘可能調用現有工具完成工作。列印 PDF ？那就直接調用 PDF 的閱讀工具列印吧。
+</p>
+<h4>Unix*</h4>
+<p>
+在 Unix類系統列印 PDF 文件非常簡單，在 Acrobat Reader 自帶的說明文件便有說明 (「從指令列列印PDF文件(UNIX)」) ，例如:
+</p>
+<pre class="language-text">$ cat sample.pdf | acroreader -toPostScript | lp</pre>
+
+<p>
+近來 Unix類系統大多採用 <a href="http://www.cups.org/">CUPS</a> (Common UNIX Printing System) ，由於 CUPS 提供了 PDF filter ，所以可直接令 lp/lpr 列印 PDF 。
+</p>
+<pre class="language-text">$ lp sample.pdf</pre>
+
+<h4>Windows</h4>
+<p>
+在 Unix類平台上向來具有以服務需求組合工具的傳統習慣，因此透過 pipe 作業我們便足以完成許多服務。然而在 Windows平台上，或許是受到 GUI 操作方式的影嚮，較缺乏這類便利性。要以程式呼叫外部的 PDF 閱讀器 (通常是 Acrobat Reader) 完成列印作業有些問題。 Acrobat Reader 的執行檔為 acrord32.exe ，指令列選項 /t 便是令 Acrobat Reader 以預設值直接列印 PDF 文件。以下為測試範例。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$pdfFile</span> <span class="o">=</span> <span class="s1">'c:\sample.pdf'</span><span class="p">;</span>
+<span class="nv">$printerName</span> <span class="o">=</span> <span class="s1">'FinePrint'</span><span class="p">;</span> <span class="c1">//印表機名稱
+</span>
+<span class="nv">$acroReaderFileName</span> <span class="o">=</span> <span class="s1">'acrord32.exe'</span><span class="p">;</span>
+<span class="nv">$acroReaderDir</span> <span class="o">=</span> <span class="s1">'C:\Progra~1\Adobe\Acroba~1.0\Reader'</span><span class="p">;</span>
+
+<span class="nv">$acroReaderFilePath</span> <span class="o">=</span>  <span class="nv">$acroReaderDir</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="nv">$acroReaderFileName</span><span class="p">;</span>
+
+<span class="nv">$printCommand</span> <span class="o">=&lt;&lt;&lt;</span><span class="nx">PRINT_COMMAND</span>
+<span class="nv">$acroReaderFilePath</span> <span class="o">/</span><span class="nx">t</span> <span class="s2">"</span><span class="nv">$pdfFile</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$printerName</span><span class="s2">"</span>
+<span class="nx">PRINT_COMMAND</span><span class="p">;</span>
+
+<span class="k">echo</span> <span class="nv">$printCommand</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="nb">exec</span><span class="p">(</span><span class="nv">$printCommand</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+從上述測試範例之操作過程中，我們可以注意到 Acrobat Reader 的視窗必須要使用者手動關閉，才能結束整個測試程式。以我們的使用案例之需求來看，這顯然是個問題。同樣呼叫外部程式列印 PDF ，和 Unix類平台相比，在 Windows 平台上做這件事實在是笨拙到令人痛恨。這就是 GUI 的缺點，什麼事都要使用者<strong>親手</strong>去做。
+</p>
+<p>
+我想這個需求應該不只 PHP 用得到，Python 或 Ruby 等開發工具也都會有這種需求。所以我還是花些時間搜尋 Windows 平台上可以指令列印出 PDF 的工具。找到了兩套:
+</p>
+<ul>
+<li><a href="http://www.pdf-tools.com/">3-Heights™ PDF Printer and Printer Pro Shell</a><br/>
+這套是商業軟體，要付費購買。好處是它本身可獨立運作，不需要依賴 Acrobat/Acrobat Reader 。
+</li>
+<li><a href="http://www.esnips.com/web/PDFTools">pdfp</a></br>
+這是一個 front-end 工具，它會偵測 PDF 的關聯程式(通常是 Acrobat Reader) ，並呼叫它列印文件，且列印後會主動關閉。
+</li>
+</ul>
+<p>
+以上述的工具改寫測試範例如下:
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$pdfFile</span> <span class="o">=</span> <span class="s1">'c:\sample.pdf'</span><span class="p">;</span>
+<span class="nv">$printerName</span> <span class="o">=</span> <span class="s1">'FinePrint'</span><span class="p">;</span>
+
+<span class="nv">$acroReaderFilePath</span> <span class="o">=</span>  <span class="s1">'c:\tools\pdfp.exe'</span><span class="p">;</span>
+
+<span class="nv">$printCommand</span> <span class="o">=&lt;&lt;&lt;</span><span class="nx">PRINT_COMMAND</span>
+<span class="nv">$acroReaderFilePath</span> <span class="o">-</span><span class="nx">p</span> <span class="s2">"</span><span class="nv">$printerName</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$pdfFile</span><span class="s2">"</span>
+<span class="nx">PRINT_COMMAND</span><span class="p">;</span>
+
+<span class="k">echo</span> <span class="nv">$printCommand</span><span class="p">;</span>
+<span class="nb">exec</span><span class="p">(</span><span class="nv">$printCommand</span><span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+That's work. :)
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2927395.html">http://blog.roodo.com/rocksaying/archives/2927395.html</a></div>

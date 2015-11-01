@@ -1,0 +1,49 @@
+---
+title: Programming with Subversion Quickstart - Direct repository access
+category: programming
+old-category: Programming
+tags: [subversion,版本控制]
+---
+<div class="tags" style="display:none">Subversion 版本控制</div>
+<p>
+我看到 thinkingmore 在《<a href="http://blog.roodo.com/thinkingmore/archives/2674227.html">subversion 與 file:// protocol</a>》提到，在 Windows 下，可以偷懶不用裝 Subversion server ，利用 file:// protocol 就可以存取專案貯藏庫 (Repository) 。在 Subversion 文件中，稱 file:// protocol 的方式為 Direct repository access (<cite>See also: <a href="http://svnbook.red-bean.com/nightly/en/svn.basic.in-action.html">Subversion Repository URLs</a></cite>) ，或 Local Access (See also: <cite><a href="http://tortoisesvn.net/docs/release/TortoiseSVN_en/tsvn-repository.html">Local Access to the Repository</a></cite>)。關於這種做法，我補充一些內容。
+</p>
+
+<!--more-->
+<h4>Direct repository access 的使用時機</h4>
+<p>
+顧名思義， 使用 Direct repository access 方式時，Subversion client 會直接讀寫本地磁碟的 repository ，所以不需要啟動 Subversion server 。但有安全缺點，此方式因不透過 Subversion server 故不啟動身份認證機制。換句話說，使用 Direct repository access 方式時，任何人不需帳號或密碼都可以讀取與提交文件到 repository 。
+</p>
+<p>
+對個人且使用專屬電腦的工作者而言，因為自己是唯一的 repository 使用者，本來就不需要身份認證。再者，此方式不需啟動 Subversion server ，故不用擔心任何人透過網路進入 repository 之事，降低網路漏洞風險。因此這是一個很方便的機制。但對多使用者的 repository 而言，這就非常不妙了。一旦將 repository 的目錄開啟網路共享，便等於讓網路上的任何人都可以讀寫 repository 。 Subversion 文件中並不建議這麼做。
+</p>
+<p>
+若需要讓網路上的使用者可以讀寫 repository ，則應該啟動 Subversion server 。若純粹是個人專用，利用 Direct repository access 足以，但不要開啟目錄的網路共享權限。
+</p>
+<h4>svn 命令列工具也可用</h4>
+<p>
+Thinkingmore 的文章中說要先安裝 TortoiseSVN ，其實 svn 命令列工具也可以這樣做。亦即 Unix-like 平台上的使用者，也可以使用 Direct repository access ，而不用啟動 Subversion server 。建立 repository 的方式請參考《<a href="{{ site.baseurl }}/archives/2006/Programming%20with%20Subversion%20Quickstart%20-%20%E5%AE%89%E8%A3%9D%20Subversion%20%E6%9C%8D%E5%8B%99.html">Programming with Subversion Quickstart - 安裝 Subversion 服務</a>》，存取 repository 的 Url 方式如下所示範。(<cite>See also: <a href="http://svnbook.red-bean.com/nightly/en/svn.basic.in-action.html">Subversion Repository URLs</a></cite>)
+</p>
+<pre class="language-text">
+# 在 Unix-like 平台上:
+# Repository 'hello world' 存放在 /repository/hello_world
+$ svn checkout file:///repository/hello_world
+
+$ svn checkout file://localhost/repository/hello_world
+
+# 在 Windows 平台上:
+# 位在 d:/repository/hello_world
+C:\&gt; svn checkout file:///d:/repository/hello_world
+</pre>
+
+<h4>TortoiseSVN 的技巧</h4>
+<p>
+TortoiseSVN 使用 Direct repository access 方式時，其實有個小技巧讓使用者不用記長長的 URL 。
+</p>
+<img src="http://blog.roodo.com/rocksaying/4a710502.png" alt="TortoiseSVN 對話框"/>
+<p>
+在 Repository URL 的輸入欄位中，先輸入 <code>file:///</code> (三個斜線) 再加上任一磁碟代號 (c:, d:, 等) ，接著點擊欄位旁的瀏覽鈕。這時就會跳出本地磁碟目錄樹的瀏覽視窗，而不是 Repository Browser 視窗。我們接著就可以在本地磁碟中找尋 repository ，而不用記住長長的 URL 。
+</p>
+<p>
+在 Windows 平台上使用 Direct repository access 方式時， Repository 的儲存格式可以用 FSFS 也可以用 BDB 。但若同時允許透過網路共享的方式存取 (雖然不建議這麼做) ，則只能選擇 FSFS 格式。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2688536.html">http://blog.roodo.com/rocksaying/archives/2688536.html</a></div>

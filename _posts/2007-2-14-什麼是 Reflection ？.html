@@ -1,0 +1,44 @@
+---
+title: 什麼是 Reflection ？
+category: programming
+old-category: Programming
+tags: [動態語言,reflection]
+---
+<div class="tags" style="display:none">動態語言 reflection</div>
+<p>
+Reflection ，一般譯為「反射」。但我一般說這是 <q>讓 object 看到自己的外貌的功能</q>(<cite><a href="{{ site.baseurl }}/archives/2007/PHP5%20%E7%9A%84%E5%8B%95%E6%85%8B%E5%87%BD%E6%95%B8_%E8%A1%8C%E7%82%BA%E8%AA%BF%E7%94%A8%E6%95%88%E7%8E%87%E6%B8%AC%E8%A9%A6.html">PHP5 的動態函數/行為調用效率測試</a></cite>) 。這說法似乎和「反射」一詞扯不上關係。事實上，我稱這種能力為「自識」能力。
+</p>
+
+<!--more-->
+<p>
+藉由翻譯《<a href="{{ site.baseurl }}/archives/2007/To%20Ruby%20From%20PHP%2C%20%E4%B8%AD%E8%AD%AF.html">To Ruby From PHP</a>》之機會，我整理了我的觀點。我認為 Reflection 其實是 Java/C# 等缺乏個體自識能力之語言才有的詞彙。因為它們的個體不具自識能力，當一個體欲觀察自身輪廓時，必須先配置另一個可反射對象輪廓的個體，該個體才能藉由觀察反射體而得知自身輪廓。而優秀的動態語言 (如 Ruby, Python) 中之個體，不需要藉助其他個體反射自身就能察知自身輪廓。
+</p>
+<p>
+以現實事物為喻，在 Java/C# 中的個體，要拿一面鏡子 (an instance of reflection class) 擺在自己面前，藉由鏡子反射的影像才能看到自己有幾隻手、幾雙腳。而 Ruby, Python 中的個體，不需要靠鏡子就能知道自己有幾隻手、幾雙腳，它們有與生俱來的能力可以察知自身狀態，故我稱之為「自識」能力。談 Ruby, Python 可能讓多數人覺得陌生，我用 JavaScript 這個大家可能都會寫個幾行的語言為例。 JavaScript 這個 Java 的冒名雙生兄弟之自識能力都比 Java 優秀。如下所示:
+</p>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'head'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'eye'</span><span class="p">:</span>  <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">'mouth'</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'hand'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">'foot'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">'say'</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">obj</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'function'</span><span class="p">)</span>
+        <span class="nx">obj</span><span class="p">[</span><span class="nx">p</span><span class="p">]();</span>
+    <span class="k">else</span>
+        <span class="nx">alert</span><span class="p">(</span><span class="s1">'I have '</span> <span class="o">+</span> <span class="nx">obj</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">+</span> <span class="s1">' '</span> <span class="o">+</span> <span class="nx">p</span> <span class="o">+</span> <span class="p">(</span><span class="nx">obj</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="p">?</span> <span class="s1">'s'</span> <span class="p">:</span> <span class="s1">''</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+就這麼簡單囉。在《<a href="{{ site.baseurl }}/archives/2007/PHP5%20%E7%9A%84%E5%8B%95%E6%85%8B%E5%87%BD%E6%95%B8_%E8%A1%8C%E7%82%BA%E8%AA%BF%E7%94%A8%E6%95%88%E7%8E%87%E6%B8%AC%E8%A9%A6.html">PHP5 的動態函數/行為調用效率測試</a>》中，則是比較在 PHP5 中用 Reflection class 和傳統函數之執行效率。在 PHP5 ， Reflection class 不論使用方式與效率，都不及傳統函數。在動態語言中，個體有自識能力，所以 reflection 顯得多餘了。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">JavaScript的中介編程與反射能力示範</a></li>
+<li><a href="{{ site.baseurl }}/archives/2012/Introspection%20and%20Reflection%20in%20Programming%20Language.html">Introspection and Reflection in the Programming Language</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2728221.html">http://blog.roodo.com/rocksaying/archives/2728221.html</a></div>

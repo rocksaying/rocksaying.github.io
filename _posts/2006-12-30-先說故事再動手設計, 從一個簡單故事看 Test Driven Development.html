@@ -1,0 +1,192 @@
+---
+title: 先說故事再動手設計, 從一個簡單故事看 Test Driven Development
+category: programming
+old-category: Programming
+tags: [tdd,測試驅動開發,phpunit,unittest]
+---
+<p>
+在進行任何程式的設計工作之前，我們必定已經知道程式的輸出入結果，亦即我們已經確知當使用者輸入什麼資料後，程式應該輸出什麼結果。更進一步說，我們已經知道使用者將如何使用這個程式，諸如使用者在操作過程中會做什麼事，而程式對操作內容應該如何回應等等。這段理所當然到近乎廢話的敘述，卻是所有軟體設計人員惡夢的開始，也是所有軟體工程實踐作法的起點。在 eXtreme Programming 中，我們稱這些內容為「故事 (story)」；在 RUP 中稱之為「使用案例 (use case)」；在 Microsoft Solution Framework 中稱之為「情節 (scenarios)」。我個人偏好使用「故事」一詞，因為它不像術語。既然故事是設計人員惡夢的開始、設計工作的起點，那麼就先說一個故事。
+</p>
+
+<!--more-->
+<p>
+「很久很久以前...」，我碰到了一種稱為 URL 的格式字串，它可以用來指示網路上可用資源的所在處。我隨手寫下了幾個 URL 字串，有 <var>http://example.com/docs/t.htm</var> 、 <var>foo@example.com</var> 以及 <var>ftp://f:foo@example.com/pub/t.zip</var>。一個 URL 字串實際上是一些各有意義的內容連接而成，所以我需要一個功能幫我將 URL 中各部份內容拆解開來，拆解結果放在關聯陣列中應該是個好主意，如此我就可以用各部份名稱為鍵值取得其值。再看看 URL 的格式，會包含通訊協定、主機網址、文件路徑，有些還會包含使用者名稱及密碼等內容，就把這些內容取名叫 protocol, hostAddress, filePath, userName, password 吧。
+</p>
+<p>
+故事到此告一段落，為免遺忘該把故事寫下來了。但是，我們是 programmer ，不是文學大師，而且目前還沒有任何 compiler 可以處理我們的日常語言，所以我們應該用電腦語言將我們的故事寫下來。<strong>在 Agile method 中隨處可見「source code is document」這句話。追隨它，相信它，貫徹它。</strong>不要淪為報告打字員。(See also: 《<a href="{{ site.baseurl }}/archives/2006/%E8%BB%9F%E9%AB%94%E5%B7%A5%E7%A8%8B%E4%B8%89%E5%A4%A7%E9%99%A3%E7%87%9F%2C%20RUP%2C%20CMMI%2C%20Agile%20Method.html">軟體工程三大陣營, RUP, CMMI, Agile Method</a>》)
+</p>
+<p>
+我用 PHP 語言，以斷言式 (assert) 的文章體裁，將故事寫成 4 個小節。第一個小節先判斷字串是否為 URL 格式。其他小節分別記下了故事中出現的三個角色以及程式拆解結果的斷言。
+</p>
+<fieldset>
+<legend>Case: 是否為 URL 字串</legend>
+<pre class="highlight"><code>/** case InvalidUrl: **/
+
+    $url = 'abc';
+    $results = explodeUrl($url);
+
+    assertFalse(($results != false), "{$url} is a valid URL.");
+</code></pre>
+
+</fieldset>
+<br/>
+<fieldset>
+<legend>Case: http://example.com/docs/t.htm</legend>
+<pre class="highlight"><code>/** case HTTP url: **/
+
+$url = 'http://example.com/docs/t.htm';
+$results = explodeUrl($url);
+
+assertTrue(($results !== false), "{$url} is an invalid URL.");
+assertEquals('http', $results['protocol'],
+    "{$url} is not transmitted by HTTP protocol.");
+assertEquals('example.com', $results['hostAddress']);
+</code></pre>
+
+</fieldset>
+<br/>
+<fieldset>
+<legend>Case: foo@example.com</legend>
+<pre class="highlight"><code>/** case Mail Address **/
+
+$mailAddress = array(
+    'userName' =&gt; 'foo',
+    'hostAddress' =&gt; 'example.com'
+);
+$url = "mailto:{$mailAddress['userName']}@{$mailAddress['hostAddress']}";
+
+$results = explodeUrl($url);
+
+assertTrue(($results !== false), "{$url} is an invalid URL.");
+foreach ($mailAddress as $k =&gt; $v) {
+    assertTrue(isset($results[$k]));
+    assertEquals($mailAddress[$k], $results[$k]);
+}
+</code></pre>
+
+</fieldset>
+<br/>
+<fieldset>
+<legend>Case: ftp://f:foo@example.com/pub/t.zip</legend>
+<pre class="highlight"><code>/** case FTP url with user name and password **/
+
+$url = 'ftp://f:foo@example.com/pub/t.zip';
+$results = explodeUrl($url);
+
+assertTrue(($results !== false), "{$url} is an invalid URL.");
+assertEquals('foo', $results['password']);
+assertContains('pub/', $results['filePath']);
+</code></pre>
+
+</fieldset>
+
+<h4>撰寫測試工作內容</h4>
+<p>
+故事說完了，接下來是動手設計程式的時間。這個故事的需求，我設計成一個 function ，稱之為 explodeUrl() 。此 function 會將拆解結果以關聯陣列回傳。我使用 <a href="http://www.phpunit.de/">PHPUnit 3</a> 進行測試工作，將先前記下的故事內容整理一下後，就可以完成測試工作碼，見 ExplodeUrlTest.php 。
+</p>
+<fieldset>
+<legend>ExplodeUrlTest.php</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+<span class="k">require_once</span> <span class="s1">'explodeUrl.php'</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">ExplodeUrlTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testInvalidUrl</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$url</span> <span class="o">=</span> <span class="s1">'abc'</span><span class="p">;</span>
+        <span class="nv">$results</span> <span class="o">=</span> <span class="nx">explodeUrl</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">((</span><span class="nv">$results</span> <span class="o">!=</span> <span class="kc">false</span><span class="p">),</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$url</span><span class="si">}</span><span class="s2"> is a valid URL."</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testHttpAddress</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$url</span> <span class="o">=</span> <span class="s1">'http://example.foo.com/docs/test.html'</span><span class="p">;</span>
+        <span class="nv">$results</span> <span class="o">=</span> <span class="nx">explodeUrl</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">((</span><span class="nv">$results</span> <span class="o">!==</span> <span class="kc">false</span><span class="p">),</span>
+            <span class="s2">"</span><span class="si">{</span><span class="nv">$url</span><span class="si">}</span><span class="s2"> is an invalid URL."</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="s1">'http'</span><span class="p">,</span> <span class="nv">$results</span><span class="p">[</span><span class="s1">'protocol'</span><span class="p">],</span>
+            <span class="s2">"</span><span class="si">{</span><span class="nv">$url</span><span class="si">}</span><span class="s2"> is not transmitted by HTTP protocol."</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="s1">'example.foo.com'</span><span class="p">,</span> <span class="nv">$results</span><span class="p">[</span><span class="s1">'hostAddress'</span><span class="p">]);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testMailAddress</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$mailAddress</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'userName'</span> <span class="o">=&gt;</span> <span class="s1">'foo'</span><span class="p">,</span>
+            <span class="s1">'hostAddress'</span> <span class="o">=&gt;</span> <span class="s1">'example.com'</span>
+        <span class="p">);</span>
+        <span class="nv">$url</span> <span class="o">=</span> <span class="s2">"mailto:</span><span class="si">{</span><span class="nv">$mailAddress</span><span class="p">[</span><span class="s1">'userName'</span><span class="p">]}</span><span class="o">@</span><span class="p">{</span><span class="nv">$mailAddress</span><span class="p">[</span><span class="s1">'hostAddress'</span><span class="p">]}</span><span class="s2">";
+
+        </span><span class="nv">$results</span><span class="s2"> = explodeUrl(</span><span class="nv">$url</span><span class="s2">);
+
+        </span><span class="nv">$this-&gt;assertTrue</span><span class="s2">((</span><span class="nv">$results</span><span class="s2"> !== false), "</span><span class="p">{</span><span class="nv">$url</span><span class="si">}</span><span class="s2"> is an invalid URL."</span><span class="p">);</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$mailAddress</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$results</span><span class="p">[</span><span class="nv">$k</span><span class="p">]));</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$mailAddress</span><span class="p">[</span><span class="nv">$k</span><span class="p">],</span> <span class="nv">$results</span><span class="p">[</span><span class="nv">$k</span><span class="p">]);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testFtpAddress</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$url</span> <span class="o">=</span> <span class="s1">'ftp://foo:oof@example.com/pub/a/x/test.html'</span><span class="p">;</span>
+        <span class="nv">$results</span> <span class="o">=</span> <span class="nx">explodeUrl</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">((</span><span class="nv">$results</span> <span class="o">!==</span> <span class="kc">false</span><span class="p">),</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$url</span><span class="si">}</span><span class="s2"> is an invalid URL."</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="s1">'oof'</span><span class="p">,</span> <span class="nv">$results</span><span class="p">[</span><span class="s1">'password'</span><span class="p">]);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'/x/'</span><span class="p">,</span> <span class="nv">$results</span><span class="p">[</span><span class="s1">'filePath'</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+
+<h4>漸近完成設計工作</h4>
+<p>
+在設計 explodeUrl() 時，我使用 REGEX 進行拆解 (<span class="Onote">此處用了 PHP 擴充的 REGEX 記述法，請參考《<a href="{{ site.baseurl }}/archives/2006/Let%20results%20of%20preg_match%20be%20an%20associative%20array.html">Let results of preg_match be an associative array</a>》</span>)。 REGEX 是種功能強大的字元規則記述法，同時也是難讀而易出錯的功能。利用 Test Driven Development 的方式來設計再適當不過了。在 explodeUrl.php 中，我漸次完成了本故事中所需要的 URL 拆解功能。我一共記錄下了六個版本，有興趣的人可以一一嘗試，回溯我設計的經驗。往後任何修改 explodeUrl() 內容的動作，都要再進行測試，只要測試完全 OK ，則可以認為這次修改內容基本無誤，接著就能 commit 回專案的 Repository 了。
+</p>
+<fieldset>
+<legend>explodeUrl.php</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">explodeUrl</span><span class="p">(</span><span class="nv">$url</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// version 1: 4 failures.
+</span>    <span class="c1">//$rc = preg_match('/\w+/', $url, $matches);
+</span>
+    <span class="c1">// version 2: 1 error, 2 failures.
+</span>    <span class="c1">// lose file path.
+</span>    <span class="c1">//$rc = preg_match('/(?P&lt;protocol&gt;\w+):(\/\/)(?P&lt;hostAddress&gt;[\w._-]+)\//', $url, $matches);
+</span>
+    <span class="c1">// version 3: 2 failures.
+</span>    <span class="c1">// cannot parse mail address and FTP url with user name
+</span>    <span class="c1">//$rc = preg_match('/(?P&lt;protocol&gt;\w+):(\/\/)(?P&lt;hostAddress&gt;[\w\._-]+)\/?(?P&lt;filePath&gt;.*)/', $url, $matches);
+</span>
+    <span class="c1">// version 4: 2 failures.
+</span>    <span class="c1">// it assume that there must be an user name and password.
+</span>    <span class="c1">//$rc = preg_match('/(?P&lt;protocol&gt;\w+):(\/\/)((?P&lt;userName&gt;\w+):?(?P&lt;password&gt;\w+)?@)(?P&lt;hostAddress&gt;[\w\._-]+)\/?(?P&lt;filePath&gt;.*)/', $url, $matches);
+</span>
+    <span class="c1">// version 5: 1 failures.
+</span>    <span class="c1">// it assume that there muse be a '//'.
+</span>    <span class="c1">//$rc = preg_match('/(?P&lt;protocol&gt;\w+):(\/\/)((?P&lt;userName&gt;\w+):?(?P&lt;password&gt;\w+)?@)?(?P&lt;hostAddress&gt;[\w\._-]+)\/?(?P&lt;filePath&gt;.*)/', $url, $matches);
+</span>
+    <span class="c1">// version 6: Ok.
+</span>    <span class="nv">$rc</span> <span class="o">=</span> <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/(?P&lt;protocol&gt;\w+):(\/\/)?((?P&lt;userName&gt;\w+):?(?P&lt;password&gt;\w+)?@)?(?P&lt;hostAddress&gt;[\w\._-]+)\/?(?P&lt;filePath&gt;.*)/'</span><span class="p">,</span> <span class="nv">$url</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$rc</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$matches</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+在工作團隊中，可以並行撰寫測試工作與程式。單人作業時，則一般會交叉進行這兩份工作。然而不論工作環境為何，我們皆反覆 (iterative) 進行測試→修改→再測試的動作。反覆式開發過程，或是 Microsoft Solution Framework 所稱的 Value-Up 過程，實際上是我們多數人進行設計工作的情形。我們多數人的程式碼總是要一改再改才能完成。那種一次到位的天才畢竟是極少數人，而且他們不需要軟體工程，軟體工程也不是為他們而存在。不懂軟體工程只是因為經驗不夠，不是因為它高深莫測。先入為主地將軟體工程視為少數天才談論之事物的想法，可是會妨礙學習進路的。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html">Working with PHPUnit3, part 2 - 撰寫測試案例</a></li>
+<li><a href="{{ site.baseurl }}/archives/2010/RSpec%20%E8%88%87%E6%B8%AC%E8%A9%A6%E9%A9%85%E5%8B%95%E9%96%8B%E7%99%BC%E7%9A%84%E6%80%9D%E8%80%83%E6%96%B9%E5%BC%8F.html">RSpec 與測試驅動開發的思考方式</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2609801.html">http://blog.roodo.com/rocksaying/archives/2609801.html</a></div>

@@ -1,0 +1,181 @@
+---
+title: 多工作業下的資料讀寫處理事項 - read()/write() 被 signal 中斷的處理
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+當 read() 或 write() 在處理資料時，若剛好產生了一個 signal ，系統為了要處理這個 signal ，便會中斷 read() 或 write() ，將程序狀態切換到 signal 的處理動作中。
+而當 signal 的處理動作結束後，再將程序狀態切換到 read() 或 write() 的後續處理動作。
+</p>
+
+<!--more-->
+<p>
+在多工作業環境下， read()/write() 被系統中斷，將作業資源切換到其他工作狀態下的情形，是非常普遍的現象。中斷讀寫動作後再切換回去，想當然爾會關係到資料讀寫的完整性。因此切換回去後的後續處理動作，自然會影嚮資料讀取或寫入的完整性，但是在這一方面，各系統間卻有很大的差異存在，在 POSIX (*1) 中也未採取強制規範。
+</p>
+<div class="note">
+*1 現代作業系統，主要依循著 <a href="http://en.wikipedia.org/wiki/POSIX">POSIX</a>  ("Portable Operating System Interface for uniX") 規格建議書實作。 POSIX 係由 IEEE 和 ISO 集合主流作業系統開發廠商制定的作業系統規格建議書。由於主流作業系統主要就是 Unix 和類似 Unix 的作業系統，如 Unix, AIX, HP-UX, SunOS ，故 POSIX 沿用了 Unix-like 家族的內容，其 API 是 C 式風格，並有高達 90% 的部份和 ANSI C 相同。使用 C/C++ 開發工具的 programmer ，很快就會熟悉 POSIX 。
+</div>
+<blockquote>
+Section 6.4.1.2 of POSIX states, "If a read() is interrupted by a signal
+after it has successfully read some data, either it shall return -1 with
+errno set to EINTR, or it shall return the number of bytes read."
+<br/>
+<cite>Section 6.4.1.2 of POSIX.1</cite>
+</blockquote>
+<p>
+在 POSIX.1 中，關於 read() 或 write() 被 signal 中斷時，系統所允許採取的兩種實作規格如下列示:
+</p>
+<ol>
+<li>回傳 -1 並設定變數 errno 的值為 EINTR 。</li>
+<li>回傳已處理的 bytes 數目。</li>
+</ol>
+<p>
+由於兩種規格都有系統在使用，因此 POSIX 就採用了折衷之道，兩種規格都允許。
+有些系統只採用其中一種，但也許有的系統是兩種規格都用，即當一個 signal 中斷了 read() 或 write() 後，如果已經讀取或寫入了部份資料，就採第二種規格處理，如果還沒有任何資料被處理，就採第一種規格處理。
+由於連 <a href="http://en.wikipedia.org/wiki/BSD">BSD (Berkeley Software Distribution)</a> 或 <a href="http://en.wikipedia.org/wiki/UNIX_System_V">SVR (System V Release)</a> 在這一方面，都沒有明顯而強制的規定，因此對一個程式設計人員來說，最好是照 POSIX 的方式，兩種規格都要兼顧到。
+</p>
+
+<h3>
+第一種規格的因應方法
+</h3>
+<p>
+如果錯誤是因為被 signal 中斷的話，就再讀一次，如果是其他原因導致的錯誤，則視為致命錯誤，應該中止程式繼續。
+不過有些文件則建議應將 EINTR 也視為致命錯誤。我個人並不完全贊同這種看法，因為在 Unix-like 系統中， signal 本來就是最基本的 IPC 技巧，是一種普遍存在的事件，如果因此就要中止程式的進行，未免奇怪。
+但是我倒認為，如果系統中提供 SA_RESTART (*2) 這個 sigaction() 的設定旗標，則應該使用此旗標來處理 signal ，要求系統自動繼續未完成的 read() 或 write() 動作，此時將不會回傳 EINTR 。
+</p>
+<div class="note">
+*2 這是 SVR4 中所定義的選項，不在 POSIX 規格中，因此不具移植性。
+</div>
+<pre class="highlight"><code><span class="k">while</span><span class="p">(</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span> <span class="p">)</span>
+    <span class="k">continue</span><span class="p">;</span>
+  <span class="k">else</span>
+    <span class="n">FATAL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h3>
+第二種規格的因應方法
+</h3>
+<p>
+當資料並未全部讀取時，則扣掉已讀取的資料數量 (bytes)，再要求 read() 繼續讀取尚未讀取的部份。
+</p>
+<pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
+<span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+<span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbytes</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
+  <span class="n">nbytes</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h3>
+兼顧兩種規格的安全方法
+</h3>
+<pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
+<span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+<span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbytes</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
+    <span class="n">nbytes</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span> <span class="p">)</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="k">else</span>
+      <span class="n">FATAL</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+可以再重整如下:
+</p>
+<pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
+<span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+<span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbytes</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
+    <span class="n">nbytes</span> <span class="o">-=</span><span class="n">rc</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span>
+    <span class="n">FATAL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+仿造 POSIX 對 read()/write() 的原型，定義一個具有安全性的 (可確保資料被完整處理)的 safe read() 和 safe write() 應寫成:
+</p>
+<pre class="highlight"><code><span class="c1">// The prototype of POSIX of read() is:
+//   ssize_t read(int fd, void *buf, size_t nbyte);
+</span><span class="kt">ssize_t</span> <span class="nf">saferead</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nbyte</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">size_t</span> <span class="n">nbr</span><span class="p">;</span>	<span class="cm">/* number of bytes readed */</span>
+  <span class="kt">ssize_t</span> <span class="n">rc</span><span class="p">;</span>	<span class="cm">/* return code of read() */</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
+  <span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+  <span class="n">nbr</span> <span class="o">=</span> <span class="n">nbyte</span><span class="p">;</span>
+  <span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbr</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbr</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
+      <span class="n">nbr</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span>
+      <span class="n">abort</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// The prototype of POSIX of write() is:
+//   ssize_t write(int fd, void *buf, size_t nbyte) {
+</span><span class="kt">ssize_t</span> <span class="nf">safewrite</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nbyte</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">size_t</span> <span class="n">nbw</span><span class="p">;</span>	<span class="cm">/* number of bytes written */</span>
+  <span class="kt">ssize_t</span> <span class="n">rc</span><span class="p">;</span>	<span class="cm">/* return code of write() */</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
+  <span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+  <span class="n">nbw</span> <span class="o">=</span> <span class="n">nbyte</span><span class="p">;</span>
+  <span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbw</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbw</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
+      <span class="n">nbw</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span>
+      <span class="n">abort</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+關於上面的討論，是針對 read() 及 write() 對正規檔案的資料處理方式所應採取的應對措施，如果是對非正規檔案，如 pipe , FIFOs, socket 的話，則上面的應對措施就不適用。
+例如對 socket 進行 read() 時，系統是對方一次輸出多少資料，我方就讀取多少資料，而不會等到讀滿指定的資料量時才回傳，因此 read() 的回傳值少於指定的資料量是正常情形。
+而 POSIX 規格中也強調對 pipe 進行 write() 時， write() 從不會回傳 EINTR ，因此在寫入 pipe 時，可不考慮被 signal 中斷的處理。
+</p>
+<p>
+在美國聯邦政府的政府採構規格 (FIPS) 中，則是明確地要求 read() 或 write() 必須採取第二種規格處理。
+</p>
+<blockquote>
+The U.S. Government (in FIPS 151-1) requires that read() return the
+number of bytes read. Since the Federal Government is the world's
+largest buyer of POSIX systems, it is a good bet that most POSIX 
+systems will return the number of bytes read.
+<br/>
+<cite>FIPS of the U.S. Government</cite>
+</blockquote>
+<p>
+我的看法是，這種處理方式比較合理，可以明確知道有多少資料已被處理了，減少資料遺失的情形。
+如果是採回傳 EINTR 的方式，那我們無法知道有多少資料已經處理了，如果要再進行一次，就勢必整個資料重送一次。這時已經處理過的資料，我們卻無法得知系統將如何處理 (除非作業系統的手冊白紙黑字說明其實作方式，或是從作業系統的 source 中確認) ，問題就比較多了，這也是為何有的文件會建議將 EINTR 也視為致命錯誤。
+</p>
+<address>
+作者: rock (遊手好閒的石頭成)<br/>
+E-mail: shirock@educities.edu.tw<br/>
+First edition: 1998-08-27 [<a href="http://home.educities.edu.tw/shirock/comp/ReadWrite_Singal.txt">read() 及 write() 被 signal 中斷的處理</a>]<br/>
+Last modify: 2006-10-19
+</address>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/select%28%29%20-%20I_O%20Multiplexer.html">select() - I/O Multiplexer</a></li>
+<li><a href="{{ site.baseurl }}/archives/2010/Python%20-%20Pipe%20%E5%9C%A8%20Signal%20%E7%99%BC%E7%94%9F%E6%99%82%E7%9A%84%E8%99%95%E7%90%86%E4%BA%8B%E9%A0%85.html">Python - Pipe 在 Signal 發生時的處理事項</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2159383.html">http://blog.roodo.com/rocksaying/archives/2159383.html</a></div>

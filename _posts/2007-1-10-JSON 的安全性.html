@@ -1,0 +1,44 @@
+---
+title: JSON 的安全性
+category: programming
+old-category: JavaScript
+tags: []
+---
+<p>
+<a href="{{ site.baseurl }}/archives/2006/JSON%20%E9%80%9F%E5%AF%AB.html">JSON</a> 是 JavaScript 語言的子集合，在 JavaScript 中透過 <code>eval()</code> 喚醒 JSON object 。但 <code>eval()</code>  是個泛用性功能，一句不當的 <code>eval()</code>  操作，足以讓惡意人士在 JSON 內容中植入可執行性敘述達成破壞目的。
+</p>
+<p>
+此安全性狀況只發生在 JavaScript 中，而其他程式語言由於語法不同兼且多數透過專屬函數編碼與解碼 JSON ，反而無此顧慮。
+</p>
+
+<!--more-->
+<p>
+以 <code>eval()</code>  喚起 JSON object 的適當方式是以小括號括起 JSON 內容，而最常見的錯誤便是省略小括號。見下例。
+</p>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">jsonObject</span> <span class="o">=</span> <span class="s1">'[], alert("HA HA HA!")'</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span> <span class="s1">'('</span><span class="o">+</span> <span class="nx">jsonString</span> <span class="o">+</span> <span class="s1">')'</span> <span class="p">);</span> <span class="c1">//Syntax error.</span>
+<span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="nx">jsonString</span><span class="p">);</span> <span class="c1">//DANGER!</span>
+</code></pre>
+
+<p>
+其實在 JSON 規範 (<a href="http://www.ietf.org/rfc/rfc4627.txt?number=4627">RFC4627</a>) 第六節就有提到這些內容，並且提供了正確且安全的調用方法。
+</p>
+<blockquote>
+A JSON text can be safely passed into JavaScript's eval() function
+(which compiles and executes a string) if all the characters not
+enclosed in strings are in the set of characters that form JSON
+tokens. This can be quickly determined in JavaScript with two
+regular expressions and calls to the test and replace methods.
+<cite><a href="http://www.ietf.org/rfc/rfc4627.txt?number=4627">RFC4627</a></cite>
+</blockquote>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">my_JSON_object</span> <span class="o">=</span> <span class="o">!</span><span class="p">(</span><span class="sr">/</span><span class="se">[^</span><span class="sr">,:{}</span><span class="se">\[\]</span><span class="sr">0-9.</span><span class="se">\-</span><span class="sr">+Eaeflnr-u </span><span class="se">\n\r\t]</span><span class="sr">/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span>
+<span class="nx">text</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/"</span><span class="se">(\\</span><span class="sr">.|</span><span class="se">[^</span><span class="sr">"</span><span class="se">\\])</span><span class="sr">*"/g</span><span class="p">,</span> <span class="s1">''</span><span class="p">)))</span> 
+<span class="o">&amp;&amp;</span> <span class="nb">eval</span><span class="p">(</span><span class="s1">'('</span> <span class="o">+</span> <span class="nx">text</span> <span class="o">+</span> <span class="s1">')'</span><span class="p">);</span>
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/JavaScript%20Hijacking%20and%20How%20to.html">JavaScript Hijacking and How to</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2636558.html">http://blog.roodo.com/rocksaying/archives/2636558.html</a></div>

@@ -1,0 +1,63 @@
+---
+title: 以 SimpleXML 將 CSV 文件轉換成 MS Excel 2k/XP XML 文件
+category: programming
+old-category: PHP
+tags: [php,xml,spreadsheet]
+---
+<div class="tags" style="display:none">Tags: php xml spreadsheet</div>
+<p>
+本文示範以 PHP <a href="http://tw.php.net/manual/en/ref.simplexml.php">SimpleXML</a> 實踐 MS Excel 2k/XP XML 文件之匯出工作。首先讀取一個 CSV 文件 <var>test.csv</var>，再建立一份 SimpleXML 文件實例，接著按 MS Excel 2k/XP 之 XML 文件結構，將自 CSV 讀取之資料存入 SimpleXML 文件實例，最後儲存為 <var>test.xml</var> 。該文件可以 MS Excel 2k/XP 讀取。
+</p>
+<p>
+關於 MS Excel 2k/XP XML 文件之相關訊息，請見《<a href="{{ site.baseurl }}/archives/2007/A%20note%20of%20creating%20XML%20document%20by%20SimpleXML.html">A note of creating XML document by SimpleXML</a>》。 
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require</span> <span class="s1">'SpreadsheetReader/CSV/SpreadsheetReader_CSV.php'</span><span class="p">;</span>
+
+<span class="nv">$csvReader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SpreadsheetReader_CSV</span><span class="p">;</span>
+<span class="nv">$sheets</span> <span class="o">=</span> <span class="nv">$csvReader</span><span class="o">-&gt;</span><span class="na">read</span><span class="p">(</span><span class="s1">'test.csv'</span><span class="p">);</span>
+
+<span class="nv">$doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SimpleXMLElement</span><span class="p">(</span>
+<span class="s1">'&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40"&gt;&lt;/Workbook&gt;'</span>
+<span class="p">);</span>
+
+<span class="nv">$indexOfSheet</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$sheets</span> <span class="k">as</span> <span class="nv">$sheet</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//&lt;Worksheet ss:Name="Sheet1"&gt;
+</span>    <span class="c1">//&lt;Table&gt;
+</span>    <span class="nv">$worksheetNode</span> <span class="o">=</span> <span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Worksheet'</span><span class="p">);</span>
+    <span class="c1">//$worksheetNode-&gt;addAttribute('ss:Name', 'sheet1');//BUG?
+</span>    <span class="nv">$worksheetNode</span><span class="p">[</span><span class="s1">'ss:Name'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'sheet'</span> <span class="o">.</span> <span class="p">(</span><span class="nv">$indexOfSheet</span><span class="o">++</span><span class="p">);</span>
+
+    <span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span><span class="c1">//add a child with value '' by setter
+</span>    <span class="c1">//$tableNode = $worksheetNode-&gt;addChild('Table');/add a child by addChild()
+</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$sheet</span> <span class="k">as</span> <span class="nv">$row</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//&lt;Row&gt;
+</span>        <span class="nv">$rowNode</span> <span class="o">=</span> <span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Row'</span><span class="p">);</span>
+        
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$row</span> <span class="k">as</span> <span class="nv">$col</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//&lt;Cell&gt;&lt;Data ss:Type="Number"&gt;1&lt;/Data&gt;&lt;/Cell&gt;
+</span>            <span class="nv">$cellNode</span> <span class="o">=</span> <span class="nv">$rowNode</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span>
+            <span class="nv">$cellNode</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="nb">iconv</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">,</span> <span class="nv">$col</span><span class="p">);</span>
+            <span class="nv">$cellNode</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">asXML</span><span class="p">(</span><span class="s1">'test1.xml'</span><span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<div class="note">
+本文是 <a href="{{ site.baseurl }}/archives/2007/php-SpreadsheetReader.html">php-SpreadsheetReader </a> 專案之一部工作。
+</div><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3021213.html">http://blog.roodo.com/rocksaying/archives/3021213.html</a></div>

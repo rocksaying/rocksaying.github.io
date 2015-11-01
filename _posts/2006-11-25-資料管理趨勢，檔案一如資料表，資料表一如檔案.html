@@ -1,0 +1,49 @@
+---
+title: 資料管理趨勢，檔案一如資料表，資料表一如檔案
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<p>
+打從人們開始使用電腦管理資料時，數位資料就一直有著兩種不同的儲存系統，一為檔案系統 (file system) ，二為資料庫系統 (database system) 。過去想使用這兩種儲存系統中的資料，也要使用兩種不同的工具軟體。例如一份儲存在檔案系統中的試算表 (spreadsheet) ，要用檔案管理員移除、複製、搬移，用 Louts-123, MS-Excel 編輯內容；而一份儲存在資料庫系統中的資料表 (table) ，則要用資料庫管理工具移除、複製、搬移，用專屬的前端系統軟體，如aa會計系統、bb進銷存系統編輯內容。即便試算表中的資料內容與資料表中的資料內容完全相同，兩種儲存系統的架構，硬是把人們使用資料的方式切成兩套不同的使用途徑。
+</p>
+
+<!--more-->
+<p>
+現在企業內常見的情況是，資訊人員使用資料庫系統管理資料，業務人員使用檔案系統管理資料。一份 xyz 業務資料要儲存兩種複本，一份儲存在資訊庫系統的 xyz 資料表，另一份儲存在檔案系統的 xyz 試算表。前者是資訊人員用的，後者是業務人員用的。接著雙方就會開始互相抱怨了。資訊人員會抱怨業務人員使用的資料內容和資料庫系統的不同，要常常提醒業務人員將最新的業務資料從檔案系統的試算表匯入到資料庫系統的資料表，或者要求業務人員改用 xyz 資訊系統 (專為資料庫系統設計的特定前端系統軟體) 。業務人員則會反應在外面跑業務時，根本沒有時間打開電腦或者無法上網連線到 xyz 資訊系統，只能先記在紙上或放在試算表中；又或是抱怨 xyz 資訊系統不好操作、不合業務的作業需求，要資訊部改一下系統又拖拉半天，用 MS-Execl 處理比較快。
+</p>
+<p>
+導致資訊人員和業務人員互相抱怨的原因，歸結於兩點。其一是兩份複本的內容同步化工作 (也是一種 version control 工作) 。其二是資訊應用軟體的設計僵化，無法滿足資訊人員和業務人員不同的需求。當人們將愈來愈多的資料放進資訊系統中管理，而業務需求的變動也愈來愈頻繁，隨兩種儲存系統而來的兩套資料使用途徑的傳統方式，漸漸無法應付如此快速的變化。
+</p>
+<p>
+以我個人經驗為例，身為公司資訊部的主要程序人員，時常為了聯結不同資料跑出一份分析報表，就要動手寫一個程式，因為這些資料位在不同的儲存系統上。如果這些資料都存在資料庫系統的資料表，那麼簡單地用 SQL 查詢的 SELECT 與 JOIN 就可以將不同資料聯結在一起了。實際情形卻是有些資料儲存在資料表，有些資料儲存在試算表。要嘛寫一個試算表匯入資料表的工具，要嘛寫一個分別自不同儲存系統中讀取資料後自行聯結的報表工具 (資料聯結工作由報表工具承擔而非資料庫系統)。再者，我也覺得特定資訊系統軟體的操作非常難用，不方便編輯資料，寧願用資料庫管理工具 (<span class="Onote">通常是 SQL query analyzer/tool</span>) 編輯或者自己寫一個編輯工具。業務人員通常是一筆一筆地編輯資料，而資訊人員往往是一批一批地編輯資料，針對業務人員需求設計的前端資訊系統軟體不適合資訊人員使用或許很正常，而當業務人員也抱怨前端資訊系統軟體操作方式不便，寧願使用 MS-Excel 或 OpenOffice Scale 編輯試算表時，那就是前端資訊系統軟體的錯了，套一句流行話，「不夠 SOA」。
+</p>
+<p>
+上述種種，皆因我們不能使用檔案一如資料表、又不能使用資料表一如檔案。因此未來的資料管理趨勢，在於打破這種二分架構，消弭檔案系統與資料庫系統之間的鴻溝。目前已經有這種實作出現，例如 IBM Lotus Domino and Noets 7 和 Microsoft Windows Vista。
+</p>
+<h3>IBM Lotus Domino and Notes with IBM DB2</h3>
+<p>
+在 <a href="http://www-306.ibm.com/software/lotus/">IBM Lotus Domino and Notes 7</a> 中，改用 DB2NSF 技術儲存資料。以前 Notes 的資料是儲存在檔案系統中的，現在透過 DB2NSF 將資料儲存在資料庫系統中，但仍然保有檔案系統的介面。於是使用者依然可以在 Notes 中管理這些文件一如檔案系統中的檔案，同時資訊系統可以查詢、分析這些文件一如資料庫系統中的資料表。例如 Notes 中的一份業務資料文件，業務人員可以用 MS-Excel 或 Lotus-123 編輯，就好像這份文件原本就是一個試算表檔案；而資訊人員則可以用資訊庫工具查詢，就好像這份文件原本就是一個資料表。於是前端資訊系統軟體就變成選擇性的存在，可有可無，使用者則有了使用彈性，可以各自用最方便的軟體編輯與管理資料。當然如果能快速組合產生特定資訊應用工具就更好了，不過這已是軟體開發的題外話。
+</p>
+<h3>Microsoft Windows Vista WFS</h3>
+<p>
+Microsoft Windows Vista 引入一種新的檔案系統，稱為 WFS 。就我所知， WFS 大幅加強結構化文件的搜尋能力，例如 XML 與 Excel XLS 這類結構化文件，將可以進行內容的搜尋與聯結動作。對 Vista 而言，儲存在 WFS 檔案系統中的結構化文件也是一種資料表，所以可以搜尋和聯結。如果加上 SQL 引擎，那麼在檔案總管的「搜尋列」中輸入下列內容就能完成工作也是指日可期之事。
+</p>
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="k">INTO</span> <span class="s1">'My Documents/abc_supply_order.xls'</span> <span class="n">p</span><span class="p">.</span><span class="n">productName</span><span class="p">,</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyBarCode</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">quantity</span><span class="p">)</span> <span class="k">AS</span> <span class="n">quantity</span>
+<span class="k">FROM</span> <span class="s1">'My Documents/xyz_order.xls'</span> <span class="k">AS</span> <span class="n">o</span>
+<span class="k">INNER</span> <span class="k">JOIN</span> <span class="p">(</span><span class="s1">'pgsql://dataware.example.com/products/product'</span> <span class="k">AS</span> <span class="n">p</span>
+    <span class="k">INNER</span> <span class="k">JOIN</span> <span class="s1">'pgsql://dataware.example.com/supplies/supply'</span> <span class="k">AS</span> <span class="n">s</span>
+    <span class="k">ON</span> <span class="n">p</span><span class="p">.</span><span class="n">barCode</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">barCode</span> <span class="k">AND</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyName</span> <span class="o">=</span> <span class="s1">'abc'</span><span class="p">)</span>
+<span class="k">ON</span> <span class="n">o</span><span class="p">.</span><span class="n">barCode</span> <span class="o">=</span> <span class="n">p</span><span class="p">.</span><span class="n">barCode</span>
+<span class="k">GROUP</span> <span class="k">BY</span> <span class="n">p</span><span class="p">.</span><span class="n">productName</span><span class="p">,</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyBarCode</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyBarCode</span><span class="p">;</span>
+ 
+</code></pre>
+
+<p>
+上述 SQL 敘述的語意是，查詢資料庫中的 products 資料表與 supply 資料表，將供應商為 'abc' 的商品挑出來，再和檔案系統的 xyz_order.xls 試算表的採購單內容聯結找出要下單給供應商 'abc' 採購的商品，總計採購數量 (sum of quantity) ，將結果儲存到檔案系統的 abc_supply_order.xls 試算表中。
+</p>
+<h3>小結</h3>
+<p>
+IBM Lotus Domino and Louts 7 with IBM DB2 將檔案系統納入資料庫系統之中，而 Microsoft Windows Vista 則是將資料庫系統納入檔案系統之中，兩者皆令檔案系統與資料庫系統的邊界模糊化。檔案就是資料表，資料表就是檔案，資訊系統將可提供基於使用者業務需求的資料管理彈性。使用者不用為配合兩種儲存系統而使用兩套工具。資訊系統可以做到真正為了使用者服務，而不是使用者屈從配合資訊系統。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2521061.html">http://blog.roodo.com/rocksaying/archives/2521061.html</a></div>

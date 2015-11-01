@@ -1,0 +1,79 @@
+---
+title: DOM~~A bug about table in M$IE
+category: programming
+old-category: JavaScript
+tags: [dom,ie,dhtml,bug]
+---
+<div class="tags" style="display:none">DOM IE DHTML bug</div>
+<p>
+我又來談 IE 的 bug 了，這次是關於 IE 處理動態產生之表格的問題。這事有段時間了，我看到 Thinker 在《<a href="http://heaven.branda.to/~thinker/GinGin_CGI.py/show_id_doc/210">jQuery 的使用 innerHTML 的問題</a>》提到當他使用 jQuery 裡的 JavaScript library 產生頁面內容時碰到這問題 ，這才讓我想起來。這問題說來有趣，我之前是在 MSDN 裡找到答案，見《<a href="http://msdn.microsoft.com/workshop/author/tables/buildtables.asp">How to Build Tables Dynamically</a>》。我看了 MSDN 的文章會想笑，又一個把 IE 的 bug 當技術文章的案例。
+</p>
+
+<!--more-->
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/%E7%95%B6%E6%8E%89%20IE%20%EF%BC%8C%E7%94%A8%20CSS%20%E8%AA%9E%E6%B3%95%E5%B0%B1%E5%8F%AF%E4%BB%A5%E8%AE%93%20IE%20%E5%BC%B7%E5%88%B6%E9%97%9C%E9%96%89.html">當掉 IE ，用 CSS 語法就可以讓 IE 強制關閉</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/JavaScript~~DOM~~A%20bug%20about%20radio%20input%20and%20createElement%20in%20M%24IE.html">A bug about radio input and createElement in M$IE</a></li>
+</ul>
+<p>
+在 IE (IE7沒試過) 中，它要求 table 的 DOM 結構中，一定且至少有一個 tbody 節點。 不論我們是用 DOM 方法建立的 table (<code>document.createElement('table');</code>) 或是用 HTML 標籤建立的 table ，即使我們都沒寫出 tbody ， IE 也會自己加一個上去。因此，當我們試圖操作 DOM 方法添加表格之行、列時，就必須添加在 tbody 節點之下才行。但如果用 IE 自帶的 Table Object Model 就沒這個限制。好笑啊。
+</p>
+<p>
+我那時的解決方法很簡單。凡是用 HTML 標籤時，一律加一個 tbody 。只要有一個 tbody 存在， IE 就不會自己再多建一個，故此時各瀏覽器的 DOM 節點都一致。如果是用 DOM 方法建立的 table ，則一律加一個 tbody 節點。
+</p>
+<p>
+下面的例子，用 HTML 標籤建立了兩個靜態表格內容，並定義了一個使用 DOM 方法建立表格節點的函數。
+</p>
+<pre class="highlight"><code><span class="nt">&lt;table</span> <span class="na">id=</span><span class="s">"tableBugOfIe"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+
+<span class="nt">&lt;table</span> <span class="na">id=</span><span class="s">"table1"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;tbody&gt;</span>
+<span class="nt">&lt;/tbody&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+function myCreateTable() {
+    var table = document.createElement('table');
+    table.appendChild(document.createElement('tbody'));
+    return table;
+}
+<span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+<p>
+接著是一段 JavaScript 的測試程式。這段程式會顯示兩個靜態表格底下的 tbody 節點數。在 IE 中，會顯示兩個表格中都有 1 個 tbody 節點；其他瀏覽器則會顯示第一個靜態表格中沒有 tbody 節點。接著測試程式會建立兩個動態表格，同樣顯示其中的 tbody 節點數，最後一個動態表格會顯示出 IE 另一個與預期不一致的地方。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">var</span> <span class="nx">tableBugOfIe</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'tableBugOfIe'</span><span class="p">);</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span>
+    <span class="nx">tableBugOfIe</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tbody'</span><span class="p">).</span><span class="nx">length</span>
+    <span class="o">+</span> <span class="s1">' :只有 IE ，顯示有一個 tbody (未預期的): '</span>
+<span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">table1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'table1'</span><span class="p">);</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span>
+    <span class="nx">table1</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tbody'</span><span class="p">).</span><span class="nx">length</span>
+    <span class="o">+</span> <span class="s1">' :有一個 tbody'</span>
+<span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nx">myCreateTable</span><span class="p">();</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span>
+    <span class="nx">t</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tbody'</span><span class="p">).</span><span class="nx">length</span>
+    <span class="o">+</span> <span class="s1">' :有一個 tbody'</span>
+<span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">table2BugOfIe</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'table'</span><span class="p">);</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span>
+    <span class="nx">table2BugOfIe</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tbody'</span><span class="p">).</span><span class="nx">length</span>
+    <span class="o">+</span> <span class="s1">' :沒有 tbody \n'</span>
+    <span class="o">+</span> <span class="s1">'用 DOM 方法建立 table 時， IE 不會自己加一個 tbody,\n'</span>
+    <span class="o">+</span> <span class="s1">'但此時當我們試圖添加 tr 在 table 之下時， IE 也不會成功。'</span>
+<span class="p">);</span>
+
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+
+<p>
+總結而言，要避免這問題只有從 tbody 下手，我們一律建立 tbody 節點，如此一來在不同瀏覽器環境中，都會有一致的 DOM 結構。接下來的動作就沒有差異了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2690905.html">http://blog.roodo.com/rocksaying/archives/2690905.html</a></div>

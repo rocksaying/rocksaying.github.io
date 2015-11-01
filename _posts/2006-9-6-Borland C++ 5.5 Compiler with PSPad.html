@@ -1,0 +1,80 @@
+---
+title: Borland C++ 5.5 Compiler with PSPad
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+雖然 Borland C++ 5.5 Compiler 是一套純命令列工具，但配合適當的程式編輯器，我們仍然可以建置出一個方便的視窗整合開發環境 (IDE) 。我慣用的輕量級程式編輯器是 <a href="http://www.pspad.com/en/">PSPad</a> ，就用它來說明吧。關於 PSPad 的一般性設定請參考它的說明或其他人寫的文章。此處直接說明關於 compiler 的設定。
+</p>
+
+<!--more-->
+<p>
+首先設定 C/C++ 文件的輔助說明文件，從主選單「設定」 -&gt; 「語法高亮度設定」，選擇「C/C++」，在「規範」頁中，輸入說明文件的路徑。如果你安裝了 <a href="http://info.borland.com/techpubs/bcppbuilder/v5/updates/std.html">C++Builder 5 core Help files (b5std.zip)</a> ，則應該選擇其中的 BCB5.HLP 。這個設定可以讓你隨時按下 &lt;Alt+F1&gt; 查詢相關資詢。如果你的編輯游標停留在函數名稱，如 strcpy 之上，按下 &lt;Alt+F1&gt; 時， PSPad 可直接跳出 strcpy 的函數說明。
+<br/>
+<a href="http://img168.imageshack.us/my.php?image=bcc5pspad01au7.png" target="_blank"><img src="http://img168.imageshack.us/img168/8215/bcc5pspad01au7.png" border="0" alt="輔助說明設定畫面 (Free Image Hosting at www.ImageShack.us)" /></a>
+</p>
+<p>
+接下來設定編譯器 (compiler) 的路徑及選項。編譯器的路徑不直接指向 BCC32.EXE ，而指向替代的 bcc32.bat 。 bcc32.bat 的內容參考「<a href="{{ site.baseurl }}/archives/2006/How%20to%20use%20Borland%20C_C%2B%2B%205.5%20Complier.html">How to use Borland C/C++ 5.5 Complier</a>」。「參數」欄位輸入「%Name%%Ext%」(注意大小寫)。勾選「擷取程式的輸出結果」，以查看編譯過程及錯誤資訊。「編譯之後執行」的欄位輸入「cmd /K %Name%」，會接著開啟命令視窗執行剛才產生的程式執行檔。完成上述設定後，就可讓你在編寫完 C/C++ 原始碼後，按下 &lt;Ctrl + F9&gt; (主選單「檔案」 -&gt; 「編譯」) ，由 PSPad 為你調用 BCC Compiler 進行編譯與連結工作。
+<br/>
+<a href="http://img91.imageshack.us/my.php?image=bcc5pspad02hh3.png" target="_blank"><img src="http://img91.imageshack.us/img91/6936/bcc5pspad02hh3.png" border="0" alt="編譯器設定畫面 (Free Image Hosting at www.ImageShack.us)" /></a>
+</p>
+<p>
+開啟「工具面板 (Ctrl+F2)」，在工具面板中，按滑鼠右鍵叫出浮動選單，點選「新的連結」以加入 Turbo Debugger 工具。路徑指向 td32.bat ， td32.bat 的參考「<a href="{{ site.baseurl }}/archives/2006/How%20to%20use%20Borland%20C_C%2B%2B%205.5%20Complier.html">How to use Borland C/C++ 5.5 Complier</a>」。「參數」欄位輸入「%Dir%%Name%.exe」。設定完成後，便可在工具面板中直接執行 Turbo Debugger 進行程式偵錯工作。<br/>
+<a href="http://imageshack.us"><img src="http://img73.imageshack.us/img73/1879/bcc5pspad05er1.png" border="0" alt="除錯器設定畫面 (Image Hosted by ImageShack.us)" /></a>
+</p>
+<p>
+此處列出一個 ANSI/ISO C++ 的 Hello world 程式碼 (hello2.cpp) 。 ANSI/ISO C++ 到 1999年的規範標準 (C99) ，在此皆有包含。如第 9,20 行的新式轉型語法，第18-31行使用了 STL 中的 vector 和 string template class 。第33行是第一修訂版中加入的寬字元型態 (wchar_t) ，第34行是 C99 加入的 long doule 型態。
+</p>
+
+<pre class="highlight"><code><span class="cp">#include &lt;cstdlib&gt;
+#include &lt;cstring&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+</span>
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">hello</span> <span class="o">=</span> <span class="s">"hello world</span><span class="se">\n</span><span class="s">"</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">hello</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">));</span>
+    <span class="n">strcpy</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">hello</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">p</span><span class="p">;</span>
+
+    <span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+    <span class="n">bool</span> <span class="n">t</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">t</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">ns</span><span class="p">(</span> <span class="mi">10</span> <span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ns</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ns</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iter</span> <span class="o">=</span> <span class="n">ns</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+        <span class="n">iter</span> <span class="o">!=</span> <span class="n">ns</span><span class="p">.</span><span class="n">end</span><span class="p">();</span>
+        <span class="o">++</span><span class="n">iter</span>
+    <span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">iter</span> <span class="o">&lt;&lt;</span> <span class="sc">' '</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+
+    <span class="n">string</span> <span class="n">helloWorld</span> <span class="o">=</span> <span class="n">string</span><span class="p">(</span><span class="n">hello</span><span class="p">);</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">helloWorld</span><span class="p">;</span>
+
+    <span class="kt">wchar_t</span> <span class="o">*</span><span class="n">p1</span><span class="p">;</span>
+    <span class="kt">long</span> <span class="kt">double</span> <span class="n">lli</span><span class="p">;</span>
+
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+
+<p>
+下圖是 PSPad 編輯 hello2.cpp 時的實際工作畫面以及除錯器工作畫面 (點擊圖片可觀看原尺寸大圖) ，我同時開啟了「工具面板 (Ctrl+F2)」，以及「程式碼瀏覽器 (Shift+Ctrl+E)」。<br/>
+<a href="http://img91.imageshack.us/my.php?image=bcc5pspad03gw9.png" target="_blank"><img src="http://img91.imageshack.us/img91/7804/bcc5pspad03gw9.th.png" border="0" alt="程式編輯器工作畫面 (Free Image Hosting at www.ImageShack.us)" /></a>
+<br/>
+<a href="http://img152.imageshack.us/my.php?image=bcc5pspad04ax3.png" target="_blank"><img src="http://img152.imageshack.us/img152/4015/bcc5pspad04ax3.th.png" border="0" alt="除錯器工作畫面 (Free Image Hosting at www.ImageShack.us) "/></a>
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/How%20to%20use%20MinGW%20GNU%20GCC%20and%20with%20PSPad.html">How to use MinGW GNU GCC and with PSPad</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2112499.html">http://blog.roodo.com/rocksaying/archives/2112499.html</a></div>

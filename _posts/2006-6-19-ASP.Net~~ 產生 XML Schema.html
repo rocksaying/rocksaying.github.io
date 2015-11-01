@@ -1,0 +1,77 @@
+---
+title: ASP.Net~~ 產生 XML Schema
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+基於工作需要，我翻了一下 .Net Framework 中對 XML Schema (XSD) 的支援，想找在程式中維護 XML Schema 的方法。找到了兩種方法，一種是使用 System.Xml.Schema 類別，另一種是透過 DataSet 。以下是分別用這兩種方法產生同一份 XML Schema 的程式。
+</p>
+
+<!--more-->
+<h4>將 DataSet 結構描述資訊寫為 XML 結構描述 (XSD)</h4>
+<pre class="highlight"><code><span class="n">DataSet</span> <span class="n">ds</span> <span class="o">=</span> <span class="n">new</span> <span class="n">DataSet</span><span class="p">(</span><span class="s">"TEST"</span><span class="p">);</span>
+<span class="n">DataTable</span> <span class="n">dt</span> <span class="o">=</span> <span class="n">ds</span><span class="p">.</span><span class="n">Tables</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"T1"</span><span class="p">);</span>
+<span class="n">dt</span><span class="p">.</span><span class="n">Columns</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"id"</span><span class="p">,</span> <span class="n">typeof</span><span class="p">(</span><span class="n">Int32</span><span class="p">));</span>
+<span class="n">dt</span><span class="p">.</span><span class="n">Columns</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"name"</span><span class="p">,</span> <span class="n">typeof</span><span class="p">(</span><span class="n">String</span><span class="p">));</span>
+<span class="n">ds</span><span class="p">.</span><span class="n">WriteXmlSchema</span><span class="p">(</span><span class="n">Console</span><span class="p">.</span><span class="n">Out</span><span class="p">);</span>
+</code></pre>
+
+
+<h4>使用 System.Xml.Schema 類別</h4>
+<pre class="highlight"><code><span class="c1">// &lt;xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
+</span><span class="n">XmlSchema</span> <span class="n">schema</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchema</span><span class="p">();</span>
+
+<span class="c1">// &lt;xs:element name="TEST"&gt;
+</span><span class="n">XmlSchemaElement</span> <span class="n">elementTEST</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
+<span class="n">elementTEST</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"TEST"</span><span class="p">;</span>
+
+<span class="c1">// &lt;xs:complexType&gt;
+</span><span class="n">XmlSchemaComplexType</span> <span class="n">complexType</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaComplexType</span><span class="p">();</span>
+
+<span class="c1">// &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+</span><span class="n">XmlSchemaChoice</span> <span class="n">choice</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaChoice</span><span class="p">();</span>
+<span class="n">choice</span><span class="p">.</span><span class="n">MinOccurs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">choice</span><span class="p">.</span><span class="n">MaxOccursString</span> <span class="o">=</span> <span class="s">"unbounded"</span><span class="p">;</span>
+
+<span class="c1">// &lt;xs:element name="T1"&gt;
+</span><span class="n">XmlSchemaElement</span> <span class="n">elementT1</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
+<span class="n">elementT1</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"T1"</span><span class="p">;</span>
+
+<span class="c1">// &lt;xs:complexType&gt;
+</span><span class="n">XmlSchemaComplexType</span> <span class="n">complexType2</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaComplexType</span><span class="p">();</span>
+
+<span class="c1">// &lt;xs:sequence&gt;
+</span><span class="n">XmlSchemaSequence</span> <span class="n">sequence</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaSequence</span><span class="p">();</span>
+
+<span class="c1">// &lt;xs:element name="ID" type="xs:int"&gt;
+</span><span class="n">XmlSchemaElement</span> <span class="n">elementID</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
+<span class="n">elementID</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"ID"</span><span class="p">;</span>
+<span class="n">elementID</span><span class="p">.</span><span class="n">SchemaTypeName</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlQualifiedName</span><span class="p">(</span><span class="s">"int"</span><span class="p">,</span> <span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="p">);</span>
+
+<span class="c1">// &lt;xs:element name="Name" type="xs:string"&gt;
+</span><span class="n">XmlSchemaElement</span> <span class="n">elementName</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
+<span class="n">elementName</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"Name"</span><span class="p">;</span>
+<span class="n">elementName</span><span class="p">.</span><span class="n">SchemaTypeName</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlQualifiedName</span><span class="p">(</span><span class="s">"string"</span><span class="p">,</span> <span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="p">);</span>
+
+<span class="n">sequence</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementID</span><span class="p">);</span>
+<span class="n">sequence</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementName</span><span class="p">);</span>
+
+<span class="n">complexType2</span><span class="p">.</span><span class="n">Particle</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">;</span>
+
+<span class="n">elementT1</span><span class="p">.</span><span class="n">SchemaType</span> <span class="o">=</span> <span class="n">complexType2</span><span class="p">;</span>
+
+<span class="n">choice</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementT1</span><span class="p">);</span>
+
+<span class="n">complexType</span><span class="p">.</span><span class="n">Particle</span> <span class="o">=</span> <span class="n">choice</span><span class="p">;</span>
+
+<span class="n">elementTEST</span><span class="p">.</span><span class="n">SchemaType</span> <span class="o">=</span> <span class="n">complexType</span><span class="p">;</span>
+
+<span class="n">schema</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementTEST</span><span class="p">);</span>
+
+<span class="n">schema</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">Console</span><span class="p">.</span><span class="n">Out</span><span class="p">);</span>
+</code></pre>
+
+<p>
+粗略試了一下，很明顯，直接操作 System.Xml.Schema 是個笨方法，這種方法的程式碼，比它產生的 XML Schema 的文件內容還多。藉由 DataSet 作為中介變數，不僅程式簡化許多，也直接對應 Database table 的 Schema ，我們向 Database 查詢並將結果存入 DataSet 後，可以直接一個 WriteXMLSchema() 就獲得對應 Database table schema 的 XML Schema，在操作上反而更為直覺。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1776571.html">http://blog.roodo.com/rocksaying/archives/1776571.html</a></div>

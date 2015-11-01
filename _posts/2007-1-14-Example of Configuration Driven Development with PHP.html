@@ -1,0 +1,159 @@
+---
+title: Example of Configuration Driven Development with PHP
+category: programming
+old-category: Programming
+tags: []
+---
+<div name="tags" class="tags">Tags: agile-method cdd json</div>
+<p>
+tokimeki 在回應《<a href="{{ site.baseurl }}/archives/2007/%E5%8B%95%E6%85%8B%E8%AA%9E%E8%A8%80%E9%97%9C%E6%96%BC%E5%8F%83%E6%95%B8%E5%AE%A3%E5%91%8A%E7%9A%84%E5%AF%AB%E4%BD%9C%E9%A2%A8%E6%A0%BC.html">動態語言關於參數宣告的寫作風格</a>》時提到： <q>所以我只要在函數內設定一個預設陣列，然後把參數陣列以及預設陣列丟進去處理就行了，傳回來就得到過濾好的參數陣列，而且保證每個參數都有值。接下來就可以對每個參數作驗證、運算等動作。</q> 這個作法還可以按所謂「Configuration Driven Development」的概念進一步改良。 Configuration Driven Development 是以中介資料描述軟體運作時的組態，我們藉由組態內容便得以調整與協調程式運作的內容。可以參考 Steve McDuff 的這篇：《<a href="http://www-128.ibm.com/developerworks/library/wa-configdev/">Configuration-driven development</a>》。
+</p>
+
+<!--more-->
+<p>
+トキメキ 的作法，我也曾做過類似的。我們的概念在於將「預設陣列」的內容視為一份以 PHP 語法描述的組態文件，而不是程式碼的其中一段。當我們需要改變某些程式動作時，我們只需要修改組態文件的內容即可。接下來以一個 web application 程式碼為示範。
+</p>
+<h4>組態文件: config.js</h4>
+<p>
+我比較過 PHP 和 JavaScript 的語法差異後，覺得 JavaScript 的語法在描述組態資料時較簡單，不會看到 <code>array()</code> 的字眼。所以我習慣上使用 JSON 文件格式儲存組態資料。
+</p>
+<pre class="highlight"><code><span class="p">{</span>
+    <span class="s2">"id"</span> <span class="err">:</span> <span class="p">{</span>
+        <span class="s2">"default"</span> <span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="s2">"pattern"</span> <span class="err">:</span> <span class="s2">"^\d+$"</span><span class="p">,</span>
+        <span class="s2">"error"</span> <span class="err">:</span> <span class="s2">"Requried, all Digit."</span>
+    <span class="p">},</span>
+    <span class="s2">"name"</span> <span class="err">:</span> <span class="p">{</span>
+        <span class="s2">"default"</span> <span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="s2">"pattern"</span> <span class="err">:</span> <span class="s2">".+"</span><span class="p">,</span>
+        <span class="s2">"error"</span> <span class="err">:</span> <span class="s2">"Required."</span>
+    <span class="p">},</span>
+    <span class="s2">"address"</span> <span class="err">:</span> <span class="p">{</span>
+        <span class="s2">"default"</span> <span class="err">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"pattern"</span> <span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="s2">"error"</span> <span class="err">:</span> <span class="s2">""</span>
+    <span class="p">},</span>
+    <span class="s2">"email"</span> <span class="err">:</span> <span class="p">{</span>
+        <span class="s2">"default"</span> <span class="err">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"pattern"</span> <span class="err">:</span> <span class="s2">"[\w\._-]+@[\w\._-]+"</span><span class="p">,</span>
+        <span class="s2">"error"</span> <span class="err">:</span> <span class="s2">"Address is invalid."</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h4>主控程式: index.php</h4>
+<p>
+因為組態文件是 JSON 格式，所以 PHP 的版本須為 5.2 版以上 (內建 json extension) ，或是自行安裝 json extension 。<cite>(See also <a href="{{ site.baseurl }}/archives/2006/PHP~~JSON%20in%20PHP.html">JSON in PHP</a>)</cite>。
+</p>
+<p>
+我們利用組態內容驗證及設定使用者輸入的資料內容，之後再傳遞給指定的函數處理。當然啦，如果這些組態內容只用在這裡的話，根本感覺不到有什麼好處。我們會把它丟給 View 繼續運用。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// You may use PHP version 5.2 or above.
+</span><span class="nv">$method1FieldsJSON</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'config.js'</span><span class="p">);</span>
+<span class="nv">$method1Fields</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span><span class="nv">$method1FieldsJSON</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+
+<span class="nv">$method1Args</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$_GET</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$method1Args</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$_POST</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$method1Args</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$invalid</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+<span class="nv">$invalidFields</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">foreach</span><span class="p">(</span><span class="nv">$method1Fields</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$method1Args</span><span class="p">[</span><span class="nv">$k</span><span class="p">]))</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">]</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nv">$method1Args</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">];</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$method1Args</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">==</span> <span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">]</span>
+        <span class="k">or</span> <span class="p">(</span><span class="nv">$v</span><span class="p">[</span><span class="s1">'pattern'</span><span class="p">]</span>
+            <span class="k">and</span> <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/'</span><span class="o">.</span><span class="nv">$v</span><span class="p">[</span><span class="s1">'pattern'</span><span class="p">]</span><span class="o">.</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$method1Args</span><span class="p">[</span><span class="nv">$k</span><span class="p">])</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$invalid</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="nv">$invalid</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+        <span class="nb">array_push</span><span class="p">(</span><span class="nv">$invalidFields</span><span class="p">,</span> <span class="nv">$k</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$invalid</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">require_once</span> <span class="nv">$method1View</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$method1</span><span class="p">(</span><span class="nv">$method1Args</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h4>View</h4>
+<p>
+在 View 中，我們以 JavaScript 載入同一份組態文件，並使用組態內容檢查表單欄位的輸入值。運用 Configuration-driven development 的概念，我們日後如果要修改欄位的輸入格式檢查，只需要修改 config.js 的內容即可，而不需分別修改主控程式及 View 的內容。
+</p>
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="err">&lt;</span>?php
+function hiddenInputElement($name, $value) {
+    echo '<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">name=</span><span class="s">"', $name, '"</span> <span class="na">value=</span><span class="s">"', $value,'"</span><span class="nt">/&gt;</span>';
+}
+function textInputElement($name, $value) {
+    echo '<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"', $name, '"</span> <span class="na">value=</span><span class="s">"', $value,'"</span><span class="nt">/&gt;</span>';
+}
+?&gt;
+
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+function validForm(formId) {
+    var fields = <span class="cp">&lt;?=$method1FieldsJSON;?&gt;</span>;
+    var form = document.getElementById(formId);
+    for (var i = 0; i <span class="nt">&lt; form.elements.length</span><span class="err">;</span> <span class="err">++i)</span> <span class="err">{</span>
+        <span class="na">k =</span> <span class="s">form.elements[i].name;</span>
+        <span class="na">pattern =</span> <span class="s">new</span> <span class="err">RegExp(fields[k].pattern);</span>
+        <span class="err">if</span> <span class="err">(</span> <span class="err">form.elements[i].value</span> <span class="err">!=</span> <span class="err">fields[k].default</span>
+            <span class="err">&amp;&amp;</span> <span class="err">!pattern.test(form.elements[i].value)</span> <span class="err">)</span>
+        <span class="err">{</span>
+            <span class="err">form.elements[i].focus();</span>
+            <span class="err">window.alert(fields[k].error);</span>
+            <span class="err">return</span> <span class="err">false;</span>
+        <span class="err">}</span>
+    <span class="err">}</span>
+    <span class="err">return</span> <span class="err">true;</span>
+<span class="err">}</span>
+<span class="err">&lt;/script</span><span class="nt">&gt;</span>
+<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">onclick=</span><span class="s">"validForm('form1');"</span><span class="nt">&gt;</span>
+<span class="cp">&lt;?=hiddenInputElement('id', $method1Args['id']);?&gt;</span><span class="nt">&lt;br/&gt;</span>
+<span class="cp">&lt;?=textInputElement('name', $method1Args['name']);?&gt;</span><span class="nt">&lt;br/&gt;</span>
+<span class="cp">&lt;?=textInputElement('address', $method1Args['address']);?&gt;</span><span class="nt">&lt;br/&gt;</span>
+<span class="cp">&lt;?=textInputElement('email', $method1Args['email']);?&gt;</span><span class="nt">&lt;br/&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">value=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>
+從上面的程式碼可以看到同一份組態文件就可以為不同程式語言服務，並使分隔開的程式區塊能夠產生相同的結果 (在此例中是相同的資料驗證結果)。這裡只是牛刀小試，往往我們也會把資料庫的資料欄位訊息也寫在組態文件中，於是組態文件可以兼作資料庫表格的 schema ，再兼程式語言的 class 資料成員宣告，再兼種種你想得到的用途。
+</p>
+<p>
+總而言之， Configuration-driven development 的概念便是把原本散落在程式碼中的資料，以及以不同語言語法記述的重複資料內容，集合起來以一份中介的結構化文件儲存。一方面避免這些資料四處散佈難以管理；另一方面又可以為我們提供多種用途。
+</p>
+<p>
+Configuration-driven development 的概念可以說天生就是針對動態語言而出現的，因為許多動態語言的資料描述語法便具有結構性，如果將那些敘述獨立於程式碼以外，則它們就是一份完整的結構化文件。 JSON 就是其中一例。這些敘述既是一份結構化文件，同時又是程式語言的子集，因此在動態語言中幾乎不需要任何額外處理動作就能載入到系統中，可以輕量化實踐 Configuration-driven development 。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2012/Working%20with%20PHPUnit%2C%20part%202%20-%20%E6%92%B0%E5%AF%AB%E6%B8%AC%E8%A9%A6%E6%A1%88%E4%BE%8B.html">Working with PHPUnit3, part 2 - 撰寫測試案例</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2644922.html">http://blog.roodo.com/rocksaying/archives/2644922.html</a></div>

@@ -1,0 +1,65 @@
+---
+title: 處理表單複選項目, 於表單中使用陣列
+category: programming
+old-category: PHP
+tags: []
+---
+<div name="tags" class="tags">php_syntax</div>
+<p>
+HTML 表單傳送給 PHP 的資料， PHP 會自動儲存在全域陣列中，例如以 POST method 送出的表單資料便儲存在 <code>$_POST</code> 全域陣列，以 GET method 送出的表單資料儲存在 <code>$_GET</code> 全域陣列。如果我們為表單元件命名 (指派了 <code>name</code> 屬性) ，則可以表單元件名稱為陣列鍵值。例如表單有一個名稱為 "userAddress" 的文字輸入欄位 <code>&lt;input name="userAddress" type="text"/&gt;</code> ，且此表單以 POST method 送出，則 PHP 中可以 <code>$_POST['userAddress']</code> 取得使用者在此欄位中輸入的資料。上述是 PHP 處理表單資料的基本概念。
+</p>
+
+<!--more-->
+<p>
+然而當我們需要處理表單複選元件，如 checkbox 時，便會遇到一個問題，即同一組複選項目元件會使用相同的名稱，而傳回 PHP 後按上述的基本概念，我們只能取得使用者勾選的最後一個項目的資料，而無法取得使用者勾選的所有項目資料。
+</p>
+<p>
+為了測試本文所說的內容，先看一個表單測試的 php 程式，它的功用只是接收來自表單的資料，並將使用者輸入於名為 price 的表單元件之資料內容顯示在頁面上。
+</p>
+<fieldset>
+<legend>form.php</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'price'</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'price'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$price</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$price</span><span class="p">,</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">'price'</span><span class="p">];</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+接著下面展示包含複選項目元件 (checkbox) 的網頁表單內容，該表單中的複選項目 (price) 無法在 PHP 中正確取得， form.php 只會顯示使用者最後一個勾選項目的內容。
+</p>
+<fieldset>
+<legend>form1.html</legend>
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">action=</span><span class="s">"form.php"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;label&gt;&lt;input</span> <span class="na">name=</span><span class="s">"price"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">value=</span><span class="s">"0"</span><span class="nt">/&gt;</span>0<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label&gt;&lt;input</span> <span class="na">name=</span><span class="s">"price"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">value=</span><span class="s">"10"</span><span class="nt">/&gt;</span>10<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label&gt;&lt;input</span> <span class="na">name=</span><span class="s">"price"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">value=</span><span class="s">"50"</span><span class="err">"</span><span class="nt">/&gt;</span>50<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+</fieldset>
+
+<p>
+若欲正確取得複選項目元件的資料便需要告知 PHP 此表單元件為一資料集合的型式，亦即陣列型態， PHP 才會以陣列型態儲存使用者所勾選的項目資料。宣告表單元件為陣列型態的語法是在表單複選項目元件的名稱後添加一對方括號，例如 <code>price[]</code> ，如此 PHP 才會將 <code>$_POST['price']</code> 或 <code>$_GET['price']</code> 的型態設為可包含多個資料的陣列。而且只有被勾選的項目會回傳，所以 <code>$_POST['price']</code> 或 <code>$_GET['price']</code> 中的內容，就是使用者勾選的內容。
+</p>
+<fieldset>
+<legend>form2.html</legend>
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">action=</span><span class="s">"form.php"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;label&gt;&lt;input</span> <span class="na">name=</span><span class="s">"price[]"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">value=</span><span class="s">"0"</span><span class="nt">/&gt;</span>0<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label&gt;&lt;input</span> <span class="na">name=</span><span class="s">"price[]"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">value=</span><span class="s">"10"</span><span class="nt">/&gt;</span>10<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label&gt;&lt;input</span> <span class="na">name=</span><span class="s">"price[]"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">value=</span><span class="s">"50"</span><span class="err">"</span><span class="nt">/&gt;</span>50<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+上列網頁表單將複選項目的名稱由 <code>price</code> 改為 <code>price[]</code> ， PHP 就會將 <code>$_POST['price']</code> 定義為陣列型態，於是在 form.php 中便可正確顯示所有使用者勾選的項目。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2600683.html">http://blog.roodo.com/rocksaying/archives/2600683.html</a></div>

@@ -1,0 +1,145 @@
+---
+title: 網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案
+category: programming
+old-category: JavaScript
+tags: []
+---
+<div name="tags" class="tags">Tags: ajax json web2.0</div>
+<p>
+在 Web 2.0 的浪潮下，有愈來愈多的網路服務推出，如網路相簿、網路書籤、網路書櫃等等。大多數網路服務都有提供 Blog 使用的小工具 (或稱 Badge) ，從軟體設計的觀點來看，這些小工具才是我們在談的「網路服務」、「服務元件 (service compoent)」。
+</p>
+<p>
+我最近在玩網路書籤提供的這些服務元件，就我觀察這些服務元件主要分兩種形式：一、以一段固定的 JavaScript 程式碼輸出網頁內容；二、僅提供 XML/JSON 資料，讓使用者自己處理程式邏輯。這兩種形式各有限制。第一種包辦了資料和程式邏輯，使用者只需／只能用 CSS 調整外觀；而且因為包含了 JavaScript 的程式邏輯，所以不同服務者提供的服務元件放在同一個頁面時可能會相衝，有我無他、或者大家一起掛。第二種則受限於 XMLHttpRequest 的安全性限制，基本上不能做成純 JavaScript 的應用。
+</p>
+
+<!--more-->
+<p>
+我想了想，其實有一種介於這兩種型式的服務提供方案。我把這個方案提供給 Hemidemi 的管理者參考了，見 <a href="http://www.hemidemi.com/board/hemidemi.feedback/thread/50710">Hemidemi 建議區</a> 。我在這裡也敘述一下方案內容吧。
+</p>
+<p>
+我想到的解決方案介於上述提到的兩種形式之間，它是一段 JavaScript 程式碼，但它所提供的程式碼只是 JSON 資料的包裹。
+</p>
+<p>
+以 <a href="http://www.hemidemi.com/">Hemidemi</a> 目前提供的服務元件為例。 Hemidemi 提供了一項查詢指定網址有幾人收錄到書籤中的服務項目，為提供 RSS (XML) 文件的服務形式。先將網址以 MD5 雜湊法得出一字串，以該字串為 ID 組成查詢服務的 REST URL ，如<code>http://www.hemidemi.com/rss/bookmark/[md5(document.URL)]/users.xml</code> 。但這有兩個應用上的問題：
+</p>
+<ol>
+<li>ID 要用 MD5 函數計算。</li>
+<li>只提供的 XML 文件格式。</li>
+</ol>
+
+<h4>ID 要用 MD5 函數計算</h4>
+<p>
+乍看之下似乎不是什麼大問題，但是 JavaScript 目前並未內建 MD5 函數，所以我們不能簡單地建立純 JavaScript 的應用。雖然在 <a href="http://pajhome.org.uk/crypt/md5/">JavaScript MD5</a> 網頁中提供了一個採 BSD 軟體授權發佈的 JavaScript 的 MD5 實作函數可用，但對建立純 JavaScript 應用而言已經是一道關卡了。為了一個 MD5 函數，使用者通常得在 server 上實作應用工具，但不是每個使用者都會擁有 server 空間或虛擬主機，因此又形成了一道關卡。雖然有些使用者在自己的主機上實作並以自己的資源提供這類服務，但畢竟不是長遠之計。</p>
+
+<h4>只提供的 XML 文件格式</h4>
+<p>
+若欲用於純 JavaScript 應用之上，便只能透過 XMLHttpRequest 取回 XML 資料。但這又受限於 XMLHttpRequest 不能跨網域的安全性限制，所以又是一個難題。
+</p>
+
+<h4>JSON 資料包裹的解決方案</h4>
+<p>
+我想到的解決方案如前所述，是把 JSON 資料用一段 JavaScript 程式碼包裹起來的方案。同樣以 Hemidemi 的書籤收藏使用者查詢服務為例說明實踐細節。
+</p>
+<p>
+首先，Hemidemi 需要允許使用者用 JavaScript 內建的 <code>encodeURIComponent()</code> 計算網址得出 ID 。事實上， URL 本身就是一個 unique key ，而 <code>encodeURIComponent()</code> 計算出的字串只是比較長而已，不似 MD5 函數固定是 32 個字元長度。這不妨礙我們以之為 ID 組成查詢服務用的 REST URL。
+</p>
+<p>
+查詢服務則要回傳一段 JavaScript 程式碼，更精確的說，是一段包著 JSON 資料的 JavaScript 外層 (即 JSON資料包裹)。範例如下列：
+</p>
+<pre class="highlight"><code><span class="cm">/***
+Start of response code (JSON data with JavaScript shell)
+***/</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">Hemidemi</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/*If there is no object Hemidemi, new one.*/</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">Hemidemi</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="p">}</span>
+
+<span class="cm">/* Open object Hemidemi and add new property 'users'
+users 的內容跟 RSS 回傳的資料一樣，但格式是 JSON 。*/</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">Hemidemi</span><span class="p">.</span><span class="nx">users</span> <span class="o">=</span>
+<span class="p">{</span>
+    <span class="s1">'title'</span> <span class="p">:</span> <span class="s1">'書籤標題'</span><span class="p">,</span>
+    <span class="s1">'link'</span> <span class="p">:</span> <span class="s1">'http://example.com/'</span><span class="p">,</span>
+    <span class="s1">'description'</span> <span class="p">:</span> <span class="s1">'書籤說明、引述...'</span><span class="p">,</span>
+    <span class="s1">'ttl'</span> <span class="p">:</span> <span class="mi">40</span><span class="p">,</span>
+    <span class="s1">'lastBuildDate'</span> <span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+    <span class="s1">'items'</span> <span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s1">'title'</span><span class="p">:</span> <span class="s1">'標題xx'</span><span class="p">,</span>
+            <span class="s1">'author'</span><span class="p">:</span> <span class="s1">'收藏者1'</span><span class="p">,</span>
+            <span class="s1">'description'</span><span class="p">:</span> <span class="s1">'描述'</span><span class="p">,</span>
+            <span class="s1">'pubDate'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="s1">'guid'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="s1">'link'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="s1">'image'</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">'url'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+                <span class="s1">'title'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+                <span class="s1">'width'</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+                <span class="s1">'height'</span><span class="p">:</span> <span class="mi">60</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s1">'title'</span><span class="p">:</span> <span class="s1">'標題yy'</span><span class="p">,</span>
+            <span class="s1">'author'</span><span class="p">:</span> <span class="s1">'收藏者2'</span><span class="p">,</span>
+            <span class="s1">'description'</span><span class="p">:</span> <span class="s1">'描述'</span><span class="p">,</span>
+            <span class="s1">'pubDate'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="s1">'guid'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="s1">'link'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="s1">'image'</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">'url'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+                <span class="s1">'title'</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+                <span class="s1">'width'</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+                <span class="s1">'height'</span><span class="p">:</span> <span class="mi">60</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+
+<span class="p">}</span>
+<span class="p">;</span>
+<span class="cm">/***
+End of response code
+***/</span>
+</code></pre>
+
+<p>
+第11到48行的內容，純粹是一個 JSON 資料。這表示實踐此方案，首先應先實作提供 JSON 資料文件的服務元件。接著再以此為基礎實作一個將 JSON 資料包著 JavaScript 程式碼的回應內容就可以完成 JSON 資料包裹形式的服務元件。
+</p>
+<p>
+使用者的使用過程大致上只要在頁面中加上如下列的程式碼即可：
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">queryHemidemiUsersHandler</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'有 '</span> <span class="o">+</span> <span class="nx">Hemidemi</span><span class="p">.</span><span class="nx">users</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span> <span class="s1">' 人收藏此文章。'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">queryHemidemiUsers</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">restId</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">URL</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">restUrl</span> <span class="o">=</span> <span class="s1">'http://www.hemidemi.com/bookmark/'</span> <span class="o">+</span> <span class="nx">restId</span> <span class="o">+</span> <span class="s1">'/users.js'</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">restJs</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
+    <span class="nx">restJs</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'text/javascript'</span><span class="p">;</span>
+    <span class="nx">restJs</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">restUrl</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'head'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">restJs</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">intervalQueryHemidemiUsers</span> <span class="o">=</span> <span class="nx">setInterval</span><span class="p">(</span>
+        <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">Hemidemi</span><span class="p">.</span><span class="nx">users</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">intervalQueryHemidemiUsers</span> <span class="p">);</span>
+                <span class="nx">queryHemidemiUsersHandler</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="mi">100</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onload'</span><span class="p">,</span> <span class="nx">queryHemidemiUsers</span><span class="p">);</span>
+<span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="nx">queryHemidemiUsers</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+</code></pre>
+
+<p>
+關於動態載入外部 JavaScript 程式碼的細節請參考《<a href="{{ site.baseurl }}/archives/2007/Load%20and%20Execute%20JavaScript%20on%20Demand%2C%20by%20createElement.html">Load and Execute JavaScript on Demand, by createElement</a>》。 JSON 資料包裹形式的服務元件只完成資料的載入動作，不多做其他程式邏輯，所以可以確保不同服務元件的相容性，並保有讓使用者以 JavaScript 自行設計網頁應用的彈性。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88%2C%20Google%20%E7%9A%84%E6%96%B9%E5%BC%8F.html">網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案, Google 的方式</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/%E4%BB%A5%20PHP%20%E5%AF%A6%E8%B8%90%20HEMiDEMi%20JSONP%20-%20%E8%AA%B0%E6%94%B6%E8%97%8F_%E8%BF%B4%E9%9F%BF%E8%A8%8E%E8%AB%96%E6%9C%AC%E6%96%87.html">以 PHP 實踐 HEMiDEMi JSONP - 誰收藏/迴響討論本文</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/Ajax%20anti-patterns%20%E8%88%87%E5%80%8B%E4%BA%BA%E7%B6%93%E9%A9%97%E8%AB%87.html">Ajax anti-patterns 與個人經驗談</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2749975.html">http://blog.roodo.com/rocksaying/archives/2749975.html</a></div>

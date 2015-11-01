@@ -1,0 +1,71 @@
+---
+title: 以 REXML 將 CSV 文件轉換成 MS Excel 2k/XP XML 文件
+category: programming
+old-category: Ruby
+tags: []
+---
+<div name="tags" class="tags">Tags: ruby xml spreadsheet</div>
+<p>
+本文示範以 Ruby 標準庫 <a href="http://www.ruby-doc.org/stdlib/libdoc/rexml/rdoc/index.html">REXML</a> 實踐 MS Excel 2k/XP XML 文件之匯出工作。首先讀取一個 CSV 文件 <var>test.csv</var>，再以 REXML 建立一份 XML 文件實例，接著按 MS Excel 2k/XP 之 XML 文件結構，將自 CSV 讀取之資料存入 XML 文件實例，最後儲存為 <var>test.xml</var> 。該文件可以 MS Excel 2k/XP 讀取。
+</p>
+<p>
+關於 MS Excel 2k/XP XML 文件之相關訊息，請見《<a href="{{ site.baseurl }}/archives/2007/A%20note%20of%20creating%20XML%20document%20by%20SimpleXML.html">A note of creating XML document by SimpleXML</a>》。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="nb">require</span> <span class="s1">'CSV'</span>
+<span class="nb">require</span> <span class="s1">'iconv'</span>
+<span class="nb">require</span> <span class="s1">'rexml/document'</span>
+<span class="kp">include</span> <span class="no">REXML</span>
+
+<span class="n">sheets</span> <span class="o">=</span> <span class="p">[[]]</span>
+
+<span class="no">Iconv</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">,</span> <span class="s1">'big5'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">cd</span><span class="o">|</span>
+    <span class="no">CSV</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.csv'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">row</span><span class="o">|</span>
+        <span class="n">uRow</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">row</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">cell</span><span class="o">|</span>
+            <span class="n">uRow</span> <span class="o">&lt;&lt;</span> <span class="n">cd</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+        <span class="k">end</span>
+        <span class="n">sheets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">uRow</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="no">REXML</span><span class="o">::</span><span class="no">Document</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span>
+<span class="s1">'&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40"&gt;&lt;/Workbook&gt;'</span><span class="p">)</span>
+
+<span class="n">indexOfSheet</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sheets</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">sheet</span><span class="o">|</span>
+    <span class="c1">#&lt;Worksheet ss:Name="Sheet1"&gt;</span>
+    <span class="c1">#&lt;Table&gt;</span>
+    <span class="n">worksheetNode</span> <span class="o">=</span> <span class="no">Element</span><span class="p">.</span><span class="nf">new</span> <span class="s1">'Worksheet'</span>
+    <span class="n">worksheetNode</span><span class="p">.</span><span class="nf">attributes</span><span class="p">[</span><span class="s1">'ss:Name'</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sheet</span><span class="si">#{</span><span class="n">indexOfSheet</span><span class="o">+=</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="n">tableNode</span> <span class="o">=</span> <span class="no">Element</span><span class="p">.</span><span class="nf">new</span> <span class="s1">'Table'</span>
+    <span class="n">sheet</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">row</span><span class="o">|</span>
+        <span class="c1">#&lt;Row&gt;</span>
+        <span class="n">rowNode</span> <span class="o">=</span> <span class="no">Element</span><span class="p">.</span><span class="nf">new</span> <span class="s1">'Row'</span>
+        <span class="n">row</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">col</span><span class="o">|</span>
+            <span class="c1">#&lt;Cell&gt;&lt;Data ss:Type="Number"&gt;1&lt;/Data&gt;&lt;/Cell&gt;</span>
+            <span class="n">dataNode</span> <span class="o">=</span> <span class="no">Element</span><span class="p">.</span><span class="nf">new</span> <span class="s1">'Data'</span>
+            <span class="n">dataNode</span><span class="p">.</span><span class="nf">attributes</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span>
+            <span class="n">dataNode</span><span class="p">.</span><span class="nf">text</span> <span class="o">=</span> <span class="n">col</span>
+            <span class="n">cellNode</span> <span class="o">=</span> <span class="no">Element</span><span class="p">.</span><span class="nf">new</span> <span class="s1">'Cell'</span>
+            <span class="n">cellNode</span><span class="p">.</span><span class="nf">add_element</span> <span class="n">dataNode</span>
+            <span class="n">rowNode</span><span class="p">.</span><span class="nf">elements</span> <span class="o">&lt;&lt;</span> <span class="n">cellNode</span>
+        <span class="k">end</span>
+        <span class="n">tableNode</span><span class="p">.</span><span class="nf">elements</span> <span class="o">&lt;&lt;</span> <span class="n">rowNode</span>
+    <span class="k">end</span>
+    <span class="n">worksheetNode</span><span class="p">.</span><span class="nf">elements</span> <span class="o">&lt;&lt;</span> <span class="n">tableNode</span>
+    <span class="n">doc</span><span class="p">.</span><span class="nf">root</span><span class="p">.</span><span class="nf">add_element</span> <span class="n">worksheetNode</span>
+<span class="k">end</span>
+
+<span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.xml'</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">file</span><span class="o">|</span>
+    <span class="n">doc</span><span class="p">.</span><span class="nf">write</span> <span class="n">file</span>
+<span class="p">}</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2995613.html">http://blog.roodo.com/rocksaying/archives/2995613.html</a></div>

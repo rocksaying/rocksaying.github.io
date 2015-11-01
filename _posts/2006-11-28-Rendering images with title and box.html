@@ -1,0 +1,86 @@
+---
+title: Rendering images with title and box
+category: programming
+old-category: JavaScript
+tags: []
+---
+<p>
+我個人喜歡簡單、敏捷。因此當我在網頁文章中放置圖像 (image) 時，我希望透過 JavaScript 改變圖像的呈現方式，加上一個標題以及外框。標題自動從圖像的 'alt' 屬性中取得，當然啦，順便加上順序編號看起來就更正式了。
+</p>
+
+<!--more-->
+<p>
+An example to show that how to render images of page with title and box.
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">img</span> <span class="nx">src</span><span class="o">=</span><span class="s2">"http://www.google.com/intl/zh-TW_ALL/images/logo.gif"</span> <span class="nx">alt</span><span class="o">=</span><span class="s2">"Google"</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="nx">img</span> <span class="nx">src</span><span class="o">=</span><span class="s2">"http://tw.i4.yimg.com/i/tw/hp/spirit/yahoo_logo.gif"</span> <span class="nx">alt</span><span class="o">=</span><span class="s2">"Yahoo!"</span><span class="o">/&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">renderImage</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">box</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'div'</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">styleName</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span><span class="nx">box</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">styleName</span><span class="p">]</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">styleName</span><span class="p">];}</span>
+        <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="p">}</span>
+    <span class="kd">with</span> <span class="p">(</span><span class="nx">box</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">className</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">className</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">border</span> <span class="o">=</span> <span class="s1">'1px solid #FF0000'</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">padding</span> <span class="o">=</span> <span class="s1">'5px'</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">backgroundColor</span> <span class="o">=</span> <span class="s1">'#D3D3D3'</span><span class="p">;</span>
+        <span class="nx">style</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">width</span><span class="p">;</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">box</span><span class="p">,</span> <span class="k">this</span><span class="p">));</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'br'</span><span class="p">));</span>
+        <span class="nx">appendChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="s1">'Image.'</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">myIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s1">': '</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">alt</span><span class="p">)));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">images</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+    <span class="nx">i</span> <span class="o">&lt;</span> <span class="nb">document</span><span class="p">.</span><span class="nx">images</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+    <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">images</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span>
+<span class="p">{</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">myIndex</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>
+    <span class="cm">/*
+    If thisArg is not null nor undefined, the called function is
+    passed ToObject(thisArg) as the this value.
+    See also: ECMA-262 15.3.4.4
+    */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">img</span><span class="p">.</span><span class="nx">complete</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* 'complete' is not defined in W3C DOM but popular */</span>
+        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'already loaded'</span><span class="p">);</span>
+        <span class="nx">renderImage</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">img</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="cm">/*
+        'onload' and 'onerror' are not defined in W3C DOM but popular.
+        The W3C Way: (W3C DOM Level-2)
+            this.addEventListener('load', eventHandler, useCapture);
+            this.addEventListener('load', eventHandler, useCapture);
+        See also:
+            http://www.w3.org/TR/2000/REC-DOM-Level-2-Events-20001113/events.html
+        */</span>
+        <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">src</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="s1">' [alt='</span><span class="p">,</span><span class="k">this</span><span class="p">.</span><span class="nx">alt</span><span class="p">,</span><span class="s1">'] is loaded.'</span><span class="p">));</span>
+                <span class="nx">renderImage</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">onerror</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">src</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="s1">' [alt='</span><span class="p">,</span><span class="k">this</span><span class="p">.</span><span class="nx">alt</span><span class="p">,</span><span class="s1">'] can not be loaded.'</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}).</span><span class="nx">call</span><span class="p">(</span><span class="nx">img</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+
+<p>
+有些實作細節與瀏覽器有關。首先，我使用的屬性 'complete', 'onload', 'onerror' 都不是 W3C DOM 規範的屬性，但是非常普遍 (普及率幾乎是100%) 。程式中都有註明，請參考程式註解。
+</p>
+<p>
+其次，瀏覽器以非同步方式載入圖像，因此在調用 javascript 時，有些圖像可能已經下載完成，但有些還在下載甚至無法下載。因此應先檢查 'complete' 屬性，已完成者直接呼叫重繪函數，未完成者委派 'onload' 事件處理函數，由事件處理函數呼叫重繪函數。以 Firefox 為例，第一次載入時，所有圖像都會觸發 'onload' 事件；但當使用者透過上一頁、下一頁切換頁面時，則已載入且仍然被置於 cache 中的圖像， Firefox 會直接設定為已下載 (complete = true) 。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/Function.prototype.call%28%29%20and%20Function.prototype.apply%28%29.html">Function.prototype.call() and Function.prototype.apply()</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/Load%20and%20Execute%20JavaScript%20on%20Demand%2C%20by%20createElement.html">Load and Execute JavaScript on Demand, by createElement</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2530004.html">http://blog.roodo.com/rocksaying/archives/2530004.html</a></div>

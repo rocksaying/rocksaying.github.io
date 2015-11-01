@@ -1,0 +1,108 @@
+---
+title: How to use Borland C/C++ 5.5 Complier
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+Borland C/C++ 5.5 Compiler 是由 Inspire (前身是 Borland) 免費提供下載與使用的 C/C++ compiler 和相關工具 (我記得大約在 2000 年時就已經發佈這項免費下載的資訊)。檔案不大，下載包約 8.7MB ，但已包含了完整的 ANSI/ISO C/C++ 的核心，包括 STL (Standard Template Library) ，對 ANSI C++ 的支援涵蓋到 C99 的規範內容。就 C/C++ language and programming 教學用途而言，已是非常完整的工具。
+如果要開發應用軟體，其實也足夠，只是要自行下載與安裝各式 SDK (Software Development Kits) 罷了。
+</p>
+
+<!--more-->
+<h3>
+Get Borland C++ 5.5 Compiler
+</h3>
+<p>
+至 <a href="http://www.borland.com/downloads/download_cbuilder.html">http://www.borland.com/downloads/download_cbuilder.html</a> 取得。請下載 Complier (Version 5.5) 。如果你沒有除錯工具，建議一併下載 Turbo Debugger (Version 5.5) 。這個免費使用的 C/C++ Compiler 工具包中，包含了下列內容:
+</p>
+<blockquote>
+<cite><a href="http://community.borland.com/article/0,1410,20633,00.html">What is Included</a></cite>
+<h4>
+Borland C++ Command Line Tools
+</h4>
+<ul>
+    <li>Borland C++ Compiler v5.5 (bcc32)</li>
+    <li>Borland Turbo Incremental Linker (tlink32)</li>
+    <li>Borland Resource Compiler / Binder (brc32, brcc32)</li>
+    <li>C++ Win32 Preprocessor (cpp32)</li>
+    <li>ANSI/OEM character set file conversion utility (fconvert)</li>
+    <li>Import Definitions utility to provide information about DLLs (impdef)</li>
+    <li>Import Library utility to create import libraries from DLLs (implib)</li>
+    <li>Borland Turbo Dump to structurally analyse EXE, OBJ and LIB files (tdump)</li>
+    <li>Librarian for symbol case-conversion, creating extended libraries and modifying page size (tlib)</li>
+</ul>
+<h4>
+Included Libraries
+</h4>
+<ul>
+    <li>Borland C/C++ Runtime Library</li>
+    <li>ANSI/ISO Standard Template Library (STL)</li>
+</ul>
+</blockquote>
+<h3>
+Install and configure
+</h3>
+<p>
+下載回來的檔案 (可能叫 freecommandLinetools.exe ) 是一個自解壓縮檔，執行後指定解壓縮的路徑。
+我放在 C:\Program Files\Developer\BCC5.5.1 。
+另請參考 <a href="http://community.borland.com/article/0,1410,21205,00.html">Supplementary Information</a> ，
+這是安裝說明，需要留意的部份是 BCC32.CFG 和 ILINK32.CFG 的設定說明 。我個人的設定範例如下列。
+</p>
+
+<h4>
+bin\bcc32.cfg
+</h4>
+<p>
+See also: <a href="http://community.borland.com/article/0,1410,21205,00.html">Supplementary Information</a>
+</p>
+<pre class="highlight"><code>-I"C:\Program Files\Developer\BCC5.5.1\Include"
+-L"C:\Program Files\Developer\BCC5.5.1\Lib"
+</code></pre>
+
+
+<h4>
+bin\ilink32.cfg:
+</h4>
+<p>
+See also: <a href="http://community.borland.com/article/0,1410,21205,00.html">Supplementary Information</a>
+</p>
+<pre class="highlight"><code>-L"C:\Program Files\Developer\BCC5.5.1\Lib"
+</code></pre>
+
+
+<h4>
+bcc32.bat
+</h4>
+<p>
+BCC32.EXE 預設會在編譯後主動執行 ILINK32.EXE 產生執行檔。由於我並未將 BCC 5.5 command line tools 的路徑置於 PATH 環境參數中，所以我編輯了 bcc32.bat 取代直接執行 BCC32.EXE ，以免 BCC32.EXE 無法執行 ILINK32.EXE 。 -v 和 -y 兩參數是為了配合 Turbo Debugger 進行原始碼除錯之用。
+</p>
+<pre class="highlight"><code>@echo off
+set PATH=%PATH%"C:\Program Files\Developer\BCC5.5.1\Bin";
+bcc32.exe -v -y %1 %2 %3 %4 %5 %6 %7 %8 %9
+</code></pre>
+
+
+<h4>
+td32.bat
+</h4>
+<p>
+Turbo Debugger 在中文環境下執行時，會因為邊框而造成畫面紊亂。所以我編輯了 td32.bat ，以 chcp 指令切換到 437 字碼頁再執行 TD32.EXE 。
+</p>
+<pre class="highlight"><code>@echo off
+chcp 437
+"C:\Program Files\Developer\BCC5.5.1\Bin\TD32.EXE" "%1"
+</code></pre>
+
+
+<h3>
+Help documents
+</h3>
+<p>
+在 <a href="http://community.borland.com/article/0,1410,20997,00.html">Using C++Builder Compiler</a> 一文中列出 BCC 5.5 所附各項工具的用途說明以及 compiler (BCC32.EXE) 的參數說明。在安裝檔案底下的 \Helo\bcb5tool.hlp 中，有更詳細的工具參數說明。而關於 C/C++ 語言本身的參考資訊，請下載 <a href="http://info.borland.com/techpubs/bcppbuilder/v5/updates/std.html">C++Builder 5 core Help files (b5std.zip)</a>，其中有 C/C++ 語法, C Standard Libraries, C++ STL 的函數參考資訊，可搭配程式編輯器 (如 PSPad) 使用。在程式編輯器中，請把輔助說明檔指向 BCB5.HLP ，這是總目錄。不過我個人較喜歡看這個版本: <a href="http://onnerby.se/~daniel/chm/">CHM Help Files</a>
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/Borland%20C%2B%2B%205.5%20Compiler%20with%20PSPad.html">Borland C   5.5 Compiler with PSPad</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2112330.html">http://blog.roodo.com/rocksaying/archives/2112330.html</a></div>

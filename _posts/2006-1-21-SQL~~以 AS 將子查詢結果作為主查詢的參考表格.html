@@ -1,0 +1,30 @@
+---
+title: SQL~~以 AS 將子查詢結果作為主查詢的參考表格
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<p>
+在子查詢中，作每一訂單的個別商品銷售數量與單項價格之加總 (求個別訂單下個別商品銷售總金額) ，將子查詢結果以 AS 命名為新表格 (只存在於查詢期間的表格)，做主查詢的參考表格後，再求總店銷售額。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="k">select</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">shop</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pluno</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pname</span><span class="p">,</span> 
+<span class="k">sum</span><span class="p">(</span><span class="n">pos324_tamt</span><span class="p">.</span><span class="n">qty</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_qty</span><span class="p">,</span>
+<span class="k">sum</span><span class="p">(</span><span class="n">pos324_tamt</span><span class="p">.</span><span class="n">tamt</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_tamt</span>
+<span class="k">from</span> <span class="p">(</span>
+    <span class="k">select</span> <span class="n">pos324</span><span class="p">.</span><span class="n">shop</span><span class="p">,</span> <span class="n">pos104</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">pos116</span><span class="p">.</span><span class="n">pluno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">pname</span><span class="p">,</span> <span class="n">pos324</span><span class="p">.</span><span class="n">qty</span><span class="p">,</span> <span class="p">(</span><span class="n">pos324</span><span class="p">.</span><span class="n">qty</span><span class="o">*</span><span class="n">pos324</span><span class="p">.</span><span class="n">sale_price</span><span class="p">)</span> <span class="k">as</span> <span class="n">tamt</span> <span class="k">from</span> <span class="n">pos324</span> 
+    <span class="k">inner</span> <span class="k">join</span> <span class="p">(</span><span class="n">pos116</span> <span class="k">inner</span> <span class="k">join</span> <span class="n">pos110</span> <span class="k">on</span> <span class="n">pos116</span><span class="p">.</span><span class="n">pluno</span> <span class="o">=</span> <span class="n">pos110</span><span class="p">.</span><span class="n">pluno</span><span class="p">)</span> <span class="k">on</span> <span class="n">pos324</span><span class="p">.</span><span class="n">pluno</span> <span class="o">=</span> <span class="n">pos116</span><span class="p">.</span><span class="n">pluno</span> 
+    <span class="k">inner</span> <span class="k">join</span> <span class="n">pos104</span> <span class="k">on</span> <span class="n">pos324</span><span class="p">.</span><span class="n">shop</span> <span class="o">=</span> <span class="n">pos104</span><span class="p">.</span><span class="n">shop</span>
+<span class="k">where</span> <span class="n">pos324</span><span class="p">.</span><span class="n">ecrdate</span> <span class="o">&gt;=</span> <span class="s1">'20060101'</span> <span class="k">and</span> <span class="n">pos324</span><span class="p">.</span><span class="n">ecrdate</span> <span class="o">&lt;=</span> <span class="s1">'20060119'</span><span class="p">)</span> <span class="k">as</span> <span class="n">pos324_tamt</span>
+<span class="k">group</span> <span class="k">by</span> <span class="n">pos324_tamt_shop</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pluno</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pname</span>
+<span class="k">order</span> <span class="k">by</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">shop</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pluno</span>
+ 
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/SQL99%20%E4%B8%AD%E5%8F%96%E4%BB%A3%E5%AD%90%E6%9F%A5%E8%A9%A2%E8%A1%A8%E6%A0%BC%E7%9A%84%E5%8A%9F%E8%83%BD%20-%20CTE%20%28Common%20Table%20Expression%29.html">SQL99 中取代子查詢表格的功能 - CTE (Common Table Expression)</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/%E5%88%86%E7%B5%84%E7%B5%B1%E8%A8%88%E7%9A%84%E4%BA%8C%E7%A8%AE%E6%9F%A5%E8%A9%A2%E6%95%98%E8%BF%B0.html">sql</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1031693.html">http://blog.roodo.com/rocksaying/archives/1031693.html</a></div>

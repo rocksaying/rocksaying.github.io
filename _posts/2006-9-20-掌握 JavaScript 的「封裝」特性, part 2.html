@@ -1,0 +1,159 @@
+---
+title: 掌握 JavaScript 的「封裝」特性, part 2
+category: programming
+old-category: JavaScript
+tags: [javascript,繼承,oop]
+---
+<p>
+續前文「<a href="{{ site.baseurl }}/archives/2006/%E6%8E%8C%E6%8F%A1%20JavaScript%20%E7%9A%84%E3%80%8C%E5%B0%81%E8%A3%9D%E3%80%8D%E7%89%B9%E6%80%A7%2C%20part%201.html">掌握 JavaScript 的封裝特性, part 1</a>」。
+第一部份已經說明了 ECMAScript 封裝特性的大部份內容。大多數情形，我們都是按照第一部份的範例程式的格式撰寫。將 private member 寫在 function 定義之中，將存取 private member 的 public method 一同寫在 function 定義之中。至於其他 public member/method 則藉由 prototype property 寫在 function 定義之外 。
+然而 ECMAScript 的語法提供我們更大的運用彈性。
+</p>
+
+<!--more-->
+<h4>
+Sample Code:
+</h4>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text/javascript'</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">B</span><span class="p">(</span><span class="nx">initValue</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">getX</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">x</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">var</span> <span class="nx">setX</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">x</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nx">initValue</span><span class="p">.</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">setX</span><span class="p">(</span><span class="nx">initValue</span><span class="p">.</span><span class="nx">x</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setX</span> <span class="o">=</span> <span class="nx">setX</span><span class="p">;</span>
+
+    <span class="kd">function</span> <span class="nx">pm</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">setX</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'pm is a private method'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">B</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="nx">B</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">B</span><span class="p">(</span> <span class="p">{</span><span class="s1">'a'</span><span class="p">:</span><span class="mi">11</span><span class="p">,</span><span class="s1">'b'</span><span class="p">:</span><span class="mi">22</span><span class="p">,</span> <span class="s1">'x'</span><span class="p">:</span><span class="mi">9</span><span class="p">}</span> <span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">y</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'b.y is defined! b.y = '</span> <span class="o">+</span> <span class="nx">b</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'b.y is undefined!'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">z</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'b.z is defined! b.z = '</span> <span class="o">+</span> <span class="nx">b</span><span class="p">.</span><span class="nx">z</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'b.z is undefined!'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">B</span><span class="p">.</span><span class="nx">setY1</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">B</span><span class="p">.</span><span class="nx">getY1</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Call b.getY1(), result is '</span> <span class="o">+</span> <span class="nx">b</span><span class="p">.</span><span class="nx">getY1</span><span class="p">());</span>
+<span class="p">}</span>
+<span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'b.getY1 is not a method/function!'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Call B.getY1(), result is '</span> <span class="o">+</span> <span class="nx">B</span><span class="p">.</span><span class="nx">getY1</span><span class="p">());</span>
+<span class="p">}</span>
+<span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'B.getY1 is not a method/function!'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">stringSetY</span> <span class="o">=</span> <span class="s1">'function(v) {this.y = v; return this;}'</span><span class="p">;</span>
+<span class="cm">/*
+B.prototype.setY2 = function(v) {
+    this.y = v;
+    return this;
+}*/</span>
+<span class="nx">B</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">setY2</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="nx">stringSetY</span><span class="p">);</span>
+
+<span class="nx">B</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getY2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Call b.getY2(), result is '</span> <span class="o">+</span> <span class="nx">b</span><span class="p">.</span><span class="nx">getY2</span><span class="p">());</span>
+<span class="p">}</span>
+<span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'b.getY2 is not a method/function!'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Call B.getY2(), result is '</span> <span class="o">+</span> <span class="nx">B</span><span class="p">.</span><span class="nx">getY2</span><span class="p">());</span>
+<span class="p">}</span>
+<span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'B.getY2 is not a method/function!'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span> <span class="nx">b</span><span class="p">.</span><span class="nx">setY2</span><span class="p">(</span><span class="mi">123</span><span class="p">).</span><span class="nx">getY2</span><span class="p">()</span> <span class="p">);</span>
+
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span></code></pre>
+
+
+<h4>
+初始化參數列的最佳作法
+</h4>
+<p>
+請一併注意第 1 行和第 32 行。第 1 行敘述建構者 (constructor) 及初始化參數。有 C++/C#/Java 經驗的 programmer ，傳統上會配合初始化參數的需求而寫下多組參數個數不一的建構函數。但在 ECMAScript 中，這不是最佳作法。
+配合 ECMAScript 的彈性，最佳作法是只寫下一個參數，調用時再將需要用到的初始狀態值集合成一個「個體」傳遞給函數。這就是第 32 行敘述的意義。該行中一共設定了三組狀態及初始值，即 <var>a = 11, b = 22, x = 9</var> ，不須理會順序，也不須理會建構者是否需要。而建構者則須判斷調用者是否提供了某狀態的初始值，即第 15-17 行敘述的意義。在許多動態語言中都可如此運用。
+</p>
+
+<h4>
+Private Method
+</h4>
+<p>
+前文提到 public method 的寫法，而第 10-13, 21-24 行就是 private method 的寫法了。在 B function object 中定義 setX, pm 兩個 function object 且不指派為 property ，則 setX/pm function object 就成為 private method ，只能被同樣在 B function object 中定義的其他成員所調用，例如第 22 行就是在 pm function 中調用同一 scope 中的 setX function 。
+第 10 行的語法或許有些古怪，但對 ECMAScript 而言完全合乎語法。該行宣告了一個變數名稱 setX ，以及定義了一個匿名函數 (anonymous function) ，並立即將此匿名函數指派給變數名稱 setX 。第 16, 22 行證實這種敘述合乎語法和語意。第 19 行中又把此匿名函數藉由變數 setX 指派給 setX property ，使得該匿名函數成為 public method 。
+</p>
+
+<h4>
+Unshared Property of Function Object
+</h4>
+<p>
+第 29,30 兩行的敘述會對初學者造成混淆。 B function object 本身就是 Function object 的實例 (instance) ，因此它除了繼承而來的 prototype property 以外，也可擁有私有的 property 。
+前文中也已提到，透過 prototype property 所指派的成員，是被參考同一條 prototype chain (<span class="Onote">ECMA-262 section 4.2.1 "Objects"</span>) 的個體所共享，也就是會被繼承。所以第 34-46 行的結果顯示了 b 個體自 B.prototype.y 繼承了 y property ，但沒有繼承到 z property ，因為 B.z 是 B 的私有 property 。
+第 48-67 行的結果，同樣是定義了兩個 B 的私有 method (setY1,getY1) ，而未為 b 所繼承。不過第 63 行顯示「 B.y 未定義」此一個令人訝異的結果，但這是 ECMA-262 的規範內容 (<span class="Onote">ECMA-262 section 4.2.1 "Objects"</span>)。當 prototype 指向自己時，就不會從 prototype 搜尋 property 。
+</p>
+
+<h4>
+Dynamic Method
+</h4>
+<p>
+第 69-79 行則展示 ECMAScript 允許隨時增加新的 public method 的特性。在第 81-86 行中顯示，即便 b 個體是在增加新的 public method 之前就已配置，仍然可以調用。此例中更進一步展示了 method 的內容可以利用 <code>eval()</code> 動態決定 (<span class="Onote">此方法不適用於 M$ IE5/IE6 。</span>)。
+</p>
+
+<h4>
+Return this
+</h4>
+<p>
+最後要提的是一個封裝上的小技巧，凡是沒有需要特定回傳值的 method ，都應該傳回 this 。這可以讓我們串接多個 method ，如第 94 行所示。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/%E5%BE%9E%20XML%20%E7%94%A2%E7%94%9F%20JSON%20%E8%B3%87%E6%96%99%E5%8F%8A%E6%96%B9%E6%B3%95%E7%9A%84%E5%B0%81%E8%A3%9D.html">從 XML 產生 JSON 資料及方法的封裝</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2175301.html">http://blog.roodo.com/rocksaying/archives/2175301.html</a></div>

@@ -1,0 +1,70 @@
+---
+title: Comment~~該不該用 while 檢查 readyState
+category: programming
+old-category: JavaScript
+tags: [xmlhttprequest,ajax,非同步,thread]
+---
+<div class="tags" style="display:none">xmlhttprequest ajax 非同步 thread</div>
+<p>
+在 AJAX 中，用 while 檢查 readyState 是同步模式的做法。這將使整個程式陷在 while 迴圈中，直到 readyState 的狀態符合脫離迴圈的條件為止。最明顯的缺點是頻繁地執行檢查動作，造成程式負載提高。而且這實際上就是同步模式，實作上，還不如明確指定以同步模式執行，即指定 XmlHttpRequest.open() 的第三個參數為 false ，反而較有效率。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">CreateHttpRequest</span><span class="p">()</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="k">try</span> <span class="p">{</span>
+  		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+  		<span class="c1">// for almost all browsers. (Maybe included M$IE7)</span>
+	<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE</span><span class="p">){</span>
+  		<span class="k">try</span> <span class="p">{</span>
+    		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Msxml2.XMLHTTP"</span><span class="p">);</span>
+  		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE2</span><span class="p">)</span> <span class="p">{</span>
+    		<span class="k">try</span> <span class="p">{</span>
+      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Microsoft.XMLHTTP"</span><span class="p">);</span>
+    		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">NotSupported</span><span class="p">)</span> <span class="p">{</span>
+      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    		<span class="p">}</span>
+  		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">HttpRequest</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<h5>
+同步模式範例。
+</h5>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">CreateHttpRequest</span><span class="p">();</span>
+<span class="nx">request</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"test.xml"</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+<span class="nx">request</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+
+<span class="c1">// document loaded</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'test.xml loaded.'</span><span class="p">);</span>
+ 
+</code></pre>
+
+<h5>
+非同步模式範例。
+</h5>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">CreateHttpRequest</span><span class="p">();</span>
+<span class="nx">request</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"test.xml"</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+<span class="nx">request</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+
+<span class="k">while</span><span class="p">(</span><span class="nx">request</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//do nothing...</span>
+<span class="p">}</span>
+
+<span class="c1">// document loaded</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'test.xml loaded.'</span><span class="p">);</span>
+</code></pre>
+
+<p>
+在非同步模式下，最佳實作方式不是去「檢查 readyState 的狀態」，而是去「等待 readyState 的改變事件」。所以要為 XmlHttpRequest.onreadystatechange  指派處理函數，並在調用 XmlHttpRequest.open() 時，指派第三個參數為 true (此亦為預設值)，即啟用非同步模式。如此一來，瀏覽器就會另外產生一個 thread 執行 send() ，而在 state 改變時，喚起 master thread 的處理函數。
+</p>
+<p>
+JavaScript 配合 XmlHttpRequest ，透過事件驅動模式，即可讓我們運用 multi-threads 的工作模式。和以往在 C/C++ 中調用 pthread functions 的繁複過程相比，實在是簡單易用得太多了。喔，具有這種經驗的 C/C++ programmer 一定了解非同步工作模式的背後，隱藏著足以獨立成冊的實作細節。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/Ajax%20anti-patterns%20%E8%88%87%E5%80%8B%E4%BA%BA%E7%B6%93%E9%A9%97%E8%AB%87.html">Ajax anti-patterns 與個人經驗談</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2086597.html">http://blog.roodo.com/rocksaying/archives/2086597.html</a></div>

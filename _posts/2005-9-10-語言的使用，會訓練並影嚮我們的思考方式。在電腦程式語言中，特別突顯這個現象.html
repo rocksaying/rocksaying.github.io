@@ -1,0 +1,78 @@
+---
+title: 語言的使用，會訓練並影嚮我們的思考方式。在電腦程式語言中，特別突顯這個現象
+category: reading
+old-category: 閱讀隨筆
+tags: [邏輯,維根斯坦]
+---
+<div class="tags" style="display:none">Tags: 邏輯 維根斯坦</div>
+<p>
+有人拿著一道程式語言的題目來問我如何解？我想了一下解法，再看了一下他原來的解法，發現語言的使用，會訓練並影嚮我們的思考方式。在電腦程式語言中，特別突顯這個現象。例如，一個熟悉組合語言的人 (例如我)，在處理下面這個問題時，就算同樣用 C 語言，他的答案就和一個不曾使用過組合語言的人 (我朋友) 完全不同。
+</p>
+
+<!--more-->
+<p>
+問題: 將10進位數字表示文字轉換成16進位數字表示文字。例: 輸入 255 ，輸出 0xFF 。讓我們看看一個用過組合語言的人，是如何寫出答案 (就是我寫的)。
+</p>
+
+<h4>/* C Language */</h4>
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">bytes</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">HEX</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="o">*</span><span class="n">pHEX</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">HEX_TABLE</span> <span class="o">=</span> <span class="s">"0123456789ABCDEF"</span><span class="p">;</span>
+
+    <span class="cm">/*
+    本例只換算32bit整數。
+
+    透過適當的字串轉數值的動作，下面的方式經過簡單地
+    套上另一個迴圈後，可以處理無限大的數字。
+    (字串轉換後的數值，放在 int 陣列中，並回傳總 bytes 。)
+    */</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Usage: %s octNumber</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">sscanf</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">"%d"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Input: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+
+    <span class="n">bytes</span> <span class="o">=</span> <span class="kt">size_t</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">pHEX</span> <span class="o">=</span> <span class="n">HEX</span><span class="p">,</span> <span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">n</span> <span class="o">&amp;&amp;</span> <span class="n">len</span> <span class="o">&lt;</span> <span class="n">bytes</span><span class="p">;</span> <span class="o">++</span><span class="n">len</span><span class="p">,</span> <span class="o">++</span><span class="n">pHEX</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span> <span class="p">)</span> <span class="p">{</span>
+  	   <span class="o">*</span><span class="n">pHEX</span> <span class="o">=</span> <span class="n">HEX_TABLE</span><span class="p">[</span><span class="n">n</span> <span class="o">&amp;</span> <span class="mh">0xF</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="o">*</span><span class="n">pHEX</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
+    <span class="cm">/* 現在儲存的字串，是倒過來表示的，接下來將頭尾對調。 */</span>
+
+    <span class="n">len</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">HEX</span><span class="p">);</span>
+
+    <span class="k">for</span><span class="p">(</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">len</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">f</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">len</span><span class="o">/</span><span class="mi">2</span><span class="p">);</span> <span class="n">f</span><span class="o">++</span><span class="p">,</span> <span class="n">r</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+    	<span class="n">HEX</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">^=</span> <span class="n">HEX</span><span class="p">[</span><span class="n">r</span><span class="p">];</span> <span class="cm">/*swap HEX[f], HEX[r] */</span>
+    	<span class="n">HEX</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">^=</span> <span class="n">HEX</span><span class="p">[</span><span class="n">f</span><span class="p">];</span>
+    	<span class="n">HEX</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">^=</span> <span class="n">HEX</span><span class="p">[</span><span class="n">r</span><span class="p">];</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Output: 0x%s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">HEX</span><span class="p">);</span>
+    <span class="cm">/*END*/</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+我是直接用遮罩的方式，再查表取字，以位元運算為主，這是組合語言式的正統做法。而我朋友是用數學換算，那似乎是數學式的正統做法。從計算機原理來看，我的方法最佳。在此無意說明計算機原理，僅討論語言與思維方式。兩種方法毫無疑問地都是邏輯結構 (不論數學或是電腦程式語言，這是語言本身的限定) ，但符號型式卻相差很大，這是因為語言使用上的特性，訓練並影嚮了我們的思維。
+</p>
+<p>
+組合語言的使用，訓練了我對16進位數值與位元運算的思考習慣。一般數學，並不是這樣教人演算的。以前還有個數學研究所的人，問過我「超長整數」 (超過 unsigned long long 範圍的數) 相加的 C 語言程式怎麼寫。我一看他的構想就知道他還沒擺脫數學思考，我告訴他這不能直接用數值 (內建數值型態) 去做，要用字串儲存數，一字元對一字元地相加與進位。其實用過組合語言的話，非常快就想通了 (用組合語言寫更快)。
+</p>
+<p>
+我數學不好，所以有個怪僻，只要有人拿什麼函數模型來請我幫他寫出電腦程式，我就會要他先把模型中的所有運算過程 (特別是微積分的) ，全部轉成只有加減乘除及邏輯運算的型式 (連指數、對數都不能用) ，我才能幫他寫程式。幾乎每個人都被這要求打退堂鼓。我數學不好，不了解原因。有任何數學好的人，可以告訴我這要求很難做到嗎？
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2005/Re~%20%E8%AA%9E%E8%A8%80%E7%9A%84%E4%BD%BF%E7%94%A8%EF%BC%8C%E6%9C%83%E8%A8%93%E7%B7%B4%E4%B8%A6%E5%BD%B1%E5%9A%AE%E6%88%91%E5%80%91%E7%9A%84%E6%80%9D%E8%80%83%E6%96%B9%E5%BC%8F%E3%80%82.html">Re: 語言的使用，會訓練並影嚮我們的思考方式。</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/467296.html">http://blog.roodo.com/rocksaying/archives/467296.html</a></div>

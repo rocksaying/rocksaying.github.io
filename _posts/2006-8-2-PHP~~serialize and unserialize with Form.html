@@ -1,0 +1,118 @@
+---
+title: PHP~~serialize and unserialize with Form
+category: programming
+old-category: PHP
+tags: [json]
+---
+<p>
+使用 PHP 的 serialize, compress 及 encode 函數，將 serialized object 儲存在網頁表單中。有 ASP.Net 使用經驗者，這即是 ViewState 的原理。
+</p>
+
+<!--more-->
+<h3>概論</h3>
+<p>
+PHP5 內建了一對 serialize 函數，即 serialize()/unserialize() ，可以將 object (a simple variable, an array, or an object which implement __sleep() method) 以特定字串形式儲存 (serialization)。此外，也可以用 JSON 形式，但需要安裝 php-json extension 才可支援。安裝 php-json 後，可用 json_encode()/json_decode() 進行 serialization 。
+</p>
+<p>
+接下來，考慮到資料文字儲存在網頁時的傳送安全性以及儲存空間，再對 serialized object 進行資料壓縮及傳送編碼。
+</p>
+<p>
+PHP 有兩組簡便的資料壓縮函數，即採用 ZLIB 壓縮格式的 gzcompress()/gzuncompress 和採用 DEFLATE 壓縮格式的 gzdeflate()/gzinflate() 。而 gzencode() 是前兩種壓縮格式的資料字串再加上 GZip file header 。我們並不需要 GZip file header ，在此不使用。由於 serialized object 係由一般文字組成，而 DEFLATE 壓縮格式對一般文字的壓縮率較佳，故採用 gzdeflate()/gzinflate() 。
+</p>
+<p>
+壓縮後的字串，包含 binary 資料，直接儲存在網頁時，會破壞頁面結構，所以必須再加以編碼。 PHP 提供 MIME 的 base64 函數 base64_encode()/base64_decode() ， base64 編碼格式只包含 A-Z,0-9, +, / 字元，不會破壞網頁的 HTML 語法，可安全地將資料儲存於網頁中。通常，我們利用網頁表單的隱藏欄位 (hidden input  element in form) 儲存 serialized object ，以便隨著表單的提交送回 server 。
+</p>
+<h3>範例一</h3>
+<p>
+綜合以上說明，一個簡單的範例如下:
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$o</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="k">for</span><span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$o</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$i</span><span class="o">*</span><span class="mi">100</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$o</span> <span class="o">=</span> <span class="nb">unserialize</span><span class="p">(</span> <span class="nb">gzinflate</span><span class="p">(</span> <span class="nb">base64_decode</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">])</span> <span class="p">)</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">echo</span> <span class="s1">'&lt;pre&gt;'</span><span class="p">;</span>
+<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$o</span><span class="p">);</span>
+<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'Length of serialized object: '</span><span class="p">,</span> <span class="nb">strlen</span><span class="p">(</span><span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">),</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'Length of serialized object compressed by deflate: '</span><span class="p">,</span>
+    <span class="nb">gzdeflate</span><span class="p">(</span><span class="nb">strlen</span><span class="p">(</span><span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">)),</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'Length of serialized object compressed by zlib: '</span><span class="p">,</span>
+    <span class="nb">gzcompress</span><span class="p">(</span><span class="nb">strlen</span><span class="p">(</span><span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">)),</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'In most case, the length of data compressed by deflate will shorter than compressed by zlib.&lt;br/&gt;'</span><span class="p">;</span>
+
+<span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nb">base64_encode</span><span class="p">(</span> <span class="nb">gzdeflate</span><span class="p">(</span> <span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">)</span> <span class="p">)</span> <span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;form&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"serialized_obj"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?=</span><span class="nv">$serialized_obj</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;button</span> <span class="na">name=</span><span class="s">"postback"</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+
+<h3>應用 JSON </h3>
+<p>
+如果有需要利用 JavaScript 強化表單使用介面時，則可改用 json_encode()/json_decode() ，兼顧 server-side 的 PHP 及 client-side 的 JavaScript 。使用時須注意，根據 JSON 的規範，必須使用 UTF-8 字元編碼，故在非 UTF-8 環境下時，需先用 iconv() 將非 UTF-8 字元轉換成 UTF-8 字元。
+</p>
+<p>
+最後要留意的事項是 magic_quotes_gpc 的影嚮。儲存在網頁表單中的 serialized object ，在提交回 server 時，若 magic_quotes_gpc 設定為 On ，則 PHP 會主動在 serialized object 的資料內容中加上必要的斜線字元 (slash, \) 。必須以 stripslashes() 將之去除，才可以 unserialization 。細心的人會注意到，在範例一，並沒有加上 stripslashes() 的動作。這並非失誤。因為範例一最後儲存的是 base64_encode() 的編碼字串，而這種格式的字串中，並未包含任何會被加上斜線字元的字元。亦即回傳的資料內容並不會受到 magic_quotes_gpc 的影嚮，所以並不需要 stripslashes() 。
+</p>
+<h3>範例二</h3>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$o</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="k">for</span><span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$o</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$i</span><span class="o">*</span><span class="mi">100</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span> <span class="nb">get_magic_quotes_gpc</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nb">stripslashes</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="nv">$o</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s1">'/\"/'</span><span class="p">,</span> <span class="s2">"'"</span><span class="p">,</span> <span class="nv">$serialized_obj</span><span class="p">)</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">echo</span> <span class="s1">'&lt;pre&gt;'</span><span class="p">;</span>
+<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$o</span><span class="p">);</span>
+<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
+<span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nb">json_encode</span><span class="p">(</span> <span class="nv">$o</span> <span class="p">);</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;select</span> <span class="na">id=</span><span class="s">"DropDownList1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;/select&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"serialized_obj"</span> <span class="na">name=</span><span class="s">"serialized_obj"</span> <span class="na">type=</span><span class="s">"hidden"</span>
+        <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?=</span><span class="nb">preg_replace</span><span class="p">(</span><span class="s2">"/'/"</span><span class="p">,</span> <span class="s1">'"'</span><span class="p">,</span> <span class="nv">$serialized_obj</span><span class="p">)</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;button</span> <span class="na">name=</span><span class="s">"postback"</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span><span class="err">
+YAHOO.util.Event.addListener(
+    window,
+    "load",
+    function() {
+        var o = </span><span class="cp">&lt;?=</span><span class="nv">$serialized_obj</span><span class="cp">?&gt;</span><span class="p">;</span>
+        <span class="c1">//var o = eval( '('+document.getElementById('serialized_obj').value()+')' );</span>
+        <span class="kd">var</span> <span class="nx">list1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'DropDownList1'</span><span class="p">);</span>
+        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">list1</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="nx">o</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> <span class="nx">i</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">);</span>
+<span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/PHP~~JSON%20in%20PHP.html">PHP::JSON in PHP</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/PHP~~Form%20Serializer%20Class.html">PHP:: Form Serializer Class</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1964361.html">http://blog.roodo.com/rocksaying/archives/1964361.html</a></div>

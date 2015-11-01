@@ -1,0 +1,89 @@
+---
+title: PHP~~分析資料輸入欄位，並轉成 SQL 查詢字句
+category: programming
+old-category: PHP
+tags: []
+---
+<p>
+在表單中，可讓使用者查詢指定的門市代號。門市代號全為數字，以空白或逗點分隔各門市代號，並可使用連字符號 (-) 表示從哪個門市到哪個門市。例如輸入 000-010 表示查詢從 000到010 的門市。又如輸入 000,005, 010-020 ，則表示查詢 000 、005 以及從 010 到 020 的門市。解析輸入字串，轉成 SQL 查詢語法的一部份。
+</p>
+
+<!--more-->
+<h4>使用 PHP</h4>
+<p>
+利用 Regex (Regular Expression, 規則表述法) 的替換功能，即可達成要求。
+</p>
+
+<pre class="highlight"><code>function parse_shop_string($shops) {
+	if(empty($shops))
+		return "";
+/*
+分離 單店 與 區間 表示。
+s1 = 單店
+s2 = 區間
+
+ex: shops = "000,003-005, 010 020, 230-240 301"
+
+s1 = Array ( [0] =&gt; 000 [1] =&gt; 010 [2] =&gt; 020 [3] =&gt; 301 )
+s2 = Array ( [0] =&gt; BW_003_005_END [1] =&gt; BW_230_240_END [2] =&gt; )
+
+query_string = "(_TABLE.shop = '000' or _TABLE.shop = '010' or _TABLE.shop = '020' or _TABLE.shop = '301' or _TABLE.shop between '003' and '005' or _TABLE.shop between '230' and '240')";
+
+*/
+	$s = preg_replace("/[a-z']/i", "", $s);
+	 /*移除非預期字元，即英文字母及單引號(single quote)*/
+
+	$s1 = preg_split("/(\s|,)+/",preg_replace("/(\d+)-(\d+)/", "", $shops));
+	$s2 = preg_split("/\s+/",preg_replace("/(\d+(\s|,)+)|(\d+$)|(,+)/" ,"",
+		 preg_replace("/(\d+)-(\d+)/", "BW_\$1_\$2_END ", $shops)));
+
+	$query_string_s1 = "";
+	$shop = current($s1);
+	do {
+		if(!empty($shop)) {
+			if(empty($query_string_s1))
+				$query_string_s1 = "_TABLE.shop = '". $shop ."'";
+			else
+				$query_string_s1 = $query_string_s1 . " or _TABLE.shop = '{$shop}'";
+		}
+	} while($shop = next($s1));
+
+	$query_string_s2 = "";
+	$shop = current($s2);
+	do {
+		if(!empty($shop)) {
+			if(empty($query_string_s2))
+				$query_string_s2 = "_TABLE.shop ".
+					preg_replace("/BW_(\d+)_(\d+)_END/","between '\$1' and '\$2' ",$shop);
+			else
+				$query_string_s2 = $query_string_s2 . " or _TABLE.shop ".
+					preg_replace("/BW_(\d+)_(\d+)_END/","between '\$1' and '\$2' ",$shop);
+		}
+	} while($shop = next($s2));
+
+	if(empty($query_string_s1))
+		$query_string = $query_string_s2;
+	elseif(empty($query_string_s2))
+		$query_string = $query_string_s1;
+	else
+		$query_string = $query_string_s1 ." or " . $query_string_s2;
+
+	return ("(". $query_string .")");
+}
+
+
+$grade_date = "2006-02-20";
+$args['shop_query_string'] = parse_shop_string($_POST['shops']);
+
+$products_stock_query_string = " and ". preg_replace("/_TABLE.shop /", "product_stock.shop ", $args['shop_query_string']);
+
+$sql_query_string = "select product_stock.* from product_stock where grade_date='{$grade_date}' {$products_stock_query_string}";
+</code></pre>
+
+<address>
+作者: 遊手好閒的石頭成 (shirock@educities.edu.tw)<br />
+Homepage: http://blog.roodo.com/rocksaying/, http://home.educities.edu.tw/shirock/<br />
+Date: 2006-02-20
+<br />
+Copyleft © Shih Yuncheng. See <a href="http://blog.roodo.com/rocksaying/archives/258097.html">About Permission and GNU Free Documentation License</a>.
+</address><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1149103.html">http://blog.roodo.com/rocksaying/archives/1149103.html</a></div>

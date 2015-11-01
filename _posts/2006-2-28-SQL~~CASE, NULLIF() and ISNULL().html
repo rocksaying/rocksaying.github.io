@@ -1,0 +1,48 @@
+---
+title: SQL~~CASE, NULLIF() and ISNULL()
+category: programming
+old-category: SQL/Database
+tags: []
+---
+<p>
+這是關於 SQL 中的 CASE 敘述的另一篇應用文章。前一篇為「<a href="{{ site.baseurl }}/archives/2006/SQL~~%20%E4%BD%BF%E7%94%A8%20CASE%20%E4%BF%AE%E9%A3%BE%E8%B3%87%E6%96%99%E5%85%A7%E5%AE%B9%EF%BC%8C%E4%BB%A5%E4%BE%BF%E9%80%B2%E8%A1%8C%20group%20%E6%93%8D%E4%BD%9C.html">SQL::使用 CASE 修飾資料內容，以便進行 group 操作</a>」。
+</p>
+<p>
+重點為：一、處理無意義的 NULL ；二、<code>NULLIF()</code> or <code>ISNULL()</code>。
+</p>
+
+<!--more-->
+<h3>處理無意義的 NULL</h3>
+<p>
+在使用 outer join 查詢的場合中，其結果一定會有包含 NULL 值的欄位。然而，我們通常希望處理的是有意義的 0 或空字串，而不是無意義的 NULL 。例如，我們希望查詢結果的其中一個欄位內容，儲存的是左表格和右表格中各一個欄位相加的結果，但在 outer join 的場合中，兩表格欲相加之欄位，可能其中之一或兩者皆為 NULL ，此時相加的結果也會是 NULL (<span class="Onote">試試 "SELECT 1 + NULL" 這個查詢，其結果會是 NULL 。但通常我們希望傳回 1 。</span>)。此時，我們需要先將 outer join 後的結果，利用 CASE 敘述加以修飾，將 NULL 改為有意義的 0 或空字串，以便後續運算。
+</p>
+<div class="note">
+case when 欄位 is NULL then 設計人員指定的有意義值 else 欄位 end
+</div>
+<pre class="highlight"><code><span class="k">select</span> <span class="n">left_table</span><span class="p">.</span><span class="n">barcode</span><span class="p">,</span> 
+<span class="n">left_table</span><span class="p">.</span><span class="n">input_qty</span><span class="p">,</span> 
+<span class="k">case</span> <span class="k">when</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">is</span> <span class="k">NULL</span> 
+    <span class="k">then</span> <span class="mi">0</span> 
+    <span class="k">else</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">end</span> <span class="k">as</span> <span class="n">output_qty</span><span class="p">,</span> 
+<span class="k">case</span> <span class="k">when</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">is</span> <span class="k">NULL</span> 
+    <span class="k">then</span> <span class="n">left_table</span><span class="p">.</span><span class="n">input_qty</span> 
+    <span class="k">else</span> <span class="n">left_table</span><span class="p">.</span><span class="n">input_qty</span> <span class="o">-</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">end</span> <span class="k">as</span> <span class="n">stock_qty</span> 
+<span class="k">from</span> <span class="n">left_table</span> 
+<span class="k">left</span> <span class="k">outer</span> <span class="k">join</span> <span class="n">right_table</span> <span class="k">on</span> <span class="n">right_table</span><span class="p">.</span><span class="n">barcode</span> <span class="o">=</span> <span class="n">left_tale</span><span class="p">.</span><span class="n">barcode</span>
+</code></pre>
+
+
+<h3>NULLIF() or ISNULL()</h3>
+<p>
+前述對 NULL 作修飾，以便後續處理的動作在實務上相當常用，因此有些 SQL DBMS 會提供函數形式的簡便寫法，例如 PostgreSQL 提供 NULLIF() ，而 Microsoft SQL Server 提供 ISNULL() ，此二者的用法完全一樣，當欄位值 (第一個參數) 為 NULL 時，傳回指定的替代值 (第二個參數) ，否則傳回欄位值。
+</p>
+<pre class="highlight"><code><span class="c1">-- PostgreSQL:
+</span><span class="k">nullif</span><span class="p">(</span> <span class="err">欄位</span><span class="p">,</span> <span class="err">設計人員指定的有意義值</span> <span class="p">)</span>
+
+<span class="c1">-- MS SQL Server:
+</span><span class="k">isnull</span><span class="p">(</span> <span class="err">欄位</span><span class="p">,</span> <span class="err">設計人員指定的有意義值</span> <span class="p">)</span>
+</code></pre>
+
+<p>
+ISNULL 在 SQL Standard 中是一個保留字，但目前並沒有定義標準用法，因此 MS SQL Server 提供的 ISNULL() 函數及用法，不見得可用在其它的 SQL DBMS 中，至少 PostgreSQL 就不這麼用。再者， ISNULL() 在字面上，往往被當作 is null 敘述的函數形式，易生誤解。總而言之， NULLIF() 及 ISNULL() 皆不可視為通用敘述，考慮到轉換、變更 DBMS 的情況，以及程式的移植性，還是建議使用較長的 CASE 敘述，而不要用 NULLIF()/ISNULL() 。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1186702.html">http://blog.roodo.com/rocksaying/archives/1186702.html</a></div>

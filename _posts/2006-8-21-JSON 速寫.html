@@ -1,0 +1,82 @@
+---
+title: JSON 速寫
+category: programming
+old-category: JavaScript
+tags: [json,javascript,ajax]
+---
+<p>JSON 是一種輕量級且可讀性高的資料轉換中介格式。已成為 <a href="http://www.ietf.org/rfc/rfc4627.txt?number=4627" target="_blank" class="outside">IETF RFC4627</a> 規範內容。
+</p>
+
+<!--more-->
+<p>多年前 (其實也才6,7年前)，當 XML 出世時，適逢分散式架構崛起之時，人們無不歡欣鼓舞。因為透過 XML 在網路間交換資料，真的很方便。只是 XML 有時候用起來有點小題大作的感覺。有時為了傳送很少的資料，卻要用上十幾倍於實際交換資料的記憶體空間，都浪費在 XML 的標籤上了。舉例來說，要傳送一個含有2個數值的陣列，其值各為 0 和 1。用 XML 來傳送的話，寫成 <code>&lt;array&gt;&lt;item index='0'&gt;0&lt;/item&gt;&lt;item index='1'&gt;1&lt;/item&gt;&lt;/array&gt;</code>。我不過要傳送 0,1 兩個數值，竟然要傳送 63 個 bytes ，其中只有 2 個 bytes 是實際要交換的資料。沒搞錯吧？嘿，老兄，有沒有更懶一點的方法。有的，就是 JSON 。
+</p>
+
+<blockquote>JSON (JavaScript Object Notation) is a lightweight data-interchange format. It is easy for humans to read and write. It is easy for machines to parse and generate.<br/>
+<cite><a href="http://www.json.org/" target="_blank" class="outside">Introducing JSON</a></cite></blockquote>
+<p>
+JSON 不是很難懂的東西，只要會用 JavaScript ，就懂 JSON 了。JSON 根本就是 JavaScript 的變數定義語法。例如下例的 JavaScript 程式碼，定義了一個字串 <var>myString</var> 、一個陣列變數 <var>myArray</var> 、一個個體變數 <var>myObject</var>。
+</p>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">myString</span> <span class="o">=</span> <span class="s2">"hello"</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">myArray</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">myObject</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"john"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span><span class="s2">"nothing"</span><span class="p">};</span>
+</code></pre>
+
+<p>
+只要把前面的變數宣告語法拿掉，只留下等號右邊的內容，就是一個 JSON 的資料內容了。回到一開始用 XML 傳送兩個數值的例子，用 JSON 來表達，只要寫成 <code>[0,1]</code> 就可以了。這可真省不少事。
+</p>
+<p>
+而要如何在程式中取用 JSON 呢？一樣是非常的簡單。如下例:
+</p>
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">JSONmyArray</span> <span class="o">=</span> <span class="s1">'[0,1]'</span><span class="p">;</span> 
+<span class="c1">// put an array by JSON format.</span>
+
+<span class="kd">var</span> <span class="nx">myArray</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="s1">'('</span> <span class="o">+</span> <span class="nx">JSONmyArray</span> <span class="o">+</span> <span class="s1">')'</span><span class="p">);</span>
+
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Value of myArray[0] is '</span> <span class="o">+</span> <span class="nx">myArray</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</code></pre>
+
+<p>
+簡單到幾乎感覺不到它的存在。最後一個例子是常見的 JSON 應用，如果你無法看出這個 JSON 包含哪些內容，那麼表示你對 JavaScript 還不夠熟悉，請回頭<a href="{{ site.baseurl }}/archives/2007/%E9%87%8D%E6%96%B0%E8%AA%8D%E8%AD%98%20JavaScript.html">複習 JavaScript</a> 。
+</p>
+<pre class="highlight"><code><span class="p">[</span>
+<span class="p">{</span>
+  <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"PC1549xxxx"</span><span class="p">,</span>
+  <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2006-08-21 20:10:32"</span><span class="p">,</span>
+  <span class="s2">"items"</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"47231322"</span><span class="p">,</span>
+      <span class="s2">"price"</span><span class="p">:</span> <span class="s2">"100"</span><span class="p">,</span>
+      <span class="s2">"qty"</span><span class="p">:</span> <span class="s2">"2"</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"23131470"</span><span class="p">,</span>
+      <span class="s2">"price"</span><span class="p">:</span> <span class="s2">"50"</span><span class="p">,</span>
+      <span class="s2">"qty"</span><span class="p">:</span> <span class="s2">"1"</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">},</span>
+<span class="p">{</span>
+  <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"PC1815xxxx"</span><span class="p">,</span>
+  <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2006-08-20 12:32:02"</span><span class="p">,</span>
+  <span class="s2">"items"</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"47214589"</span><span class="p">,</span>
+      <span class="s2">"price"</span><span class="p">:</span> <span class="s2">"99"</span><span class="p">,</span>
+      <span class="s2">"qty"</span><span class="p">:</span> <span class="s2">"3"</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"33135870"</span><span class="p">,</span>
+      <span class="s2">"price"</span><span class="p">:</span> <span class="s2">"15"</span><span class="p">,</span>
+      <span class="s2">"qty"</span><span class="p">:</span> <span class="s2">"3"</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+<span class="p">]</span>
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/%E5%BE%9E%20XML%20%E7%94%A2%E7%94%9F%20JSON%20%E8%B3%87%E6%96%99%E5%8F%8A%E6%96%B9%E6%B3%95%E7%9A%84%E5%B0%81%E8%A3%9D.html">從 XML 產生 JSON 資料及方法的封裝</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/JSON%20%E7%9A%84%E5%AE%89%E5%85%A8%E6%80%A7.html">JSON 的安全性</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2045155.html">http://blog.roodo.com/rocksaying/archives/2045155.html</a></div>

@@ -1,0 +1,119 @@
+---
+title: 用 SimpleXML functions 和 MVC 架構實作的簡單 RSS 閱讀器
+category: programming
+old-category: PHP
+tags: [xml,mvc,framework]
+---
+<p>
+我前幾天發現 blog 邊欄訂閱的 RSS 欄位的內容沒有顯示出來，追蹤了一會兒，發現是 blog 系統在輸出 RSS 內容時，沒有處理換行字元，令 JavaScript 碰到非預期的敘述斷行導致執行失敗。追蹤過程中，我順手寫了一個 PHP 程式測試這個狀況。後來我把這程式擴充一下，改寫成一個簡單的 RSS 閱讀器。
+</p>
+<p>
+這個 PHP 程式，使用 SimpleXML functions 處理 RSS 文件，並且實踐了一個非常簡單的 MVC 架構。
+</p>
+
+<!--more-->
+<h3>Part of Control</h3>
+<p>
+程式實踐了 MVC 架構，但其實缺了 Model 這一塊。原本讀取 RSS 文件並轉成 SimpleXML 個體的動作應該放在 Model 中的，但因為只有一行，我就直接放在 Control 中了。
+</p>
+<p>
+《<a href="http://www-128.ibm.com/developerworks/xml/library/x-simplexml.html">SimpleXML processing with PHP</a>》示範了更多 SimpleXML functions 的使用內容。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// begin of test case
+</span><span class="nv">$rssUri</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'rss'</span><span class="p">])</span> <span class="k">and</span> <span class="o">!</span><span class="k">empty</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'rss'</span><span class="p">]))</span>
+    <span class="o">?</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'rss'</span><span class="p">]</span>
+    <span class="o">:</span> <span class="s1">'http://www-128.ibm.com/developerworks/news/dw_technl.rss'</span>
+<span class="p">);</span>
+<span class="nv">$rssCached</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+<span class="c1">//end of test case
+</span>
+<span class="nv">$rss</span> <span class="o">=</span> <span class="nb">simplexml_load_string</span><span class="p">(</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="nv">$rssUri</span><span class="p">)</span> <span class="p">);</span>
+<span class="cm">/*
+$charTranslateTable = array(
+    "'" =&gt; "\x5C'",
+    "\x5C" =&gt; "\x5C\x5C",
+    "\n" =&gt; '',
+    "\r" =&gt; ''
+);
+foreach ($rss-&gt;channel-&gt;item as $item) {
+    echo 'document.write('&lt;a class="rssLink" href="',
+        $item-&gt;link,
+        '"&gt;',
+        strtr($item-&gt;title, $charTranslateTable),
+        "&lt;/a&gt;');\n";
+}
+*/</span>
+<span class="k">if</span> <span class="p">(</span><span class="nv">$rssCached</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//@readfile();
+</span><span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="k">include</span> <span class="s1">'rssView.phtml'</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h3>Part of View (rssView.phtml)</h3>
+<p>
+View 的內容使用了 PHP 的原始用法，以 .phtml 為延伸檔名，使用文字性的區塊語法。當初 PHP2/3 出現時，原本目的就是在 HTML 中插入程式性敘述，所以模仿 SSI 的 .shtml 檔名採用 .phtml 為檔名，又為了避免 {, } 字元夾雜在 HTML 敘述中不易閱讀，所以提供了可讀性較高的文字性區塊語法，如 <code>if...endif; for...endfor; while... endwhile;</code>
+</p>
+<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+  <span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"content-type"</span> <span class="na">content=</span><span class="s">"text/html; charset=utf-8"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;title&gt;</span>RSS View<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;style </span><span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+    <span class="nf">#dir</span> <span class="p">{</span>
+      <span class="nl">width</span><span class="p">:</span> <span class="m">40%</span><span class="p">;</span>
+      <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="nf">#viewBlock</span> <span class="p">{</span>
+      <span class="nl">width</span><span class="p">:</span> <span class="m">55%</span><span class="p">;</span>
+      <span class="nl">height</span><span class="p">:</span> <span class="m">100%</span><span class="p">;</span>
+      <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+      <span class="nl">border</span><span class="p">:</span> <span class="m">1px</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nt">&lt;/style&gt;</span>
+  
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"dir"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;script </span><span class="na">language=</span><span class="s">"php"</span><span class="nt">&gt;</span>
+    <span class="kd">function</span> <span class="nx">html_anchor</span><span class="p">(</span><span class="nx">$attrSet</span><span class="p">,</span> <span class="nx">$innerContent</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">$a</span> <span class="o">=</span> <span class="nx">array</span><span class="p">(</span><span class="s1">'&lt;a'</span><span class="p">);</span>
+        <span class="nx">foreach</span> <span class="p">(</span><span class="nx">$attrSet</span> <span class="nx">as</span> <span class="nx">$attrName</span> <span class="o">=&gt;</span> <span class="nx">$attrValue</span><span class="p">)</span> <span class="err">:</span>
+            <span class="nx">array_push</span><span class="p">(</span><span class="nx">$a</span><span class="p">,</span> <span class="s1">' '</span><span class="p">,</span> <span class="nx">$attrName</span><span class="p">,</span> <span class="s1">'="'</span><span class="p">,</span> <span class="nx">$attrValue</span><span class="p">,</span> <span class="s1">'"'</span><span class="p">);</span>
+        <span class="nx">endforeach</span><span class="p">;</span>
+        <span class="nx">array_push</span><span class="p">(</span><span class="nx">$a</span><span class="p">,</span> <span class="s1">'&gt;'</span><span class="p">,</span> <span class="nx">$innerContent</span><span class="p">,</span> <span class="s1">'&lt;/a&gt;'</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nx">implode</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="nx">$a</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="nt">&lt;/script&gt;</span>
+
+    <span class="nt">&lt;dl&gt;</span>
+      <span class="cp">&lt;?php</span> <span class="k">foreach</span> <span class="p">(</span><span class="nv">$rss</span><span class="o">-&gt;</span><span class="na">channel</span><span class="o">-&gt;</span><span class="na">item</span> <span class="k">as</span> <span class="nv">$item</span><span class="p">)</span><span class="o">:</span> <span class="cp">?&gt;</span>
+        <span class="nt">&lt;dt&gt;</span>
+          <span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nx">html_anchor</span><span class="p">(</span>
+            <span class="k">array</span><span class="p">(</span><span class="s1">'href'</span> <span class="o">=&gt;</span> <span class="nv">$item</span><span class="o">-&gt;</span><span class="na">link</span><span class="p">,</span> <span class="s1">'target'</span> <span class="o">=&gt;</span> <span class="s1">'viewBlock'</span><span class="p">),</span>
+            <span class="nv">$item</span><span class="o">-&gt;</span><span class="na">title</span><span class="p">);</span>
+          <span class="cp">?&gt;</span>
+        <span class="nt">&lt;/dt&gt;</span>
+        <span class="nt">&lt;dd&gt;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$item</span><span class="o">-&gt;</span><span class="na">description</span><span class="p">;</span><span class="cp">?&gt;</span><span class="nt">&lt;/dd&gt;</span>
+      <span class="cp">&lt;?php</span> <span class="k">endforeach</span><span class="p">;</span> <span class="cp">?&gt;</span>
+    <span class="nt">&lt;/dl&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+
+    <span class="nt">&lt;iframe</span> <span class="na">id=</span><span class="s">"viewBlock"</span> <span class="na">name=</span><span class="s">"viewBlock"</span> <span class="na">height=</span><span class="s">"100%"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;/iframe&gt;</span>
+
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E9%87%90%E6%B8%85%20MVC%20%E8%88%87%20Framework%20%E7%9A%84%E8%A7%80%E5%BF%B5.html">釐清 MVC 與 Framework 的觀念</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2552134.html">http://blog.roodo.com/rocksaying/archives/2552134.html</a></div>

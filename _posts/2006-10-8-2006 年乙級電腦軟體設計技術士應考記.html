@@ -1,0 +1,42 @@
+---
+title: 2006 年乙級電腦軟體設計技術士應考記
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+隔了一年後再次應考乙級電腦軟體設計技術士 C++ 職類，依然歃羽而歸，真是令我情何以堪。好在學科成績可以保留三年，明年再挑戰吧。雖然已經是第三年進行術科檢定了 (第一年我沒考) ，但考題內容似乎還不是很完善，監考老師在檢定中途陸續修訂了數次題目的內容，多少令應檢者有些困擾。
+</p>
+
+<!--more-->
+<p>
+關於檢定方式，經過上次的經驗後，這次我終於搞清楚了。前三題是「<strong>改錯題</strong>」，只有第四題才是實作題。所謂「改錯題」，就是考題磁片中，已經提供程式碼了，而試題的要求是應檢者改錯。我上次不知道這件事，結果三題都是從頭寫 Orz...
+</p>
+<h3>題目一、羅馬數字轉十進位數字</h3>
+<p>
+本題改錯重點，其一、 switch case 語法，例如原程式是用 case "I" ，很明顯是個錯誤。因為在 C/C++ 中， case 只能使用整數與字元型態值，不能用字串。其二、程式邏輯，主要是羅馬符號轉十進位數值的換算邏輯有誤。其三、迴圈次數。試題要求不限輸入資料筆數，但原程式中是用一個只能輸入 5 筆資料的有限迴圈，這要改成無窮迴圈搭上對 cin 輸入內容的判斷動作。我在這裡碰到了麻煩，因為我不知道 cin 如何處理使用者直接輸入 enter 的情形。
+</p>
+<h3>動態連結</h3>
+<p>
+本題的重點是動態連結 (dynamic link) ，改錯重點：其一、 virtual 的語法。原程式的 virtual 語法使用錯誤，該用的地方沒寫，不該用的地方寫了。其二、個體指標與 method 的調用。要使用動態連結，就要藉由個體指標調用，所以要用 -&gt; 算符。原程式在這兩個地方都錯了，直接用個體及 . 算符調用，自然被調用的是基底類別的 method ，而不是動態連結衍生類別的 method 了。其三、在衍生類別的 method 中調用基底類別的 method 時，漏掉了類別範圍算符。
+</p>
+<h3>檔案串流 (fstream) 與 Friend class</h3>
+<p>
+本題重點是 freind class 和 fstream 的應用。原程式中有 3 個 class ，分別是 personInfo, studentType, courseType 。其中 studentType 繼承自 personInfo ，並包含了 courseType (studentType is a personInfo and has courseType) 。但 studentType 的 method 都試圖存取 personInfo 和 courseType 的非公開資料成員。按試類要求，則應將 studentType 宣告為 personInfo 和 courseType 的 friend class 。本題另有兩個主要錯誤處，其一、讀取檔案記錄的迴圈錯誤，有兩層迴圈，外層的計數是 0 ~ numberOfStudents ，內層的計數是 0 ~ numberOfCourses 。但內層迴圈也寫成 numberOfStudents ，這會產生檔案讀取時的錯誤。其二、 getGpa() 的結果錯誤。說實話，這個試題出的不理想，因為試題中並未說明 Gpa 如何計算。我是從範例輸出結果中猜測出 Gpa 的正確計算方式。正確的 Gpa 值，是各科成績總和再除以總時數，原程式的錯誤在於未除以總時數。
+</p>
+<h3>實作題: 銀行會員信用評估</h3>
+<p>
+說起來這題算簡單的了，並沒有什麼演算法需求，只需要熟練的檔案讀寫操作。從檔案中讀取資料，建立 2 張表，即信用評估表 (Credit table)、權重評估表 (Weight table) 。最後讀取會員借貸資料，再查前兩個表算會員的信用評值。
+</p>
+<h3>
+應檢重點
+</h3>
+<p>
+重點來了，我考了兩次術考，雖然都失敗了，但也從敗招中悟出勝招了。
+</p>
+<p>
+第一式：善用除錯功能。改錯題的應檢技巧很簡單，先把試題磁片中的錯誤程式開啟，然後直接按 F9 (compile) ， compiler 就會幫你把語法錯誤的地方挑出來了。改完語法錯誤後，試著輸入範例資料，看看有哪些地方有邏輯錯誤。此時就輸到 debuger 上場了，請善用 breakpoint (設定中斷點), watch (監看變數值) 這兩個功能，再用 F8 (step) 和 F7 (trace) 兩招就可以很快找出邏輯錯誤。按我經驗，動作快的只要 1 小時就能解決這三題改錯題了。像這次檢定的第二題，我只花 15 分鐘就解決了。剩下 3 小時可以讓你慢慢搞定實作題。
+</p>
+<p>
+第二式：熟悉 STL 。就我所知，檢定單位傾向使用 STL 而否決 C functions 。也就是說，你應該用 new, delete ，而不應該用 malloc(), free() ；你應該用 fstream, 而不應該用 FILE handle functions [fopen(), fclose(), fgets(), etc] 。我這兩次應檢，都敗在不熟悉 STL 。我在 Linux 平台有 6 年的維護現存 C 語言程式的經驗，使我可以自在地使用各種 C functions 而不用看 manual ，但我偏偏就是不熟悉 STL ，所以我敗了。想我前幾天還很開心地用 C 玩著非同步檔案讀寫技術 (select, AIO 等) ，結果今天就敗在 C++ 的 STL 上，令人情何以堪，只能感嘆長江後浪推前浪，前浪死在沙灘上。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2263707.html">http://blog.roodo.com/rocksaying/archives/2263707.html</a></div>

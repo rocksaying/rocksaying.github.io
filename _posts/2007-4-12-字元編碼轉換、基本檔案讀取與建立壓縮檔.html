@@ -1,0 +1,66 @@
+---
+title: 字元編碼轉換、基本檔案讀取與建立壓縮檔
+category: programming
+old-category: Ruby
+tags: [ruby,iconv,file]
+---
+<div class="tags" style="display:none">ruby iconv file</div>
+<p>
+Ruby 練習程式。讀取UTF-8編碼文字檔，轉換成Big5編碼後顯示。開啟檔案後分別以 Loop 式的 <code>gets</code>, Iterator 的 <code>each</code>, 以及一次讀入陣列的 <code>readlines</code> 三種形式操作。再以封絕(Closure)方式完成開啟、讀取及轉碼輸出。最後嘗試以 <code>popen</code> 進行管線(pipe)操作，呼叫壓縮工具將轉碼後的資料壓縮儲存。
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="nb">require</span> <span class="s1">'iconv'</span>
+
+<span class="n">conv</span> <span class="o">=</span> <span class="no">Iconv</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">)</span>
+<span class="n">fh</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.txt'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span>
+
+<span class="nb">print</span> <span class="s2">"Loop way...</span><span class="se">\n</span><span class="s2">"</span>
+<span class="k">while</span> <span class="n">line</span> <span class="o">=</span> <span class="n">fh</span><span class="p">.</span><span class="nf">gets</span>
+    <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="n">fh</span><span class="p">.</span><span class="nf">rewind</span>
+
+<span class="nb">print</span> <span class="s2">"Iterate way...</span><span class="se">\n</span><span class="s2">"</span>
+<span class="n">fh</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
+    <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="n">fh</span><span class="p">.</span><span class="nf">rewind</span>
+
+<span class="nb">print</span> <span class="s2">"Read to array</span><span class="se">\n</span><span class="s2">"</span>
+<span class="n">dataSet</span> <span class="o">=</span> <span class="n">fh</span><span class="p">.</span><span class="nf">readlines</span>
+<span class="n">dataSet</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
+    <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="n">fh</span><span class="p">.</span><span class="nf">close</span>
+<span class="n">conv</span><span class="p">.</span><span class="nf">close</span>
+
+<span class="nb">print</span> <span class="s2">"Block way...</span><span class="se">\n</span><span class="s2">"</span>
+<span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.txt'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">fh</span><span class="o">|</span>
+    <span class="no">Iconv</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">conv</span><span class="o">|</span>
+        <span class="n">fh</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
+            <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="n">compressor</span> <span class="o">=</span> <span class="s1">'C:/progra~1/7-zip/7z.exe'</span>
+<span class="n">compressCommand</span> <span class="o">=</span> <span class="n">compressor</span> <span class="o">+</span> <span class="s1">' a -sitest_big5.txt test.7z'</span>
+<span class="no">IO</span><span class="p">.</span><span class="nf">popen</span><span class="p">(</span><span class="n">compressCommand</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">zfh</span><span class="o">|</span>
+    <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.txt'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">fh</span><span class="o">|</span>
+        <span class="no">Iconv</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">conv</span><span class="o">|</span>
+            <span class="n">fh</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
+                <span class="n">zfh</span><span class="p">.</span><span class="nf">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2995543.html">http://blog.roodo.com/rocksaying/archives/2995543.html</a></div>

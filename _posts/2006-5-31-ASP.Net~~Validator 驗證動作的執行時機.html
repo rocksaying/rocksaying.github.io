@@ -1,0 +1,21 @@
+---
+title: ASP.Net~~Validator 驗證動作的執行時機
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<h4>Validator 驗證動作的執行時機</h4>
+<blockquote>
+MSDN: 「因為這個屬性的預設值為 true ，所以如果您在執行驗證前查詢這個屬性，它會傳回 true 。例如，如果您企圖使用網頁之 Control.Load 事件中的這個屬性，則可能會發生這個狀況。」
+</blockquote>
+
+<!--more-->
+<p>
+那麼，到底什麼時候才會「執行驗證」呢？實驗一下，在頁面上加入驗證控制項並取消 Cleint 的驗證功能，輸入不合格式的內容， PostBack 回伺服端。在 Page_Load() 和事件處理函數中，分別查看 Validator.IsValid 之屬性值，在 Page_Load() 中必為 true ，在事件處理函數中則為 false 。參考 MSDN 的說法，則在 Page_Load() 中，還沒有進行驗證動作，接著進行驗證動作後，才呼叫事件處理函數。亦即 Validator 的驗證動作，發生在 Page_Load() 和事件處理函數之間。 
+</p>
+<pre class="language-text">
+Page_Load() -> Validate() -> Event_Handler()
+</pre>
+<p>
+要手動設定驗證結果時，應在事件處理函數中設定 Validator.IsValid 屬性值。同樣地，若要確認使用者輸入內容是否合乎格式，也要在事件處理函數中處理。例如將資料寫入資料庫之前，就應該在事件處理函數中，先查看 Page.IsValid 或指定驗證控制項的 IsValid 屬性。如果要在執行時期才決定驗證控制項的驗證內容，例如 ControlToValidate 或 ValueRange 等，那麼要在 Page_Load() 中設定。如果在事件處理函數中才設定或變動驗證控制項的驗證內容，則變更後，要自行調用 Validate() 方法一次。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/1690421.html">http://blog.roodo.com/rocksaying/archives/1690421.html</a></div>

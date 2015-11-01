@@ -1,0 +1,73 @@
+---
+title: 釐清 MVC 與 Framework 的觀念
+category: programming
+old-category: Programming
+tags: []
+---
+<blockquote>
+<p>
+若是 Web 應用, 大可不必採用 MVC, 招致執行效率差程式碼分散的結果
+相反的, 也有工程師告訴我使用 MVC 對於長期維護程式增減功能有很大助益
+</p>
+<p>
+據了解使用 MVC 程式的行數的確會增多; 但也會有助健全的程式開發與便利維護程式
+</p>
+</blockquote>
+<p>
+由於許多 framework 都把 <a href="http://zh.wikipedia.org/w/index.php?title=MVC&variant=zh-tw">MVC</a> 列為特點，因而導致初學者把 MVC 和 framework 這兩件事混淆在一起，然而這兩者是不同層次的事物，甚至彼此無關。
+</p>
+
+<!--more-->
+<p>
+廣義而言，當我們開發 web application 時，就已經一隻腳踩在 MVC 中了。以 PHP 為例，我們使用 PHP 處理程式邏輯和資料儲存 (這就是 Control/Model 的工作)，使用 HTML 呈現資料 (這是 View 的工作) 。只要把這些 code 按工作內容分開儲放在檔案中，就是 MVC 的實作。 只是 PHP 可以將 HTML 語言和 PHP 語言放在同一個容器中 (即同一個檔案中) ，致使造成初學者時常將兩種語言的 code 夾雜在一起。我承認即使是老手也會在寫一些很短的、不到20行的小程式時這樣做。
+</p>
+<p>
+不使用任何 framework 而運用 MVC 的範例，可以看看這篇《<a href="{{ site.baseurl }}/archives/2006/%E7%94%A8%20SimpleXML%20functions%20%E5%92%8C%20MVC%20%E6%9E%B6%E6%A7%8B%E5%AF%A6%E4%BD%9C%E7%9A%84%E7%B0%A1%E5%96%AE%20RSS%20%E9%96%B1%E8%AE%80%E5%99%A8.html">用 SimpleXML functions 和 MVC 架構實作的簡單 RSS 閱讀器</a>》。再以資料庫查詢應用為例，使用 MVC 而未使用 framework 之前，我們會用 sample1.php 的寫法。
+</p>
+<fieldset>
+<legend>sample1.php</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s1">'config.php'</span><span class="p">;</span> <span class="c1">// get database address, user and password
+</span><span class="nv">$dbh</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="nx">DB_CONNECT_STRING</span><span class="p">,</span> <span class="nx">DB_USER</span><span class="p">,</span> <span class="nx">DB_PASSWORD</span><span class="p">);</span>
+
+<span class="k">function</span> <span class="nf">getFoo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">global</span> <span class="nv">$dbh</span><span class="p">;</span>
+    <span class="nv">$fooSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dbh</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s1">'SELECT * from FOO'</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$row</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$fooSet</span><span class="p">[</span><span class="nv">$i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$row</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nv">$fooSet</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+接著，假設我們使用了某個名為 "MyCommonApp" 的 framework 之後，按該 framework 的預先建置內容，我們改成 sample2.php 的寫法。
+</p>
+<fieldset>
+<legend>sample2.php</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s1">'MyCommonApp.php'</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">FooApp</span> <span class="k">extends</span> <span class="nx">MyCommonApp</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">getFoo</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$fooSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+        <span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dbh</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s1">'SELECT * from FOO'</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$row</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$fooSet</span><span class="p">[</span><span class="nv">$i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$row</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$fooSet</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>
+sample1.php 和 sample2.php 兩種寫法的差異，一眼可見資料庫連線的動作被隱蔽了，而且也不需要用全域變數 (global) $dbh ， $dbh 變成了個體成員 $this->dbh 。更進一步，被隱蔽的部份可以加以抽象化，如 MyCommonApp 可能會支援多種資料庫系統，或是支援不同的資料庫連接層 (DBA, MDB2 等) 。但這些細節皆被 framework 隱蔽起來， programmer 只需要專注 class FooApp 的內容即可。還有一件事要提，上述內容沒有 View 和 Control 的程式碼，因為根本不需要知道。 View 只管呈現陣列 ($fooSet) 的內容，不管是 sample1.php 或是 sample2.php ，只要 Model 丟出來的是個陣列， View 就不用作任何修改。這也是 MVC 架構所帶來的好處：低耦合度，各項工作間彼此獨立，其中一個項目的修改動作不會連帶要修改其他項目。在 team-work 中也意味著三種設計工作可以交由三個人同時進行。
+</p>
+<p>
+MVC 和 framework 是兩個不同層次的事物。借個譬喻， MVC 是戰略層次，而 framework 是戰術層次。 MVC 是一種程式架構的觀念，它與軟體需求或規格無關，其意義甚至可以簡化到視為 programmer 撰寫程式時的「良好習慣」。因為為了符合 MVC 架構，我們會被迫設計出再用性高的程式碼。通常在 MVC 架構下的 model 都可成為一個獨立的 function/class library 。而 framework 可以視為常用功能大補帖，針對特定軟體需求，將常用功能或「最佳實踐方案」預先打造好的「準軟體」。隱蔽那些再用性與重複性高的內容，讓 programmer 專注在客製化內容。再者，不是所有 framework 都需要採用 MVC 架構，例如一個專門用於 server 程式的 framework 就不需要什麼 MVC 架構。然而 framework 畢竟是一種針對特定需求的框架，一但某個 framework 認為其特定需求的最佳實踐作法應採用 MVC 架構時，選擇這個 framework 的 programmer 就要跟隨 framework 而以 MVC 架構進行設計。若要說 MVC 和 framework 間有什麼關係，僅此而已。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2617123.html">http://blog.roodo.com/rocksaying/archives/2617123.html</a></div>

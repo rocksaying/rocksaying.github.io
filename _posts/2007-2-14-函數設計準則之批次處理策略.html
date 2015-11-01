@@ -1,0 +1,77 @@
+---
+title: 函數設計準則之批次處理策略
+category: programming
+old-category: Programming
+tags: [programming,程式設計]
+---
+<div class="tags" style="display:none">programming 程式設計</div>
+<p>
+唉唉，我差點被 Tokimeki 搞糊塗了。在他的《<a href="http://blog.pixnet.net/HACGIS/post/2581380">函數設計準則 (2)</a>》一文中，他設計了兩個函數，一個是一次只處理一筆的 (載入單一模組、寫入單一記錄, etc) ，另一個是批次處理的。
+</p>
+
+<!--more-->
+<p>
+我先從一般設計經驗來談。當我用單一處理的函數時，只會有兩個可能結果: 成功或失敗。當我用批次處理的函數時，則可能會有<strong>一個以上</strong>的錯誤狀態。然而 Tokimeki 在批次處理函數中搞了一個複雜的動作，令批次處理函數的結果可能是<strong>一個</strong>錯誤狀態 (引數 <var>$中斷</var> 為 <var>TRUE</var>)、也可能是<strong>一組</strong>錯誤狀態(陣列) (引數 <var>$中斷</var> 為 <var>FALSE</var>)。我一點都不覺得這樣做有什麼好處。
+</p>
+<p>
+如果我用 Tokimeki 的作法，加上參數 <var>$中斷</var> 的設計，並選擇保用可能隨時改變 <var>$中斷</var> 之值的彈性，則批次處理函數的結果會有一個錯誤狀態和一組錯誤狀態兩種情形。面對這情形，我調用時的程式如下列:
+</p>
+
+<pre class="highlight"><code>$results = 載入：模組集($模組集, $中斷);
+if (is_string($results)) {
+    echo $ersults;
+}
+else if (is_array($results)) {
+    foreach ($results as $errorStatus) {
+        echo $errorStatus;
+    }
+}
+else {
+    echo 'OK';
+}
+</code></pre>
+
+
+<p>
+如果我不用 Tokimeki 的作法，把 <var>$中斷</var> 拿掉，令批次處理函數的結果只會是一組錯誤狀態。則我調用時的程式如下列:
+</p>
+
+<pre class="highlight"><code>$results = 載入：模組集($模組集);
+if ($results !== TRUE) {
+    foreach ($results as $errorStatus) {
+        echo $errorStatus;
+    }
+}
+else {
+    echo 'OK';
+}
+</code></pre>
+
+
+<p>
+另一方面，批次處理函數的設計策略通常採 transaction 策略：<strong>除非全部動作都成功，否則復原全部狀態</strong>。以 Tokimeki 的例子來看，如果我的模組集中有十個模組要批次載入，在 transaction 策略下，只要有一個模組載入錯誤，則批次載入函數在回傳此一錯誤狀態前，必須先釋放已經載入成功的九個模組，否則會帶來副作用 (See also: <a href="{{ site.baseurl }}/archives/2007/%E5%87%BD%E6%95%B8%E8%A8%AD%E8%A8%88%E6%BA%96%E5%89%87.html">函數設計準則</a>)。此一策略不因是否有 <var>$中斷</var> 參數之設計而改變。難道 <var>$中斷</var> 為 <var>TRUE</var> 時才復原狀態，而 <var>$中斷</var> 為 <var>FALSE</var> 時就不用復原狀態嗎？
+</p>
+<p>
+當然我們也視情況決定不採用 transaction 策略，但必須有相對應的處理函數。以 Tokimeki 的例子來看，則必須要有與模組載入函數相對應的模組卸載函數。在此策略下，批次載入模組不用為了一個載入錯誤而釋放已經載入成功的九個模組，而由程式主體決定。程式主體可以選擇將已載入的模組從 <var>$模組集</var> 中移除後，再次調用批次載入函數；或是決定中止程序而將失敗的模組從 <var>$模組集</var> 中移除，再調用卸載函數釋放已經載入的模組。如下所示:
+</p>
+
+<pre class="highlight"><code>while (($results = 載入：模組集($模組集)) !== TRUE) {
+    if ($再試幾次) {
+        $模組集 = array();
+        foreach ($results as $result) {
+            $模組集[] = $result['模組'];
+        }
+        --$再試幾次;
+    }
+    else {
+        $釋放模組集 = ...
+        卸載：模組集($釋放模組集);
+        break;
+    }
+}
+</code></pre>
+
+
+<p>
+採 transaction 策略時，如上例的卸載動作須設計在載入函數之中；不採 trasaction 策略時，則要獨立設計為相對應的反批次處理函數。而 Tokimeki 的想法，似乎想將這兩種策略設計在一起，而以引數 <var>$中斷</var> 決定批次處理函數內部要採哪種策略。這種想法不是不行，但以我個人經驗而言，這種想法在實踐時很容易失控，複雜度會不斷增加。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2722505.html">http://blog.roodo.com/rocksaying/archives/2722505.html</a></div>

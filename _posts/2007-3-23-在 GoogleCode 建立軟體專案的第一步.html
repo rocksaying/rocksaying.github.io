@@ -1,0 +1,35 @@
+---
+title: 在 GoogleCode 建立軟體專案的第一步
+category: programming
+old-category: Programming
+tags: [subverion,軟體專案管理,自由軟體]
+---
+<div class="tags" style="display:none">subverion 軟體專案管理 自由軟體</div>
+<p>
+Google Code 是一項開放源碼專案管理服務平台 - <a href="http://code.google.com/">Google Code Home</a>，它採用 <a href="http://subversion.tigris.org/">Subversion</a> 作為版本控制系統(See also: <a href="{{ site.baseurl }}/archives/2006/Programming%20with%20Subversion%20Quickstart%20-%20%E5%AE%89%E8%A3%9D%20Subversion%20%E6%9C%8D%E5%8B%99.html">Programming with Subversion Quickstart</a>)。想申請建立專案非常容易，只要到 <a href="http://code.google.com/hosting/">Prject Hosting</a> 中填好申請表格即可建立專案。唯一限制是軟體授權證一定要採用 Google Code 提供的開放源碼授權證 (如 GPL, Apache License, New BSD License)。必須先登入 Gmail 帳號之後，才會出現 <a href="http://code.google.com/hosting/createProject">Create a new project</a> 的申請表連結。提醒事項:
+</p>
+
+<!--more-->
+<ol>
+<li>用 Google 帳號不能建立專案，一定要用 Gmail 帳號。如果你是以其他服務商的 E-Mail 帳號申請 Google 帳號，請轉換成 Gmail 帳號。
+</li>
+<li>Google Code 的 Subversion server 使用另一個登入密碼，請在登入 Gmail 帳號後查看 <a href="http://code.google.com/hosting/settings">GoogleCode.com Password</a> 得知你的 GoogleCode 密碼。當你自 repository 提出或提交資料時，就要輸入你的 Gmail 帳號以及這個 GoogleCode 密碼。
+</li>
+</ol>
+<p>
+當你送出申請表，GoogleCode 就會建立一個專案網站: <code>http://code.google.com/<var>?</var>/<var>專案代名</var>/</code>，其中提供檔案下載、維護使用文件(使用wiki)、問題處理等功能服務。附帶一提，Wiki之內容也會被包含在 repository 中。專案的 repository URL 則為: (認證)<code>https://<var>專案代名</var>.googlecode.com/svn/</code> ／ (匿名)<code>http://<var>專案代名</var>.googlecode.com/svn/</code>。
+</p>
+<p>
+建立專案後第一步是上傳源碼內容。如果你已經有一個 repository (專案貯藏庫)，那麼你可以用 <code>svnsync</code> 將原有的 repository 內容轉移到 Google Code 的 repository 。<strong>但是在上傳之前，請務必確認原有 repository 之內容沒有私人資料或帳號密碼</strong>。當我們建立一個私人的本地 repository 時，常常不自覺地將一些帶有隱密性資料的源碼提交進 repository ，例如測試案例中的帳號密碼、使用者資料等等。如果你原有的私人 repository 內容中有這些資料，那麼就不應該用 svnsync 轉移資料。碰到這種情形，只能手動添加。
+</p>
+<p>
+<code>svnsync</code> 是 Subversion 1.4 版時新增的指令，主要功能是同步兩地 repository 的紀錄內容。首先以 <code>initialize</code> 指令選項初始化 GoogleCode 的 repository ，這動作只能做一次。接著以 <code>synchronize</code> 指令選項取得同步資訊，最後以 <code>copy</code> 指令選項複製原有 repository 的內容至 GoogleCode repository 。說明:
+</p>
+<pre class="language-text">
+svnsync init dest_url src_url
+svnsync sync dest_url
+svnsync copy dest_url rev
+</pre>
+<p>
+如果你很不幸地在轉移原有 repository 之後才發現內含隱密性資料，為防資料外洩，請儘快於 <a href="http://groups.google.com/group/google-code-hosting">Hosting at Google Code</a> 網上論壇發出 Repository reset 訊息請求清空 repository。GoogleCode 管理者在看到你發文後，通常當天就會重置你的 repository 。不要擔心英文不好，論壇上常常有人發出 reset 訊息，拿一篇當範本改一下就行了... 我也是這樣做的。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2897049.html">http://blog.roodo.com/rocksaying/archives/2897049.html</a></div>

@@ -1,0 +1,117 @@
+---
+title: 掌握 JavaScript 的「封裝」特性, part 1
+category: programming
+old-category: JavaScript
+tags: [javascript,繼承,oop]
+---
+<p>
+JavaScript/ECMAScript (配合 <a href="http://www.ecma-international.org/">ECMAScript Language Specification - Standard ECMA-262 - 用語，以下稱 ECMAScript</a>) 是一種個體導向程式語言 (object-oriented programming language, OOPL) ，但並不是一種基於類別的個體導向程式語言 (class-based OOPL) (<span class="Onote">ECMA-262 section 4.2 "Language Overview"</span>)。只接觸過 C++, Smalltalk, Java, C# 這些程式語言的 programmer ，一開始多少會因 ECMAScript 沒有 class, public, protoected, private 這些關鍵字而困惑。不過 ECMAScript 仍然支援繼承 (inheritance) 、封裝 (encapsulation) 、動態連結 (dynamic binding) 這三種特性。
+</p>
+
+<!--more-->
+<h3>
+ECMAScript 的「封裝」概觀
+</h3>
+<p>
+「封裝」特性中， ECMAScript 支援公開 (public) 和私有 (private) 兩種特性，但配合 ECMAScript 的世界觀，所以用語並不相同。在 ECMAScript 中，個體 (包括 function 也是一種 object) 是 property 的集合。由於 ECMAScript 規定 property 是共享的 (shared) ，因此個體中的 property 可就是 class-based OOPL 中的 public member 。
+在每一個 scope (對 scope 最簡單的說明就是把每一組 {,} 所括起來的區域，視為一個 scope) 中定義且未被指派為其他個體的 property 的個體，其生命週期及可見範圍都只限於該 scope 中，故這些個體就是 private member ，或者更通俗地稱為「區域變數」 (local variable) 。
+</p>
+<p>
+外界只能存取每個個體的 property ，而無法存取其 scope 中的區域變數，但同一 scope 中的區域變數彼此可見。再想到一點，在 ECMAScript 中 function 也是一個 object 。結合上述來思考，可以想到若在 scope 中定義一個 function ，那麼這個 function 就可以存取同一 scope 中的區域變數。接著只要將這個 function 指派為個體的 property ，那麼外界就可以調用 (call) 這個 property ，而達到存取區域變數的目的。
+當我們把一個 function object 指派作為其他個體的 property 時，在 ECMAScript 中就稱此 function 為個體的 method 。由於 property 是公開的，所以這類 function 就是 class-based OOPL 中所說的 public method 。
+</p>
+
+<h3>
+實作 private member
+</h3>
+<p>
+此處以實例說明上述概念。
+</p>
+<h4>
+Sample code
+</h4>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">body</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="cm">/*
+See also: ECMA-262 chapter.13 Function Definition.
+*/</span>
+<span class="kd">function</span> <span class="nx">A</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">y</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setX</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">x</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">getX</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">x</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setZ</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">getZ</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">z</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">A</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">setY</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">y</span> <span class="o">=</span> <span class="s1">'y of global variable is '</span> <span class="o">+</span> <span class="nx">v</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="s1">'y of property is '</span> <span class="o">+</span> <span class="nx">v</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">A</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getY</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="s1">';'</span> <span class="o">+</span> <span class="nx">y</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">a2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">();</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">setX</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"private member 'x' of 'a' (variable 'x' in object 'a') = "</span> <span class="o">+</span> <span class="nx">a</span><span class="p">.</span><span class="nx">getX</span><span class="p">());</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"public member 'x' of 'a' (property 'x' of object 'a') = "</span> <span class="o">+</span> <span class="nx">a</span><span class="p">.</span><span class="nx">x</span><span class="p">);</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"private member 'x' of 'a2' = "</span> <span class="o">+</span> <span class="nx">a2</span><span class="p">.</span><span class="nx">getX</span><span class="p">());</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">setZ</span><span class="p">(</span><span class="s1">'C2'</span><span class="p">);</span>
+<span class="nx">a</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="s1">'C3'</span><span class="p">;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"property 'z' of object 'a' = "</span> <span class="o">+</span> <span class="nx">a</span><span class="p">.</span><span class="nx">getZ</span><span class="p">());</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">setY</span><span class="p">(</span><span class="s1">'5'</span><span class="p">);</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">getY</span><span class="p">());</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">y</span><span class="p">);</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span></code></pre>
+
+<p>
+在第 7-27 行中，是 A function object 的定義，其 scope 就是第 7-27 行的區域。第 8-9 中定義了兩個區域變數 x,y ，第 10 行是 A 的 z property 。第 12-14 行定義了一個 function object 並將之指派為 A 的 setX property, 也就是 setX method ，其他皆同。而第 29-35 行，則是在 A 的 scope 外定義兩個 function objects - setY,getY - ，並透過 A 的 prototype property ，將 setY/getY 指派為 A 的 method 。透過 prototype property 所指派的成員，是被參考同一條 prototype chain (<span class="Onote">ECMA-262 section 4.2.1 "Objects"</span>) 的個體所共享，也就是會被繼承。而直接指派的成員，則是該個體獨有的。
+</p>
+<p>
+第 37-38 行，透過 new 指令要求系統以 A function object 為建構者，配置兩個新的個體 a, a2 。基本上， a 和 a2 是 A function object 的複本 (只有一些不同，例如 a, a2 的 prototype property 的屬性[attribute] 是 read only) ，它們各自擁有自己私有的 x,y 區域變數和 z property。第 44 行的輸出結果，顯示 a2 的 x 區域變數的值，並未被改變。
+第 41 行並不是試圖存取 a 的區域變數 x 。從語意上就可以了解，這個語法是設定 a 的 x property 的值。如果現在還沒有這個 property ，那麼系統會為 a 增加這個 property 。 ECMAScript 在語意上就指明了第 41 行存取的對象是 a 的 x property ，系統不會認為這裡試圖存取的對象是 a 的 x 區域變數。於是第 41 行後， a 就有一個名為 x 的區域變數和一個名為 x 的 property ，系統不會混淆這兩者。第 42-43 行的輸出結果，證實了這點。
+</p>
+<p>
+第 13 行處， setX method 試圖存取一個名為 x 的個體。這裡沒有加上 this 關鍵字，所以系統會沿著 scope chain (<span class="Onote">ECMA-262 section 10.1.4 "Scope Chain and Identifier Resolution"</span>) 尋找，由於在同一個 scope 中就有符合的個體，因此 setX 存取的就是同一個 scope 中的 x 區域變數。第 21 行處，由於加上了 this 關鍵字，所以系統會去存取 activation object (<span class="Onote">ECMA-262 section 10.1.6 "Activation Object"</span>) 的 z property 。
+</p>
+<p>
+第 46-47 行展示了一個沒有保護效果的封裝，即可透過 method 又可直接存取成員。
+</p>
+<p>
+第 50-53 行展示了一個較易令人困惑的例子。此處調用 setY method ，而從語意中就可以發現一個問題，即第 30 行中試圖存取的名為 y 的個體是哪個？沒有加 this ，所以不是 activation object 的 y property 。在 A function object 的 scope 之外，所以也不是第 9 行中定義的 y 區域變數。碰到這種情形， ECMAScript 會建構一個名為 y 的 global object (<span class="Onote">ECMA-262 10.1.5 "Global Object", 俗稱全域變數</span>) 。第 52 行顯示現在系統中確實有一個 y 全域變數。
+</p>
+<p>
+在本文中反覆提到了 prototype chain, scope chain 這幾個字眼，這是 ECMAScript 支援「繼承」(inheritance) 特性的關鍵概念。我想改天再說吧。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/%E6%8E%8C%E6%8F%A1%20JavaScript%20%E7%9A%84%E3%80%8C%E5%B0%81%E8%A3%9D%E3%80%8D%E7%89%B9%E6%80%A7%2C%20part%202.html">掌握 JavaScript 的「封裝」特性, part 2</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/The%20practice%20of%20anonymous%20recursion%20function%20in%20JavaScript.html">The practice of anonymous recursion function in JavaScript</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">JavaScript的中介編程與反射能力示範</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2165837.html">http://blog.roodo.com/rocksaying/archives/2165837.html</a></div>

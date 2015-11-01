@@ -1,0 +1,130 @@
+---
+title: Load and Execute JavaScript on Demand, by createElement
+category: programming
+old-category: JavaScript
+tags: []
+---
+<div name="tags" class="tags">Tags: ajax javascript</div>
+<p>
+在《<a href="{{ site.baseurl }}/archives/2007/Load%20and%20Execute%20JavaScript%20on%20Demand.html">Load and Execute JavaScript on Demand</a>》一文中，我說明了利用 <code>XMLHttpRequest</code> 動態載入外部 JavaScript 程式的技巧。然而那技巧是用於應付某些特殊情境之手段，其限制與特點如下列所示：
+</p>
+<ol>
+<li>受限於 <code>XMLHttpRequest</code> 之安全性管制，不能載入不同主機的外部程式。</li>
+<li>易於掌握載入狀況及執行順序。</li>
+<li>執行方式較具彈性，甚至可以選擇性執行片段。例如《<a href="{{ site.baseurl }}/archives/2007/Load%20and%20Execute%20JavaScript%20on%20Demand.html">Load and Execute JavaScript on Demand</a>》之範例程式第74-79行之註解內容，原意是截取夾雜在一般 HTML 文件中的 JavaScript 程式碼，且僅僅執行此片段程式。此亦為該程式實作之最初用途，因為外部 JavaScript 程式碼並非位於純粹 .js 文件中，而是夾雜在網誌的文章中。</li>
+</ol>
+
+<!--more-->
+<p>
+除 <code>XMLHttpRequest</code> 之外，還有一個適用於較一般性情境的動態載入技巧：利用 <code>document.createElement('script')</code> 實踐 (See also: <a href="http://www.activewidgets.com/javascript.forum.6114.45/dynamic-load-javascript-from-javascript.html">dynamic load javascript from javascript</a>、<a href="http://www.codehouse.com/javascript/articles/external/">Dynamically Loading
+External JavaScript Files</a>)。
+</p>
+<p>
+<code>document.createElement('script')</code> 動態載入技巧之特點恰與 <code>XMLHttpRequest</code> 相反：
+</p>
+<ol>
+<li>可以載入跨網域的外部 JavaScript 程式。</li>
+<li>不易掌握載入狀況及執行順序。一樣是以非同步模式載入，但不像 <code>XMLHttpRequest</code> 具有 <code>onreadystatechange</code> 事件可掌握載入狀況；也不能載入之後再依序執行。</li>
+<li>無法選擇執行片段。瀏覽器載入外部 JavaScript 程式後便立即執行，不能選擇執行時機，也不能僅執行片段內容。因此外部文件必須是一個純 JavaScript 文件。</li>
+</ol>
+
+<p>
+下列是一個基本的外部 JavaScript 程式。
+</p>
+
+<fieldset>
+<legend>test_v1.js</legend>
+<pre class="highlight"><code><span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'This external JavaScript file is loaded!'</span><span class="p">);</span>
+</code></pre>
+
+</fieldset>
+
+<p>
+下列示範 <code>document.createElement('script')</code> 載入外部 JavaScript 程式的基本型式，並嘗試以《<a href="{{ site.baseurl }}/archives/2006/Rendering%20images%20with%20title%20and%20box.html">Rendering images with title and box</a>》所採取的方法掌握外部程式載入狀況。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">dynamicLoadJs1</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">js</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
+    <span class="nx">js</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'text/javascript'</span><span class="p">;</span>
+    <span class="nx">js</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'test_v1.js'</span><span class="p">;</span>
+    <span class="nx">js</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// not work in IE</span>
+        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Loaded'</span><span class="p">)</span>
+        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'js.complete is '</span> <span class="o">+</span> <span class="nx">js</span><span class="p">.</span><span class="nx">complete</span><span class="p">);</span>
+    <span class="p">};</span> 
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'head'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">js</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onload'</span><span class="p">,</span> <span class="nx">dynamicLoadJs1</span><span class="p">);</span>
+<span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="nx">dynamicLoadJs1</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+
+<p>
+藉由上述示範，可以證明 <code>document.createElement('script')</code> 確實可以載入外部 JavaScript 程式，但卻無法掌握其載入狀況。元素的 <code>onload</code> 事件在 IE 中不會作用；至於 <code>complete</code> 屬性，我個人已知在 IE, Firefox 及 Opera 三種瀏覽器中皆為 <code>undefined</code> ，是無效的。這意味著我們必須要求外部程式主動改變某些狀態以告知它已經載入了，主控端則要輪詢狀態值。譬諭如我們要 JavaScript 去載入一個文件，然後每隔一段時間就要問 JavaScript 載入完了嗎？
+</p>
+
+<p>
+根據上述發現的問題進行修正。首先，我在主控端定義一個狀態值 <var>loadingScripts</var> 表示要載入的外部程式數目，並以 <code>setInterval</code> 設定輪詢動作。藉由查詢 <var>loadingScripts</var> 之值或一個應該由外部程式定義之項目是否已定義這兩種狀態之變化掌握載入狀況。修正後的動態載入型式如下列。
+</p>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">dynamicLoadJs2</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">loadingScript</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">js</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
+    <span class="nx">js</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'text/javascript'</span><span class="p">;</span>
+    <span class="nx">js</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'test_v2.js'</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'head'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">js</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">interval</span> <span class="o">=</span> <span class="nx">setInterval</span><span class="p">(</span>
+        <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">((</span><span class="nb">window</span><span class="p">.</span><span class="nx">loadingScript</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+                <span class="p">(</span><span class="nx">externalData</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">interval</span><span class="p">);</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Loaded and external = '</span> <span class="o">+</span> <span class="nx">externalData</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="mi">100</span> <span class="cm">/* poll per 0.1 second*/</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onload'</span><span class="p">,</span> <span class="nx">dynamicLoadJs2</span><span class="p">);</span>
+<span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="nx">dynamicLoadJs2</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+<p>
+外部程式則要在其最後一行將 <var>loadingScripts</var> 之值減一。
+</p>
+<fieldset>
+<legend>test_v2.js</legend>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">externalFunc</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">externalData</span> <span class="o">=</span> <span class="s1">'Abc'</span><span class="p">;</span>
+
+<span class="nb">window</span><span class="p">.</span><span class="nx">loadingScripts</span><span class="o">--</span><span class="p">;</span>
+</code></pre>
+
+</fieldset>
+
+
+<p>
+以 <code>document.createElement('script')</code> 動態載入外部程式的技巧雖然可以載入跨網域的程式，卻有一些效能缺陷。
+</p>
+<ol>
+<li>不易掌握載入狀況的問題。當外部程式不能配合主控端改變狀態值時，則必須要多繞幾個圈才能確保載入與執行狀況。</li>
+<li>必須以輪詢模式掌握載入狀況。</li>
+<li>因為需建立 <code>script</code> 元素並加入文件 DOM 的 <code>head</code> 節點中，因此通常要等到文件 DOM 結構建立之後才能開始載入外部程式，不像 <code>XMLHttpRequest</code> 方式可以並行載入。</li>
+</ol>
+<p>
+若對非同步模式下的輪詢與事件驅動機制有興趣，可以參考《<a href="{{ site.baseurl }}/archives/2006/select%28%29%20-%20I_O%20Multiplexer.html">select() - I/O Multiplexer</a>》。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88.html">網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/JavaScript%20Hijacking%20and%20How%20to.html">JavaScript Hijacking and How to</a></li>
+<li><a href="{{ site.baseurl }}/archives/2010/%E8%B7%A8%E7%B6%B2%E7%AB%99%E8%BC%89%E5%85%A5%E8%88%87%E5%9F%B7%E8%A1%8C%20JavaScript%20%E7%9A%84%E6%96%B9%E5%BC%8F.html">跨網站載入與執行 JavaScript 的方式</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2741057.html">http://blog.roodo.com/rocksaying/archives/2741057.html</a></div>

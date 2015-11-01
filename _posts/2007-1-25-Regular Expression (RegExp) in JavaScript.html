@@ -1,0 +1,216 @@
+---
+title: Regular Expression (RegExp) in JavaScript
+category: programming
+old-category: JavaScript
+tags: [javascript,regexp,regex]
+---
+<p>
+Regular Expression (以下簡稱 REGEX) 是以一組特定字元符號描述字串樣式規則的記述語法。簡單地說， REGEX 用於表達字元符號在字串中出現的規則。舉個例子說明，在 REGEX 中，字元 '^' 放在第一個位置表示字串開頭位置，當我寫下 <code>^A</code> 的記述時，便表示必須是一個開頭為 <code>A</code> 的字串，如 <var>Adam</var>，才符合此一規則。這個表達規則通常稱為 pattern 。 ECMAScript/JavaScript 以內建的 RegExp Object 提供 REGEX 功能。<cite>See also: ECMA-262 15.10 - RegExp Objects</cite>
+</p>
+
+<!--more-->
+<p>
+要產生一個 RegExp 個體有兩種方式。第一種是直接以斜線 (<code>/</code>) 包住 pattern ，例如 <code>/^A/</code> 。注意不要再用單引號或雙引號包在斜線外圍，一但用了引號圍住，就只是一個 String 而非 RegExp 個體。 <code>"/^A/"</code> 就是錯誤寫法，這只是一個普通字串。第二種是向系統要求建立一個 RegExp 個體，即 <code>new RegExp(pattern)</code> ，引數 pattern 可以是一個字串也可以是另一個 RegExp 個體。第一種方法只能使用常值的 pattern ，我們不能用斜線包住一個變數或一個字串運算結果。如果 pattern 保存在變數之中，則必須使用第二種方式。
+</p>
+
+<p>
+RegExp 個體提供兩個主要行為，即 exec() 和 test() 。 exec() 會對引數字串進行比對運算，並將匹配的字串內容記錄在陣列中回傳。而 test() 則僅僅測試引數字串是否符合規則，只回傳 <code>true</code> 或 <code>false</code> 。此外，RegExp 個體也可以作為 String 個體的 <code>match(), search(), replace(), split()</code> 之引數。 String 的 <code>match()</code> 其實就是調用 RegExp 的 <code>exec()</code> ，兩者的結果相同。
+</p>
+
+<p>
+ECMAScript/JavaScript 的 REGEX 規則是以 Perl 的規則為範本 (PHP 中稱為 PCRE 的內容) ，本文僅簡短說明幾個常見的字元意義。想了解更多用法者，請參看 Perl/PHP 的相關書籍，以及 ECMA-262 15.10 的內容。
+</p>
+<ol>
+<li><code>^</code><br/>寫在 pattern 第一個位置時，表示其後一符號必須出現在字串開頭的位置。寫在 pattern 中間位置時則為否定之意，表示字串中不可有 ^ 之後一符號的內容。
+</li>
+<li><code style="font-size:large;">$</code><br/>寫在 pattern 最後一個位置時，表示其前一符號必須出現在字串尾端的位置。寫在 pattern 中時無特別意義。
+</li>
+<li><code style="font-size:large;">*</code><br/> 表示字串中有 0 到無數個其前一符號的內容。
+</li>
+<li><code style="font-size:large;">+</code><br/> 表示字串中有 1 到無數個其前一符號的內容。
+</li>
+<li><code style="font-size:large;">?</code><br/> 表示字串中有 0 到 1個其前一符號的內容。
+</li>
+<li><code style="font-size:large;">{ }</code><br/> 表示前一符號在字串中的重覆次數。例如 <code>/A{2}/</code> 表示 'A' 重覆兩次 (即 'AA') ；<code>/A{2,}/</code> 表示字串含有 2 到無數多個 'A' ；<code>/A{2,5}/</code> 表示含有 2 到 5 個 'A' 。
+</li>
+<li><code style="font-size:large;">.</code><br/> 表示一個任意字元。
+</li>
+<li><code style="font-size:large;">[ ]</code><br/> 表示字串含有括號中任一字元的內容。可以 <code>-</code> 表示一組連續字元，例如 <code>/[a-z]/, /[0-9]/</code> 。注意， [] 僅代表一個字元，例如 <code>/[abc]/</code> 表示 'a' 或 'b' 或 'c' ，而不是 'abc' 。
+</li>
+<li><code style="font-size:large;">( )</code><br/> 表示一個 sub pattern ，符合 sub pattern 的字串內容會被存放在匹配陣列中，並依序指派數字代表此 sub pattern 。可以此數字在 pattern 的其他地方引用內容，例如 <code>/The h([0-9]) means Title (\1)/</code> 表示第 1 個 sub pattern 是 0 到 9 的任一字元，而 \1 表示匹配的內容。故 'The h1 means Title 1', 'The h2 means Title 2' 到 'The h9 means Title 9' 符合規則。
+</li>
+<li><code style="font-size:large;">\</code><br/> 表示轉義 (escaping) ，將其後的字元視為一般字元。例如要表示字串中含有 '/' 字元時，就必須寫作 <code>/\//</code> 。
+</li>
+<li><code style="font-size:large;">|</code><br/> 「或」意，字串中含有 '|' 之前一符號或後一符號的內容。例如 <code>/image\.(jpg|png)/</code> 表示 'image.jpg' 或 'image.png' 。通常會用 () 括住 '|' 的前後符號。
+</li>
+<li><code style="font-size:large;">\d</code><br/> 表示任何一個數字，意同 [0-9] 。
+</li>
+<li><code style="font-size:large;">\D</code><br/> 表示任何一個非數字，意同 [^0-9] 。
+</li>
+<li><code style="font-size:large;">\w</code><br/> 表示任何一個字元與數字以及 '_' ，意同 [a-zA-Z0-9_] 。
+</li>
+<li><code style="font-size:large;">\W</code><br/> 表示任何一個 \w 以外的字元。
+</li>
+<li><code style="font-size:large;">\s</code><br/> 表示任何一個空白符號，包括 \t, \v 等。
+</li>
+<li><code style="font-size:large;">\S</code><br/> 表示任何一個非空白符號。
+</li>
+</ol>
+
+<h3>Example 1.</h3>
+<pre class="highlight"><code><span class="o">/</span><span class="err">\</span><span class="nx">d</span><span class="p">{</span><span class="mi">4</span><span class="p">}</span><span class="o">-</span><span class="err">\</span><span class="nx">d</span><span class="p">{</span><span class="mi">2</span><span class="p">}</span><span class="o">-</span><span class="err">\</span><span class="nx">d</span><span class="p">{</span><span class="mi">2</span><span class="p">}</span><span class="sr">/.test</span><span class="se">(</span><span class="sr">'2007-01-25'</span><span class="se">)</span><span class="sr">;     /</span><span class="o">/</span> <span class="kc">true</span>
+<span class="s1">'2007-01-25'</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/</span><span class="se">\d{4}</span><span class="sr">-</span><span class="se">\d{2}</span><span class="sr">-</span><span class="se">\d{2}</span><span class="sr">/</span><span class="p">);</span>    <span class="c1">// true</span>
+
+<span class="kd">var</span> <span class="nx">datePart</span> <span class="o">=</span> <span class="s1">'2007-01-25'</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/</span><span class="se">(\d{4})</span><span class="sr">-</span><span class="se">(\d{2})</span><span class="sr">-</span><span class="se">(\d{2})</span><span class="sr">/</span><span class="p">);</span>
+<span class="c1">// datePart is ['2007-01-25', '2007', '01', '25']</span>
+
+<span class="kd">var</span> <span class="nx">emailPart</span> <span class="o">=</span> <span class="sr">/^</span><span class="se">(\w</span><span class="sr">+</span><span class="se">)</span><span class="sr">@</span><span class="se">([\w</span><span class="sr">.</span><span class="se">]</span><span class="sr">+</span><span class="se">)</span><span class="sr">/</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="s1">'rock@example.com'</span><span class="p">);</span>
+<span class="c1">// emailPart = ['rock@example.com', 'rock', 'example.com']</span>
+
+<span class="kd">var</span> <span class="nx">words</span> <span class="o">=</span> <span class="s1">'How are you doing, john?'</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/</span><span class="se">[\s</span><span class="sr">,</span><span class="se">\?\.]</span><span class="sr">+/</span><span class="p">);</span>
+<span class="c1">// words = ['How', 'are', 'you', 'doing', 'john', '']</span>
+</code></pre>
+
+
+<h3>Example 2. 一個簡單的 REGEX 測試工具，可以立即回應輸入的字串與 pattern 是否相符</h3>
+
+<script type="text/javascript">
+function r_test(regex, s) {
+    var p = document.getElementById('2070695_r_test');
+    var result = document.createTextNode(
+        regex.test(s)
+            ? 'Match!'
+            : 'Not match!'
+    );
+    p.replaceChild(result, p.lastChild);
+}
+
+function r_exec(regex, s) {
+    var p = document.getElementById('2070695_r_exec');
+    var matches = regex.exec(s);
+    var result = document.createTextNode(
+        matches
+            ? matches.toString()
+            : 'Not match!'
+    );
+    p.replaceChild(result, p.lastChild);
+}
+
+function s_split(regex, s) {
+    var p = document.getElementById('2070695_s_split');
+    var splits = s.split(regex);
+    var result = document.createTextNode(
+        splits
+            ? splits.toString()
+            : 'Not match!'
+    );
+    p.replaceChild(result, p.lastChild);
+}
+
+function regexp_match() {
+    var p = document.getElementById('2070695_regex');
+
+    var inputString = document.getElementById('2070695_inputString').value;
+    var patternString = document.getElementById('2070695_patternString').value;
+    var regexFlags = document.getElementsByName('2070695_regexFlags');
+    var flags = '';
+    for (i = regexFlags.length - 1; i >= 0; --i) {
+        if (regexFlags[i].checked) {
+            flags += regexFlags[i].value;
+        }
+    }
+
+    var regex = new RegExp(patternString, flags);
+    p.replaceChild(document.createTextNode(regex.toString()), p.lastChild);
+
+    r_test(regex, inputString);
+    r_exec(regex, inputString);
+    s_split(regex, inputString);
+}
+</script>
+<span style="font-size: large;">
+<fieldset>
+<legend>REGEX test form</legend>
+<p>
+    <label for="2070695_inputString">String "</label><input id="2070695_inputString" type="text" value="Abc" size="40" style="border:0;background-color:#99ffff;"/>"
+<br/>此輸入框中輸入字串
+</p>
+<p>
+    <label for="2070695_patternString">Pattern /</label><input id="2070695_patternString" type="text" value="[a-z]+" size="40" style="border:0;background-color:#99ffff;"/>/
+<br/>此輸入框中輸入 REGEX 內容。前後不用加 (/)。
+</p>
+<p>
+    <label><input name="2070695_regexFlags" type="checkbox" value="i">ignoreCase</label> |
+    <label><input name="2070695_regexFlags" type="checkbox" value="g">global</label>
+</p>
+<p>
+    <button type="button" onclick="regexp_match();">Match</button>
+</p>
+<p id="2070695_regex"><label>Regular Expression: </label>&nbsp;</p>
+<p id="2070695_r_test"><label>test: </label>&nbsp;</p>
+<p id="2070695_r_exec"><label>exec/match: </label>&nbsp;</p>
+<p id="2070695_s_split"><label>split: </label>&nbsp;</p>
+</fieldset>
+</span>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">r_test</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'r_test'</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span>
+        <span class="nx">regex</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+            <span class="p">?</span> <span class="s1">'Match!'</span>
+            <span class="p">:</span> <span class="s1">'Not match!'</span>
+    <span class="p">);</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">r_exec</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'r_exec'</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">matches</span> <span class="o">=</span> <span class="nx">regex</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span>
+        <span class="nx">matches</span>
+            <span class="p">?</span> <span class="nx">matches</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span>
+            <span class="p">:</span> <span class="s1">'Not match!'</span>
+    <span class="p">);</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">s_split</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s_split'</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">splits</span> <span class="o">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="nx">regex</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span>
+        <span class="nx">splits</span>
+            <span class="p">?</span> <span class="nx">splits</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span>
+            <span class="p">:</span> <span class="s1">'Not match!'</span>
+    <span class="p">);</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">regexp_match</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'regex'</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">inputString</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'inputString'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">patternString</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'patternString'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">regexFlags</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s1">'regexFlags'</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">flags</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">regexFlags</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">regexFlags</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">checked</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">flags</span> <span class="o">+=</span> <span class="nx">regexFlags</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">value</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="kd">var</span> <span class="nx">regex</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="nx">patternString</span><span class="p">,</span> <span class="nx">flags</span><span class="p">);</span>
+    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="nx">regex</span><span class="p">.</span><span class="nx">toString</span><span class="p">()),</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
+
+    <span class="nx">r_test</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">inputString</span><span class="p">);</span>
+    <span class="nx">r_exec</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">inputString</span><span class="p">);</span>
+    <span class="nx">s_split</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">inputString</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E5%9C%A8%20C%20%E7%A8%8B%E5%BC%8F%E4%B8%AD%EF%BC%8C%E4%BD%BF%E7%94%A8%20Regex%20%28Regular%20Expression%29%20library.html">在 C 程式中，使用 Regex (Regular Expression) library</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2670695.html">http://blog.roodo.com/rocksaying/archives/2670695.html</a></div>

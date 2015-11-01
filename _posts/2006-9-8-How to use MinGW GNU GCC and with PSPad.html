@@ -1,0 +1,74 @@
+---
+title: How to use MinGW GNU GCC and with PSPad
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+"MinGW" 是取 Minimalist GNU for Windows 計劃之意，其目標為提供一個可在 Win32 平台上開發 Win32 native code 的 GNU GCC tools ，而非提供 Unix 程式移植到 Win32 平台之用，此即為其 Minimalist 之意。 2000年時，我曾在「<a href="http://home.educities.edu.tw/shirock/comp/Install_Mingw32.htm">安裝 GCC 2.95/Mingw32</a>」說明過 MinGW 。不過那篇文章中的資訊已經過時了，現在 MinGW 的正式網址為 <a href="http://www.mingw.org/">http://www.mingw.org/</a> 。
+</p>
+
+<!--more-->
+<div class="note">
+2007/06/30: 更新安裝資訊。
+</div>
+<p>
+http://www.mingw.org/MinGWiki/index.php/Install%20MinGW
+MinGW 雖然提了供整合安裝工具，但仍有些許問題。仍然建議手動下載與安裝。請瀏覽 <a href="http://www.mingw.org/download.shtml#Contents">File List@MinGW Download</a> ，依個人需求下載個別套件，解壓縮到個人欲安裝的目錄下即可。建議下載 Current 版本。使用 MinGW 開發 C/C++ 程式的最小需求套件為:
+</p>
+<ul>
+  <li>MinGW Runtime</li>
+  <li>Windows API</li>
+  <li>binutils</li>
+  <li>gcc-core (for C language)</li>
+  <li>gcc-g++ (for C++ language)</li>
+  <li>make<br/>傳統上我們使用 make 建置專案，如果你改用 <a href="http://ant.apache.org/">Ant</a> ，那麼就不需下載此檔。</li>
+</ul>
+<p>
+只需要下載 bin 的部份。 src 是原始碼。安裝時，將上述套件都解壓縮到同一目錄之下。個人經驗及網路文章所收集到的資訊顯示，安裝到 <code>C:\MinGW</code> 是最佳選擇。若安裝到其他目錄，常常發生問題，且各人狀況不一。依 mingw-runtime, win32api, binutils, gcc-core, gcc-g++ 的順序解壓縮，碰到檔案重複的提示時，請覆蓋過去。最後，設置環境變數 <var>PATH</var> 指向安裝目錄，如下列所示。若你並非安裝在 <code>C:\MinGW</code> ，請依實際遇到的狀況調整環境變數的設置。各人的狀況不一致。
+</p>
+<pre class="language-text">
+SET PATH=%PATH%;C:\MinGW\bin;
+</pre>
+<p>
+在 MinGW 中，有提供一套最小化的 unix shell 擬似執行環境，稱為 MSYS (Minimal SYStem) ，這並非必要套件。純粹只是需要一套 C/C++ compiler tools 的使用者，並不需要下載它。如果是打算將原本在 unix 環境下的程式移植到 win32 的使用者，也不建議用這套工具， <a href="http://cygwin.com/">Cygwin</a> 更合適。 Cygwin CD 中也包含了 MinGW 套件，取得 Cygwin CD 者，就不需要另外再安裝 MinGW 。
+</p>
+<p>
+我們一般使用 gcc 即可完成編譯與連結工作，通常不用區分 C 或 C++。但若你在編譯 C++ 程式時發生狀況，依 MinGW 文件說明， C 語言程式使用 gcc 編譯，而 C++ 語言程式則用 g++ 編譯。
+</p>
+<p>
+個人經驗：我試著用 gcc 建置 C++ 語言程式，在進行連結工作時，無法正確連結所需的 libraries/object files 以致發生符號未定義的錯誤。我測試發現，用 gcc 和 g++ ，皆可完成 C 和 C++ 的編譯工作； gcc 只能完成 C 語言程式的連結工作，但 g++ 卻又可完成 C 和 C++ 語言程式的連結工作。
+</p>
+<p>
+底下提供一個範例程式，供測試 MinGW 是否安裝無誤。
+</p>
+<h4>
+win_hello.c
+</h4>
+<pre class="highlight"><code><span class="cp">#include &lt;windows.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">WINAPI</span> <span class="nf">WinMain</span> <span class="p">(</span><span class="n">HINSTANCE</span> <span class="n">hInstance</span><span class="p">,</span>
+	<span class="n">HINSTANCE</span> <span class="n">hPrevInstance</span><span class="p">,</span>
+	<span class="n">PSTR</span> <span class="n">szCmdLine</span><span class="p">,</span>
+	<span class="kt">int</span> <span class="n">iCmdShow</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="n">MessageBox</span> <span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="s">"Hello"</span><span class="p">,</span> <span class="s">"Hello Demo"</span><span class="p">,</span> <span class="n">MB_OK</span><span class="p">);</span>
+   <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+<br/>
+<pre class="highlight"><code><span class="s">"C:\Program Files\MinGW</span><span class="se">\b</span><span class="s">in\g++"</span> <span class="o">-</span><span class="n">o</span> <span class="n">win_hello</span> <span class="n">win_hello</span><span class="p">.</span><span class="n">c</span> <span class="o">-</span><span class="n">mwindows</span>
+</code></pre>
+
+<p>
+PSPad 編輯器的使用者，可以參考 <a href="{{ site.baseurl }}/archives/2006/Borland%20C%2B%2B%205.5%20Compiler%20with%20PSPad.html">Borland C++ 5.5 Compiler with PSPad</a> 設定編譯器的內容。編譯器指向 gcc.exe ，而「參數」則輸入<var>-o -o %Name% %File%</var>。輔助說明可用 <a href="http://onnerby.se/~daniel/chm/">CHM Help Files</a> 此版。
+</p>
+<p>
+Eclipse/CDT 的使用者，請參考 <a href="http://www-128.ibm.com/developerworks/opensource/library/os-ecc/?ca=dgr-ln">C/C++ development with the Eclipse Platform</a>。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/Make%20%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E7%B0%A1%E4%BB%8B.html">Make 工具使用簡介</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2119992.html">http://blog.roodo.com/rocksaying/archives/2119992.html</a></div>
