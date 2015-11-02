@@ -1,0 +1,127 @@
+---
+title: 以PHP觀點來看 C++ template
+category: programming
+old-category: PHP
+tags: [template,generic,泛型,動態語言]
+---
+<p>
+在<a href="" class="bookname_notation">從 C++ Template 到 Java Generic，一步一步來</a>一文，我用 Java 的泛型語法改寫了一個 C++ 樣板類別。
+我也用 PHP、JavaScript 和 Ruby 來做同樣的事，看看這些動態語言有沒有泛型處理能力。
+</p>
+
+<p>
+我要用 PHP 改寫的 C++ 樣板類別，其源碼同<a href="" class="bookname_notation">從 C++ Template 到 Java Generic，一步一步來</a>。本文不再重複，直接說明 PHP 的改寫過程。
+</p>
+
+<!--more-->
+<h3>PHP 改寫過程</h3>
+
+<p>
+PHP 的類別定義語法和 C++/Java 差異不大(其實是像Java)。
+<code>Cx</code> 是個樣板類別，定義中使用的型別為參數化、可替換者。
+在 PHP 中的意義，就代表著不具體的型別，通常就是用 <code>var</code> 或不寫。
+PHP 的變數都是用 <var>$</var> 開頭，存取資料成員時一定要用 <var>$this</var> 指示，不可省略。
+方法定義要加關鍵字 <code>function</code> ，略去參數與回傳值的型別。
+PHP 的建構子有兩種寫法:
+</p>
+<ol>
+    <li>舊式(PHP4)跟 C++/Java 一樣，跟類別同名的方法即為建構子。</li>
+    <li>新式(PHP5)則統一名稱為 <code>__construct</code> 。</li>
+</ol>
+<p>
+本例兩種都用。
+</p>
+
+<p>
+Cx 有兩個建構子，一個是無參數的預設建構子，另一個是一個參數的建構子。PHP 可以用參數預設值的方式簡化建構子的改寫動作，寫成一個。其實 C++ 就可以用參數預設值的方式將兩個建構子寫成一個建構子。
+只是因為 Java, JavaScript 不支援參數預設值，所以我的 C++ 程式碼才特意分開來寫。
+</p>
+
+<pre class="highlight"><code>class Cx {
+    private $data;
+
+    public function Cx($v) { //舊式建構子寫法。剛好跟 C++ 一樣，不用改。
+          $this-&gt;data = $v;
+    }
+
+    public function getData() {
+        return $this-&gt;data-&gt;value();
+    }
+};
+
+class N {
+    private $n;
+
+    //新式建構子寫法，名稱一律用 __construct
+    //用參數預設值的方式簡化建構子的改寫動作
+    public function __construct($v = 0) { $this-&gt;n = $v; }
+
+    public function value() {
+        return -$this-&gt;n;
+    }
+};
+
+class M {
+    private $m;
+
+    public function __construct($v = 0) { $this-&gt;m = $v; }
+
+    public function value() {
+        return $this-&gt;m * 10;
+    }
+};
+
+class S {
+    private $s;
+
+    public function __construct($v = "") { $this-&gt;s = $v; }
+
+    public function value() {
+        return $this-&gt;s;
+    }
+};
+</code></pre>
+
+
+<p>
+緊接著上面的內容，接著的要改寫 C++ 的 <code>main()</code> 。在 PHP 中不需要指示程序進入點，直接寫即可。
+</p>
+<p>
+PHP 的變數不用宣告型別，由右值的實體決定左值的型別。 C# 3.0 引入了類似觀念。但是 PHP 的變數可以再次指派其他型別的資料給左值；C# 3.0 則在第一次指派後便固定型別，之後不可指派其他型別的內容給變數。
+</p>
+<pre class="highlight"><code>
+$n = new N(1);
+
+//不需要特別的樣板語法。
+$cn = new Cx( $n );
+
+echo $cn-&gt;getData(), "\n";
+
+$m = new M(1);
+$cm = new Cx( $m );
+echo $cm-&gt;getData(), "\n";
+
+$s = new S("hello");
+$cs = new Cx( $s );
+echo $cs-&gt;getData(), "\n";
+
+</code></pre>
+
+
+<p>
+在 C++ 中的樣板類別 Cx ，到了 PHP 之後，跟一般的類別沒兩樣。雖然 PHP 的語法很像 C++, Java ，但至少它還算是動態語言，故其語義基本上仍是泛型的。
+</p>
+
+<p>
+有些沒接觸過動態語言的人，對於泛型有一種奇怪的誤解，他們認為動態語言並沒有泛型語法，所以動態語言沒有泛型能力。我在<a href="{{ site.baseurl }}/archives/2007/C%2B%2B%E5%92%8C%E5%8B%95%E6%85%8B%E8%AA%9E%E8%A8%80%E7%9A%84%E6%B3%9B%E5%9E%8B.html" class="bookname_notation">C++和動態語言的泛型</a>一文中曾經駁斥過這一論點。從語意看，動態語言其實就是泛型的。
+</p>
+
+<p>
+移除 C++ 型別資訊，以 PHP 語法改寫的 N, M, S 類別定義，也僅僅只剩兩行程式碼不同，這意味著我們可以進一步重構彙整。
+而 PHP5 的新式建構子寫法此時也看得出一個好處，就是名稱統一，重構類別時不必再去修改建構子的名稱。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/%E4%BB%A5%E4%B8%8D%E5%90%8C%E8%AA%9E%E8%A8%80%E7%9A%84%E8%A7%80%E9%BB%9E%E4%BE%86%E7%9C%8B%20C%2B%2B%20template.html">以不同語言的觀點來看 C++ template</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10934759.html">http://blog.roodo.com/rocksaying/archives/10934759.html</a></div>

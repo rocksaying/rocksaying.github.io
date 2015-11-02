@@ -1,0 +1,47 @@
+---
+title: TWPUG問答~ 滑鼠指到某一列，可以出現說明文字
+category: programming
+old-category: JavaScript
+tags: [yui,tooltip]
+---
+<div class="tags" style="display:none">Tags: YUI tooltip</div>
+<p><q>請問滑鼠指到某一列，可以出現說明文字?</q>(<cite><a href="http://twpug.net/modules/newbb/viewtopic.php?viewmode=flat&type=&topic_id=2611&forum=21">TWPUG::JavaScript討論區</a></cite>)</p>
+<p>
+Just HTML. 不需要用到 JavaScript. 任何網頁元件只要具有 <code>title</code> 屬性，當滑鼠停留在其上方時就會出現提示文字(tooltip)，顯示 <code>title</code> 所指定的文字內容。See also: <a href="http://www.w3.org/TR/html401/struct/global.html#adef-title">HTML 4.01 Specification: The title attribute</a>.
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="nt">&lt;p</span> <span class="na">title=</span><span class="s">"提示1"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;div&gt;&lt;span</span> <span class="na">title=</span><span class="s">"提示2"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/span&gt;&lt;/div&gt;</span>
+<span class="nt">&lt;table&gt;&lt;tr&gt;&lt;td</span> <span class="na">title=</span><span class="s">"提示3"</span><span class="nt">&gt;</span>某一格<span class="nt">&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</span>
+</code></pre>
+
+
+<p>
+如果你覺得瀏覽器提供的提示文字功能(tooltip)太簡單，希望以 JavaScript 實踐，其基本概念為: 首先你要先為網頁元件指派 mouseover 及 mouseout 事件處理動作。接著在 mouseover 處理動作中，要找出網頁元件在頁面的 position 與長寬，以便計算提示文字呈現時的位置。不幸的是，網頁元件的position與長寬的求法有些複雜。若從頭寫一個提示文字功能煩了點。
+</p>
+<p>
+所幸這個看似簡單實則複雜的功能，有許多 JavaScript framework 都實作了。你應該直接選一套來用。我以 <a href="http://developer.yahoo.com/">YUI (Yahoo! UI Library)</a> 作為示範。YUI 實作了一個名為 Tooltip 的功能，說明文件: <a href="http://developer.yahoo.com/yui/container/tooltip/">Yahoo! UI Library: Tooltip</a>。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;p&gt;</span>跟上面的例子一樣，但要為網頁元件指定 ID。<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">"tip1"</span> <span class="na">title=</span><span class="s">"提示1"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;div&gt;&lt;span</span> <span class="na">id=</span><span class="s">"tip2"</span> <span class="na">title=</span><span class="s">"提示2"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/span&gt;&lt;/div&gt;</span>
+<span class="nt">&lt;table&gt;&lt;tr&gt;&lt;td</span> <span class="na">id=</span><span class="s">"tip3"</span> <span class="na">title=</span><span class="s">"提示3"</span><span class="nt">&gt;</span>某一格<span class="nt">&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</span>
+
+<span class="nt">&lt;link</span> <span class="na">rel=</span><span class="s">"stylesheet"</span> <span class="na">type=</span><span class="s">"text/css"</span> <span class="na">href=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/container/assets/container.css"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/yahoo-dom-event/yahoo-dom-event.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/animation/animation-min.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/container/container-min.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+var myTooltip = [];
+myTooltip['tip1'] = new YAHOO.widget.Tooltip("myTooltip1", { context:"tip1", showdelay:0 } );
+myTooltip['tip2'] = new YAHOO.widget.Tooltip("myTooltip2", { context:"tip2", showdelay:0 } );
+myTooltip['tip3'] = new YAHOO.widget.Tooltip("myTooltip3", { context:"tip3", showdelay:0 } );
+<span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+<p>
+雖然 YUI::Tooltip 允許我們以 JavaScript 的方式指定提示文字的內容，但我建議使用 HTML 的 <code>title</code> 屬性完成這件事。一來在 JavaScript 程式碼中不會出現文字內容的 hard code ；二來當使用者的瀏覽器不支援或關閉 JavaScript 功能時，使用者仍然可以透過瀏覽器本身的 tooltip 功能看到提示文字。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3283943.html">http://blog.roodo.com/rocksaying/archives/3283943.html</a></div>

@@ -1,0 +1,149 @@
+---
+title: Hibernate 查詢某個欄位的絕對值
+category: programming
+old-category: C/C++/C#/Java
+tags: [hibernate]
+---
+<p>
+當我們試圖從資料庫中查詢某個欄位的絕對值時，我們有兩種途徑。第一種是自定新的 Hibernate UserType ，再透過 HQL 查詢。
+第二種則是利用 SQL <code>abs()</code> 函數，透過 SQL 查詢。
+</p>
+
+<p>
+自定新的 Hibernate UserType 並不太難，僅需實作 UserType 介面，再套用一個範例來修改即可。
+範例可參考 https://www.hibernate.org/388.html 。
+</p>
+
+<!--more-->
+<p>
+Implements Hibernate's UserType to define a custom class for absolute integer.
+</p>
+<pre class="highlight"><code><span class="kn">package</span> <span class="n">tw</span><span class="o">.</span><span class="na">idv</span><span class="o">.</span><span class="na">rock</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.io.Serializable</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.sql.PreparedStatement</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.sql.ResultSet</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.sql.SQLException</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.sql.Types</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.hibernate.Hibernate</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.hibernate.usertype.UserType</span><span class="o">;</span>
+
+<span class="cm">/**
+ * Custom class for absolute values on the way out from the database, Hibernate 3 version.
+ * This is based on Paul Newport's work.
+ * @see https://www.hibernate.org/388.html
+ * @author rock
+ */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AbsoluteInteger</span> <span class="kd">implements</span> <span class="n">UserType</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">sqlTypes</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[]</span> <span class="o">{</span> <span class="n">Types</span><span class="o">.</span><span class="na">INTEGER</span> <span class="o">};</span>
+    <span class="o">}</span>
+
+    <span class="nd">@SuppressWarnings</span><span class="o">(</span><span class="s">"unchecked"</span><span class="o">)</span>
+	<span class="kd">public</span> <span class="n">Class</span> <span class="n">returnedClass</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kt">int</span><span class="o">.</span><span class="na">class</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="n">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">x</span><span class="o">,</span> <span class="n">Object</span> <span class="n">y</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="o">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">y</span><span class="o">)</span> <span class="o">||</span> <span class="o">(</span><span class="n">x</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">y</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">x</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">y</span><span class="o">)));</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Object</span> <span class="n">nullSafeGet</span><span class="o">(</span><span class="n">ResultSet</span> <span class="n">inResultSet</span><span class="o">,</span> <span class="n">String</span><span class="o">[]</span> <span class="n">names</span><span class="o">,</span> <span class="n">Object</span> <span class="n">o</span><span class="o">)</span>
+        <span class="kd">throws</span> <span class="n">SQLException</span> <span class="o">{</span>
+        <span class="n">Integer</span> <span class="n">val</span> <span class="o">=</span>
+            <span class="o">(</span><span class="n">Integer</span><span class="o">)</span> <span class="n">Hibernate</span><span class="o">.</span><span class="na">INTEGER</span><span class="o">.</span><span class="na">nullSafeGet</span><span class="o">(</span><span class="n">inResultSet</span><span class="o">,</span> <span class="n">names</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">abs</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">nullSafeSet</span><span class="o">(</span>
+        <span class="n">PreparedStatement</span> <span class="n">inPreparedStatement</span><span class="o">,</span>
+        <span class="n">Object</span> <span class="n">o</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i</span><span class="o">)</span>
+        <span class="kd">throws</span> <span class="n">SQLException</span> <span class="o">{</span>
+
+    	<span class="n">Integer</span> <span class="n">val</span> <span class="o">=</span> <span class="o">(</span><span class="n">Integer</span><span class="o">)</span> <span class="n">o</span><span class="o">;</span>
+    	<span class="n">inPreparedStatement</span><span class="o">.</span><span class="na">setInt</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">val</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Object</span> <span class="n">deepCopy</span><span class="o">(</span><span class="n">Object</span> <span class="n">o</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">o</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="k">return</span> <span class="k">new</span> <span class="n">Integer</span><span class="o">(((</span><span class="n">Integer</span><span class="o">)</span> <span class="n">o</span><span class="o">));</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="n">isMutable</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Object</span> <span class="n">assemble</span><span class="o">(</span><span class="n">Serializable</span> <span class="n">cached</span><span class="o">,</span> <span class="n">Object</span> <span class="n">owner</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">cached</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Serializable</span> <span class="n">disassemble</span><span class="o">(</span><span class="n">Object</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="o">(</span><span class="n">Serializable</span><span class="o">)</span> <span class="n">value</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Object</span> <span class="n">replace</span><span class="o">(</span><span class="n">Object</span> <span class="n">original</span><span class="o">,</span> <span class="n">Object</span> <span class="n">target</span><span class="o">,</span> <span class="n">Object</span> <span class="n">owner</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">original</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="n">hashCode</span><span class="o">(</span><span class="n">Object</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="na">hashCode</span><span class="o">();</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre>
+
+
+<p>
+Use this user type in Hibernate Mapping (HBM).
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="cp">&lt;!DOCTYPE hibernate-mapping
+    PUBLIC "-//Hibernate/Hibernate Mapping DTD//EN"
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"&gt;</span>
+<span class="nt">&lt;hibernate-mapping&gt;</span>
+    <span class="nt">&lt;class</span> <span class="na">name=</span><span class="s">"tw.idv.rock.model.MyMap"</span> <span class="na">table=</span><span class="s">"mymap"</span><span class="nt">&gt;</span>
+    
+            <span class="nt">&lt;id</span> <span class="na">name=</span><span class="s">"id"</span> <span class="na">type=</span><span class="s">"int"</span> <span class="na">unsaved-value=</span><span class="s">"null"</span><span class="nt">&gt;</span>
+              <span class="nt">&lt;column</span> <span class="na">name=</span><span class="s">"id"</span> <span class="na">sql-type=</span><span class="s">"serial(10)"</span> <span class="nt">/&gt;</span>
+              <span class="nt">&lt;generator</span> <span class="na">class=</span><span class="s">"sequence"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">"sequence"</span><span class="nt">&gt;</span>mymap_id_seq<span class="nt">&lt;/param&gt;</span>
+              <span class="nt">&lt;/generator&gt;</span>
+            <span class="nt">&lt;/id&gt;</span>
+            <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"length"</span> <span class="na">type=</span><span class="s">"tw.idv.rock.AbsoluteInteger"</span><span class="nt">/&gt;</span>
+<span class="c">&lt;!--           
+            &lt;property name="length" type="int"/&gt;
+--&gt;</span>
+    <span class="nt">&lt;/class&gt;</span>
+<span class="nt">&lt;/hibernate-mapping&gt;</span>
+</code></pre>
+
+
+<p>
+HQL Query
+</p>
+<pre class="highlight"><code><span class="n">Query</span> <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">createQuery</span><span class="o">(</span><span class="s">"from MyMap where length &gt;= :length"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setInteger</span><span class="o">(</span><span class="s">"length"</span><span class="o">,</span> <span class="n">minLength</span><span class="o">);</span>
+<span class="n">items</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="na">list</span><span class="o">();</span>
+</code></pre>
+
+
+<p>
+然而，透過 Hibernate 的 UserType 途徑取得欄位的絕對值之效能，遠遜於透過 SQL 的 <code>abs()</code> 函數。
+</p>
+
+<pre class="highlight"><code><span class="n">SQLQuery</span> <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">createSQLQuery</span><span class="o">(</span><span class="s">"select id, abs(length) as length "</span> 
+        <span class="o">+</span> <span class="s">" from "</span> <span class="o">+</span> <span class="n">MyMap</span><span class="o">.</span><span class="na">tableQuoteName</span><span class="o">()</span> <span class="o">+</span> <span class="s">" where length &gt;= :length"</span><span class="o">);</span>
+    <span class="n">query</span><span class="o">.</span><span class="na">addEntity</span><span class="o">(</span><span class="n">MyMap</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">query</span><span class="o">.</span><span class="na">setInteger</span><span class="o">(</span><span class="s">"length"</span><span class="o">,</span> <span class="n">minLength</span><span class="o">);</span>
+<span class="n">items</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="na">list</span><span class="o">();</span>
+</code></pre>
+
+
+<p>
+查詢結果集的內容愈多，則效能差異愈顯著。
+</p>
+<p>
+如果你採用 SQL 方式取欄位的絕對值，則你不必定義新的 UserType 與 HBM。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11126093.html">http://blog.roodo.com/rocksaying/archives/11126093.html</a></div>

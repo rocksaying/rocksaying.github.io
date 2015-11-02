@@ -1,0 +1,128 @@
+---
+title: 跨網站載入與執行 JavaScript 的方式
+category: programming
+old-category: JavaScript
+tags: [json,javascript,ajax,gdata]
+---
+<p>
+昨天在公司的小組會議中，我和同事們討論到 JavaScript 呼叫本地桌面程序的問題，提到關於 JavaScript 跨網站執行的關卡。近年來，隨著 jQuery 等 JavaScript 框架的普及，降低了 Ajax 程式的開發門檻，但也同時讓人忽略了一些更為基礎的知識。由於 jQuery 等框架主要利用 XmlHttpRequest 實現 Ajax 能力，但 XmlHttpRequest 在使用時也受限於瀏覽器的相同網域策略 (The Same Domain Policy)，所以不允許載入不同網域的文件。但是，要解決這個關卡其實只需要應用到基本的 Ajax 技巧。
+</p>
+<p>
+所謂 JavaScript 跨網站執行的關卡只作用於 XmlHttpRequest 個體上。在 Ajax 中，我們還有很多非同步機制可以載入與執行來自不同網域的 JavaScript 程式。這些技巧， Google 在用，hackers 也很常用。
+</p>
+
+<!--more-->
+<p>
+實現跨網站載入與執行 JavaScript 時，最常用的招式是 <code>document.createElement('script');</code>。實現方式僅需要基本的 JavaScript 技術即可，還不需要用到 jQuery 之類的框架。這一招，我在三年前就已經在部落格上說明過了。
+</p>
+
+<p>
+首先，我先準備一個簡單的 JavaScript 程式 (ext.js)，它會產生一筆 JSON 資料，我讓它依循 Google Data Protocol 的方式，呼叫遠端調用者所準備好的函數。
+</p>
+<script type="syntaxhighlighter" class="brush: javascript"><![CDATA[
+alert('ext.js load')
+var currentTime = new Date()
+var model = {
+    name: 'rock', 
+    message: 'hello (at ' + currentTime.toLocaleString() + ')'
+}
+ext_callback( model )
+
+]]></script>
+
+<p>
+接著，我要準備一個網頁，在其中將利用 <code>document.createElement('script');</code> 動態載入上列的 ext.js 。
+</p>
+
+<script type="syntaxhighlighter" class="brush: javascript"><![CDATA[
+<script type="text/javascript">
+//See: Google Data Protocol
+function ext_callback(data) {
+    alert('callback: ' + data.name + ' say ' + data.message)
+}
+
+function dynamicLoadJs1() {
+    var js = document.createElement('script');
+    js.type = 'text/javascript';
+    js.src = 'http://localhost/workspace/ext.js'; //remote javascript.
+    //js.onload = function() { // not work in IE6
+    var remove_this_after_loaded = function() {
+        //window.alert('Load a ' + this)
+
+        var scripts = document.getElementsByTagName('head')[0].getElementsByTagName('script')
+        for (i = 0; i < scripts.length ; i++) {
+            if (js == scripts[i]) {
+                //alert('remove #' + (i + 1) + ' of script');
+                //將此節點自 DOM 中移除，靜待瀏覽器進行垃圾回收。
+                //ps. 回收效率並不高。
+                document.getElementsByTagName('head')[0].removeChild(this)
+            }
+        }
+    }; 
+    document.getElementsByTagName('head')[0].appendChild(js);
+//    var scripts = document.getElementsByTagName('head')[0].getElementsByTagName('script')
+//    alert(scripts.length)
+
+    if (js.attachEvent) js.attachEvent('onload', remove_this_after_loaded); // not work in IE
+    else js.addEventListener('load', remove_this_after_loaded, false); // W3C DOM
+}
+
+if (window.attachEvent) window.attachEvent('onload', dynamicLoadJs1); // IE only
+else window.addEventListener('load', dynamicLoadJs1, false); // W3C DOM
+&lt;/script>
+
+<p>
+Working...
+</p>
+<a href="javascript:dynamicLoadJs1()">Load script!</a>
+
+]]></script>
+
+<p>
+此網頁會在載入後自動載入 ext.js 並執行它一次。頁面上有一個連結 (Load script!)，當你點擊它時，還會再次載入與執行 ext.js。 ext.js 的回傳內容中含有時間，你將可觀察到它每次執行時的內容都會改變。
+</p>
+<p>
+本文內容適用於 Firefox, Google Chrome 瀏覽器，大部份適用於 IE 瀏覽器。
+</p>
+
+<h5>
+關於 ABE
+</h5>
+<p>
+如果你是 Firefox 的長期使用者，你可能會安裝 NoScript 插件。當你安裝此插件時，你會發現上述的範例不會運作，那是因為 NoScript 的 ABE (Application Boundaries Enforcer) 機制擋下了載入動作。
+</p>
+<p>
+本文開頭說過 JavaScript 跨網站執行的關卡只作用於 XmlHttpRequest 個體上。但還有很多非同步機制可以載入與執行來自不同網域的 JavaScript 程式。這些技巧， Google 在用，hackers 也很常用。而 NoScript 注意到這一點，因此它額外實作了 ABE 機制，以攔阻透過其他方式載入 JavaScript 的動作。
+</p>
+
+<h5>
+Cross-Origin Resource Sharing
+</h5>
+<p>
+有鑑於 Ajax 模式的普及，與跨網站載入文件的需求， W3C 也正在研擬一套正式的規範，以提供可靠與安全的跨網站資源分享途徑，即 <a href="http://www.w3.org/TR/access-control/">Cross-Origin Resource Sharing</a> 。
+</p>
+<p>
+CORS 還在草案階段，相當地新。按照 W3C 官方時程，應該會包含在 HTML5 規範之中。
+</p>
+
+<h5>
+延伸閱讀
+</h5>
+
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2007/Load%20and%20Execute%20JavaScript%20on%20Demand%2C%20by%20createElement.html">
+    Load and Execute JavaScript on Demand, by createElement</a></li>
+    
+    <li><a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88%2C%20Google%20%E7%9A%84%E6%96%B9%E5%BC%8F.html">
+    網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案, Google 的方式</a></li>
+    
+    <li><a href="http://code.google.com/intl/zh-TW/apis/gdata/">
+    GData (Google Data Protocol)</a></li>
+    
+    <li><a href="http://noscript.net/abe/">
+    What's ABE?</a></li>
+    
+    <li><a href="http://www.w3.org/TR/access-control/">
+    Cross-Origin Resource Sharing</a></li>
+
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11847511.html">http://blog.roodo.com/rocksaying/archives/11847511.html</a></div>

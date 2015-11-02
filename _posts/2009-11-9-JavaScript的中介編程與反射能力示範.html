@@ -1,0 +1,329 @@
+---
+title: JavaScript的中介編程與反射能力示範
+category: programming
+old-category: JavaScript
+tags: [javascript,reflection,繼承,prototype,metaprogramming,中介編程]
+---
+<p>
+基於某些原因，我這幾天嘗試分別以 JavaScript, PHP, Ruby (排名按字母順序) 實現同一個簡單的功能，這個功能用了簡單的反射與中介編程技巧。
+主要目的是看這些語言在動態型別、中介編程、迭代與反射語法方面的表現。
+最後，我會用 Java 語言來實現這個需求，「展現Java語言的特點」。
+</p>
+<p>
+這篇構想中的文章，愈寫愈長。我想了想，還是按程式語言拆成幾篇，先把要示範的源碼與說明發佈上來。
+這是第一篇發佈的，內容是 JavaScript 的實作，示範了兩個基本的中介編程技巧: foreach 和 accessor。
+</p>
+
+<!--more-->
+<h4>
+建構者(Constructor)
+</h4>
+
+<blockquote>
+<p>
+所有建構者都是個體，但並非每個個體都是建構者。<br/>
+All constructors are objects, but not all objects are constructors.
+</p>
+<cite>
+ECMAScrpit Language Specification, page 3
+</cite>
+</blockquote>
+
+<p>
+所以 <code>Abc = {};</code> 就只是配置一個單純的個體，而不會產生一個建構者。
+</p>
+
+<p>
+那麼建構者從何而來？
+</p>
+
+<blockquote>
+<p>
+建構者是一個具有建立與賦予初值給個體之能力的函數實體。<br/>
+A constructor is a Function object that creates and initialises objects.
+</p>
+<cite>
+ECMAScript Language Specification, page 4
+</cite>
+</blockquote>
+
+<p>
+和 Java 的半調子 OOP 世界不同，在 JavaScrpit 的世界中，函數本身就是一個個體。
+當我們定義一個函數，並且函數內部執行了對自己增加成員並賦予成員初值的動作時，
+這個函數實體就被視為一個建構者。用 Java 說法，這個東西是一個類別。
+</p>
+
+<p>
+在 JavaScript/ECMAScript 裡，配置建構者的寫法有兩種。
+如下所示:
+</p>
+
+<h5>
+1.配置一個名稱叫 <dfn>F</dfn> 的建構者。
+</h5>
+<pre class="highlight"><code>    <span class="kd">function</span> <span class="nx">F</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//增加成員並賦予初值</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//公開成員 a</span>
+        <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>  <span class="c1">//私有成員 b</span>
+    <span class="p">}</span>
+</code></pre>
+
+
+<h5>
+2.配置一個新函數，指派給變量 <dfn>F</dfn>。
+</h5>
+<pre class="highlight"><code>    <span class="nx">F</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//增加成員並賦予初值</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//公開成員 a</span>
+        <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>  <span class="c1">//私有成員 b</span>
+    <span class="p">};</span>
+</code></pre>
+
+
+<p>
+這兩種寫法等義。
+</p>
+
+
+<h4>
+Prototype 與可繼承方法
+</h4>
+
+<p>
+ECMAScript 規範的 <dfn>Prototype</dfn> 繼承機制有些詭秘。
+我們定義在建構者內的成員(寫在 <code>new Function(){...}</code> 中的變數與函數等)，屬於建構者私有的 Prototype ，只有直接透過此建構者配置出來的個體可以用。
+如果我們想要定義可以被衍生的建構者繼承的內容，我們要添加到基礎建構者的公開 Prototype 。
+</p>
+
+<p>
+在此例中(<span class="Onote">完整源碼在文末</span>)，我們先定義了名叫 <dfn>Class</dfn> 的建構者，再從此衍生一個名叫 <dfn>Data</dfn> 的建構者。
+接著我們想要在 <dfn>Class</dfn> 上定義 <dfn>foreach</dfn> 與 <dfn>accssor</dfn> 的<em>可繼承方法</em>，讓衍生的 <dfn>Data</dfn> 建構者可以使用，那我們就要把這兩個函數添加到 <var>Class.prototype</var> 此一公開的 Prototype 。
+故而形成了先在第5行配置建構者，再在第18行與第32行添加方法的寫法。
+</p>
+
+<p class="note">
+如果對 JavaScript 的成員封裝機制有興趣，請繼續看我先前寫的
+<a class="bookname_notation" href="{{ site.baseurl }}/archives/2006/%E6%8E%8C%E6%8F%A1%20JavaScript%20%E7%9A%84%E3%80%8C%E5%B0%81%E8%A3%9D%E3%80%8D%E7%89%B9%E6%80%A7%2C%20part%201.html">掌握 JavaScript 的「封裝」特性, part 1</a> 。
+</p>
+
+
+<h4>
+中介編程技巧示範
+</h4>
+<p>
+接下來要示範兩種最常見的中介編程技巧，我們要加上 foreach 和預設存取器 accessor 功能。
+</p>
+
+<h5>
+第一個中介編程技巧 foreach
+</h5>
+<p>
+請看源碼第18到22行。如你所見，非常簡單的演算法。透過函數個體與匿名函數，我自定了一個 <dfn>foreach</dfn> 語法。
+用匿名函數定義你的迭代器(iterator)，傳給 <dfn>foreach</dfn> 即可。第83－85行是 foreach 的使用範例。
+不過我沒有把這個 foreach 能力塞到最基底的 Object 類別中，所以 foreach 只作用於 Class 的衍生類別中。
+</p>
+
+<p>
+這是個非常基本的技巧，但是用途很廣。
+流行的 JavaScript 框架，如 Prototype, jQuery, Dojo, Yahoo UI 都實作了這項能力。
+當然他們實作的 foreach 功能都比我這個示範用的強 :P
+</p>
+
+<p class="note">
+如果對 JavaScript 的匿名函數有興趣，請繼續看我先前寫的
+<a class="bookname_notation" href="{{ site.baseurl }}/archives/2007/The%20practice%20of%20anonymous%20recursion%20function%20in%20JavaScript.html">The practice of anonymous recursion function in JavaScript</a> 。
+</p>
+
+
+<h5>
+第二個中介編程技巧 accessor
+</h5>
+<p>
+JavaScript 不支援 PHP magic method 或類似的功能(<span class="Onote">參閱<a href="{{ site.baseurl }}/archives/2007/%E6%B4%BB%E7%94%A8%20PHP5%20%E7%9A%84%20magic%20methods%20-%20__set%28%29%2C%20__get%28%29%20and%20__call%28%29.html">活用 PHP5 的 magic methods</a></span>)，也不支援 Ruby 的 accessor 或是
+C# 3.0 的自動屬性完成語法，所以要用一些技巧實作。
+</p>
+<blockquote>
+<p>
+調用 Function 的建構者時，會將最後一個參數轉為字串，視之為新函數的函數碼。<br/>
+The last parameter provided to the Function constructor is converted
+to a string and treated as the FunctionBody.
+</p>
+<cite>
+ECMAScript Language Specification, page 37
+</cite>
+</blockquote>
+
+<p>
+利用這個規範，設計我的 accessor 語法。請看源碼第32到51行。
+我自定的 accessor 語法是如下，接受一個 hash table 指示要套用預設存取器的屬性清單。
+例如: <code>accessor( {name1:1, name2:"abc"} )</code>。
+</p>
+<p>
+至於 getter 和 setter 的寫法，則是按照動態語言常用的設計慣例，只用一個函數實現，這個函數只接受一個參數。
+若調用屬性存取函數時無參數，則視為 getter 回傳屬性值。若給予一個參數，則視為 setter ，將屬性之值指派為參數值。
+例如針對 <var>content</var> 屬性，就定義一個叫 <code>content(value)</code> 的存取函數(<span class="Onote">在本文中是中介編程自動定義</span>)。
+其運作內容如下:
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">NewData</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="na">content</span><span class="p">:</span> <span class="s1">''</span>
+    <span class="p">}</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">content</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">value</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>     <span class="c1">//未傳遞參數,視為 getter</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">content</span><span class="p">;</span>
+        <span class="k">else</span>                        <span class="c1">//有參數,視為 setter</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">content</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">NewData</span><span class="p">;</span>
+<span class="nx">n</span><span class="p">.</span><span class="nx">content</span><span class="p">(</span><span class="s2">"abc"</span><span class="p">);</span> <span class="c1">// setter</span>
+<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">content</span><span class="p">();</span> <span class="c1">// getter</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+</code></pre>
+
+<p>
+本文透過中介編程自動產生了指定屬性的預設存取器函數，故而在源碼中看不到如上例般明顯示存取函數定義。
+第108－110行則是示範利用中介編程產生的 setter 與 getter 存取 content 屬性。
+</p>
+
+<h4>
+data.js, 本文範例用源碼
+<a name="source"></a>
+</h4>
+<pre class="highlight"><code><span class="cm">/*
+function Class() {
+}
+*/</span>
+<span class="nx">Class</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">;</span>
+
+<span class="cm">/**
+ * 上面先配置一個空的建構者，名叫 Class 。
+ * 底下才是 Class 這個建構者所定義的可繼承方法。
+ */</span>
+
+<span class="cm">/**
+ * 第一個中介編程技巧。
+ * 透過函數個體與匿名函數，我自定了一個 foreach 語法。
+ * 不過我沒有把這個 foreach 能力塞到最基底的 Object 類別中，所以 foreach 只作用於
+ * Class 的衍生類別中。
+ */</span>
+<span class="nx">Class</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">f</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="cm">/**
+ * 第二個中介編程技巧。
+ * 我自定的 accessor 語法是如下，接受一個 hash table 指示要套用預設存取器的屬性
+ * 清單。
+ * 例如: accessor( {name1:1, name2:'abc'} )
+ *
+ * @prarm props 要使用預設存取器的屬性列表(hash table).
+ */</span>
+<span class="nx">Class</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">accessor</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">sourceText</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nx">p</span> <span class="k">in</span> <span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">sourceText</span> <span class="o">=</span> <span class="s2">"  \
+            if (v == undefined) \
+                return this.props.{XXX}; \
+            else    \
+                this.props.{XXX} = v;   \
+            "</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s2">"v"</span><span class="p">,</span> <span class="nx">sourceText</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/{XXX}/g</span><span class="p">,</span> <span class="nx">p</span><span class="p">));</span>
+        <span class="c1">// Script解譯器會自動將上面的源碼解釋為:</span>
+        <span class="c1">//  this[p] = function(v) {</span>
+        <span class="c1">//      if (v == undefined)</span>
+        <span class="c1">//          return this.props.?</span>
+        <span class="c1">//      else</span>
+        <span class="c1">//          this.props.? = v;</span>
+        <span class="c1">//  }</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">Data</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="na">id</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="na">title</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="na">content</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="na">timestamp</span><span class="p">:</span> <span class="kc">true</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">])</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nx">Data</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">;</span>
+<span class="c1">//定義 Data 的原型是 Class 。亦即定義 Data 為 Class 的衍生類</span>
+
+
+<span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">({</span>
+    <span class="na">id</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="na">title</span><span class="p">:</span> <span class="s1">'rock'</span><span class="p">,</span>
+    <span class="na">content</span><span class="p">:</span> <span class="s1">'hello world'</span><span class="p">,</span>
+    <span class="na">timestamp</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">()</span>
+<span class="p">});</span>
+
+
+<span class="c1">// 得益於中介編程，在此使用自定的 foreach 語法:</span>
+<span class="nx">print</span><span class="p">(</span><span class="s2">"Properties of Data"</span><span class="p">);</span>
+<span class="nx">d</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">value</span><span class="p">){</span>
+    <span class="nx">print</span><span class="p">(</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">" : "</span> <span class="o">+</span> <span class="nx">value</span> <span class="p">);</span>
+<span class="p">});</span>
+
+
+<span class="kd">function</span> <span class="nx">DataDao</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="nx">Data</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">args</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">table</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">table</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">accessor</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">DataDao</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">;</span>
+
+
+<span class="kd">var</span> <span class="nx">d2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataDao</span><span class="p">({</span>
+    <span class="s1">'id'</span><span class="p">:</span>  <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'title'</span><span class="p">:</span> <span class="s1">'rock'</span><span class="p">,</span>
+    <span class="s1">'content'</span><span class="p">:</span> <span class="s1">'hello world'</span><span class="p">,</span>
+    <span class="s1">'timestamp'</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">(),</span>
+    <span class="s1">'table'</span><span class="p">:</span> <span class="s1">'Data'</span>
+<span class="p">});</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s2">"\n---- Accessor demo ----"</span><span class="p">);</span>
+<span class="nx">d2</span><span class="p">.</span><span class="nx">content</span><span class="p">(</span><span class="s1">'hello javascript'</span><span class="p">);</span> <span class="c1">// setter</span>
+<span class="nx">print</span><span class="p">(</span> <span class="nx">d2</span><span class="p">.</span><span class="nx">content</span><span class="p">()</span> <span class="p">);</span> <span class="c1">//getter</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s2">"\nProperties of DataDao"</span><span class="p">);</span>
+<span class="nx">d2</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">" : "</span> <span class="o">+</span> <span class="nx">value</span> <span class="p">);</span>
+<span class="p">});</span>
+</code></pre>
+
+
+<p class="note">
+JavaScript 使用反射(reflection)的場合無所不在，在本文示範源碼中就一直在用。
+但是不熟悉 JavaScript 的讀者可能會困惑「到底反射的程式碼寫在呢？」
+有此困惑的讀者請先看 <a href="{{ site.baseurl }}/archives/2007/%E4%BB%80%E9%BA%BC%E6%98%AF%20Reflection%20%EF%BC%9F.html">什麼是 reflection?</a> ，
+看完 JavaScript 的反射語法後，再回來看本文就知道反射的程式碼寫在哪了。
+在強型態的動態語言中，一個個體認識自己（自識）是再自然不過的事，所謂反射就像呼吸一樣自然，讓人感覺不到它的存在。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/%E5%86%8D%E6%8E%A2%20JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%20foreach.html">再探 JavaScript的中介編程 foreach</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/PHP%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">PHP的中介編程與反射能力示範</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E9%A1%9E%E5%88%A5%E5%AE%9A%E7%BE%A9%E6%93%B4%E5%85%85%E8%83%BD%E5%8A%9B.html">JavaScript的類別定義擴充能力</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/Ruby%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">Ruby的中介編程與反射能力示範</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/%E5%BE%9E%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E4%BE%86%E8%AB%87%20Java%20%E8%AA%9E%E8%A8%80.html">從中介編程與反射能力來談 Java 語言</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/%E7%94%A2%E7%94%9F%E6%96%B0%E9%A1%9E%E5%88%A5%E7%9A%84%E9%A1%9E%E5%88%A5.html">產生新類別的類別</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10624583.html">http://blog.roodo.com/rocksaying/archives/10624583.html</a></div>

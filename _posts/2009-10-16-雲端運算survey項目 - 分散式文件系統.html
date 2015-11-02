@@ -1,0 +1,235 @@
+---
+title: 雲端運算survey項目 - 分散式文件系統
+category: computer
+old-category: 電腦技術
+tags: [雲端運算,cloud computing,MapReduce,Hadoop]
+---
+<p>
+關於 Google MapReduce, Apache Hadoop 分散式文件系統的簡述。
+</p>
+<p>
+MapReduce 的概念源自於並行運算的領域中很普遍的資料處理策略。
+Map 在 MapReduce 中的詞性是一個動詞，取其 “劃分地圖“之義。
+它的內涵是將一整塊資料儘可能按照不相關聯的地方劃分成好幾片。就好像是在一張大地圖中劃分區域分界線般，故稱此動作為 Map。
+</p>
+<p>
+被 Map 成好幾片的資料，分別被儲存在不同的 host 中。當使用者需要處理該份資料時，
+再將運算程序再複製到那些 host 上，開始處理那些資料。最後將散佈在不同 host 上
+的程序所運算的結果化簡歸納成使用者要的最終結果，就是 Reduce。
+</p>
+<p>
+將 MapReduce 結合分散式文件系統後，就是 Google 得以高效率處理網頁文件搜尋的核心系統。
+</p
+
+<!--more-->
+<h3>
+Google - MapReduce
+</h3>
+    <blockquote>
+    <p>
+    MapReduce是Google提出的一個軟體架構，用於大規模數據集（大於1TB）的并行運算。概念"Map（映射）"和"Reduce（化簡）"，和他們的主要思想，都是從函數式程式語言借來的，還有從向量程式語言借來的特性。
+    </p>
+    <p>
+    在Google，MapReduce用在非常廣泛的應用程序中，包括「分佈grep，分佈排序，web連接圖反轉，每台機器的詞向量，web訪問日誌分析，反向索引構建，文檔聚類，機器學習，基於統計的機器翻譯……」值得注意的是，MapReduce實現以後，它被用來重新生成Google的整個索引，並取代老的ad hoc程序去更新索引。
+    </p>
+    <cite>
+    http://zh.wikipedia.org/zh-tw/MapReduce
+    </cite>
+    </blockquote>
+    
+    <p>
+    Map 在 MapReduce 中的詞性是一個動詞，取其 “劃分地圖“之義，而不是”映射“。
+    它的內涵是將一整塊資料儘可能按照不相關聯的地方劃分成好幾片。就好像是在一張大地圖中劃分區域分界線般，故稱此動作為 Map。
+    </p>
+    <p>
+    被 Map 成好幾片的資料，分別被儲存在不同的 host 中。當使用者需要處理該份資料時， 
+    再將運算程序再複製到那些 host 上，開始處理那些資料。最後將散佈在不同 host 上
+    的程序所運算的結果化簡歸納成使用者要的最終結果，就是 Reduce。 
+    </p>
+
+    <p>
+    MapReduce 的概念源自於並行運算的領域中很普遍的資料處理策略。
+    下列的 C 程式碼可以幫助大家理解 MapReduce 的基本概念。
+    </p>
+<pre class="highlight"><code><span class="c1">// File name: vector_sum.c
+</span><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;omp.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">sumLocal</span><span class="p">,</span> <span class="n">sum</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">vector</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">};</span>
+
+    <span class="n">sum</span> <span class="o">=</span> <span class="n">sumLocal</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">omp_set_num_threads</span><span class="p">(</span><span class="n">size</span><span class="p">);</span> <span class="c1">// Try to map vector to 3 pieces.
+</span>    <span class="cp">#pragma omp parallel private(sumLocal)
+</span>    <span class="p">{</span>
+        <span class="cm">/**
+            If there are no accidents, the following information will be divided  
+            into (Map) three pieces.
+            for (i=0; i &lt; 1; ++i) {...}
+            for (i=1; i &lt; 2; ++i) {...}
+            for (i=2; i &lt; 3; ++i) {...}
+        **/</span>
+        <span class="cp">#pragma omp for
+</span>        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span>
+                <span class="n">sumLocal</span> <span class="o">+=</span> <span class="n">vector</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">];</span>
+        <span class="p">}</span>
+
+        <span class="cm">/**
+            Reduce sumLocal's to sum.
+        **/</span>
+        <span class="cp">#pragma omp critical(update_sum)
+</span>        <span class="p">{</span>
+            <span class="n">sum</span> <span class="o">+=</span> <span class="n">sumLocal</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Sum = %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+
+<pre class="language-term">
+$ gcc -openmp -lgomp -o vector_sum vector_sum.c
+$ ./vector_sum
+Sum = 42
+</pre>
+
+<p class="note">
+這個 C 程式利用了 <a href="http://www.openmp.org/">OpenMP</a> 進行多緒並行運算。 GCC 需要版本 4.3.2 以上才支援。
+</p>
+
+    <p>
+    雖然 Google 發表了 MapReduce 的概念，但 Google 的實作軟體並未 Open source ，所以我們無法取得。
+    所幸有人根據 MapReduce 的概念，發展了一套 Open source 的分散式文件系統，即 Hadoop 。
+    </p>
+
+<h3>
+Yahoo - Hadoop
+</h3>
+    <blockquote>
+    <p>
+    Hadoop是Apache軟件基金會所研發的開放源碼並行運算編程工具和分佈式文件系統，與MapReduce和Google檔案系統的概念類似。
+    </p>
+    <cite>
+    http://zh.wikipedia.org/wiki/Hadoop
+    </cite>
+    
+    <p>
+    Hadoop 是一个开源的可运行于大规模集群上的分布式并行编程框架，由于分布式存储对于分布式编程来说是必不可少的，这个框架中还包含了一个分布式文件系统 HDFS( Hadoop Distributed File System )。
+    </p>
+    <cite>
+    http://www.ibm.com/developerworks/cn/opensource/os-cn-hadoop1/index.html
+    </cite>
+    </blockquote>
+
+    <p>
+    Hadoop 的檔案系統稱為 <a href="http://hadoop.apache.org/hdfs/">HDFS</a>，
+    這是一種虛擬檔案系統，乍看之下，文件儲存方式類似一般實體檔案系統，
+    我們一樣可以建立目錄，也可以將文件從實體檔案系統複製過去，但實際上文件是以 Hadoop 特殊的儲存機制分散在不同 host 的空間中。
+    例如:
+    </p>
+    <pre class="language-term">
+    $ echo hello > /home/rock/hello.txt
+    
+    # 從本地實體檔案系統中，將 hello.txt 複製到 Hadoop HDFS 的虛擬檔案系統中。
+    $ hadoop fs -put /home/rock/readme.txt /home/rock
+    
+    # 異動本地的 hello.txt
+    $ echo my name is rock >> /home/rock/hello.txt
+    
+    # 現在可以看出這其實是不同的兩份文件了。
+    # 初學者常常在此感到混淆，誤以為這兩個 /home/rock/hello.txt 是同一份文件。
+    $ cat /home/rock/hello.txt
+    $ hadoop fs -cat /home/rock/readme.txt
+    </pre>
+
+    <p>
+    Hadoop 還有一個基於 HDFS 的資料庫管理系統實作，稱為 HBase 。HBase 主要用於儲
+    存零散結構的大型資料表。為此，HBase 則採用 <a href="http://en.wikipedia.org/wiki/Column-oriented_DBMS">
+    column-oriented </a> 儲存策略，有別於一般關聯式資料庫系統所採用的 row-oriented 儲存策略。
+    由於資料結構不同，基於查詢效率的考量，HBase 並不支援 SQL 。
+    </p>
+
+    <fieldset>
+    <legend>
+    Hadoop 的文件與程式儲存概念。
+    </legend>
+    <img src="http://blog.roodo.com/rocksaying/ec1935cb.png" alt="Hadoop 的文件與程式儲存概念"/>
+    <p>
+    上圖的左半部是我畫的，右半部來自《Hadoop: The Definitive Guide》，剛好疊上去。
+    </p>
+    </fieldset>
+
+    <p>
+    我們可以透過添置主機的方式，持續將新的主機加入 Hadoop core 中，便可以不斷
+    增加 HDFS 的儲存空間。
+    </p>
+    <p>
+    當一份文件要儲放入 HDFS 時，實際上被劃分(map)成好幾片。被 Map 成好幾片的資料，
+    分別被儲存在不同的 host 中。當使用者需要處理該份資料時，再將運算程序再複製到
+    那些 host 上，開始處理那些資料。最後將散佈在不同 host 上的程序所運算的結果
+    Reduce 成使用者要的最終結果。
+    </p>
+
+    <blockquote>
+    <p>
+    <q>Moving Computation is Cheaper than Moving Data</q>
+    </p>
+    <cite>
+    <a href="http://hadoop.apache.org/common/docs/current/hdfs_design.html">HDFS Architecture</a>
+    </cite>
+    </blockquote>
+
+
+    <h4>
+    Hadoop on live
+    </h4>
+    <p>
+    趨勢科技提供了一個安裝了 Hadoop 的虛擬機影像，可自
+     <a href="http://www.wretch.cc/blog/trendnop09/21159427">
+    趨勢科技 － Hadoop 實作環境</a>
+    下載。下載點: <a href="http://a928.g.akamai.net/f/928/485/10m/www.trend.com.tw/program/3rd/hadoop_centos5.7z">hadoop_centos5 (VMWare image)</a>。我們可以在此環境中練習 Hadoop 。
+    </p>
+    
+    <h4>
+    應用對象
+    </h4>
+    <p>
+    目前 Hadoop 的檔案系統 HDFS 尚不提供文件修改功能，而且分散式文件系統在性質上並不適合處理頻繁異動的資料，
+    故適合透過 HDFS 儲存的文件，主要是靜態文件。
+    例如以 MIME 儲存的郵件 (傳統的 unix mailbox 格式)、進銷存系統中的銷售記錄（發票）、電子公文系統中發佈的公文、程式運行的過往log。
+    </p>
+    <p>
+    在「Hadoop: The Definitive Guide」一書中，則以 <a href="http://streamy.com/">Streamy.com</a>
+    作為 HBase 的應用案例，不過並未詳例哪些資料內容適合改用 HBase 儲存。
+    </p>
+
+<h3>
+References
+</h3>
+    <ul>
+        <li><a href="http://labs.google.com/papers/mapreduce.html">MapReduce: Simplified Data Processing on Large Clusters</a>
+        </li>
+        <li><a href="http://labs.google.com/papers/gfs.html">The Google File System</a>
+        </li>
+
+        <li><a href="http://www.ibm.com/developerworks/cn/opensource/os-cn-hadoop1/index.html">用 Hadoop 进行分布式并行编程，第 1 部分：基本概念与安装部署</a>
+        </li>
+        <li><a href="http://www.ibm.com/developerworks/cn/opensource/os-cn-hadoop2/index.html">用 Hadoop 进行分布式并行编程，第 2 部分：程序实例与分析</a>
+        </li>
+        <li><a href="http://www.ibm.com/developerworks/cn/opensource/os-cn-hadoop3/index.html">用 Hadoop 进行分布式并行编程, 第 3 部分：部署到分布式环境</a>
+        </li>
+        
+        <li><a href="http://hadoop.apache.org/">Apache Hadoop!</a>
+        </li>
+
+        <li>Hadoop: The Definitive Guide. Copyright © 2009 Tom White. Published by O’Reilly Media, Inc.
+        </li>
+
+    </ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10348123.html">http://blog.roodo.com/rocksaying/archives/10348123.html</a></div>

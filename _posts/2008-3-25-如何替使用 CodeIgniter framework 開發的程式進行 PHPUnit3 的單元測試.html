@@ -1,0 +1,78 @@
+---
+title: 如何替使用 CodeIgniter framework 開發的程式進行 PHPUnit3 的單元測試
+category: programming
+old-category: PHP
+tags: [codeigniter,phpunit]
+---
+<div class="tags" style="display:none">Tags: CodeIgniter phpunit</div>
+<p>
+先說一下 PHP framework 的事，我個人很想用 Zend Framework 。但我服務的公司的軟體是用 PHP4 開發的，所以主機也是跑 PHP4。由於遲遲不見有更新到 PHP5 的計劃，所以我現階是用 CodeIgniter framework 在寫新功能。
+</p>
+<p>
+另一方面，我又習慣用 PHPUnit 進行測試工作。為此，我必須要弄一個簡單的測試框架出來，才能以 PHPUnit 去測試我用 CodeIgniter framework 寫的功能單元。
+</p>
+
+<!--more-->
+<p>
+我最主要的測試內容是資料庫的操作部份，所以測試框架中一併載入了 CodeIgniter 的 Database class。
+</p>
+
+<h5>重點</h5>
+<p>
+CodeIgniter 必要的三個常數: <var>APPPATH, BASEPATH, EXT</var>。
+</p>
+<p>
+CodeIgniter 的 Database class 使用了2個函數: <code>log_message(), show_error()</code>。我們要定義那2個函數。函數內容很簡單，最簡單的內容就是什麼都不做。 
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+
+<span class="nb">define</span><span class="p">(</span><span class="s1">'APPPATH'</span><span class="p">,</span> <span class="nb">realpath</span><span class="p">(</span><span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">))</span> <span class="o">.</span> <span class="s1">'/../src/'</span><span class="p">);</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'BASEPATH'</span><span class="p">,</span> <span class="nb">realpath</span><span class="p">(</span><span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">))</span> <span class="o">.</span> <span class="s1">'/../src/core/'</span><span class="p">);</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'EXT'</span><span class="p">,</span> <span class="s1">'.php'</span><span class="p">);</span>
+
+<span class="k">require_once</span> <span class="nx">BASEPATH</span> <span class="o">.</span> <span class="s1">'database/DB.php'</span><span class="p">;</span>
+
+<span class="nb">define</span><span class="p">(</span><span class="s1">'TESTSUITEPATH'</span><span class="p">,</span> <span class="nb">realpath</span><span class="p">(</span><span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">))</span> <span class="o">.</span> <span class="s1">'/'</span><span class="p">);</span>
+
+<span class="sd">/**
+ * log_message(), a mock function.
+ */</span> 
+<span class="k">function</span> <span class="nf">log_message</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// nothing
+</span><span class="p">}</span>
+<span class="k">function</span> <span class="nf">show_error</span><span class="p">(</span><span class="nv">$msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// nothing
+</span><span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">MyWebApp_TestCase</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
+    <span class="sd">/**
+     * DSN, dbdriver://username:password@hostname/database    
+     * @var string 
+     */</span>
+    <span class="k">protected</span> <span class="nv">$DSN</span> <span class="o">=</span> <span class="s1">'postgre://xxx:xxx@localhost/myWebApp'</span><span class="p">;</span>
+    
+    <span class="sd">/**
+     * Instance of CI's database class    
+     * @var object     
+     */</span>
+    <span class="k">protected</span> <span class="nv">$db</span><span class="p">;</span>     
+
+    <span class="k">protected</span> <span class="k">function</span> <span class="nf">initDB</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">db</span> <span class="o">=</span> <span class="nx">DB</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">DSN</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fail</span><span class="p">(</span><span class="s1">'Connect database error!'</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+最後，參考 <a href="{{ site.baseurl }}/archives/2008/%E4%BD%BF%E7%94%A8%20CodeIgniter%20%E4%BD%9C%E7%82%BA%E9%96%8B%E7%99%BC%E6%A1%86%E6%9E%B6%E4%B8%A6%E9%A0%90%E6%9C%9F%E4%BB%A5%20GPL%20%E6%95%A3%E4%BD%88%E6%87%89%E7%94%A8%E8%BB%9F%E9%AB%94%E7%9A%84%E4%BD%9C%E6%B3%95.html">使用 CodeIgniter 作為開發框架並預期以 GPL 散佈應用軟體的作法</a> 的內容，了解更多細節。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5751939.html">http://blog.roodo.com/rocksaying/archives/5751939.html</a></div>

@@ -1,0 +1,177 @@
+---
+title: Java Json-lib note
+category: programming
+old-category: C/C++/C#/Java
+tags: [java-json]
+---
+<ol>
+    <li>JSON array: convert to Java JSONArray.</li>
+    <li>JSONArray instance: convert to List.</li>
+    <li>List: convert to Java JSONArray.</li>
+    <li>JSONArray instance: convert to JSON array(String).</li>
+    <li>ClassCastException.</li>
+    <li>You can not use iterator() for enhanced for-loop.</li>
+</ol>
+
+<!--more-->
+<h4>JSON(string) array, Java List and Java JSONArray</h4>
+<ol>
+    <li>
+    JSON array: convert to Java JSONArray.
+
+    <p>
+    It thinks JSON string as a String object which formated by JSON.
+    Therefore invoke JSONArray.fromObject(), return a JSONArray instance.
+    </p>
+    <pre class="code">
+jsonArray = JSONArray.fromObject( "[1, 2, 3]" );</pre>
+    </li>
+    
+    <li>
+    JSONArray instance: convert to List.
+
+    <p>
+    Invoke JSONArray.toCollection(), pass class of target.
+    However, it is still an unchecked or unsafe operations.
+    </p>
+    <pre class="code">
+List&lt;Integer&gt; idList;
+idList = (List&lt;Integer&gt;) JSONArray.toCollection(jsonArray, Integer.class);</pre>
+    </li>
+    
+    <li>
+    List: convert to Java JSONArray.
+    
+    <pre class="code">
+jsonArray = JSONArray.fromObject( idList );</pre>
+    </li>
+
+    <li>
+    JSONArray instance: convert to JSON array(String).
+    
+    <pre class="code">
+System.out.println( jsonArray.toString() );</pre>
+    </li>
+</ol>
+
+<script type="syntaxhighlighter" class="brush: java"><![CDATA[
+import java.util.*;
+import net.sf.json.JSONArray;
+
+public class ArrayAndJson {
+    
+    public static void
+    main(String[] args) {
+        String jsonString;
+        List<Integer> idList;
+        JSONArray jsonArray;
+
+        jsonString = "[1 ,2 ,3]";
+
+        // JSON array: convert to Java JSONArray
+        jsonArray = JSONArray.fromObject( jsonString );
+
+        System.out.println(jsonArray.toString());
+            
+        
+        // JSONArray instance: convert to List
+        // Warning: unchecked or unsafe operations.
+        idList = (List<Integer>) JSONArray.toCollection(jsonArray, Integer.class);
+
+        System.out.println(idList.toString());
+        
+
+        idList.add(9);
+
+        // List: convert to Java JSONArray.
+        jsonArray = JSONArray.fromObject( idList );
+
+        // JSONArray instance: convert to JSON array(String).
+        System.out.println( jsonArray.toString() );
+
+    }
+}
+]]></script>
+
+<h4>
+JSONArray iterator and exception.
+</h4>
+
+<ul>
+    <li>
+    ClassCastException.
+    <p>
+    Even you pass class to toCollection(), toCollection() won't throw this exception.
+    It is only raised when you try to get an element from collection to variable.
+    </p>
+    </li>
+
+    <li>
+    You can not use iterator() for enhanced for-loop.
+    <p>
+    Method iterator() is not iterable by enhanced for-loop,
+    because it fotgets to add interface Iterable into its implements list.
+    It only lists JSON, List and Comparable.
+    </p>
+    <p><code>
+    public final class JSONArray
+       extends Object
+       implements JSON, List, Comparable
+    </code></p>
+    <p>
+    http://json-lib.sourceforge.net/apidocs/jdk15/net/sf/json/JSONArray.html
+    <br/>
+    http://blogs.sun.com/CoreJavaTechTips/entry/using_enhanced_for_loops_with
+    </p>
+
+    </li>
+</ul>
+
+<script type="syntaxhighlighter" class="brush: js"><![CDATA[
+import java.util.*;
+import net.sf.json.JSONArray;
+
+public class ArrayAndJson2 {
+    
+    public static void
+    main(String[] args) {
+        String jsonString;
+        List<Integer> idList;
+        JSONArray jsonArray;
+
+        jsonString = "[1 ,"x" ,3]";
+        jsonArray = JSONArray.fromObject( jsonString );
+
+        try {
+            Integer i;
+            for (Iterator iter = jsonArray.iterator();
+                iter.hasNext();
+                )
+            {
+                i = (Integer) iter.next(); // throws ClassCastException
+                System.out.println( i );
+            }
+        }
+        catch (ClassCastException e) {
+            System.out.println("There is an element of unexcepted type in JSONArray. " 
+                + e.getMessage());
+        }
+
+        // No exception riase...
+        idList = (List<Integer>) JSONArray.toCollection(jsonArray, Integer.class);
+
+        try {
+            for (int i : idList) // throws ClassCastException
+            {
+                System.out.println( i );
+            }
+        }
+        catch (ClassCastException e) {
+            System.out.println("There is an element of unexcepted type in List. " 
+                + e.getMessage());
+        }
+
+    }
+}
+
+]]></script><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11126901.html">http://blog.roodo.com/rocksaying/archives/11126901.html</a></div>

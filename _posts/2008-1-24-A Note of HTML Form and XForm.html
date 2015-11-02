@@ -1,0 +1,143 @@
+---
+title: A Note of HTML Form and XForm
+category: programming
+old-category: Programming
+tags: [xml,xform,ajax,web design]
+---
+<div class="tags" style="display:none">Tags: xml xform ajax web_design</div>
+<p>
+如何分割 "資料"(Data)與 "表單外觀"(呈現層,Presentation)。
+</p>
+<p>
+HTML Form 之中，資料與表單元件的陣述混雜在一起，增加文件編寫與閱讀複雜度。此複雜度不僅是針對人工輸入與閱讀，對應用軟體亦然，例如網頁編輯工具、Famework 工具等等。混雜的陣述方式，增加了前述工具的開發者之工作 - 編程難，除錯難 。
+</p>
+
+<!--more-->
+<h4>
+傳統的 HTML Form
+</h4> 
+
+<h5>
+Without Data
+</h5>
+
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">name=</span><span class="s">"form1"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;label</span> <span class="err">for"fname"</span><span class="nt">&gt;</span>FirstName<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"fname"</span> <span class="na">name=</span><span class="s">"fname"</span> <span class="na">value=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;br/&gt;</span>
+
+    <span class="nt">&lt;label</span> <span class="err">for"lname"</span><span class="nt">&gt;</span>LastName<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"lname"</span> <span class="na">name=</span><span class="s">"lname"</span> <span class="na">value=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+
+<h5>
+With Data
+</h5>
+
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">name=</span><span class="s">"form1"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;label</span> <span class="err">for"fname"</span><span class="nt">&gt;</span>FirstName<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"fname"</span> <span class="na">name=</span><span class="s">"fname"</span> <span class="na">value=</span><span class="s">"Peter"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;br/&gt;</span>
+
+    <span class="nt">&lt;label</span> <span class="err">for"lname"</span><span class="nt">&gt;</span>LastName<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"lname"</span> <span class="na">name=</span><span class="s">"lname"</span> <span class="na">value=</span><span class="s">"Parker"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+
+<p>
+要一眼看出資料在哪，還真是傷眼力。
+</p>
+
+<h4>
+透過 JavaScript 分割 HTML Form 的資料與表單元件
+</h4>
+<p>
+資料的文件格式是 JSON。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">name=</span><span class="s">"form1"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;label</span> <span class="err">for"fname"</span><span class="nt">&gt;</span>FirstName<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"fname"</span> <span class="na">name=</span><span class="s">"fname"</span> <span class="na">value=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;br/&gt;</span>
+
+    <span class="nt">&lt;label</span> <span class="err">for"lname"</span><span class="nt">&gt;</span>LastName<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"lname"</span> <span class="na">name=</span><span class="s">"lname"</span> <span class="na">value=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+
+<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+    /* Data */
+    var form1 = {
+        fname: 'Peter',
+        lname: 'Parker'
+    }; 
+
+    for (var controlId in form1) {
+        var control = document.getElementById(controlId);
+        control.value = form1[controlId];
+        /*
+        This is an example.
+        It cannot set the value of Select, Checkbox, Radio, etc.
+        To set up the value of any type of controls, we need more codes.
+        */ 
+    }
+<span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+
+<h4>
+XForm way
+</h4>
+<p>
+資料的文件格式是 XML。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;xforms&gt;</span>
+
+<span class="nt">&lt;model&gt;</span>
+  <span class="nt">&lt;instance&gt;</span>
+  <span class="c">&lt;!-- Data (XML document)--&gt;</span>
+  <span class="nt">&lt;person&gt;</span>
+    <span class="nt">&lt;fname&gt;</span>Peter<span class="nt">&lt;/fname&gt;</span>
+    <span class="nt">&lt;lname/&gt;</span>Parker<span class="nt">&lt;/lname&gt;</span>
+  <span class="nt">&lt;/person&gt;</span>
+ <span class="nt">&lt;/instance&gt;</span>
+
+ <span class="nt">&lt;submission</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/model&gt;</span>
+
+<span class="c">&lt;!-- Presentation --&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">ref=</span><span class="s">"fname"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;label&gt;</span>First Name<span class="nt">&lt;/label&gt;</span>
+<span class="nt">&lt;/input&gt;</span>
+
+<span class="nt">&lt;input</span> <span class="na">ref=</span><span class="s">"lname"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;label&gt;</span>Last Name<span class="nt">&lt;/label&gt;</span>
+<span class="nt">&lt;/input&gt;</span>
+
+<span class="nt">&lt;submit</span> <span class="na">submission=</span><span class="s">"form1"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;label&gt;</span>Submit<span class="nt">&lt;/label&gt;</span>
+<span class="nt">&lt;/submit&gt;</span>
+
+<span class="nt">&lt;/xforms&gt;</span>
+</code></pre>
+
+
+<h4>
+Reference about XForm
+</h4>
+<ul>
+    <li><a href="http://www-128.ibm.com/developerworks/xml/library/x-ajaxxml9/">Ajax and XML: Ajax for forms</a> - Use Ajax techniques to create input forms</li>
+    <li><a href="http://www.w3schools.com/xforms/default.asp">XForms Tutorial</a></li>
+    <li><a href="http://www.w3.org/TR/xforms/">XForms 1.0 (Third Edition)</a> - W3C Recommendation 29 October 2007</li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2008/How%20do%20you%20write%20template%3F%20XSLT%2C%20PHP%20or%20RoR%3F.html">How do you write template? XSLT, PHP or RoR?</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5107059.html">http://blog.roodo.com/rocksaying/archives/5107059.html</a></div>

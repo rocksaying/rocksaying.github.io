@@ -1,0 +1,137 @@
+---
+title: Openchange 開發工具補遺
+category: programming
+old-category: C/C++/C#/Java
+tags: [Exchange,MAPI,Openchange]
+---
+<p>
+日前有一項工作，需要從 Microsoft Exchange Server 中轉出行事曆、連絡人等等資料。我嘗試使用 Openchage 這套工具來處理。它透過 Exchange 預設的 SMB 封包協定交換資訊。應用軟體開發人員可使用其 libmapi 函數庫設計一般用戶程式。
+</p>
+
+<blockquote>
+OpenChange aims to provide a portable Open Source implementation of Microsoft Exchange Server and Exchange protocols.
+<br/>
+<cite><a href="http://www.openchange.org/">Openchange</a></cite>
+</blockquote>
+<p>
+不過 Openchange 仍未臻成熟，在使用前必須修正不少地方。本文說明 header 檔路徑修正、常數定義修正與中日韓語系修正的內容。
+</p>
+
+<!--more-->
+<h3>
+路徑修正
+</h3>
+
+<p>
+Ubuntu 8.1 是目前極少數提供 Openchange 套件的 GNU/Linux 散佈套件。即便如此，它的套件仍然有許多 header 檔案放置的路徑未經修正。若未修正路徑，在編譯源碼時，你將會得到許多找不到檔案的錯誤訊息。 Ubuntu 8.1 安裝套件: libmapi-dev, samba4-dev。路徑修正:
+</p>
+<pre class="language-text">
+sudo ln -s /usr/include/samba-4.0/*.h /usr/include
+sudo ln -s /usr/include/samba-4.0/gen_ndr/* /usr/include/gen_ndr
+sudo ln -s /usr/include/samba-4.0/core /usr/include
+sudo ln -s /usr/include/samba-4.0/samba /usr/include
+sudo ln -s /usr/include/samba-4.0/util /usr/include
+</pre>
+
+<h3>
+常數定義修正
+</h3>
+<p>
+如果你是透過 SVN 取得最新版本的 Openchange 源碼(<a href="https://svn.openchange.org/openchange/trunk">https://svn.openchange.org/openchange/trunk</a>，那麼你將發現其中並未定義 <code>PidLid</code> 開頭的各個常數 (如 <code>PidLidAttendeeCriticalChange, PidLidEmail1DisplayName</code>)，那些代表屬性的 ID 值。請下載 <a href="http://downloads.sourceforge.net/openchange/libmapi-0.8.2-ROMULUS.tar.gz">libmapi-0.8.2-ROMULUS.tar.gz</a>，使用其中的 libmapi/mapi_nameid.h 檔案。
+</p>
+<p>
+不幸的是，定義在 mapi_nameid.h 中的屬性 ID 值也存在不少錯誤。幾乎所有 <code>001f</code> 結尾的 ID 值都應改成 <code>001e</code>。例如:
+</p>
+<pre class="highlight"><code><span class="c1">//#define PidLidEmail1DisplayName                             0x8080001f
+</span><span class="cp">#define PidLidEmail1DisplayName                             0x8080001e
+</span>
+<span class="c1">//#define PidLidEmail1AddressType                             0x8082001f
+</span><span class="cp">#define PidLidEmail1AddressType                             0x8082001e
+</span>
+<span class="c1">//#define PidLidEmail1EmailAddress                            0x8083001f
+</span><span class="cp">#define PidLidEmail1EmailAddress                            0x8083001e
+</span>
+<span class="c1">//#define PidLidEmail1OriginalDisplayName                     0x8084001f
+</span><span class="cp">#define PidLidEmail1OriginalDisplayName                     0x8084001e
+</span>
+<span class="c1">//#define PidLidEmail1EmailType                               0x8087001f
+</span><span class="cp">#define PidLidEmail1EmailType                               0x8087001e
+</span></code></pre>
+
+<p>
+要怪就怪微軟吧，因為他們放出的 <a href="http://msdn.microsoft.com/en-us/library/cc307725.aspx">Exchange protocols</a> 規格書並未講明這些屬性 ID 值是多少。
+</p>
+
+<p>
+在 /usr/include/libmapi/libmapi.h 亦未定義 <code>PRIx64</code>，請補下列定義程式碼。
+</p>
+<pre class="highlight"><code>
+<span class="cm">/* These are essentially local versions of part of the
+   C99 __STDC_FORMAT_MACROS */</span>
+<span class="cp">#ifndef PRIx64
+#if __WORDSIZE == 64
+</span>  <span class="cp">#define PRIx64        "lx"
+#else
+</span>  <span class="cp">#define PRIx64        "llx"
+#endif
+#endif
+</span>
+</code></pre>
+
+
+
+<h3>
+中日韓(CJK)語系修正
+</h3>
+
+<p>
+Openchange 提供 mapiprofile 此工具建置帳號簡介。然而這個工具所設定的 Codepage 與 method 不適用於中日韓語系環境。
+</p>
+
+<h5>
+mapiprofile.c
+</h5>
+<pre class="highlight"><code>
+	<span class="cm">/* This is only convenient here and should be replaced at some point */</span>
+	<span class="n">mapi_profile_add_string_attr</span><span class="p">(</span><span class="n">profname</span><span class="p">,</span> <span class="s">"codepage"</span><span class="p">,</span> <span class="s">"0x4e4"</span><span class="p">);</span>
+	<span class="n">mapi_profile_add_string_attr</span><span class="p">(</span><span class="n">profname</span><span class="p">,</span> <span class="s">"language"</span><span class="p">,</span> <span class="n">lcid</span> <span class="p">);</span>
+	<span class="n">mapi_profile_add_string_attr</span><span class="p">(</span><span class="n">profname</span><span class="p">,</span> <span class="s">"method"</span><span class="p">,</span> <span class="s">"0x409"</span><span class="p">);</span>
+</code></pre>
+
+<p>
+Codepage 決定字元集 (charset)，Method 決定內碼 (encoding)，Language 僅僅表示本地用符號。在中日韓(CJK)語系環境中，Codepage 與 method 才是最重要的參數。Language 基本無用。Mapiprofile 卻將 Codepage 與 method 寫死。在未經修正的情形下，它不能應用於中日韓環境。簡單地說，如果沒有經過修改，它的預設狀態無法支援中文系統。
+</p>
+<p>
+若要符合中日韓環境，建議將 Codepage 與 method 設為 <code>0xFDE9 (65001)</code>，這是微軟系統為 UTF-8 所設定的代號。至於 language ，正體中文使用者可以設為 <code>0x404</code>。其實 language 的影響微乎其微，對中文環境使用者而言可隨意設定。 
+</p>
+
+<h4>
+Openchage 字元轉碼程序是錯的
+</h4>
+
+<p>
+然而，因為 Openchange 內部的字元轉碼程序錯誤，就算我們設定了正確的 Codepage 與 method， Openchange 仍然不支援中日韓環境。對於多位元組字元， Openchange 的 IO 函數會轉換成錯誤的未知內碼。<em>在開發人員修正字元轉碼程序之前， Opehcnage 不支援中日韓環境。亦即，不能使用中文檔案、中文訊息內容。</em>
+</p>
+<p>
+依據我所抓出的內碼表，舉兩個字為例。「味」的 UTF-8 內碼為 (\xE5\x91\xB3)，「呿」的 UTF-8 內碼為 (\xE5\x91\xBF)。而 Openchange 的字元轉碼程序之輸出為 (\xC3\x95\xC3\xA6\xE2\x94\x82)、(\xC3\x95\xC3\xA6\xE2\x94\x90)。
+</p>
+<p>
+以下為我個人抓出的內碼對照表之一份小表，第一欄是正確的 UTF-8 內碼，第二欄是 Openchange 輸出的錯誤內碼:
+</p>
+<pre class="highlight"><code><span class="k">static</span> <span class="n">_sCode_oCode_t</span> <span class="n">secterC383</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x9C</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC2\xA3</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x8E</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x84</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x92</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x86</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x90</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x89</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x9A</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x9C</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x94</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\xB6</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x96</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\xBB</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x98</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\xBF</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\xB9</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xE2\x95\xA3</span><span class="s">"</span><span class="p">},</span>
+	<span class="p">{</span><span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre>
+
+<p>
+我彙整了 BIG5 與 GB2312 兩份字元集約一萬五千多字後，編製出來的內碼對照表約有600KB，這是經過編譯後的大小。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/8689105.html">http://blog.roodo.com/rocksaying/archives/8689105.html</a></div>

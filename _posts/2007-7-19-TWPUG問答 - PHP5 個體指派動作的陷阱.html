@@ -1,0 +1,96 @@
+---
+title: TWPUG問答 - PHP5 個體指派動作的陷阱
+category: programming
+old-category: PHP
+tags: [php,reference,object]
+---
+<div class="tags" style="display:none">Tags: php reference object</div>
+<p>
+前幾天在 TWPUG 上，有位網友提了一個<a href="http://twpug.net/modules/newbb/viewtopic.php?viewmode=flat&type=&topic_id=2706&forum=13">問題</a>。大意是如何以一個個體為正本，透過指派動作複製多次到陣列中，每個陣列元素的內容應該不相同。我看出他碰到了一個語言陷阱，我也回答了。可惜，我當時的答案是錯的... 我重新思索了一下，本文才是正解。
+</p>
+<p>
+在 PHP5 之後，個體(object)的指派動作皆是使用參照。換言之，當指派來源的資料型態是<dfn>object</dfn>時， PHP5 就會用參照；故 <code>$a = $o</code> 的動作實際上等於 <code>$a =&$o</code>。
+</p>
+
+<!--more-->
+<blockquote>
+As of PHP 5, objects are assigned by reference unless explicitly told otherwise with the new <dfn>clone</dfn> keyword.
+<cite>PHP Manual: <a href="http://tw.php.net/manual/en/language.operators.assignment.php">Assignment Operators</a></cite>
+</blockquote>
+
+<p>
+如果我們希望透過指派動作得到複製體，則必須使用關鍵字 <dfn>clone</dfn> 明確地告知 PHP5 產生一個複製體(右值的複製體)指派給對象(左值)(<span class="Onote">PHP5 預設的複製動作是淺拷貝(shallow copy)。可覆寫<code>__clone()</code>自定複製內容。See also: <a href="http://tw.php.net/manual/en/language.oop5.cloning.php">PHP Manual: Object cloning</a></span>)。如下列所示。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="cm">/*
+ * 1. normal assign
+ */</span>
+<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StdClass</span><span class="p">;</span> <span class="c1">//equal: $o = (object)null;
+</span><span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$o</span><span class="o">-&gt;</span><span class="na">a</span> <span class="o">=</span> <span class="nv">$i</span><span class="p">;</span> <span class="c1">//print_r($o);
+</span>    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$o</span><span class="p">;</span> <span class="c1">//print_r($ar);
+</span><span class="p">}</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$ar</span> <span class="k">as</span> <span class="nv">$a</span><span class="p">)</span>
+    <span class="k">echo</span> <span class="nv">$a</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cm">/*
+ * 2. assign by clone
+ */</span>
+<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StdClass</span><span class="p">;</span>
+<span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$o</span><span class="o">-&gt;</span><span class="na">a</span> <span class="o">=</span> <span class="nv">$i</span><span class="p">;</span> <span class="c1">//print_r($o);
+</span>    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="k">clone</span> <span class="nv">$o</span><span class="p">;</span> <span class="c1">//print_r($ar);
+</span><span class="p">}</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$ar</span> <span class="k">as</span> <span class="nv">$a</span><span class="p">)</span>
+    <span class="k">echo</span> <span class="nv">$a</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+上列範例中，先使用一般的指派方式，結果陣列 <var>$ar</var> 中的每個元素都相同，其實都參照變數 <var>$o</var>。接著改用加上關鍵字 <dfn>clone</dfn> 的指派方式，這才使得陣列 <var>$ar</var> 中的每個元素都是一個獨立的個體，內容各不相同。
+</p>
+
+<h4>其他型態的指派動作仍然是「複製」</h4>
+<p>
+請留意， PHP5 仍非完全個體導向化的程式語言，並未將每個變數都視為一種個體。在 PHP5 中，「個體」僅指資料型態為 <dfn>object</dfn> (基礎類別為 <dfn>StdClass</dfn>) 的變數。布林、數值、字串及陣列等，各有其獨立的資料型態，如<dfn>boolean</dfn>, <dfn>integer</dfn>, <dfn>string</dfn>, <dfn>array</dfn>。它們與 <dfn>object</dfn> 是同層級的資料型態，不被視為「個體」(<span class="Onote">PHP5有8種資料原生型態，它們是平行非附屬的關係，故一個<dfn>array</dfn>的實例不是一種(is not a ) <dfn>object</dfn>的實例</span>)。詳細內容請參考 <a href="http://tw.php.net/manual/en/language.types.php">PHP Manual: Types</a>。
+</p>
+<p>
+PHP5 對 <dfn>object</dfn> 型態的變數之指派動作預設是「參照」，但對其他型態的變數之指派動作仍然是「複製」。亦即，當右值之資料型態不是 <dfn>object</dfn> 時， PHP5 就會複製一個獨立的內容指派給左值。
+</p>
+<p>
+下列示範當 <var>$s</var> 之資料型態分別是 <dfn>string</dfn> 與 <dfn>object</dfn> 時，PHP5 指派動作產生的結果差異。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$s</span> <span class="o">=</span> <span class="s1">'Hello'</span><span class="p">;</span>
+<span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$s</span> <span class="o">.=</span> <span class="nv">$i</span><span class="p">;</span>
+    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nv">$s</span> <span class="o">.=</span> <span class="s1">'x'</span><span class="p">;</span>
+<span class="nb">print_r</span><span class="p">(</span><span class="nv">$ar</span><span class="p">);</span>
+
+<span class="nv">$s</span> <span class="o">=</span> <span class="p">(</span><span class="nx">object</span><span class="p">)</span> <span class="s1">'Hello'</span><span class="p">;</span>
+<span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$s</span><span class="o">-&gt;</span><span class="na">scalar</span> <span class="o">.=</span> <span class="nv">$i</span><span class="p">;</span>
+    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nv">$s</span><span class="o">-&gt;</span><span class="na">scalar</span> <span class="o">.=</span> <span class="s1">'x'</span><span class="p">;</span>
+<span class="nb">print_r</span><span class="p">(</span><span class="nv">$ar</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+先令 <var>$s</var> 之資料型態為字串 <dfn>string</dfn> ，再指派給陣列 <var>$ar</var>。結果顯示 <var>$ar</var> 各元素內容皆不相同，並非參照 <var>$s</var>。接著令 <var>$s</var> 之資料型態為 <dfn>object</dfn> ，再指派一次。結果顯示 <var>$ar</var> 各元素內容相同，其實都參照 <var>$s</var>。
+</p>
+<p>
+基本上，這是一個語言陷阱(trick)。再者，若將上例第6行的指派動作加上 <dfn>clone</dfn> 關鍵字，將會產生非預期的結果。同時， PHP 會警告程序員:<q>Warning:  __clone method called on non-object</q>. 此意味著，程序員編寫之敘述必須區別個體與非個體資料型態。關鍵字 <dfn>clone</dfn> 僅作用於右值為 <dfn>object</dfn> 型態之變數，故而降低了 PHP 的泛型能力。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3686877.html">http://blog.roodo.com/rocksaying/archives/3686877.html</a></div>

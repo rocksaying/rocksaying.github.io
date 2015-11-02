@@ -1,0 +1,95 @@
+---
+title: D-Bus service activation
+category: programming
+old-category: Programming
+tags: [d-bus]
+---
+<p>當一名程序員實作了一個 daemon 時，他將會面臨一個關於系統啟動流程的問題。他要如何安排啟動流程，才能正常地啟動他的 daemon？ 要放在 init.d 嗎？還是放在 rc.local？再者，每種 Linux 或 BSD 系統的啟動流程都有差異，更是為這項工作增加不少負擔。而 D-Bus service 的運作模式基本上也是一個 daemon ，所以當程序員實作了一個 D-Bus service 後，按理也是要為安排啟動流程煩惱。
+</p>
+
+<p>所幸 D-Bus 有一個 dbus daemon launch helper 的功能，可以免除程序員安排 D-Bus service 啟動程序的困惱。只要按照 D-Bus 規格上說明的方式，寫好 <dfn>.service</dfn> 文件，dbus daemon lauhcn helper 就會在使用者呼叫指定 D-Bus service 時，自動啟動該 D-Bus service 程序。程序員不必煩惱 D-Bus service 程序的啟動問題。
+</p>
+
+<!--more-->
+<h4>
+Session bus service
+</h4>
+
+<p>Session bus service 是跟隨使用者桌面環境期間的行程，所以它執行時的 UID,GID 為此桌面期間的使用者。
+</p>
+
+<p>假設有一個 Session bus service ，其 service name 為 <dfn>blog.rock.Hello</dfn> ，程式名稱是 <dfn>/usr/local/bin/HelloService</dfn>。那麼我們可以編輯一個與 service name 同名的 blog.rock.Hello.service 文件，其內容如下:
+</p>
+
+<pre class="language-text">
+#filename: blog.rock.Hello.service
+[D-BUS Service]
+Name=blog.rock.Hello
+Exec=/usr/local/bin/HelloService
+</pre>
+
+<p>最後將此文件複製到 <dfn>/usr/share/dbus-1/services</dfn> 目錄下。 Dbus daemon launch helper 就會知道該如何啟動這個程序。
+</p>
+
+<div class="note">
+D-Bus 規格文件上有一個疏失，規格文件上指出 .serivce 文件中，可以用 <var>Names</var> 指定一或多個 serivce name。但實際上無效。應該用 <var>Name</var> ，且指定與 .service 文件同名的 service name。
+</div>
+
+<h4>
+System bus service
+</h4>
+
+<p>System bus service 屬於系統層級的行程，它執行時的預設身份將會是 root ，或者你也可以指定執行身份。因此，dbus daemon lauhcn helper 啟動 System bus service 程序時，比 Session bus service 多了一道安全機制。
+</p>
+
+<p>假設有一個 System bus service ，其 service name 為 <dfn>blog.rock.sys</dfn> ，程式名稱是 <dfn>/usr/local/bin/rock_sys</dfn>。那麼我們可以編輯一個與 service name 同名的 blog.rock.sys.service 文件，其內容如下:
+</p>
+
+<pre class="language-text">
+#filename: blog.rock.sys.service
+[D-BUS Service]
+Name=blog.rock.sys
+Exec=/usr/local/bin/rock_sys
+User=root
+</pre>
+<p>
+System bus service 的 .service 文件，多一個 <var>User</var> 欄位，指定此服務行程的身份。
+</p>
+
+<p>將此文件複製到 <dfn>/usr/share/dbus-1/system-services</dfn> 目錄下。
+</p>
+
+<p>接著，配合 dbus daemon lauhcn helper 啟動 System bus service 程序的安全機制，我們還要新增一份與 service 同名的組態文件。在此例中，此文件名稱是 blog.rock.sys.conf 。最少內容如下:
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;</span>
+<span class="nt">&lt;busconfig&gt;</span>
+  <span class="c">&lt;!-- Only root could launch this service --&gt;</span>
+  <span class="nt">&lt;policy</span> <span class="na">user=</span><span class="s">"root"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;allow</span> <span class="na">own=</span><span class="s">"blog.rock.sys"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/policy&gt;</span>
+
+  <span class="c">&lt;!-- Allow anyone to invoke methods of interface --&gt;</span>
+  <span class="nt">&lt;policy</span> <span class="na">context=</span><span class="s">"default"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;allow</span> <span class="na">send_destination=</span><span class="s">"blog.rock.sys"</span>
+           <span class="na">send_interface=</span><span class="s">"org.freedesktop.DBus.Introspectable"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;allow</span> <span class="na">send_destination=</span><span class="s">"blog.rock.sys"</span>
+           <span class="na">send_interface=</span><span class="s">"blog.rock.sys"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/policy&gt;</span>
+<span class="nt">&lt;/busconfig&gt;</span>
+</code></pre>
+
+
+<p>將此文件複製到 <dfn>/etc/dbus-1/system.d</dfn>。安排好這兩份文件後，Dbus daemon launch helper 就會知道該如何啟動這個程序。
+</p>
+
+<ul>
+  <li>
+    <a href="http://dbus.freedesktop.org/doc/dbus-specification.html#message-bus-starting-services">Message bus starting services</a>
+  </li>
+  <li>
+    <a href="http://www.freedesktop.org/wiki/IntroductionToDBus#Activation">Introduction To DBus: Activation</a> 
+  </li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12318427.html">http://blog.roodo.com/rocksaying/archives/12318427.html</a></div>

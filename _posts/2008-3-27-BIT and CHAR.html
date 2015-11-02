@@ -1,0 +1,118 @@
+---
+title: BIT and CHAR
+category: programming
+old-category: SQL/Database
+tags: [database,sql]
+---
+<div class="tags" style="display:none">Tags: database sql</div>
+<p>
+BIT 與 CHAR 使用筆記。以 SQL92 為基準。
+</p>
+<p>
+BIT很少用，前一陣子為了使用這種資料型態，google了不少資料，不過大部份網路資料都沒有提供什麼有用的資訊 (市面上的 SQL 書籍更是不提)。最後還是在各家資料庫系統本身的 Manual 中找到資訊。留下筆記，以供日後查閱。
+</p>
+
+<!--more-->
+<h4>
+BIT and BIT VARYING
+</h4>
+
+<h5>bit string literal</h5>
+<blockqoute>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="n">bit</span> <span class="n">string</span> <span class="n">literal</span><span class="o">&gt;</span> <span class="p">::</span><span class="o">=</span>
+    <span class="n">B</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">bit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span>
+        <span class="p">[</span> <span class="err">{</span> <span class="o">&lt;</span><span class="n">separator</span><span class="o">&gt;</span><span class="p">...</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">bit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="err">}</span><span class="p">...</span> <span class="p">]</span>
+
+<span class="o">&lt;</span><span class="n">hex</span> <span class="n">string</span> <span class="n">literal</span><span class="o">&gt;</span> <span class="p">::</span><span class="o">=</span>
+    <span class="n">X</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">hexit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span>
+        <span class="p">[</span> <span class="err">{</span> <span class="o">&lt;</span><span class="n">separator</span><span class="o">&gt;</span><span class="p">...</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">hexit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="err">}</span><span class="p">...</span> <span class="p">]</span>
+</code></pre>
+
+</blockquote>
+
+<p>
+數值 5 的 BIT 字串寫作 <code>B'101'</code> 或 <code> X'5'</code>。要插入一筆含有 BIT 字串欄位的紀錄時，如下例所示:
+</p>
+<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"myTable"</span> <span class="p">(</span>
+    <span class="nv">"intValue"</span> <span class="n">int</span><span class="p">,</span>
+    <span class="nv">"bitString"</span> <span class="n">BIT</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
+    <span class="nv">"normalString"</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="nv">"myTable"</span> <span class="p">(</span>
+    <span class="nv">"intValue"</span><span class="p">,</span>
+    <span class="nv">"bitString"</span><span class="p">,</span> 
+    <span class="nv">"normalString"</span>
+<span class="p">)</span> 
+<span class="k">VALUES</span> <span class="p">(</span> 
+    <span class="mi">5</span><span class="p">,</span>
+    <span class="n">X</span><span class="s1">'5'</span><span class="p">,</span> 
+    <span class="s1">'5'</span> 
+<span class="p">);</span>
+</code></pre>
+
+
+
+<h5>Cast</h5>
+<blockquote>
+<p>
+The 'Character' value expression can cast to BIT/BIT VARYING.
+</p>
+<p>
+The 'Exact Numeric' and 'Approximate Numeric' value expression 
+CANNOT cast to BIT/BIT VARYING.
+</p>
+<cite>SQL92 6.10  cast specification</cite>
+</blockquote>
+
+<pre class="highlight"><code><span class="c1">-- 下列為正確寫法:
+</span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="nv">"myTable"</span> <span class="k">WHERE</span> <span class="nv">"bitString"</span> <span class="o">=</span> <span class="k">CAST</span><span class="p">(</span><span class="s1">'0101'</span> <span class="k">AS</span> <span class="n">BIT</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
+
+<span class="c1">-- 下列為錯誤寫法:
+</span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="nv">"myTable"</span> <span class="k">WHERE</span> <span class="nv">"bitString"</span> <span class="o">=</span> <span class="k">CAST</span><span class="p">(</span><span class="mi">5</span> <span class="k">AS</span> <span class="n">BIT</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
+</code></pre>
+
+
+<p>
+PostgreSQL 允許將數值字義轉換成 BIT/BIT VARYING ，故上述的錯誤寫法在 PostgreSQL 中是可用的。
+</p>
+
+
+<h4>
+CHAR, CHAR VARYING, VARCHAR
+</h4>
+
+<p>
+SQL92 要求指定長度。PostgreSQL 允許省略長度。最大長度則依 DBMS 實作細節而定，<q> 
+The maximum value of &lt;length&gt; is implementation-defined.</q>(SQL92)。
+</p>
+
+<table border="1" cellspacing="0">
+<tr>
+    <th>DBMS</th><th>Maximum length</th>
+</tr>
+<tr>
+    <td>Sybase</td><td>255</td>
+</tr>
+<tr>
+    <td>Oracle</td><td>4000</td>
+</tr>
+<tr>
+    <td>SQL Server</td><td>8000, (NCHAR is 4000)</td>
+</tr>
+<tr>
+    <td>DB2</td><td>32704</td>
+</tr>
+<tr>
+    <td>PostgreSQL</td><td>any size</td>
+</tr>
+</table>
+
+<h5>相關資訊</h5>
+<ul>
+    <li><a href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">ISO/IEC 9075:1992, Database Language SQL- July 30, 1992</a></li>
+    
+    <li><a href="http://www.postgresql.org/docs/8.2/interactive/datatype.html">PostgreSQL</a></li>
+    <li><a href="http://publib.boulder.ibm.com/infocenter/dzichelp/v2r2/index.jsp?topic=/com.ibm.db29.doc.intro/db2z_stringdatatypes.htm">DB2 information</a></li>
+    <li><a href="http://download.oracle.com/docs/cd/B28359_01/server.111/b28286/sql_elements001.htm#i45441">Oracle® Database SQL Language Reference</a></li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5762925.html">http://blog.roodo.com/rocksaying/archives/5762925.html</a></div>

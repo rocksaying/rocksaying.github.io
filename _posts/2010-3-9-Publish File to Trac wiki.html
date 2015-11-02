@@ -1,0 +1,202 @@
+---
+title: Publish File to Trac wiki
+category: programming
+old-category: Ruby
+tags: [wiki,Ruby,Trac]
+---
+<p>
+This tool which written by Ruby language publish file to <a href="http://trac.edgewall.org/">Trac</a> wiki page. It will read the file content then publish to Trac wiki.
+</p>
+<p>
+Many people use <a href="http://trac.edgewall.org/">Trac</a> to trace the software projects. When project execution, we will renew the project's wiki page frequently. However, many contents often are written in other documents. For example the API specification, Java will write by the Javadoc form in the .java source code, Ruby has RDoc, PHP has PHPDoc. The update log will write in the Subversion commit message. “The source code is the document”, these methods are quite universal. Because the document content had already existed, we most effective processing mode is with publish tool to read the file and to publish to the wiki page. Remembers, Copy and Paste is not the job which a professional programmer should do. 
+</p>
+
+<!--more-->
+<p>
+有許多人使用 Trac 追蹤軟體專案進度。當專案執行時，我們會頻繁地更新專案的 wiki 頁面。然而，許多要更新到 wiki 的內容，往往是撰寫在其他文件中。例如 API 規格， Java 會以 Javadoc 格式寫在 .java 源碼內， Ruby 有 RDoc, PHP 有 PHPDoc 。源碼更新訊息與交辦事項，會寫在 Subversion 的簽入訊息(commit message)。「源碼即文件」，這些作法是相當普遍的。由於文件的內容已經存在了，我們最有效率的處理方式，就是用發佈工具，讀取檔案後發佈到 wiki 頁面上。記住，剪貼與複製並不是一位專業程序員應該做的事。
+</p>
+
+<script type="syntaxhighlighter" class="brush: bash;"><![CDATA[
+#!/usr/bin/ruby
+=begin rdoc
+= publish_tracwiki_page.rb
+
+ publish_tracwiki_page --login user --password password --page page_path \
+    --file file --host Wiki URL --login_form uri_of_login_form
+
+== Usage
+    --login, -u: login name.
+    --password, -p: login password.
+    --page, -P: Output. Wiki page path without host URL.
+    --file, -f: Input. File to publish.
+    --login_form: Login form URL.
+    
+== Example
+    publish_tracwiki_page --login rock --password xxxx --page /wiki/index/test \
+    --file hello.txt --login_form http://localhost/wiki/login
+=end
+require 'getoptlong'
+#require 'rdoc/usage'
+require 'net/http'
+require 'cgi'
+
+# RDoc::usage was removed from ruby at the beginning of 2008, 
+# and thus is not present in Ruby 1.9
+def show_usage
+    usage = <<-USAGE
+
+publish_tracwiki_page --login user --password password --page page_path \
+ --file file --login_form URL_of_login_form
+
+== Usage
+    --login, -u: login name.
+    --password, -p: login password.
+    --page, -P: Output. Wiki page path without host URL.
+    --file, -f: Input. File to publish.
+    --login_form: Login form URL.
+    
+== Example
+    publish_tracwiki_page --login rock --password xxxx --page /wiki/index/test \
+ --file hello.txt --login_form http://localhost/wiki/login
+
+    USAGE
+
+    puts usage
+    exit 0
+end
+
+opts = GetoptLong.new(
+    ['--help', '-h', GetoptLong::NO_ARGUMENT],
+    ['--login', '-u', GetoptLong::REQUIRED_ARGUMENT],
+    ['--password', '-p', GetoptLong::REQUIRED_ARGUMENT],
+    ['--page',  '-P', GetoptLong::REQUIRED_ARGUMENT],
+    ['--file',  '-f', GetoptLong::REQUIRED_ARGUMENT],
+    ['--login_form', GetoptLong::REQUIRED_ARGUMENT]
+)
+
+login = nil
+password = nil
+page = nil
+file = nil
+login_form = nil
+
+opts.each do |opt, arg|
+    case opt
+    when '--help'
+        #RDoc::usage
+        show_usage
+    #when '--login'
+    #    login = arg
+    #when '--password'
+    #    password = arg
+    else
+        eval("#{opt.delete('--')} = arg")
+    end
+end
+
+class TracWikiPublisher
+    def initialize(login_form)
+        @uri = URI.parse(login_form)
+        @http = Net::HTTP.new(@uri.host, @uri.port)
+
+        @form = {
+            'action' => 'edit',
+            'scroll_bar_pos' => '',
+            'editrows' => '20',
+            'comment' => '',
+            'save' => 'Submit changes',
+            
+            'version' => 0,
+            'text' => '', #content of page
+            '__FORM_TOKEN' => ''
+        }
+
+        @cookies = {
+            'trac_auth' => '',
+            'trac_form_token' => ''
+        }
+    end
+    
+    def auth(login, password)
+        req = Net::HTTP::Get.new(@uri.path) #login form path
+        req.basic_auth(login, password)
+        response = @http.request(req)
+
+        if response.code == '401' or !response.response['set-cookie']
+            return false
+        else
+            #trac_auth
+            cookies = CGI::Cookie::parse(response.response['set-cookie'])
+            @cookies['trac_auth'] = cookies['trac_auth'].value[0]
+            @cookies['Path'] = cookies['Path'].value[0]
+
+            @headers = { 'Cookie' => response.response['set-cookie'] }
+            return true
+        end
+    end
+
+    def get_token(page)
+        response, data = @http.get(page + '?action=edit', @headers)
+
+        #There is a new cookie, trac_form_token
+        cookies = CGI::Cookie::parse(response.response['set-cookie'])
+        form_token = cookies['trac_form_token'].value[0]
+
+        @cookies['trac_form_token'] = @form['__FORM_TOKEN'] = form_token
+
+        raw_cookie = []
+        @cookies.each {|key, value|
+            raw_cookie << "#{key}=#{value}"
+        }
+
+        @headers['Cookie'] = raw_cookie.join('; ')
+
+        #name="__FORM_TOKEN" value="4c6621edb844"
+        #m = /name="__FORM_TOKEN" value="([a-z0-9]+)"/.match(data)
+        #@form['__FORM_TOKEN'] = m[1]
+
+        m = /name="version" value="(\d+)"/.match(data)
+        @form['version'] = m[1]
+    end
+
+    def put(page, file)
+        get_token(page)
+        
+        @form['text'] = IO.read(file)
+        #puts @form
+
+        form = []
+        @form.each {|key, value|
+            form << "#{key}=" + CGI.escape(value)
+        }
+        data = form.join('&')
+
+        #puts data
+        #puts @headers
+        response, data = @http.post page, data, @headers
+
+        if response.code == '303'
+            puts 'Update!'
+        elsif response.code == '200'
+            puts 'No change.'
+        else
+            puts response.code
+        end
+    end
+end
+
+if !login or !password or !page or !file or !login_form
+    #RDoc::usage
+    show_usage
+end
+
+publisher = TracWikiPublisher.new(login_form)
+
+if !publisher.auth(login, password)
+    puts 'Auth failed!'
+    exit 1
+end
+
+publisher.put(page, file)
+
+]]></script><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11913027.html">http://blog.roodo.com/rocksaying/archives/11913027.html</a></div>

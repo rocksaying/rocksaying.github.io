@@ -1,0 +1,112 @@
+---
+title: Ubuntu NetworkManager 使用要項
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,networkmanager]
+---
+<p>
+Linux 延續 Unix 風格，傳統上使用 <dfn>/etc/network/interfaces</dfn>(本文以 network/interfaces 簡稱之) 管理網路介面設定。不論那種 Linux 散佈版本都支援這種設定方式， LPI 檢定也是考這一招。而 Ubuntu 近來在桌面環境下引進了另一套網路介面設定管理機制，即 <a href="http://projects.gnome.org/NetworkManager/">NetworkManager</a> 。本文旨在說明 NetworkManager 的使用要項。
+</p>
+
+<!--more-->
+<p>
+Ubuntu Desktop edition (桌面版) 才會安裝 NetworkManager ，Server edition (伺服器版) 並不會安裝 NetworkManager，仍然用傳統的 network/interfaces 管理。兩種版本的網路設備管理策略並不相同，只有 Desktop edition 的使用者才會用到 NetworkManager 。NetworkManager 和 network/interfaces 兩種管理策略，基本上只能選擇一種使用。混用設定只會造成更多問題。
+</p>
+
+<h4>
+NetworkManager setting
+</h4>
+
+<p>
+NetworkManager 的設定檔放在 <dfn>/etc/NetworkManager/nm-system-settings.conf</dfn>。它基本上只需要4行設定內容即可運作。
+
+<span class="Onote">
+這是 Debian/Ubuntu 版本的組態內容。Fedora/RHEL 使用不同的 plugins 設定。
+</span>
+</p>
+
+<pre class="language-text">
+[main]
+plugins=ifupdown,keyfile
+
+[ifupdown]
+managed=false
+</pre>
+
+<p>
+更改上述 NetworkManager 的設定後，可以執行 <kbd>sudo /etc/init.d/network-manager restart</kbd> 重新載入。<span class="Onote">在 Ubuntu 中，更改 network/interfaces 的設定後，則可以執行 <kbd>sudo /etc/init.d/networking restart</kbd> 重新載入設定。這兩套機制分別使用不同的管理指令。</span>
+</p>
+
+<p>
+按照<a href="http://live.gnome.org/NetworkManager/SystemSettings">官方文件</a>的說法，當 <var>managed</var> 設為 <code>false</code> 時，NetworkManager 會略過列在 network/interfaces 內的網路設備。也就是說，如果我們把網路設定寫在 network/interfaces 內的話，NetworkManager 就不會去管理它。如下例，network/interfaces 列出了 lo 和 eth0 這兩張網路介面的設定，故 NetworkManager 就不會去管理 lo 和 eth0 這兩張網路介面。
+</p>
+
+<pre class="language-text">
+# /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+</pre>
+
+<p>
+如果主機上所有的網路介面設備都列在 network/interfaces 設定的話，桌面上的 NetworkManager 小圖示就會顯示紅色錯誤圖示，提示沒有設備可以管理 (No valid active connections found!)。這是正常的。
+</p>
+
+<p>
+如果我們想由 NetworkManager 管理 eth0 的設定，那就要刪掉 network/interfaces 內關於 eth0的設定內容。注意， network/interfaces 內關於 lo 的那兩行設定是必要的，請勿刪除。刪掉的話，系統將不具備 127.0.0.1 (localhost) 的網路介面。
+</p>
+
+<p>
+反之，如果我們將 <var>managed</var> 設為 <code>true</code> 時，NetworkManager 會接管所有網路設備的設定，而忽略 network/interfaces 的內容。
+</p>
+
+
+<h4>
+system-connections
+</h4>
+<p>
+基本上，NetworkManager 會自動產生與更新 /etc/NetworkManager/system-connections 下的網路卡資訊。如果你發現 NetworkManager 不讓你手動修改網路連線，或是它更新網路設定之後無法正常連線時，可以試著手動刪除 /etc/NetworkManager/system-connections 內的所有檔案，再重新開機(或重新啟動 NetworkManager)。
+</p>
+
+<pre class="language-term">
+sudo rm -rf /etc/NetworkManager/system-connections/*
+sudo /etc/init.d/network-manager restart
+</pre>
+
+<h4>
+70-persistent-net.rules
+</h4>
+
+<p>
+Debian/Ubuntu 使用 udev 管理硬體設備，也包括了網路卡。網路卡設備的內容會記錄在 /etc/udev/rules.d/70-persistent-net.rules 。它也會影嚮 NetworkManager 的運作。
+</p>
+
+<p>
+當我們使用備份功能將系統複製到新的硬體上之後，會因為新網卡的 MAC address 與 70-persistent-net.rules 內的 MAC address 不相同，導致網路卡未被啟用、網路無法連線。
+此時，只需要刪除 70-persistent-net.rules ，再重開機，讓系統重新產生 70-persistent-net.rules 即可。
+</p>
+<p>
+或者，手動編輯 70-persistent-net.rules ，將 <code>ATTR{address}=="..."</code> 的內容刪掉，再重開機。
+</p>
+<ul>
+    <li><a href="http://aaron-kelley.net/blog/2009/08/moving-an-ubuntu-server-install-to-another-machine-whered-my-network-connection-go/">Moving an Ubuntu Server install to another machine</a></li>
+    <li><a href="http://www.debianhelp.co.uk/udev.htm">http://www.debianhelp.co.uk/udev.htm</a></li>
+</ul>
+
+<h4>
+Ubuntu 9.10狀況
+</h4>
+<p>
+Ubuntu 9.10 NetworkManager 存在一個 bug。當我們把所有網路設備都交由 network/interfaces 設定時，NetworkManager 會出現一個名稱叫 ifupdown 的網路連線名稱，而且我們無法在 NetworkManager 中編輯這個連線。不能編輯是正常現象，因為我們將這個網路卡的網路設定權交給了 interfaces。顯然 Ubuntu 9.10 的 NetworkManager 在分析設定時有誤；在 Ubuntu 9.04 中，NetworkManager 不會出現 ifupdown 這種名稱。
+</p>
+
+<p>
+此時，我們有兩種處理方法。
+</p>
+
+<ol>
+   <li>如果我們就是想要用 network/interfaces 設定網路，那就不用處理。</li>
+   <li>如果我們想改成用 NetworkManager 設定網路。則按上述說明，將 network/interfaces 中關於 eth0 的設定項目全部刪除，把設定權交給 NetworkManager。</li>
+</ol><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11777065.html">http://blog.roodo.com/rocksaying/archives/11777065.html</a></div>

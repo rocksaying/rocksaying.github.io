@@ -1,0 +1,207 @@
+---
+title: How to write a program ran in GDM screen
+category: programming
+old-category: Programming
+tags: [linux,gtk2,gdm]
+---
+<p>
+我現在需要撰寫一個 GTK 程式，它必須可以執行在 GDM 的登入畫面處。並且可以在我需要時顯示出來，在我不需要時隱藏。
+我規劃透過 signal 與該 GTK 程式互動，控制它的顯示與隱藏行為。
+</p>
+
+<p>
+要達成上述目標，最大的麻煩在於該把程式的執行指令放在何處？才可以讓它在 GDM 登入畫面處執行，又該如何在 GDM 完成登入工作後被關閉。
+</p>
+
+<!--more-->
+<h4>
+GDM 各階段的可自定行為處
+</h4>
+<p>
+GDM 啟動時，與登入使用者的桌面前，會執行下列數個 scripts 的內容。這些 scripts 代表了 GDM 運作時的不同階段，透過這些 scripts ，我們就可以自定 GDM 在不同階段時的外觀與行為。
+</p>
+
+<p>
+按照 unix 世界的慣例，這些 script 的最後一行都必須是 <code>exit 0</code> ，GDM 才會認為狀況正常而繼續下一個動作。
+</p>
+
+<ol>
+    <li>/etc/gdm/Init/Default</li>
+    <li>/etc/gdm/Xsession</li>
+    <li>/etc/gdm/PostLogin/Default</li>
+    <li>/etc/gdm/PreSession/Default</li>
+    <li>/etc/gdm/PostSession/Default</li>
+</ol>
+
+<p>
+GDM 執行各階段script 的流程如下:
+</p>
+
+<pre class="language-text">
+while (True) do
+    # GDM 登入作業開始前
+    exec /etc/gdm/Init/Default
+    
+    show GDM login window
+
+    if succession to login then
+        # GDM 登入作業結束後
+        exec /etc/gdm/PostLogin/Default
+        
+         # 使用者期間作業開始前
+        exec /etc/gdm/PreSession/Default
+
+        switch into user's X session
+
+         # 使用者期間作業結束後
+        exec /etc/gdm/PostSession/Default
+    end
+end
+</pre>
+
+<h4>
+GTK 程式實作
+</h4>
+<p>
+首先，我先用 Python 撰寫一個 GTK GTK 程式。名為 <var>hello.py</var>。它將捕抓 <dfn>SIGUSR1</dfn> 這個自定義訊號。我們可以透過這個訊號，控制它的顯示與隱藏行為。
+</p>
+
+<script type="syntaxhighlighter" class="brush: python"><![CDATA[
+#!/usr/bin/python
+
+import os
+import sys
+import signal
+
+import pygtk
+import gtk
+
+class HelloWorld:
+    def hello(self, widget):
+        print "Hello world"
+    
+    def delete_event(self, widget, event):
+        return False
+        
+    def destroy(self, widget):
+        gtk.main_quit()
+    
+    def __init__(self):
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.connect("delete_event", self.delete_event)
+        self.window.connect("destroy", self.destroy)
+        self.window.set_border_width(10)
+
+        self.table = gtk.Table(2, 1, True)
+
+        self.button = gtk.Button("Hello world")
+        self.button.connect_object("clicked", gtk.Widget.destroy, self.window)
+        self.button.show()
+        self.table.attach(self.button, 0, 1, 0 ,1)
+
+        self.entry = gtk.Entry()
+        self.entry.show()
+        self.table.attach(self.entry, 0, 1, 1 ,2)
+
+        self.table.show()
+
+        self.window.add(self.table)
+        #self.window.show()
+        self.window.set_modal(False)
+
+    def main(self):
+        gtk.main()
+
+
+def sig_usr1_handler(signum, frame):
+    global hello
+    print "reacting on USR1 signal (10)"
+    modal = hello.window.get_modal()
+    if (modal):
+        hello.window.set_modal(False)
+        hello.window.hide()
+        hello.window.set_keep_above(False)
+    else:
+        hello.window.set_modal(True)
+        hello.window.show()
+        hello.window.set_keep_above(True)
+    return
+
+        
+if __name__ == "__main__":
+    hello = HelloWorld()
+    signal.signal(signal.SIGUSR1, sig_usr1_handler)
+
+    pidfile = open('/var/run/hello_py.pid', 'w')
+    pidfile.write( str(os.getpid()) )
+    pidfile.close()
+    
+    hello.main()
+
+]]></script>
+
+<p>
+主要注意 <var>PID</var> 的保存。我將透過 signal 與此程式的程序互動，所以該程式將它的 PID (process id) 保存在 <dfn>/var/run/hello_py.pid</dfn> 內。
+</p>
+
+
+<h4>
+將程式放進GDM階段與互動
+</h4>
+
+<p>
+首先，將程式的執行指令寫進 <dfn>/etc/gdm/Init/Default</dfn>。一般添加在該文件最後一行的 <code>exit 0</code> 的前面，並且請務必放到背景執行。如下: 
+</p>
+
+<pre class="language-term">
+
+/usr/bin/python /home/rock/hello.py & 
+
+sudo xterm &
+# 這裡加上 xterm ，只是為了方便測試。
+# 我們可以在 xterm 中輸入指令，對 hello.py 送出訊號，觀察是否正確地顯示與隱藏。
+
+exit 0
+</pre>
+
+<p>
+注意，寫在 <dfn>Init/Default</dfn> script 中的指令，其程序的執行身份將會是 root 。
+</p>
+
+<p>
+如果你希望用 GDM 的身份執行，可以加上 <code> sudo -u gdm </code>。如下:
+</p>
+
+<pre class="language-term">
+
+sudo -u gdm xterm &
+  
+exit 0
+</pre>
+
+<p>  
+接著，我要讓該程序在使用者登入桌面之前關閉。此階段的動作，要寫進 <dfn>/etc/gdm/PostLogin/Default</dfn> 。如下:
+</p>
+
+<pre class="language-term">
+
+kill `cat /var/run/hello_py.pid`
+
+exit 0
+</pre>
+
+<p>
+當完成上述修改動作後，我們登出桌面，回到 GDM 的登入畫面。此時，我們應該可以看到一個 xterm 的視窗。接著我們在 xterm 中，對 hello.py 程序送出 SIGUSR1 的訊號，把它顯示出來。送訊號的指令很簡單，就是 <dfn>kill</dfn>。
+</p>
+
+<pre class="language-term">
+# kill -USR1 `cat /var/run/hello_py.pid`
+</pre>
+
+<p>
+第一次執行時， hello.py 會顯示出來。第二次執行時，hello.py 會隱藏。
+</p>
+
+<p>
+了解各階段的動作，將更方便我們自定 GDM 啟動前後的各項行為。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11625175.html">http://blog.roodo.com/rocksaying/archives/11625175.html</a></div>

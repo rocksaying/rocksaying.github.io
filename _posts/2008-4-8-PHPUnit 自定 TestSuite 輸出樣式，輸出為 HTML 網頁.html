@@ -1,0 +1,232 @@
+---
+title: PHPUnit 自定 TestSuite 輸出樣式，輸出為 HTML 網頁
+category: programming
+old-category: PHP
+tags: [phpunit,tdd]
+---
+<div class="tags" style="display:none">Tags: phpunit tdd</div>
+<p>
+PHPUnit 預置了一個純文字型式的 TextUI Runner，在大多數情形下，它足夠應付我們的需求。不過，當我想要把 TestSuite 放到專案網頁上，讓小組成員 - 特別是 PM - 可以上網查看立即的測試結果時，那個文字型式的 TextUI Runner 就顯得太簡略了。至少要把測試工作及結果輸出成 HTML 的條列式清單，最好還加上顏色區別成功或失敗。
+</p>
+<p>
+所幸 PHPUnit 提供了良好的擴充性，要自定一個可以將測試內容輸出為 HTML 網頁的 HTML Runner 相當簡單。
+</p>
+
+<!--more-->
+<p>
+自定輸出樣式的方法很多，我選擇透過擴展 PHPUnit_Framework_TestListener 來實現。See also: <a href="http://www.phpunit.de/pocket_guide/3.2/en/extending-phpunit.html#extending-phpunit.PHPUnit_Framework_TestListener">Implement PHPUnit_Framework_TestListener</a>.
+</p>
+
+<p>
+另一方面，我將測試案例清單放置在另一個檔案中。在本例中，測試案例清單之文件名稱為 UnitTestSuiteList.php。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="sd">/**
+ * 測試案例清單。
+ */</span>
+<span class="nv">$testCases</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'AbcTest.php'</span><span class="p">,</span>
+    <span class="s1">'XyzTest.php'</span>
+<span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+
+<h4>HTML Runner, UnitTestSuite.php</h4>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s1">'PHPUnit_MAIN_METHOD'</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s1">'PHPUnit_MAIN_METHOD'</span><span class="p">,</span> <span class="s1">''</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//測試案例清單
+</span><span class="k">require_once</span> <span class="s1">'UnitTestSuiteList.php'</span><span class="p">;</span>
+
+<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">HtmlTestListener</span> <span class="k">implements</span> <span class="nx">PHPUnit_Framework_TestListener</span> <span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$lastTestStatus</span><span class="p">;</span>
+
+    <span class="k">private</span> <span class="k">function</span> <span class="nf">_name</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$name</span> <span class="o">=</span> <span class="nv">$test</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match_all</span><span class="p">(</span><span class="s1">'/[A-Z][a-z0-9]+/'</span><span class="p">,</span> <span class="nv">$name</span><span class="p">,</span> <span class="nv">$words</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nv">$words</span> <span class="o">=</span> <span class="nv">$words</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+            <span class="nv">$showName</span> <span class="o">=</span> <span class="nb">array_shift</span><span class="p">(</span><span class="nv">$words</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$words</span> <span class="k">as</span> <span class="nv">$word</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$showName</span> <span class="o">.=</span> <span class="s1">' '</span> <span class="o">.</span> <span class="nb">strtolower</span><span class="p">(</span><span class="nv">$word</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nv">$showName</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">addError</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">,</span>
+           <span class="nx">Exception</span> <span class="nv">$e</span><span class="p">,</span>
+           <span class="nv">$time</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lastTestStatus</span> <span class="o">=</span> <span class="s1">'e'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">addFailure</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">,</span>
+             <span class="nx">PHPUnit_Framework_AssertionFailedError</span> <span class="nv">$e</span><span class="p">,</span>
+             <span class="nv">$time</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lastTestStatus</span> <span class="o">=</span> <span class="s1">'f'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">addIncompleteTest</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">,</span>
+                    <span class="nx">Exception</span> <span class="nv">$e</span><span class="p">,</span>
+                    <span class="nv">$time</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lastTestStatus</span> <span class="o">=</span> <span class="s1">'i'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">addSkippedTest</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">,</span>
+                 <span class="nx">Exception</span> <span class="nv">$e</span><span class="p">,</span>
+                 <span class="nv">$time</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lastTestStatus</span> <span class="o">=</span> <span class="s1">'s'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">startTest</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lastTestStatus</span> <span class="o">=</span> <span class="s1">'p'</span><span class="p">;</span> <span class="c1">//pass
+</span>    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">endTest</span><span class="p">(</span><span class="nx">PHPUnit_Framework_Test</span> <span class="nv">$test</span><span class="p">,</span> <span class="nv">$time</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'&lt;li&gt;['</span><span class="p">;</span>
+
+        <span class="k">switch</span> <span class="p">(</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lastTestStatus</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="s1">'e'</span><span class="o">:</span>
+                <span class="k">echo</span> <span class="s1">'&lt;span class="error"&gt;E&lt;/span&gt;'</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s1">'f'</span><span class="o">:</span>
+                <span class="k">echo</span> <span class="s1">'&lt;span class="failure"&gt;F&lt;/span&gt;'</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s1">'i'</span><span class="o">:</span>
+                <span class="k">echo</span> <span class="s1">'&lt;span class="incomplete"&gt;I&lt;/span&gt;'</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s1">'s'</span><span class="o">:</span>
+                <span class="k">echo</span> <span class="s1">'&lt;span class="skipped"&gt;S&lt;/span&gt;'</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">default</span><span class="o">:</span>
+                <span class="k">echo</span> <span class="s1">'&lt;span class="pass"&gt;P&lt;/span&gt;'</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">echo</span> <span class="s1">']'</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_name</span><span class="p">(</span><span class="nv">$test</span><span class="p">),</span> <span class="s2">"&lt;/li&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">startTestSuite</span><span class="p">(</span><span class="nx">PHPUnit_Framework_TestSuite</span> <span class="nv">$suite</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s1">''</span> <span class="o">!=</span> <span class="nv">$suite</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">())</span>
+            <span class="nb">printf</span><span class="p">(</span><span class="s2">"&lt;div class='test_suite'&gt;%s:&lt;/div&gt;&lt;ul&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="nv">$suite</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">endTestSuite</span><span class="p">(</span><span class="nx">PHPUnit_Framework_TestSuite</span> <span class="nv">$suite</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s1">''</span> <span class="o">!=</span> <span class="nv">$suite</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">())</span>
+            <span class="nb">printf</span><span class="p">(</span><span class="s2">"&lt;/ul&gt;&lt;/div&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+
+<span class="nt">&lt;style </span><span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+<span class="nc">.pass</span><span class="o">,</span>
+<span class="nc">.error</span><span class="o">,</span>
+<span class="nc">.failure</span><span class="o">,</span>
+<span class="nc">.incomplete</span><span class="o">,</span>
+<span class="nc">.skipped</span> <span class="p">{</span>
+    <span class="nl">font-family</span><span class="p">:</span> <span class="nb">monospace</span><span class="p">,</span> <span class="n">courier</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.pass</span> <span class="p">{</span>
+    <span class="nl">background-color</span><span class="p">:</span> <span class="m">#00cc00</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nc">.error</span> <span class="p">{</span>
+    <span class="nl">background-color</span><span class="p">:</span> <span class="m">#CC0000</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nc">.failure</span> <span class="p">{</span>
+    <span class="nl">background-color</span><span class="p">:</span> <span class="no">red</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nc">.incomplete</span> <span class="p">{</span>
+    <span class="nl">background-color</span><span class="p">:</span> <span class="m">#ffff99</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nc">.skipped</span> <span class="p">{</span>
+    <span class="nl">background-color</span><span class="p">:</span> <span class="m">#CCFFCC</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nt">&lt;/style&gt;</span>
+<span class="nt">&lt;div&gt;</span>
+[<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"pass"</span><span class="nt">&gt;</span>P<span class="nt">&lt;/span&gt;</span>]: Pass;
+[<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"failure"</span><span class="nt">&gt;</span>F<span class="nt">&lt;/span&gt;</span>]: Failure;
+[<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"incomplete"</span><span class="nt">&gt;</span>I<span class="nt">&lt;/span&gt;</span>]: Incomplete;
+[<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"skipped"</span><span class="nt">&gt;</span>S<span class="nt">&lt;/span&gt;</span>]: Skipped;
+[<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"error"</span><span class="nt">&gt;</span>E<span class="nt">&lt;/span&gt;</span>]: Error.
+<span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;hr/&gt;</span>
+
+<span class="cp">&lt;?php</span>
+
+<span class="nv">$suite</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestSuite</span><span class="p">;</span>
+<span class="nv">$result</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestResult</span><span class="p">;</span>
+<span class="nv">$result</span><span class="o">-&gt;</span><span class="na">addListener</span><span class="p">(</span><span class="k">new</span> <span class="nx">HtmlTestListener</span><span class="p">);</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$testCases</span> <span class="k">as</span> <span class="nv">$testCase</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">require_once</span> <span class="nv">$testCase</span><span class="p">;</span>
+    <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/\/(\w+)\.php$/'</span><span class="p">,</span> <span class="nv">$testCase</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">);</span>
+    <span class="nv">$testCaseClassName</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="nv">$suite</span><span class="o">-&gt;</span><span class="na">addTestSuite</span><span class="p">(</span><span class="nv">$testCaseClassName</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Run the tests.
+</span><span class="k">echo</span> <span class="s1">'&lt;p&gt;Start. Timestamp:'</span><span class="p">,</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'Y-m-d h:i:s'</span><span class="p">),</span> <span class="s1">'&lt;/p&gt;'</span><span class="p">;</span>
+<span class="nv">$suite</span><span class="o">-&gt;</span><span class="na">run</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
+
+<span class="k">echo</span> <span class="s1">'&lt;div&gt;&lt;pre&gt;'</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="nv">$result</span><span class="o">-&gt;</span><span class="na">wasSuccessful</span><span class="p">()</span> <span class="o">&amp;&amp;</span>
+    <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">allCompletlyImplemented</span><span class="p">()</span> <span class="o">&amp;&amp;</span>
+    <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">noneSkipped</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="nb">printf</span><span class="p">(</span>
+        <span class="s2">"</span><span class="se">\n</span><span class="s2">OK (%d test%s)</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+
+        <span class="nb">count</span><span class="p">(</span><span class="nv">$result</span><span class="p">),</span>
+        <span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">?</span> <span class="s1">''</span> <span class="o">:</span> <span class="s1">'s'</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="o">!</span><span class="nv">$result</span><span class="o">-&gt;</span><span class="na">allCompletlyImplemented</span><span class="p">()</span> <span class="o">||</span>
+          <span class="o">!</span><span class="nv">$result</span><span class="o">-&gt;</span><span class="na">noneSkipped</span><span class="p">())</span><span class="o">&amp;&amp;</span>
+         <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">wasSuccessful</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="nb">printf</span><span class="p">(</span>
+        <span class="s2">"</span><span class="se">\n</span><span class="s2">OK, but incomplete or skipped tests!</span><span class="se">\n</span><span class="s2">"</span> <span class="o">.</span>
+        <span class="s2">" Tests: %d </span><span class="se">\n</span><span class="s2"> Incomplete: %s </span><span class="se">\n</span><span class="s2"> Skipped: %s.</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+
+        <span class="nb">count</span><span class="p">(</span><span class="nv">$result</span><span class="p">),</span>
+        <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">notImplementedCount</span><span class="p">(),</span>
+        <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">skippedCount</span><span class="p">()</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span>
+<span class="p">{</span>
+    <span class="nb">printf</span><span class="p">(</span>
+        <span class="s2">"</span><span class="se">\n</span><span class="s2">FAILURES!</span><span class="se">\n</span><span class="s2">"</span> <span class="o">.</span>
+        <span class="s2">" Tests: %d </span><span class="se">\n</span><span class="s2"> Failures: %s </span><span class="se">\n</span><span class="s2"> Errors: %s </span><span class="se">\n</span><span class="s2"> Incomplete: %s </span><span class="se">\n</span><span class="s2"> Skipped: %s.</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+
+        <span class="nb">count</span><span class="p">(</span><span class="nv">$result</span><span class="p">),</span>
+        <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">failureCount</span><span class="p">(),</span>
+        <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">errorCount</span><span class="p">(),</span>
+        <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">notImplementedCount</span><span class="p">(),</span>
+        <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">skippedCount</span><span class="p">()</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;&lt;/div&gt;'</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s1">'&lt;p&gt;End. Timestamp:'</span><span class="p">,</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'Y-m-d h:i:s'</span><span class="p">),</span> <span class="s1">'&lt;/p&gt;'</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<img src="http://blog.roodo.com/rocksaying/62370ef5.png" alt="使用畫面" /><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5829661.html">http://blog.roodo.com/rocksaying/archives/5829661.html</a></div>

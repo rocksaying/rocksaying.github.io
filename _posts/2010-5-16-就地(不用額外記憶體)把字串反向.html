@@ -1,0 +1,133 @@
+---
+title: 就地(不用額外記憶體)把字串反向
+category: programming
+old-category: C/C++/C#/Java
+tags: [指標,pointer]
+---
+<p>前陣子，有位同事看了《約耳趣談軟體》(Joel On Software 中譯版)，就作者提到面試人員教戰守則中的第一道程式問題向我請教。那道題目是「就地(不用額外記憶體)把字串反向」。同事不熟 C 語言，不了解作者為何說不懂指標的人，解這題一定會錯。所以跑來問我。
+</p>
+
+<p>這道問題難就難在「不用額外記憶體」的條件。再者，就算面試者用了指標，我仍然可以就 C 語言的意義挑毛病，指出光用指標無法滿足「不用額外記憶體」的條件。如果只是從 C 語言的角度思考，僅用指標寫不出滿足條件的字串反向程式。面試者還要能從組合語言的角度思考，才能向出題者解釋他的程式確實滿足條件。
+</p>
+
+<!--more-->
+<p>因為我了解指標，所以我會直接寫出下列字串反向程式。(OK, 如果主考官想找一個 C 語言程式設計人員，看到下列程式碼，九成就會直接錄用)
+</p>
+
+<pre class="highlight"><code><span class="c1">// strrev.c
+</span><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">puts</span><span class="p">(</span><span class="s">"input one string"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="n">f</span> <span class="o">=</span> <span class="n">t</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    
+    <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">t</span><span class="p">)</span> 
+        <span class="n">t</span><span class="o">++</span><span class="p">;</span> 
+    <span class="o">--</span><span class="n">t</span><span class="p">;</span>
+    
+    <span class="k">while</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="o">*</span><span class="n">f</span><span class="p">;</span>
+        <span class="o">*</span><span class="n">f</span><span class="o">++</span> <span class="o">=</span> <span class="o">*</span><span class="n">t</span><span class="p">;</span>
+        <span class="o">*</span><span class="n">t</span><span class="o">--</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">puts</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+    
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>上列程式透過指標指向字串 <var>argv[1]</var>，利用指標搬移字元，所以不用建立額外的字串。
+</p>
+
+<p>這段程式碼中，沒有出現任何一次 <code>malloc()</code>，看起來似乎滿足「不用額外記憶體」的條件了。但我還是可以挑毛病，「嘿，你定義了三個變數 <var>f,t,c</var>，這三個變數用了額外的記憶體」。
+</p>
+
+<p>不要懷疑，從 C 語言的定義來說，那三個變數確實用了額外的記憶體。當你在函數內定義了區域變數時，就是在堆疊(stack)中配置記憶體儲存變數內容。編譯器會計算區域變數的總容量，在函數的進入點後，加入一段碼，令堆疊索引暫存器之定址增加等於區域變數總容量之值。如此一來，堆疊索引暫存器與堆疊基底暫存器之定址包住的記憶體區間，就是區域變數額外配置的記憶體。編譯器同樣會在函數的返回點前，加入一段碼，令堆置索引暫存器之定址減少相同之值。這表示釋出區域變數配置的記憶體。
+</p>
+
+<p>所以光是懂指標，上列程式碼還無法讓我等挑惕者滿意。面試者必須要了解計算機架構(具組合語言的基礎)與 C 編譯器最佳化動作的意涵。才能更進一步地向出題者說明上列程式碼如何得以滿足「不用額外記憶體」的條件。如果你精通組合語言，你就可以用組合語言寫出完全不用額外記憶體的字串反向程式，連解釋都免了。
+</p>
+
+<p>在平面記憶體定址機制中(float memory)，每一個指標的大小就等於一個暫存器大小。同時，每一個暫存器的大小，也必定大於或等於該計算機中一個無修飾字元的大小 (即 char 等於 byte)。在上列程式中，只使用了兩個指標變數與一個字元變數，以現代 CPU 內含的暫存器數量來看，足夠提供三個暫存器儲存這三個變數的內容。基本上，只要啟用了 C 編譯器的最佳化選項中的暫存器使用最佳化項目，C 編譯器就可以在處理字串反向的程式區段中，找出三個暫存器儲存那三個變數的內容，連堆疊都不必使用。
+</p>
+
+<p>以 gcc 編譯器為例，只要啟用第一級最佳化 (<dfn>-O</dfn>) 就足夠得到我們想要的結果。我利用 gcc 的組譯功能，得到上列 C 程式碼在第一級最佳化後實際產生的組合語言程式碼。下列:
+</p>
+
+<pre class="language-term">
+$ gcc -S -O strrev.c
+$ cat strrev.s
+</pre>
+
+<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"strrev.c"</span>
+	<span class="p">.</span><span class="n">section</span>	<span class="p">.</span><span class="n">rodata</span><span class="p">.</span><span class="n">str1</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span><span class="s">"aMS"</span><span class="p">,</span><span class="err">@</span><span class="n">progbits</span><span class="p">,</span><span class="mi">1</span>
+<span class="p">.</span><span class="n">LC0</span><span class="o">:</span>
+	<span class="p">.</span><span class="n">string</span>	<span class="s">"input one string"</span>
+	<span class="p">.</span><span class="n">text</span>
+<span class="p">.</span><span class="n">globl</span> <span class="n">main</span>
+	<span class="p">.</span><span class="n">type</span>	<span class="n">main</span><span class="p">,</span> <span class="err">@</span><span class="n">function</span>
+<span class="n">main</span><span class="o">:</span>
+<span class="p">.</span><span class="n">LFB34</span><span class="o">:</span>
+	<span class="p">.</span><span class="n">cfi_startproc</span>
+	<span class="n">subq</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">rsp</span>
+	<span class="p">.</span><span class="n">cfi_def_cfa_offset</span> <span class="mi">16</span>
+	<span class="n">cmpl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">edi</span>
+	<span class="n">jg</span>	<span class="p">.</span><span class="n">L2</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="p">.</span><span class="n">LC0</span><span class="p">,</span> <span class="o">%</span><span class="n">edi</span>
+	<span class="n">call</span>	<span class="n">puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+	<span class="n">jmp</span>	<span class="p">.</span><span class="n">L3</span>
+<span class="p">.</span><span class="n">L2</span><span class="o">:</span>
+	<span class="n">addq</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">rsi</span>
+	<span class="n">movq</span>	<span class="p">(</span><span class="o">%</span><span class="n">rsi</span><span class="p">),</span> <span class="o">%</span><span class="n">rdx</span>
+	<span class="n">movq</span>	<span class="o">%</span><span class="n">rdx</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rdx</span><span class="p">)</span>
+	<span class="n">je</span>	<span class="p">.</span><span class="n">L5</span>
+<span class="p">.</span><span class="n">L10</span><span class="o">:</span>
+	<span class="n">addq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
+	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rax</span><span class="p">)</span>
+	<span class="n">jne</span>	<span class="p">.</span><span class="n">L10</span>
+<span class="p">.</span><span class="n">L5</span><span class="o">:</span>
+	<span class="n">subq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
+	<span class="n">cmpq</span>	<span class="o">%</span><span class="n">rax</span><span class="p">,</span> <span class="o">%</span><span class="n">rdx</span>
+	<span class="n">jae</span>	<span class="p">.</span><span class="n">L7</span>
+<span class="p">.</span><span class="n">L8</span><span class="o">:</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">rdx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
+	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">rax</span><span class="p">),</span> <span class="o">%</span><span class="n">edi</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">dil</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rdx</span><span class="p">)</span>
+	<span class="n">addq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rdx</span>
+	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rax</span><span class="p">)</span>
+	<span class="n">subq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
+	<span class="n">cmpq</span>	<span class="o">%</span><span class="n">rax</span><span class="p">,</span> <span class="o">%</span><span class="n">rdx</span>
+	<span class="n">jb</span>	<span class="p">.</span><span class="n">L8</span>
+<span class="p">.</span><span class="n">L7</span><span class="o">:</span>
+	<span class="n">movq</span>	<span class="p">(</span><span class="o">%</span><span class="n">rsi</span><span class="p">),</span> <span class="o">%</span><span class="n">rdi</span>
+	<span class="n">call</span>	<span class="n">puts</span>
+	<span class="n">movl</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
+<span class="p">.</span><span class="n">L3</span><span class="o">:</span>
+	<span class="n">addq</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">rsp</span>
+	<span class="n">ret</span>
+	<span class="p">.</span><span class="n">cfi_endproc</span>
+<span class="p">.</span><span class="n">LFE34</span><span class="o">:</span>
+	<span class="p">.</span><span class="n">size</span>	<span class="n">main</span><span class="p">,</span> <span class="p">.</span><span class="o">-</span><span class="n">main</span>
+	<span class="p">.</span><span class="n">ident</span>	<span class="s">"GCC: (Ubuntu 4.4.3-4ubuntu5) 4.4.3"</span>
+	<span class="p">.</span><span class="n">section</span>	<span class="p">.</span><span class="n">note</span><span class="p">.</span><span class="n">GNU</span><span class="o">-</span><span class="n">stack</span><span class="p">,</span><span class="s">""</span><span class="p">,</span><span class="err">@</span><span class="n">progbits</span>
+</code></pre>
+
+
+<p>自標記 L5 起，C 編譯器就令暫存器 <var>rax</var> 為指標 <var>t</var>，令暫存器 <var>rdx</var> 為指標 <var>f</var>，令暫存器 <var>rcx</var> 的低位元組部份 <var>cl</var> 為變數 <var>c</var>。再使用暫存器 <var>edi</var> 的低位元組部份 <var>dil</var> 作為從兩指標間搬移字元的暫存器；也就是負責 <code>*f = *t</code> 此一記憶體間資料搬移動作的暫存器。
+</p>
+
+<p>標記 L8 到 L7 之間的程式區段，就是 C 程式碼中，實際處理字串反向動作之 <code>while ( t > f) {... }</code> 的內容。這段程式碼只用了暫存器(4個)，沒有使用任何額外的記憶體。故滿足題目的條件。
+</p>
+
+<p>乍看之下很簡單的一道問題，確實能看出面試者對指標與計算機架構的理解程度。就是要懂這些<em>基礎知識</em>，才能說明你的程式碼真的沒有使用額外的記憶體。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12418697.html">http://blog.roodo.com/rocksaying/archives/12418697.html</a></div>

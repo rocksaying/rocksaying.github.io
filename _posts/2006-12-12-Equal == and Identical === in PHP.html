@@ -1,0 +1,61 @@
+---
+title: Equal (==) and Identical(===) in PHP
+category: programming
+old-category: PHP
+tags: []
+---
+<div name="tags" class="tags">php_syntax</div>
+<p>
+PHP 的比較算符中 (<a href="http://tw.php.net/manual/en/language.operators.comparison.php">Comparison Operators</a>) 提供了兩種相等算符，一為 Equal 算符(<code>==</code>)，另一為 Identical 算符 (<code>===</code>)。這兩種算符是因應 PHP 的型態彈性 (或稱動態型) 而設置，其差異在於 Equal 算符會自動轉換兩側變數的型態，而 Identical 算符不會轉換型態，因此 Identical 算符要求值以及型態皆相等才為 <code>True</code> 。
+</p>
+
+<!--more-->
+<p>
+PHP 的 Equal 算符具有型態轉換的動態特性，當變數的型態不為 <code>bool</code> 時會自動轉換型態後再進行相等運算。然而，一來型態轉換的動作有時會增加不必要的程式執行動作；二來某些情況下，型態差異是有意義的，不應該視為相等。例如自資料庫中讀取一個欄位值，這個欄位值可能是 0 ，也可能是 Null 。在資料庫系統中，這兩者顯然不應視為相等，但對 Equal 算符而言， 0 與 Null 相等。如此便產生語意不清的困擾，此時便需要使用會抑止型態轉換的 Identical 算符進行比較，同時也會帶來執行速度較佳的好處。
+</p>
+<p>
+基本上， PHP 的 Equal 算符 (<code>==</code>) 沿續 C 語言的傳統，認為非零的值皆為 <code>True</code> ，零值為 <code>False</code> ，而 <code>Null</code> 也一向被認為是零的等義值，字串指向非 Null 的記憶位址，所以會被視為非零值。據此猜想可以寫出下列的測試程式。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$vs</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'bool true'</span>     <span class="o">=&gt;</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="s1">'string "true"'</span> <span class="o">=&gt;</span> <span class="s1">'true'</span><span class="p">,</span>
+    <span class="s1">'string "t"'</span>    <span class="o">=&gt;</span> <span class="s1">'t'</span><span class="p">,</span>
+    <span class="s1">'int 1'</span>         <span class="o">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'string "1"'</span>    <span class="o">=&gt;</span> <span class="s1">'1'</span><span class="p">,</span>
+    <span class="s1">'int -2'</span>        <span class="o">=&gt;</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+    <span class="s1">'string "-2"'</span>   <span class="o">=&gt;</span> <span class="s1">'-2'</span><span class="p">,</span>
+    <span class="s1">'int 0'</span>         <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s1">'string "0"'</span>    <span class="o">=&gt;</span> <span class="s1">'0'</span><span class="p">,</span>
+    <span class="s1">'empty string'</span>     <span class="o">=&gt;</span> <span class="s1">''</span><span class="p">,</span>
+    <span class="s1">'bool false'</span>    <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="s1">'string "false"'</span><span class="o">=&gt;</span> <span class="s1">'false'</span><span class="p">,</span>
+    <span class="s1">'string "f"'</span>    <span class="o">=&gt;</span> <span class="s1">'f'</span><span class="p">,</span>
+    <span class="s1">'null'</span>          <span class="o">=&gt;</span> <span class="kc">null</span>
+<span class="p">);</span>
+
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">Equal operator test:</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$vs</span> <span class="k">as</span> <span class="nv">$t</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$v</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span><span class="o">:</span>
+        <span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$t</span><span class="si">}</span><span class="s2"> is equal to true</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">else</span><span class="o">:</span>
+        <span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$t</span><span class="si">}</span><span class="s2"> is equal to false</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">endif</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">Identical operator test:</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$vs</span> <span class="k">as</span> <span class="nv">$t</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$v</span> <span class="o">===</span> <span class="kc">true</span><span class="p">)</span><span class="o">:</span>
+        <span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$t</span><span class="si">}</span><span class="s2"> is identical to true</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">else</span><span class="o">:</span>
+        <span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$t</span><span class="si">}</span><span class="s2"> is identical to false</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">endif</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+記錄上列程式的結果應該就可掌握 Equal 算符與 Identical 算符的差異。比較特殊的是字串 '0' 和空字串 '' 的測試結果。當字串為空字串時， PHP 視為 Null 的等義值，故結果為 False 。接著 PHP 會再試著將字串轉換為數值，所以字串 '0' 被轉換為零值而為 False 。至於字串 'false' 則純粹被視為一個非空且無法轉換為數值的字串，不會被轉換成 bool 型態的 false ，故仍為 True 。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2565180.html">http://blog.roodo.com/rocksaying/archives/2565180.html</a></div>

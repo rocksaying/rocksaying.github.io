@@ -1,0 +1,173 @@
+---
+title: DOM bug in Opera when using an unknown HTML element
+category: programming
+old-category: JavaScript
+tags: [ajax,javascript,dom,opera,tag,bug]
+---
+<div class="tags" style="display:none">ajax javascript dom opera tag bug</div>
+<p>
+前幾天我在寫用 JavaScript 自動轉換 Tag 註記的工具時，發現 Opera 瀏覽器在操作 Unknown HTML 元素 (即自定元素) 的 DOM 方法中有 bug ，不能正確取代或插入其他節點在 Unknown HTML 元素之節點後。如果用取代方法 (<code>replaceChild</code>) 甚至會切斷 DOM 結構。
+</p>
+<p>
+我設置了一個最簡單的測試環境，使用三種瀏覽器: MSIE 6, Firefox 1.5, Opera 9.1 (build 8679) 測試操作取代及插入動作。 MSIE 和 Firefox 都如預期般正確操作，唯 Opera 有錯誤。
+</p>
+
+<!--more-->
+<h3>案例一、使用一般 HTML 元素</h3>
+<p>
+首先，我想先確認使用一般 HTML 元素時， Opera 會不會有問題。因此，我在 HTML 文件中放了四個節點元素， 3 個 paragraph element (<var>&lt;p&gt;</var>) ， 1 個 break element (<var>&lt;br&gt;</var>) 。
+</p>
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;p&gt;</span>First<span class="nt">&lt;/p&gt;</span>
+    <span class="nt">&lt;p&gt;</span>Second<span class="nt">&lt;/p&gt;</span>
+    <span class="nt">&lt;br/&gt;</span>
+    <span class="nt">&lt;p&gt;</span>Third<span class="nt">&lt;/p&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>
+我以 break element 為目標，分別嘗試三個節點操作動作：一、節點取代動作；二、在節點之後插新節點；三、將新節點插入在節點之前。
+</p>
+
+<h4>節點取代動作</h4>
+<p>
+建立一個 image element (<var>&lt;img&gt;</var>) ，以其取代 break element 節點。
+將下面的 JavaScript 程式碼複製到 HTML 文件中，請放在 <var>&lt;body&gt;</var> 區塊內。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'br'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'img'</span><span class="p">);</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'http://www.google.com/intl/zh-TW_ALL/images/logo.gif'</span><span class="p">;</span>
+
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'before add img node'</span><span class="p">);</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">d</span><span class="p">);</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'after add img node'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+
+<h4>在節點之後插新節點</h4>
+<p>
+建立一個 image element (<var>&lt;img&gt;</var>) ，將其插入在 break element 節點之下。
+將下面的 JavaScript 程式碼複製到 HTML 文件中，請放在 <var>&lt;body&gt;</var> 區塊內。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'br'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'img'</span><span class="p">);</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'http://www.google.com/intl/zh-TW_ALL/images/logo.gif'</span><span class="p">;</span>
+
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'before add img node'</span><span class="p">);</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">insertBefore</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">d</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">);</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'after add img node'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+
+<h4>將新節點插入在節點之前</h4>
+<p>
+建立一個 image element (<var>&lt;img&gt;</var>) ，將其插入在 break element 節點之前。
+將下面的 JavaScript 程式碼複製到 HTML 文件中，請放在 <var>&lt;body&gt;</var> 區塊內。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'br'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'img'</span><span class="p">);</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'http://www.google.com/intl/zh-TW_ALL/images/logo.gif'</span><span class="p">;</span>
+
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'before add img node'</span><span class="p">);</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">insertBefore</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">d</span><span class="p">);</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'after add img node'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+
+<p>
+三種瀏覽器皆正確完成以上操作動作。
+</p>
+
+<h3>案例二、使用自定元素</h3>
+<p>
+確定一般 HTML 元素不會有問題後，接著要測試自定元素的情形，這是本文的主題。承前面的例子，只是我把 break element (<var>&lt;br&gt;</var>) 換成了自定元素 (<var>&lt;tags&gt;</var>) ，其他動作皆相同。
+</p>
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;p&gt;</span>First<span class="nt">&lt;/p&gt;</span>
+    <span class="nt">&lt;p&gt;</span>Second<span class="nt">&lt;/p&gt;</span>
+    <span class="nt">&lt;tags/&gt;</span>
+    <span class="nt">&lt;p&gt;</span>Third<span class="nt">&lt;/p&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<p>
+即使面對一個自定元素 (Unknown element) ， MSIE 和 Firefox 仍然正確地完成操作動作， Opera 卻出現錯誤。
+</p>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'br'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'img'</span><span class="p">);</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'http://www.google.com/intl/zh-TW_ALL/images/logo.gif'</span><span class="p">;</span>
+
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'before add img node'</span><span class="p">);</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">d</span><span class="p">);</span>
+    <span class="cm">/*
+      Opera will cut DOM tree after img node.
+    */</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'after add img node'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+<p>
+ Opera 在完成取代動作後，卻砍斷了 DOM 結構，原來自定元素之節點後的樹枝也被移除了。
+</p>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'br'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'img'</span><span class="p">);</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'http://www.google.com/intl/zh-TW_ALL/images/logo.gif'</span><span class="p">;</span>
+
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'before add img node'</span><span class="p">);</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">);</span>
+    <span class="cm">/*
+      d.nextSibling should be a HTML paragraphElement, '&lt;p&gt;Third&lt;/p&gt;'
+      However, Opera says that d.nextSibling is null.
+    */</span>
+
+    <span class="c1">//window.alert(d.nextSibling.firstChild);</span>
+    <span class="cm">/*
+      Although Opera says d.nextSibling is null,
+      Opera will still be blocked
+      when I try to get the property of d.nextSibling.
+    */</span>
+
+    <span class="nx">d</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">insertBefore</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">d</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">);</span>
+    <span class="cm">/*
+      Opera will cut add img node behind '&lt;p&gt;third&lt;/p&gt;'.
+    */</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'after add img node'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span></code></pre>
+
+<p>
+插入在節點之後的動作，卻是把新節點插入在最後面位置，而不是自定元素後的節點 (<var>&lt;p&gt;Thrid&lt;/p&gt;</var>) 之前。透過觀察 <var>d.nextSibling</var> 和 <var>d.nextSibling.firstChild</var> 兩個體之內容，也發現 Opera 無法正確處理自定元素的屬性。
+</p>
+
+<p>
+Opera 唯有插入在節點之前的動作正確。
+</p>
+<p>
+在 Ajax 技法中，上述節點操作動作的使用機會很高。而從本文的測試結果中顯示，如果你使用了自定元素，而 Opera 的使用者反應他們無法使用你的網站時，多半就是碰到本文的狀況了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2704403.html">http://blog.roodo.com/rocksaying/archives/2704403.html</a></div>

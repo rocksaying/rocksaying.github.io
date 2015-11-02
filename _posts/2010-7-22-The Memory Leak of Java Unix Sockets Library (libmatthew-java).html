@@ -1,0 +1,118 @@
+---
+title: The Memory Leak of Java Unix Sockets Library (libmatthew-java)
+category: programming
+old-category: C/C++/C#/Java
+tags: [java,d-bus]
+---
+<p>
+UPDATE: I have commit this code to Matthew Johnson. This bug is fixed in the version 0.7.3 of
+libmatthew-java. See Debian Bug report logs - <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=590331">#590331</a>.
+</p>
+<p>
+    <a href="http://dbus.freedesktop.org/doc/dbus-java/">Java D-Bus bindings</a> requires <a href="http://www.matthew.ath.cx/projects/java/">libmatthew-java</a>, a small JNI library, to use Unix-Sockets. We find a memory leak in libmatthew-java version 0.7.2. Here is the fixed code.
+</p>
+
+<!--more-->
+<p>
+<em>libmatthew-java-0.7.2.tar.gz: unix-java.c: line 238 - 294</em>
+</p>
+<pre class="highlight"><code><span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="nf">Java_cx_ath_matthew_unix_USOutputStream_native_1send__I_3_3B</span>
+  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="o">,</span> <span class="n">jobject</span> <span class="n">o</span><span class="o">,</span> <span class="n">jint</span> <span class="n">sock</span><span class="o">,</span> <span class="n">jobjectArray</span> <span class="n">bufs</span><span class="o">)</span>
+<span class="o">{</span>
+   <span class="n">size_t</span> <span class="n">sblen</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+   <span class="n">socklen_t</span> <span class="n">sblen_size</span> <span class="o">=</span> <span class="n">sizeof</span><span class="o">(</span><span class="n">sblen</span><span class="o">);</span>
+   <span class="n">getsockopt</span><span class="o">(</span><span class="n">sock</span><span class="o">,</span> <span class="n">SOL_SOCKET</span><span class="o">,</span> <span class="n">SO_SNDBUF</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">sblen</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">sblen_size</span><span class="o">);</span>
+
+   <span class="n">struct</span> <span class="n">msghdr</span> <span class="n">msg</span><span class="o">;</span>
+   <span class="n">struct</span> <span class="n">iovec</span> <span class="o">*</span><span class="n">iov</span><span class="o">;</span>
+   <span class="n">msg</span><span class="o">.</span><span class="na">msg_name</span> <span class="o">=</span> <span class="n">NULL</span><span class="o">;</span>
+   <span class="n">msg</span><span class="o">.</span><span class="na">msg_namelen</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+   <span class="n">msg</span><span class="o">.</span><span class="na">msg_control</span> <span class="o">=</span> <span class="n">NULL</span><span class="o">;</span>
+   <span class="n">msg</span><span class="o">.</span><span class="na">msg_controllen</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+   <span class="n">msg</span><span class="o">.</span><span class="na">msg_flags</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+   <span class="n">size_t</span> <span class="n">els</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetArrayLength</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">bufs</span><span class="o">);</span>
+   <span class="n">iov</span> <span class="o">=</span> <span class="o">(</span><span class="n">struct</span> <span class="n">iovec</span><span class="o">*)</span> <span class="n">malloc</span><span class="o">((</span><span class="n">els</span><span class="o">&lt;</span><span class="n">IOV_MAX</span><span class="o">?</span><span class="nl">els:</span><span class="n">IOV_MAX</span><span class="o">)</span> <span class="o">*</span> <span class="n">sizeof</span><span class="o">(</span><span class="n">struct</span> <span class="n">iovec</span><span class="o">));</span>
+   <span class="n">msg</span><span class="o">.</span><span class="na">msg_iov</span> <span class="o">=</span> <span class="n">iov</span><span class="o">;</span>
+   <span class="n">jbyteArray</span> <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="o">(</span><span class="n">jbyteArray</span><span class="o">*)</span> <span class="n">malloc</span><span class="o">(</span><span class="n">els</span> <span class="o">*</span> <span class="n">sizeof</span><span class="o">(</span><span class="n">jbyteArray</span><span class="o">));</span>
+   <span class="kt">int</span> <span class="n">rv</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+   <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">,</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">els</span><span class="o">;</span> <span class="n">i</span><span class="o">++,</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">==</span> <span class="n">els</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">msg</span><span class="o">.</span><span class="na">msg_iovlen</span> <span class="o">=</span> <span class="n">j</span><span class="o">;</span>
+         <span class="n">rv</span> <span class="o">=</span> <span class="n">sendmsg</span><span class="o">(</span><span class="n">sock</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">msg</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">k</span><span class="o">--,</span> <span class="n">l</span><span class="o">--)</span>
+            <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">ReleaseByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">k</span><span class="o">],</span> <span class="n">iov</span><span class="o">[</span><span class="n">l</span><span class="o">].</span><span class="na">iov_base</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="k">if</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">rv</span><span class="o">)</span> <span class="o">{</span> <span class="n">handleerrno</span><span class="o">(</span><span class="n">env</span><span class="o">);</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="o">}</span>
+         <span class="k">break</span><span class="o">;</span>
+      <span class="o">}</span>
+      <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetObjectArrayElement</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">bufs</span><span class="o">,</span> <span class="n">i</span><span class="o">);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">NULL</span> <span class="o">==</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">])</span> <span class="o">{</span>
+         <span class="n">msg</span><span class="o">.</span><span class="na">msg_iovlen</span> <span class="o">=</span> <span class="n">j</span><span class="o">;</span>
+         <span class="n">rv</span> <span class="o">=</span> <span class="n">sendmsg</span><span class="o">(</span><span class="n">sock</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">msg</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">k</span><span class="o">--,</span> <span class="n">l</span><span class="o">--)</span>
+            <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">ReleaseByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">k</span><span class="o">],</span> <span class="n">iov</span><span class="o">[</span><span class="n">l</span><span class="o">].</span><span class="na">iov_base</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="k">if</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">rv</span><span class="o">)</span> <span class="o">{</span> <span class="n">handleerrno</span><span class="o">(</span><span class="n">env</span><span class="o">);</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="o">}</span>
+         <span class="k">break</span><span class="o">;</span>
+      <span class="o">}</span>
+      <span class="n">size_t</span> <span class="n">l</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetArrayLength</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">s</span><span class="o">+</span><span class="n">l</span> <span class="o">&gt;</span> <span class="n">sblen</span> <span class="o">||</span> <span class="n">j</span> <span class="o">==</span> <span class="n">IOV_MAX</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">msg</span><span class="o">.</span><span class="na">msg_iovlen</span> <span class="o">=</span> <span class="n">j</span><span class="o">;</span>
+         <span class="n">rv</span> <span class="o">=</span> <span class="n">sendmsg</span><span class="o">(</span><span class="n">sock</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">msg</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+         <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">k</span><span class="o">--,</span> <span class="n">l</span><span class="o">--)</span>
+            <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">ReleaseByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">k</span><span class="o">],</span> <span class="n">iov</span><span class="o">[</span><span class="n">l</span><span class="o">].</span><span class="na">iov_base</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>  <span class="c1">//FIXED!!</span>
+         <span class="k">if</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">rv</span><span class="o">)</span> <span class="o">{</span> <span class="n">handleerrno</span><span class="o">(</span><span class="n">env</span><span class="o">);</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="o">}</span>
+      <span class="o">}</span>
+      <span class="n">iov</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">iov_base</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">],</span> <span class="n">NULL</span><span class="o">);</span>
+      <span class="n">iov</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">iov_len</span> <span class="o">=</span> <span class="n">l</span><span class="o">;</span>
+      <span class="n">s</span> <span class="o">+=</span> <span class="n">l</span><span class="o">;</span>
+   <span class="o">}</span>
+
+   <span class="n">free</span><span class="o">(</span><span class="n">iov</span><span class="o">);</span>
+   <span class="n">free</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+   <span class="k">return</span> <span class="n">rv</span><span class="o">;</span>
+<span class="o">}</span>
+
+</code></pre>
+
+
+<h5>
+Problem code
+</h5>
+<p>
+<var>j</var> is 0 and <var>l</var> be initialized as <code>j - 1</code>. It means that <var>l</var> will be -1 and the condition (l >= 0) will never meet. Therefore most of the memories allocated by GetByteArrayElements() would not be freed.
+</p>
+<pre class="highlight"><code>      <span class="n">size_t</span> <span class="n">l</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetArrayLength</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">s</span><span class="o">+</span><span class="n">l</span> <span class="o">&gt;</span> <span class="n">sblen</span> <span class="o">||</span> <span class="n">j</span> <span class="o">==</span> <span class="n">IOV_MAX</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">msg</span><span class="o">.</span><span class="na">msg_iovlen</span> <span class="o">=</span> <span class="n">j</span><span class="o">;</span>
+         <span class="n">rv</span> <span class="o">=</span> <span class="n">sendmsg</span><span class="o">(</span><span class="n">sock</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">msg</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>  <span class="c1">//reset j (wrong place)</span>
+         <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+         <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">k</span><span class="o">--,</span> <span class="n">l</span><span class="o">--)</span> <span class="c1">//PROBLEM!!</span>
+            <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">ReleaseByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">k</span><span class="o">],</span> <span class="n">iov</span><span class="o">[</span><span class="n">l</span><span class="o">].</span><span class="na">iov_base</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="k">if</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">rv</span><span class="o">)</span> <span class="o">{</span> <span class="n">handleerrno</span><span class="o">(</span><span class="n">env</span><span class="o">);</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="o">}</span>
+      <span class="o">}</span>
+      <span class="n">iov</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">iov_base</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">],</span> <span class="n">NULL</span><span class="o">);</span>
+</code></pre>
+
+
+<h5>
+Fixed code
+</h5>
+<p>
+<var>j</var> should be reset after loop.
+</p>
+<pre class="highlight"><code>      <span class="n">size_t</span> <span class="n">l</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetArrayLength</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">s</span><span class="o">+</span><span class="n">l</span> <span class="o">&gt;</span> <span class="n">sblen</span> <span class="o">||</span> <span class="n">j</span> <span class="o">==</span> <span class="n">IOV_MAX</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">msg</span><span class="o">.</span><span class="na">msg_iovlen</span> <span class="o">=</span> <span class="n">j</span><span class="o">;</span>
+         <span class="n">rv</span> <span class="o">=</span> <span class="n">sendmsg</span><span class="o">(</span><span class="n">sock</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">msg</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+         <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">k</span><span class="o">--,</span> <span class="n">l</span><span class="o">--)</span>
+            <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">ReleaseByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">k</span><span class="o">],</span> <span class="n">iov</span><span class="o">[</span><span class="n">l</span><span class="o">].</span><span class="na">iov_base</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+         <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>  <span class="c1">// reset j should be done after above loop.</span>
+         <span class="k">if</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">rv</span><span class="o">)</span> <span class="o">{</span> <span class="n">handleerrno</span><span class="o">(</span><span class="n">env</span><span class="o">);</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span> <span class="o">}</span>
+      <span class="o">}</span>
+      <span class="n">iov</span><span class="o">[</span><span class="n">j</span><span class="o">].</span><span class="na">iov_base</span> <span class="o">=</span> <span class="o">(*</span><span class="n">env</span><span class="o">)-&gt;</span><span class="n">GetByteArrayElements</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">],</span> <span class="n">NULL</span><span class="o">);</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13135015.html">http://blog.roodo.com/rocksaying/archives/13135015.html</a></div>

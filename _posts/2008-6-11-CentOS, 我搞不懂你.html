@@ -1,0 +1,41 @@
+---
+title: CentOS, 我搞不懂你...
+category: computer
+old-category: 電腦技術
+tags: [linux]
+---
+<div class="tags" style="display:none">Tags: linux</div>
+<p>
+最近公司分了一個案子下來，要在基於 CentOS 的環境進行開發工作。公司也配了一台開發用主機下來，不過是空機，OS要自己裝。於是我下載 CentOS 5 完成了安裝工作。安裝工作沒啥問題，但要測試 HTTP 和 FTP 等網路服務時卻出狀況了。其他主機都無法連接開發用主機上的網路服務，如 HTTP, FTP 和資料庫，只有SSH 可以連接(謎啊...)。我一開始認為是防火牆問題，於是新增了對應的 iptables 規則，但仍然無用。於是我開始 google 文件... 最後的答案告訴我，一切都是 SELinux 的問題。
+</p>
+<p>
+我想想，我用了下列指令。
+</p>
+<pre class="language-text">
+$ getsebool -a
+
+$ setsebool -P ftpd_disable_trans on
+$ service vsftpd restart
+## OK! 成功地開放 FTP 服務。
+
+$ setsebool -P httpd_disable_trans on
+$ setsebool -P httpd_can_network_connect on
+$ service httpd restart
+## OMG! HTTP服務還是無法連結 囧
+
+## 也許 iptables 也有影嚮，試試...
+
+$ iptables -A INPUT --dport 80 -j ACCEPT
+$ service iptables save
+## It still doesn't work.
+
+$ service iptables stop
+## 我關掉 iptables ，所有問題都迎刃而解了。
+## 最後，我執行 ntsysv ，把 iptables 服務取消了...
+</pre>
+<p>
+我到現在仍然搞不懂一件事。像 FTP, MySQL, PostgreSQL 這些服務，我在 SELinux 設定開啟後就能用了(但未在 iptables 設定對應規則)，卻為何在 SELinux 和 iptables 都設定開放 HTTP 服務了，外部主機還是無法連接 HTTP 服務呢？
+</p>
+
+<!--more-->
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/6163377.html">http://blog.roodo.com/rocksaying/archives/6163377.html</a></div>

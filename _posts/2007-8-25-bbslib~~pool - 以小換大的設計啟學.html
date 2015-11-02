@@ -1,0 +1,73 @@
+---
+title: bbslib~~pool - 以小換大的設計啟學
+category: programming
+old-category: C/C++/C#/Java
+tags: []
+---
+<p>
+bbslib::pool 是一個簡單的記憶體配置功能 (源碼: <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib-20010331.tar.gz</a>/strexp/pool.c)。乍看之下，像是一個動態長度字串，但實際上，卻是簡單的動態記憶體管理模組。bbslib::pool 當初在設計時，是有多種考量的，例如安全性。當它要複製或銜接一個字串時，如果原先的空間不足，就會自動重配置夠大的空間去儲存，如此可避免 buffer ovewflow 的問題。而在使用效率上， bbslib::pool 是用 page 為單位向系統要求配置記憶體空間。
+</p>
+
+<!--more-->
+<p>
+作業系統並不是以 bytes 為單位管理記憶體，而是以 page ；雖然 malloc() 的參數是以 bytes 為單位，但作業系統實際配置時，不足 1 page 的空間仍然是配置 1 page 記憶體空間，但標註 region ，因此無法使用超過此 region 的剩餘空間。
+</p>
+<p>
+而 bbslib::pool 在設計時，便以小換大。與其浪費掉 page 內的剩餘空間，不如直接就要求一整塊 page 來用，然後由 bbslib::pool 自已來維護這個空間。但 bbslib::pool 不只是省下了記憶體空間，也省下了時間。在呼叫 malloc() 時，系統會進行核心的切換(從 application 切進 kernel)，配置時也要做同步控制。而 bbslib::pool 僅僅需重新配置容量時會呼叫 malloc() ，除此以外的時間，都只在 application 層級動作，不需切到 kernel 。
+</p>
+<p>
+舉個例子來說，如果要做個 link-list 的結構，其 node 如下:
+</p>
+<pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">node</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">data</span><span class="p">[</span><span class="mi">120</span><span class="p">];</span>
+    <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">node_t</span><span class="p">;</span>
+<span class="cm">/* sizeof(node_t) = 128 bytes */</span>
+</code></pre>
+
+<p>
+如果有 10 個 node ，則用 malloc 的話，要呼叫 10次，一共要 10個 page 的空間 (這還不包括 kernel 維護這些 page 的記憶體空間)，假設一個 page 是 1K ，至少浪費了 (1024-128)*10 的內容... 如果是用 bbslib::pool 呢？ 把這個 10 個node 塞進pool，則只會呼叫 2次 malloc() 。省下了多次 kernel time 。
+</p>
+<p>
+空間上只用了 2 page 的空間，浪費空間數是零。不是還有 (2*1024 - 128*10) 的地方沒用嗎？  是的，但那些空間仍在 bbslib::pool 的掌控下，只是還沒用到，不是用不到，所以不算是浪費了。
+</p>
+<p>
+由此可知，如果資料是一群小資料的集合，則使用 bbslib::pool 反而較省資源，雖然 bbslib::pool 維護時會在其中留下一些 hole ，但相對於整個系統的記憶體空間來說，反而節省了許多大空間。
+</p>
+
+<h5>
+實作說明
+</h5>
+<pre class="highlight"><code><span class="k">struct</span> <span class="n">pool</span>
+<span class="p">{</span>
+	<span class="n">string_i</span> <span class="n">striobj</span><span class="p">;</span>	<span class="c1">// 具有 string_i 所承諾的行為的物件;
+</span>	<span class="kt">char</span> <span class="o">*</span><span class="n">content</span><span class="p">;</span>        <span class="c1">// pool 儲存區，Zero-end string;
+</span>	<span class="kt">size_t</span> <span class="n">length</span><span class="p">;</span>        <span class="c1">// Length of string, less terminating null character;
+</span>	<span class="kt">size_t</span> <span class="n">size</span><span class="p">;</span>          <span class="c1">// The (current) available size of content;
+</span>	<span class="kt">size_t</span> <span class="n">increment</span><span class="p">;</span>     <span class="c1">// 每次容量增加量，預設為 POOLBLKSIZ
+</span>	<span class="k">enum</span> <span class="p">{</span>
+		<span class="n">POOL_MALLOC</span><span class="p">,</span>
+		<span class="n">POOL_AUTO</span>
+	<span class="p">}</span> <span class="n">type</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">pool</span> <span class="n">pool_t</span><span class="p">;</span>
+
+<span class="c1">// _SC_PAGESIZE not part of POSIX.1
+</span><span class="cp">#if defined( _SC_PAGESIZE )
+#define POOLBLKSIZ  sysconf(_SC_PAGESIZE)   // per block size
+#else
+#define POOLBLKSIZ 1024
+#endif
+</span></code></pre>
+
+<p>
+POOLBLKSIZ 設為 1024 是因大多數的 32bit OS 是以 1024 bytes 為 1 page 。1 page 是 OS 在配置記憶體時的最小單位。我已確知的 OS 其 page 大小:
+OS/2: 4 KB = 1 page; Linux: 4 KB = 1 page; DOS: 16 bytes = 1 para. DOS 是以 para 為配置單位，但其意義跟 page 很像。其他的 i386 OS ，也都是以 1 KB 到 4 KB 為 1 page。
+</p>
+<p>
+content 指向 bbslib::pool 的真正內容(通常是一個字串)。length 表示 content 目前的字串長度，即已使用的容量，但不包含字串終結字元 '\0' 所佔的容量。 size 表示目前 content 可用的大小， length 的最大值等於 size-1 。
+</p>
+<p>
+每次以 POOLBLKSIZ 為單位來配置一個記憶體區域，以 content 指向該區域， size 表示該區域的大小( n * POOLBLKSIZ ， POOLBLKSIZ的整數倍數)。將字串內容儲存在該區域中，但是因為字串不會一次剛好用完整個含量，故以 length 表示目前已使用的容量。當要儲存新的字串內容時，會自動判斷目前配置的容量，是否仍足夠儲存新的內容，如果不夠，會以 POOLBLKSIZ 為單位，再配置一塊足夠容納所有內容(原有及新增)的記憶體區域，將所有內容給儲存到該新的區域中後，才釋放掉舊的記憶體區域， content 會指向新的區域， size會指派新的容量大小。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4014249.html">http://blog.roodo.com/rocksaying/archives/4014249.html</a></div>

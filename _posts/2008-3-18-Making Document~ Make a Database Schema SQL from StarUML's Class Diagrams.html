@@ -1,0 +1,279 @@
+---
+title: Making Document~ Make a Database Schema SQL from StarUML's Class Diagrams
+category: programming
+old-category: Programming
+tags: [database,uml,agile method]
+---
+<p>
+日前我在公司和同事討論一個案子的 database schema，PM初期丟下來的 database schema 是寫在 Excel .xls 檔中。我拿到手後看了一會，覺得有些怪怪的，好像有些重覆。自然要討論內容。不過，用 Excel .xls 實在不方便討論，不時地切換試算表頁，常常中斷思考與討論節奏。所以，我乾脆打開 <a href="http://www.staruml.com/">StarUML</a>，建立一個類別圖 (Class diagram)，把 database schema 畫了出來。在類別圖中清楚地呈現了表格與關聯性。一畫之下果然討論起來就順暢多了，也重新修正了不少地方。那接下來呢？再打開程式碼編輯器，把剛剛畫出來的 database schema 類別圖的內容，重新用 SQL 語法編寫一次嗎？
+</p>
+<p>
+喔，不，老兄，那樣太不專業了。我們可是專業的資訊人員，重複輸入同樣的資訊，不是我們該做的事。身為專業資訊人員，就應該重複利用輸入過的資訊才對。不然我們做什麼資訊管理，搞什麼資料庫？
+</p>
+
+<!--more-->
+<p>
+既然我們應該重用輸入過的資訊，哪要如何做呢？我看看 StarUML 的存檔格式。非常好，是用 XML 。再用 XML 節點瀏覽工具觀察文件內容後，我決定寫一個小工具，可以從 StarUML 的類別圖中，產出我要的 SQL 文件。
+</p>
+
+<h5>類別圖</h5>
+<p>
+首先，看看用來表示 database schema 的類別圖內容。
+</p>
+<img src="http://blog.roodo.com/rocksaying/7ef95309.png" alt="Database schema 的類別圖範例"/>
+<p>
+在我的作法是: 
+</p>
+<ul>
+    <li>使用類別圖 (Class Diagram)。</li>
+    <li>一個類別(Class)對應一張資料表(Table)。</li>
+    <li>以屬性(Class's attribute)表示資料欄位，可見性皆為 public 。</li>
+    <li>屬性應加上資料型態，若省略則視為 int 。使用 ANSI SQL 標準資料型態。</li>
+    <li>以關聯 (association) 表示表格關聯性。這關聯性僅用於標明一對一、一對多此類關聯。</li>
+    <li>鍵值外部關聯鍵值，於資料型態中表示。</li>
+    <li>沒有行為。</li>
+    <li>以註解(Note)說明屬性的意義與用途。</li>
+    <li>一份註解關聯一張表，並加上註解連結(NoteLink)。</li>
+    <li>以 “空行” 或 “非空格開頭” 為分段。開頭為欄位名稱的註解段落，該段落皆為對應欄位的註解內容。</li>
+</ul>
+
+<p>
+我要說明一點，用類別圖表示 database schema 的方式很多，OMG 並沒有給我們"標準答案"。你要怎麼畫都行。只要有脈絡可循，能夠抓出資訊就可以。
+</p>
+<p>
+此外，上述作法並不是我一開始就這麼做的。我一開始畫的很簡單，類別、屬性，再加上幾條關聯線。是跟著我後來寫的小工具，才開始形成上述編寫慣例。慣例、慣例，請把這件事放在心中: <em>Agile method 以慣例取代教條、規定</em>。請隨時留意團隊成員在編程時的小習慣，也許那就是提升軟體開發效率的關鍵。
+</p>
+
+<h5>產生 SQL 文件</h5>
+<p>
+接著，我用 PHP 寫了一個小工具解析 StarUML 的文件內容，將 Database schema 的內容從類別圖中取出，轉換成 SQL 語法後輸出。這樣就產生了我要的 SQL 文件了。喔對，這動作就是 UML 用法中的正向工程 (See also: UML精華第三版，Martin Fowler著)。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// input data.
+</span><span class="k">if</span> <span class="p">(</span><span class="nx">PHP_SAPI</span> <span class="o">==</span> <span class="s1">'cli'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$argc</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">and</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'help'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"</span><span class="nv">$argv[0]</span><span class="s2">  input_start_uml_file  db_class_diagram_name</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="nv">$starUmlFile</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">:</span> <span class="s1">'project.uml'</span><span class="p">;</span> 
+    <span class="nv">$dbSchemaDiagramName</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">:</span> <span class="s1">'DB'</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$argv</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
+    <span class="nv">$starUmlFile</span> <span class="o">=</span> <span class="s1">'../'</span> 
+        <span class="o">.</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s1">'/\\\\/'</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="o">.</span> <span class="s1">'/doc/'</span>
+        <span class="o">.</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s1">'/\\\\/'</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+    <span class="nv">$dbSchemaDiagramName</span><span class="o">=</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="sd">/**
+ * CODE START
+ */</span>
+
+<span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">is_readable</span><span class="p">(</span><span class="nv">$starUmlFile</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$starUmlFile</span><span class="p">,</span> <span class="s2">" is not readable!</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+  
+<span class="c1">// Get the class diagram of database schema
+</span><span class="k">foreach</span> <span class="p">(</span><span class="nb">simplexml_load_file</span><span class="p">(</span><span class="nv">$starUmlFile</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'//XPD:OBJ[@type="UMLModel"]/XPD:OBJ[@type="UMLClassDiagram"]'</span><span class="p">)</span> 
+    <span class="k">as</span> <span class="nv">$classDiagram</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="nv">$name</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span> <span class="nb">current</span><span class="p">(</span><span class="nv">$classDiagram</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:ATTR[@name="Name"]'</span><span class="p">));</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$name</span> <span class="o">==</span> <span class="nv">$dbSchemaDiagramName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$dbSchemaXml</span> <span class="o">=</span> <span class="nv">$classDiagram</span><span class="p">;</span> 
+        <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$dbSchemaXml</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$dbSchemaDiagramName</span><span class="p">,</span> <span class="s2">" is not found!</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nv">$viewTypeSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'UMLClassView'</span><span class="p">,</span>
+    <span class="s1">'UMLNoteView'</span><span class="p">,</span>
+    <span class="s1">'UMLNoteLinkView'</span>
+<span class="p">);</span> 
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$viewTypeSet</span> <span class="k">as</span> <span class="nv">$viewName</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$viewSet</span> <span class="o">=</span> <span class="nv">$viewName</span> <span class="o">.</span> <span class="s1">'Set'</span><span class="p">;</span> <span class="c1">// like 'UMLClassViewSet'
+</span>    <span class="nv">$$viewSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>  <span class="c1">// $UMLClassViewSet = array();
+</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dbSchemaXml</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s2">"XPD:OBJ[@type='UMLClassDiagramView']/XPD:OBJ[@type='</span><span class="si">{</span><span class="nv">$viewName</span><span class="si">}</span><span class="s2">']"</span><span class="p">)</span> 
+        <span class="k">as</span> <span class="nv">$viewXmlNode</span><span class="p">)</span> 
+    <span class="p">{</span>
+        <span class="nv">${$viewSet}</span><span class="p">[(</span><span class="nx">string</span><span class="p">)</span><span class="nv">$viewXmlNode</span><span class="p">[</span><span class="s1">'guid'</span><span class="p">]]</span> <span class="o">=</span> <span class="nv">$viewXmlNode</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="sd">/**
+ * Fetch each note text associatied to class.
+ */</span> 
+<span class="nv">$classNoteSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$UMLNoteLinkViewSet</span> <span class="k">as</span> <span class="nv">$guid</span> <span class="o">=&gt;</span> <span class="nv">$noteLinkView</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$refSet</span> <span class="o">=</span> <span class="nv">$noteLinkView</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:REF'</span><span class="p">))</span> <span class="p">{</span> <span class="c1">// if not false
+</span>        <span class="nv">$headGuid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nv">$refSet</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="nv">$tailGuid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nv">$refSet</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$UMLClassViewSet</span><span class="p">[</span><span class="nv">$headGuid</span><span class="p">]))</span> <span class="p">{</span>
+            <span class="nv">$classGuid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nb">current</span><span class="p">(</span><span class="nv">$UMLClassViewSet</span><span class="p">[</span><span class="nv">$headGuid</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:REF'</span><span class="p">));</span>
+            <span class="c1">// xpath('XPD:REF[1]')
+</span>           
+            <span class="nv">$classNote</span> <span class="o">=</span> <span class="nv">$UMLNoteViewSet</span><span class="p">[</span><span class="nv">$tailGuid</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$UMLClassViewSet</span><span class="p">[</span><span class="nv">$tailGuid</span><span class="p">]))</span> <span class="p">{</span>
+            <span class="nv">$classGuid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nb">current</span><span class="p">(</span><span class="nv">$UMLClassViewSet</span><span class="p">[</span><span class="nv">$tailGuid</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:REF'</span><span class="p">));</span>
+            <span class="c1">// xpath('XPD:REF[1]')
+</span>           
+            <span class="nv">$classNote</span> <span class="o">=</span> <span class="nv">$UMLNoteViewSet</span><span class="p">[</span><span class="nv">$headGuid</span><span class="p">];</span>
+        <span class="p">}</span>
+        
+        <span class="nv">$classNoteSet</span><span class="p">[</span><span class="nv">$classGuid</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nb">current</span><span class="p">(</span><span class="nv">$classNote</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:ATTR[@name="Text"]'</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span> <span class="c1">// endforeach ($UMLNoteLinkViewSet as $guid =&gt; $noteLinkView)
+</span>
+
+<span class="sd">/**
+ * Fetch table's information 
+ */</span>  
+<span class="nv">$tableSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$UMLClassViewSet</span> <span class="k">as</span> <span class="nv">$guid</span> <span class="o">=&gt;</span> <span class="nv">$node</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$tableGuid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nb">current</span><span class="p">(</span><span class="nv">$node</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:REF[@name="Model"]'</span><span class="p">));</span>
+    <span class="nv">$tableNode</span> <span class="o">=</span> <span class="nb">current</span><span class="p">(</span><span class="nv">$dbSchemaXml</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'../XPD:OBJ[@guid="'</span> <span class="o">.</span> <span class="nv">$tableGuid</span> <span class="o">.</span> <span class="s1">'"]'</span><span class="p">));</span>
+    <span class="nv">$tableName</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nb">current</span><span class="p">(</span><span class="nv">$tableNode</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:ATTR[@name="Name"]'</span><span class="p">));</span>
+
+    <span class="nv">$tableSet</span><span class="p">[</span><span class="nv">$tableGuid</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="nv">$tableSet</span><span class="p">[</span><span class="nv">$tableGuid</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$tableName</span><span class="p">;</span>
+
+    <span class="nv">$currentTable</span> <span class="o">=&amp;</span> <span class="nv">$tableSet</span><span class="p">[</span><span class="nv">$tableGuid</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$classNoteSet</span><span class="p">[</span><span class="nv">$tableGuid</span><span class="p">]))</span>
+        <span class="nv">$tableNotes</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="nv">$classNoteSet</span><span class="p">[</span><span class="nv">$tableGuid</span><span class="p">]);</span>
+    <span class="k">else</span>
+        <span class="nv">$tableNotes</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span> <span class="c1">//There is no note that link to this class.
+</span>
+    <span class="nv">$tableFields</span> <span class="o">=</span> <span class="nv">$tableNode</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:OBJ[@type="UMLAttribute"]'</span><span class="p">);</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$tableFields</span> <span class="k">as</span> <span class="nv">$field</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$fieldName</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nb">current</span><span class="p">(</span><span class="nv">$field</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:ATTR[@name="Name"]'</span><span class="p">));</span>
+        <span class="nv">$fieldDataType</span> <span class="o">=</span> <span class="nb">current</span><span class="p">(</span><span class="nv">$field</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'XPD:ATTR[@name="TypeExpression"]'</span><span class="p">));</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$fieldDataType</span> <span class="o">!=</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$fieldDataType</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nv">$fieldDataType</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nv">$fieldDataType</span> <span class="o">=</span> <span class="s1">'int'</span><span class="p">;</span> <span class="c1">//default type
+</span>        <span class="p">}</span>
+
+        <span class="nv">$currentTable</span><span class="p">[</span><span class="s1">'fields'</span><span class="p">][</span><span class="nv">$fieldName</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+        <span class="nv">$currentTable</span><span class="p">[</span><span class="s1">'fields'</span><span class="p">][</span><span class="nv">$fieldName</span><span class="p">][</span><span class="s1">'dataType'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$fieldDataType</span><span class="p">;</span>
+
+        <span class="nv">$currentTable</span><span class="p">[</span><span class="s1">'fields'</span><span class="p">][</span><span class="nv">$fieldName</span><span class="p">][</span><span class="s1">'note'</span><span class="p">]</span> <span class="o">=</span> <span class="nx">fetchNoteOfField</span><span class="p">(</span><span class="nv">$fieldName</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">$tableNotes</span><span class="p">);</span>
+        
+    <span class="p">}</span> <span class="c1">// endforeach ($tableFields as $field)
+</span><span class="p">}</span> <span class="c1">// endforeach ($dbSchemaXml-&gt;xpath('../XPD:OBJ[@type="UMLClass"]') as $tableNode)
+</span>
+<span class="sd">/**
+ * Fetch note of field from tableNotes.
+ *
+ * 以 "空行" 或 "非空格開頭" 為分段。
+ * 找尋開頭為 欄位名稱 的註解段落，該段落皆為此欄位的註解內容。
+ */</span>  
+<span class="k">function</span> <span class="nf">fetchNoteOfField</span><span class="p">(</span><span class="nv">$fieldName</span><span class="p">,</span> <span class="nv">$tableNotes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$fetching</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nv">$noteText</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$tableNotes</span> <span class="k">as</span> <span class="nv">$noteLine</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//找尋開頭為 欄位名稱 的註解段落
+</span>        <span class="k">if</span> <span class="p">((</span><span class="nb">stripos</span><span class="p">(</span><span class="nv">$noteLine</span><span class="p">,</span> <span class="nv">$fieldName</span><span class="p">)</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="k">and</span> <span class="o">!</span><span class="nv">$fetching</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$fetching</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+            <span class="nv">$noteText</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="nb">substr</span><span class="p">(</span><span class="nv">$noteLine</span><span class="p">,</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$fieldName</span><span class="p">)),</span> <span class="s1">' :'</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nv">$fetching</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//"空行" 或 "非空格開頭" 分段。
+</span>            <span class="k">if</span> <span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$noteLine</span><span class="p">)</span> <span class="k">or</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="nv">$noteLine</span><span class="p">,</span> <span class="s1">' '</span><span class="p">)</span> <span class="o">!==</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="c1">//空格開頭，視為同一段落，接在先前的內容之後。
+</span>            <span class="nv">$noteText</span> <span class="o">.=</span> <span class="nb">trim</span><span class="p">(</span><span class="nv">$noteLine</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nv">$noteText</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">makeSQLCreateTableString</span><span class="p">(</span><span class="nv">$table</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$fields</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="nv">$n</span> <span class="o">=</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$table</span><span class="p">[</span><span class="s1">'fields'</span><span class="p">]);</span>
+
+    <span class="c1">//foreach ($table['fields'] as $name =&gt; $field) {
+</span>    <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;=</span> <span class="nv">$n</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">list</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$field</span><span class="p">)</span> <span class="o">=</span> <span class="nb">each</span><span class="p">(</span><span class="nv">$table</span><span class="p">[</span><span class="s1">'fields'</span><span class="p">]);</span>
+        <span class="nv">$fields</span><span class="p">[]</span> <span class="o">=</span> <span class="s2">"    "</span><span class="p">{</span><span class="nv">$name</span><span class="p">}</span><span class="s2">"    </span><span class="si">{</span><span class="nv">$field</span><span class="p">[</span><span class="s1">'dataType'</span><span class="p">]}</span><span class="s2">" 
+            . (</span><span class="nv">$i</span><span class="s2"> &lt; </span><span class="nv">$n</span><span class="s2"> ? ', ' : '')
+            . (empty(</span><span class="nv">$field['note']</span><span class="s2">) ? '' : "</span> <span class="o">--</span> <span class="p">{</span><span class="nv">$field</span><span class="p">[</span><span class="s1">'note'</span><span class="p">]}</span><span class="s2">")
+            . "</span><span class="nx">\n</span><span class="s2">";
+    }
+
+    </span><span class="nv">$SQLString</span><span class="s2"> = "</span><span class="nx">CREATE</span> <span class="nx">TABLE</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$table</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]}</span><span class="s2">" (</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="o">.</span> <span class="nb">implode</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="nv">$fields</span><span class="p">)</span>
+        <span class="o">.</span> <span class="s2">");</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> 
+
+    <span class="k">return</span> <span class="nv">$SQLString</span><span class="p">;</span>
+<span class="si">}</span><span class="s2">
+
+/**
+ * Output 
+ */ 
+if (PHP_SAPI != 'cli')
+    header('Content-type: text/plain; charset="</span><span class="nx">utf</span><span class="o">-</span><span class="mi">8</span><span class="s2">"');
+
+foreach (</span><span class="nv">$tableSet</span><span class="s2"> as </span><span class="nv">$table</span><span class="s2">) {
+    echo makeSQLCreateTableString(&amp;</span><span class="nv">$table</span><span class="s2">);
+}
+
+?&gt;
+</span></code></pre>
+
+
+<p>
+底下是用這個小工具，針對上面的類別圖所產出的 SQL 文件內容。一份 UML 名件中會有很多張類別圖，我習慣上把表示 Database schema 的類別圖命名為 'DB'。記得告訴這個小工具要從哪張類別圖中抓出資料。
+</p>
+
+<pre class="highlight"><code><span class="o">#</span> <span class="n">php</span> <span class="n">makeDbSchemaFromUml</span> <span class="n">example</span><span class="p">.</span><span class="n">uml</span> <span class="n">DB</span>
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Product"</span> <span class="p">(</span>
+    <span class="nv">"id"</span>    <span class="n">int</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span> 
+    <span class="nv">"name"</span>    <span class="n">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>  <span class="c1">-- 商品名稱
+</span>    <span class="nv">"cost"</span>    <span class="n">numeric</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">not</span> <span class="k">null</span> <span class="c1">-- 成本
+</span><span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Customer"</span> <span class="p">(</span>
+    <span class="nv">"id"</span>    <span class="n">int</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span> 
+    <span class="nv">"name"</span>    <span class="n">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Order"</span> <span class="p">(</span>
+    <span class="nv">"id"</span>    <span class="n">int</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span> 
+    <span class="nv">"customerId"</span>    <span class="n">int</span> <span class="k">references</span> <span class="nv">"Customer"</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>  <span class="c1">-- 顧客編號
+</span>    <span class="nv">"orderDate"</span>    <span class="k">timestamp</span><span class="p">,</span>  <span class="c1">-- 訂購時間
+</span>    <span class="nv">"deliveryAddress"</span>    <span class="n">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>  <span class="c1">-- 送貨地址
+</span>    <span class="nv">"deliveryDate"</span>    <span class="k">timestamp</span><span class="p">,</span>  <span class="c1">-- 送貨時間
+</span>    <span class="nv">"type"</span>    <span class="n">char</span> <span class="c1">-- 訂單類型
+</span><span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"OrderItem"</span> <span class="p">(</span>
+    <span class="nv">"id"</span>    <span class="n">int</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span> 
+    <span class="nv">"orderId"</span>    <span class="n">int</span> <span class="k">references</span> <span class="nv">"Order"</span><span class="p">(</span><span class="n">id</span><span class="p">),</span> 
+    <span class="nv">"productId"</span>    <span class="n">int</span> <span class="k">references</span> <span class="nv">"Product"</span><span class="p">(</span><span class="n">id</span><span class="p">),</span> 
+    <span class="nv">"price"</span>    <span class="n">numeric</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>  <span class="c1">-- 售價
+</span>    <span class="nv">"qty"</span>    <span class="n">int</span> <span class="k">not</span> <span class="k">null</span> <span class="c1">-- 購買數量
+</span><span class="p">);</span>
+</code></pre>
+
+
+<h5>結語</h5>
+<p><em>If you can make, do not write again.</em></p>
+<p>
+一般人在初次接觸 Agile method 時，會有 Agile method 不寫文件的印象。但我可以肯定的說: 這不是正確的印象。Agile method 一樣<em>產出文件</em>(注意我用"產出"這個字，而非"編寫")。但是我們用得是具有重用性、結構性的表達方式記述文件。能用純文字檔格式記錄的，我們就不用 Word .doc (重用性較純文字檔差)；能用程式語言寫下，我們就不用英文、中文等日常語言寫 (結構性較程式語言差)。所以我們說: <q>源碼即文件</q>。 
+</p>
+<p>
+在本文中，我也是遵循著這個原則。PM原來用 Excel .xls 編寫，可惜重用性不高，也不方便表達關聯性。所以我改用 UML 畫出來。同時，StarUML 也將我畫出來的資訊，再用 XML 型式儲存，這就提供了一份重用性與結構性兼具的源碼。於是，我可以根據我的需求寫一個小工具，<em>產出(make)</em>我要的 SQL 文件，不而是重複<em>編寫(write)</em>。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5717961.html">http://blog.roodo.com/rocksaying/archives/5717961.html</a></div>

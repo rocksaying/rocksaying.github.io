@@ -1,0 +1,71 @@
+---
+title: PHP如何取得虛擬主機名稱及瀏覽器適用的地區語文資訊
+category: programming
+old-category: PHP
+tags: []
+---
+<p>
+ 在 HTTP 協定(RFC2612) 中提到， <var>Host</var> 可用於得知使用者存取主機資源時會使用的主機名稱，供 HTTP Server 判斷虛擬主機設置。<var>Accept-Language</var> 可用於得知使用者的地區語文清單。服務者可根據此清單內容，呈現最適用於使用者的地區語文內容。
+</p>
+<p>
+在 PHP 中，可藉由全域變數 <var>$_SERVER['HTTP_HOST']</var> 、 <var>$_SERVER['SERVER_NAME']</var> 取得 Host 內容。<var>$_SERVER['HTTP_ACCEPT_LANGUAGE']</var> 取得瀏覽器適用的語文清單。
+</p>
+<p>
+HTTP_HOST, SERVER_NAME should be the same. However, SERVER_NAME looks like only available in Apache2.
+</p>
+
+<!--more-->
+<blockquote>
+14.23 Host<br/>
+<br/>
+     Host = "Host" ":" host [ ":" port ] ; Section 3.2.2<br/>
+<br/>
+A “host” without any trailing port information implies the default port for the service requested (e.g., “80” for an HTTP URL). For example, a request on the origin server for <http://www.w3.org/pub/WWW/> would properly include:<br/>
+<br/>
+     GET /pub/WWW/ HTTP/1.1<br/>
+     Host: www.w3.org<br/>
+<br/>
+14.4 Accept-Language<br/>
+<br/>
+The Accept-Language request-header field is similar to Accept, but restricts the set of natural languages that are preferred as a response to the request. Language tags are defined in section 3.10.<br/>
+<br/>
+     Accept-Language = "Accept-Language" ":"<br/>
+                       1#( language-range [ ";" "q" "=" qvalue ] )<br/>
+     language-range  = ( ( 1*8ALPHA *( "-" 1*8ALPHA ) ) | "*" )<br/>
+<br/>
+Each language-range MAY be given an associated quality value which represents an estimate of the user's preference for the languages specified by that range. The quality value defaults to “q=1”. For example,<br/>
+<br/>
+     Accept-Language: da, en-gb;q=0.8, en;q=0.7<br/>
+</blockquote>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">echo</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'HTTP_HOST'</span><span class="p">];</span>
+<span class="k">echo</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'SERVER_NAME'</span><span class="p">];</span>
+
+<span class="nv">$acceptLanguageList</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">','</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'HTTP_ACCEPT_LANGUAGE'</span><span class="p">]);</span>
+ 
+<span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/en\-?/'</span><span class="p">,</span> <span class="nv">$acceptLanguageList</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s1">'Good morning'</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="s1">'zh-cn'</span><span class="p">,</span> <span class="nv">$acceptLanguageList</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s1">'早上好'</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s1">'早安'</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+地區語文清單的代碼係根據 ISO 3316 language code 。
+</p>
+<ul>
+<li>台灣地區之語文代碼為: zh-tw</li>
+<li>中國大陸地區之語文代碼為: zh-cn</li>
+<li>中文語文代碼為: zh</li>
+</ul>
+
+<p>
+See also: <a href="http://tw.php.net/manual/en/reserved.variables.php">PHP Manual:Predefined Variables</a>
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5540807.html">http://blog.roodo.com/rocksaying/archives/5540807.html</a></div>

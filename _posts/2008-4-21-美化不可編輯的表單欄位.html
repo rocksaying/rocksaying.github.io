@@ -1,0 +1,115 @@
+---
+title: 美化不可編輯的表單欄位
+category: computer
+old-category: 電腦技術
+tags: [web design]
+---
+<div class="tags" style="display:none">Tags: web_design</div>
+<p>
+在 Web 應用的設計工作中，我們常常會讓"資料新增"、"資料編輯"與"資料檢視"這幾個動作共用同一個頁面樣板，差別僅在於檢視動作下的表單欄位輸入控制元件是不可編輯的。而要讓輸入控制元件不可編輯的方式很簡單，僅需要設置輸入控制元件的 <var>disabled</var> 或 <var>readonly</var> 即可。只不過，我們最好能在視覺上美化一下不可編輯表單欄位，讓使用者可以看出哪些欄位是不可編輯的。特別是 <var>disabled</var> 的輸入控制元件，其預設的顯示樣式實在很醜。非美化不可。
+</p>
+<p>
+如果你使用 Selenium Core 編寫 Web 應用的測試案例，那麼關於輸入控制元件的 <var>readonly</var> 屬性有一些測試上的注意事項，請參考《<a href="{{ site.baseurl }}/archives/2008/A%20patch%20of%20isEditable%20of%20Selenium%20Core%200.83.html">A patch of isEditable of Selenium Core 0.83</a>》。
+</p>
+
+<!--more-->
+<p>
+首先來看一個簡單的範例與圖像。這是在 Firefox 下的預設顯示樣式。
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"i1"</span><span class="nt">&gt;</span>Label1: <span class="nt">&lt;/label&gt;&lt;input</span> <span class="na">id=</span><span class="s">"i1"</span> <span class="na">disabled=</span><span class="s">"disabled"</span> <span class="na">value=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"editI1"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">onclick=</span><span class="s">"toggleEditable();"</span> <span class="nt">/&gt;</span>Editable
+<span class="nt">&lt;br/&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"i2"</span><span class="nt">&gt;</span>Label2: <span class="nt">&lt;/label&gt;&lt;input</span> <span class="na">id=</span><span class="s">"i2"</span> <span class="na">value=</span><span class="s">"2"</span><span class="nt">/&gt;</span>
+</code></pre>
+
+<img src="http://blog.roodo.com/rocksaying/0103a77c.png" alt="disabled欄位的預設顯示樣式"/>
+
+
+<p>
+我們可以看出預設顯示樣式很醜，而且不符合我們的用途。我們的用途是讓使用者"檢視"內容。但預設樣式卻是灰字灰底，搞得一團灰，看著就礙眼，如何"檢視"？所以我們接著要用 CSS 美化它。作法很簡單，用 CSS 的 attr selector 語法，指定 <code>input[disabled]</code> 的 style sheet 即可。如下所示:
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;style</span> <span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+input {
+    border: 1px solid;
+}
+
+input[disabled] {
+    border: 1px hidden;
+    background-color: transparent;
+    color: black;
+}
+<span class="nt">&lt;/style&gt;</span>
+
+<span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"i1"</span><span class="nt">&gt;</span>Label1: <span class="nt">&lt;/label&gt;&lt;input</span> <span class="na">id=</span><span class="s">"i1"</span> <span class="na">disabled=</span><span class="s">"disabled"</span> <span class="na">value=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"editI1"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">onclick=</span><span class="s">"toggleEditable();"</span> <span class="nt">/&gt;</span>Editable
+<span class="nt">&lt;br/&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"i2"</span><span class="nt">&gt;</span>Label2: <span class="nt">&lt;/label&gt;&lt;input</span> <span class="na">id=</span><span class="s">"i2"</span> <span class="na">value=</span><span class="s">"2"</span><span class="nt">/&gt;</span>
+</code></pre>
+
+
+<img src="http://blog.roodo.com/rocksaying/c798bea7.png" alt="美化後的disabled欄位顯示樣式"/>
+
+<p>
+提醒一下，萬惡淵藪的 M$IE6 並不支援 CSS attr selector 語法 (M$IE7 以後才支援)。為了美化檢視頁面，就會看到一些對應 M$IE6 的奇招怪式。我個人已經無視 IE6 了。對那些還在用 IE6 的人，我都會"嚇他們"說微軟已經停止 IE6 支援了，要趕快升級 IE7。這時候我才發現 FUD (Fear, uncertainty and doubt) 策略還真好用，嘿嘿嘿(奸笑中)
+</p>
+
+
+<p>
+最後，我展示一段配合 JavaScript 改變表單欄位可編輯狀態的範例。這也是很常用的技巧。
+</p>
+
+<script type="text/javascript">
+function toggleEditable() {
+    var elm = document.getElementById('i1');
+    elm.disabled = !elm.disabled;
+}
+</script>
+
+<style type="text/css">
+#example input {
+    border: 1px solid;
+}
+
+#example input[disabled] {
+    border: 1px hidden;
+    background-color: transparent;
+    color: black;
+}
+</style>
+
+<div id="example" style="border:1px solid black;padding:5px">
+<label for="i1">Label1: </label><input id="i1" disabled="disabled" value="1"/>
+<input id="editI1" type="checkbox" onclick="toggleEditable();" />Editable
+<br/><br/>
+<label for="i2">Label2: </label><input id="i2" value="2"/>
+</div>
+
+<pre class="highlight"><code><span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+function toggleEditable() {
+    var elm = document.getElementById('i1');
+    elm.disabled = !elm.disabled;
+}
+<span class="nt">&lt;/script&gt;</span>
+
+<span class="nt">&lt;style</span> <span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+input {
+    border: 1px solid;
+}
+
+input[disabled] {
+    border: 1px hidden;
+    background-color: transparent;
+    color: black;
+}
+<span class="nt">&lt;/style&gt;</span>
+
+<span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"i1"</span><span class="nt">&gt;</span>Label1: <span class="nt">&lt;/label&gt;&lt;input</span> <span class="na">id=</span><span class="s">"i1"</span> <span class="na">disabled=</span><span class="s">"disabled"</span> <span class="na">value=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"editI1"</span> <span class="na">type=</span><span class="s">"checkbox"</span> <span class="na">onclick=</span><span class="s">"toggleEditable();"</span> <span class="nt">/&gt;</span>Editable
+<span class="nt">&lt;br/&gt;&lt;br/&gt;</span>
+<span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"i2"</span><span class="nt">&gt;</span>Label2: <span class="nt">&lt;/label&gt;&lt;input</span> <span class="na">id=</span><span class="s">"i2"</span> <span class="na">value=</span><span class="s">"2"</span><span class="nt">/&gt;</span>
+</code></pre>
+
+
+<br/><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5895849.html">http://blog.roodo.com/rocksaying/archives/5895849.html</a></div>

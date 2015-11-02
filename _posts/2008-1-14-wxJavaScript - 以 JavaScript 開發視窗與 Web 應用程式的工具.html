@@ -1,0 +1,125 @@
+---
+title: wxJavaScript - 以 JavaScript 開發視窗與 Web 應用程式的工具
+category: programming
+old-category: JavaScript
+tags: [javascript,wxwidgets,jscript,spidermonkey,ecma262,webdev]
+---
+<div class="tags" style="display:none">Tags: JavaScript wxWidgets jscript spidermonkey ecma262 webdev</div>
+<p>
+雖然 Microsoft 的 .Net Framework 就提供了一個 JScript.Net comipler (jsc.exe)，透過 JScript.Net 就可以開發 .Net 平台下的視窗與 Web 應用程式。不過知道的人應該不多，而且對 .Net Framework 架構感冒的人也不少。所以在 OpenSource 界中，就有人做了 <a href="http://www.wxjavascript.net/">wxJavaScript</a> ，一樣可以寫視窗與 Web 應用程式。
+</p>
+
+<p>
+熟悉 OpenSource 軟體的開發者，在看到 "wx" 這個字首後，應該就會聯想到 <a href="http://www.wxwidgets.org/">wxWidgets</a> 這個老牌的跨平台 GUI 應用軟體開發工具了。 wxJavaScript 正是以 wxWidgets 為核心，並使用 <a href="">Mozilla SpiderMonkey</a> 為 JavaScript 引擎的 JavaScript 開發工具。 
+</p>
+
+<!--more-->
+<h4>取得與安裝 wxJavaScript</h4>
+<p>
+Windows平台的使用者可下載預先編譯好的 package ，Linux平台使用者目前則請自行下載源碼編譯。安裝後，基本上就可以得到一個 JavaScript 編譯器，可供開發 Console 與 Window 應用程式。
+</p>
+<p>
+至於 Web 應用程式開發工作，則需要再安裝 mod_wxjs 部份。 mod_wxjs 是提供 Apache 使用的 module 。需要手動設定，不過這過程非常簡單。以 Windows平台使用者為例，當 wxJavaScript 主程式安裝好後， mod_wxjs 所需的檔案也已經被置放於 wxjs/bin 的目錄之中。我們僅需要開啟 Apache 的設定檔 (httpd.conf)，在最後面加上下述幾行設定內容即可。檔案路徑請自行以個人安裝環境修改，同時建議使用 Apache 2.2 版。See also: <a href="http://www.wxjavascript.net/mod_wxjs/index.html">mod_wxjs@wxJavaScript</a>。
+</p>
+
+<pre class="language-text">
+#Begin wxJavaScript Module
+LoadFile "c:/program files/JavaScript/wxjs/bin/libapreq2.dll"
+LoadModule apreq_module "c:/program files/JavaScript/wxjs/bin/mod_apreq2.so"
+
+LoadModule wxjs_module "c:/program files/JavaScript/wxjs/bin/mod_wxjs.dll"
+AddHandler wxjs .wxjs
+#為了避免與即有的 Client 端使用的 JavaScript 衝突，副檔名使用 .wxjs 。
+
+wxJS_Modules "c:/program files/JavaScript/wxjs/modules.xml"
+wxJS_RtSize 2M
+wxJS_CtxSize 32K
+#End wxJavaScript Module
+</pre>
+
+
+<h4>範例程式</h4>
+<p>
+根據 ECMA262 規範內容，一個運行環境 (host) 必定有一個 global object 。 wxJavaScript 的 global object 名為 <var>wxjs</var> ，具有 <code>exit, include, load, namespace, print</code> 等方法。See also: <a href="http://www.wxjavascript.net/wxjs/classes/global.html">wxjs</a>。
+</p>
+
+
+<h5>hello1.js - console mode, say hello</h5>
+<pre class="highlight"><code><span class="c1">// hello1.js</span>
+<span class="nx">print</span><span class="p">(</span><span class="s2">"hello world\n"</span><span class="p">);</span>
+<span class="c1">//print 是 global object 'wxjs' 的方法，通常可省略前綴 'wxjs.' 。</span>
+
+<span class="kd">var</span> <span class="nx">rp</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="s1">'^[abc]{2,4}'</span><span class="p">);</span>
+<span class="c1">//RegExp 是 ECMA262 規範的標準類，順便測一下支援程度。</span>
+
+<span class="kd">var</span> <span class="nx">ss</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">'aaaaa'</span><span class="p">,</span>
+    <span class="s1">'bb'</span><span class="p">,</span>
+    <span class="s1">'c'</span>
+<span class="p">];</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ss</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span> <span class="nx">rp</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<pre class="language-text">
+C:\Program Files\JavaScript\wxjs\bin\wxjs.exe  hello1.js  
+</pre>
+
+<h5>hello2.js - window mode, say hello</h5>
+<p>
+wxJavaScript 採用 wxWidgets 為 GUI 核心，它的編程風格自然也是 wxWidgets 。文件參考 <a href="http://www.wxjavascript.net/gui/index.html">wxJavaScript - GUI module</a>。 
+</p>
+<pre class="highlight"><code><span class="c1">// hello2.js</span>
+<span class="nx">wxTheApp</span><span class="p">.</span><span class="nx">onInit</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> 
+    <span class="nx">dlg</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">wxDialog</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">);</span> 
+    <span class="nx">dlg</span><span class="p">.</span><span class="nx">button</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">wxButton</span><span class="p">(</span><span class="nx">dlg</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"Hello"</span><span class="p">);</span> 
+    <span class="nx">dlg</span><span class="p">.</span><span class="nx">button</span><span class="p">.</span><span class="nx">onClicked</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> 
+        <span class="nx">dlg</span><span class="p">.</span><span class="nx">endModal</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> 
+    <span class="p">}</span> 
+
+    <span class="nx">dlg</span><span class="p">.</span><span class="nx">showModal</span><span class="p">();</span> 
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> 
+<span class="p">}</span>  
+</code></pre>
+
+
+<pre class="language-text">
+C:\Program Files\JavaScript\wxjs\bin\wxjs.exe  hello2.js  
+</pre>
+
+
+<h5>hello3.wxjs - web mode, say hello</h5>
+<p>
+mod_wxjs 提供了兩個 object: <a href="http://www.wxjavascript.net/mod_wxjs/classes/httpresp.html">HttpResponse</a> (aka '<var>response</var>'), <a href="http://www.wxjavascript.net/mod_wxjs/classes/httpreq.html">HttpRequest</a> (aka '<var>request</var>')。
+</p>
+<p>
+在副檔名部份，為了避免與即有的 Client 端使用的 JavaScript 衝突，改為 .wxjs 。
+</p>
+<pre class="highlight"><code><span class="c1">// hello3.wxjs</span>
+<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;html&gt;&lt;head&gt;&lt;title&gt;wxJS test program&lt;/title&gt;&lt;/head&gt;&lt;body&gt;"</span><span class="p">);</span> 
+<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;b&gt;Hello "</span> <span class="o">+</span> <span class="nx">request</span><span class="p">.</span><span class="nx">get</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"&lt;/b&gt;"</span><span class="p">);</span>
+
+<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;p&gt;List of GET:&lt;/p&gt;"</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nx">p</span> <span class="k">in</span> <span class="nx">request</span><span class="p">.</span><span class="nx">get</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="nx">p</span> <span class="o">+</span> <span class="s2">": "</span> <span class="o">+</span> <span class="nx">request</span><span class="p">.</span><span class="nx">get</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"&lt;br/&gt;"</span><span class="p">);</span>
+<span class="p">}</span>
+ 
+<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;/body&gt;&lt;/html&gt;"</span><span class="p">);</span>
+</code></pre>
+
+
+<pre class="language-text">
+firefox http://localhost/hello3.wxjs?name=john  
+</pre>
+
+<p>
+當然上面的範例是基本而傳統的寫法。現代寫法是運用 template ，這部份的範例請參閱官方的範例: <a href="http://www.wxjavascript.net/mod_wxjs/example.html">Create a dynamic XHTML page with mod_wxjs</a>。
+</p>
+
+<h4>現有的 Module</h4>
+<p>
+請參考 <a href="http://www.wxjavascript.net/modules.html">wxJavaScript - modules</a> 。GUI 與 IO 是以 wxWidgets 為核心。除此之外，目前在資料庫部份支援 ODBC, MySQL, SQLite。以 Expat 支援 XML 解析，GD 支援 PNG, JPEG 圖檔操作。並提供一套 TPL 樣板引擎。 
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4977935.html">http://blog.roodo.com/rocksaying/archives/4977935.html</a></div>

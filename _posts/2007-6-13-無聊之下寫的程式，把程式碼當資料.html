@@ -1,0 +1,55 @@
+---
+title: 無聊之下寫的程式，把程式碼當資料...
+category: programming
+old-category: C/C++/C#/Java
+tags: [圖靈]
+---
+<div class="tags" style="display:none">Tags: 圖靈</div>
+<p>
+前些日子閱讀《沒有時間的世界》，書中說，<a href="http://zh.wikipedia.org/w/index.php?title=%E8%89%BE%E4%BC%A6%C2%B7%E5%9B%BE%E7%81%B5&oldid=4396025">圖靈</a> 的圖靈機概念，最偉大的貢獻在於「把程式當資料儲存」的想法。我一時無聊，又想起了以前在 DOS 時代的記憶，就寫了一段 C 語言程式，把程式碼當資料複製，然後再去執行那段被複製的程式碼。 
+</p>
+
+<!--more-->
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;mem.h&gt;
+</span>
+<span class="kt">void</span> <span class="nf">funcA</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">"hello</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">funcB</span><span class="p">()</span> <span class="p">{}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">pfV</span><span class="p">)();</span>
+
+    <span class="kt">size_t</span> <span class="n">contextLength</span> <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">funcB</span> <span class="o">-</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">funcA</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"context length: %x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">contextLength</span><span class="p">);</span>
+    <span class="n">pfV</span> <span class="o">=</span> <span class="p">(</span><span class="kt">void</span><span class="p">(</span><span class="o">*</span><span class="p">)())</span> <span class="n">malloc</span><span class="p">(</span><span class="n">contextLength</span><span class="p">);</span>
+    <span class="n">memcpy</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">pfV</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">funcA</span><span class="p">,</span> <span class="n">contextLength</span><span class="p">);</span>
+    
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">funcA</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">16</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%x,"</span><span class="p">,</span> <span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">funcA</span><span class="p">)[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pfV</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">16</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%x,"</span><span class="p">,</span> <span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">pfV</span><span class="p">)[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="n">funcA</span><span class="p">();</span>
+    <span class="p">(</span><span class="o">*</span><span class="n">pfV</span><span class="p">)();</span> <span class="c1">//segment exception
+</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+這個程式在現代的作業系統中應該是無法執行到結束的... 因為現代的作業系統都實踐了記憶體節區保護的概念，當程式試圖將 ip (指令指標) 指向一段標記為資料區的記憶體位址時，就會擲出系統性錯誤而中止程式執行。現在一般要改用系統呼叫才能做這件事；用 C 標準庫不允許這麼做。
+</p>
+<p>
+不過在 DOS 時代，這段程式技巧卻相當普遍。在 640K + EMS/XMS 的限制下，幾乎有點資歷的程序員都會用這一招實現動態載入程式碼的功能。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3461127.html">http://blog.roodo.com/rocksaying/archives/3461127.html</a></div>

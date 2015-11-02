@@ -1,0 +1,127 @@
+---
+title: CSS 設定筆記 for 樂多日誌 Roodo Blog
+category: computer
+old-category: 電腦技術
+tags: [css,樂多樣式]
+---
+<div class="tags" style="display:none">css 樂多樣式</div><br />
+<p><br />
+這是針對 樂多日誌 的 網頁樣式 的 CSS 設定所做的筆記。我把樂多日誌所用到的 css 區塊層級及樣式做了兩張整理圖。<br />
+</p><br />
+
+<!--more-->
+<p><br />
+樂多日誌預設的 樣式表 寫的太簡略了，不是樣式問題，而是語法問題。我原本的文章就已經使用 html 及 css 語法在做樣式控制。直接使用樂多日誌的樣式表，會跟我原本文章中的樣式定義衝突。在這時候，我不可能再回頭去修改我那堆舊文，也不符合 CSS 提出的本意。 CSS 的本意就是把樣式定義從資料/文章中抽離出來，使人不用修改文章本體，就能改變顯示的樣式。我最後是把 樣式表 大改了一番才完整解決。<br />
+</p><br />
+<h4>樂多日誌樣式層級圖</h4><br />
+<DIV class=pict><a href="http://blog.roodo.com/rocksaying/6f360195.png" target="_blank"><img src="http://blog.roodo.com/rocksaying/6f360195_s.png" width="160" height="226" border="0" alt="yam_blog_style_layer2.png" hspace="5" class="pict" align="left"></a></DIV><br />
+<DIV class=pict><a href="http://blog.roodo.com/rocksaying/6572fe30.png" target="_blank"><img src="http://blog.roodo.com/rocksaying/6572fe30_s.png" width="160" height="226" border="0" alt="yam_blog_style_layer1.png" hspace="5" class="pict" align="left"></a></DIV><br />
+<br />
+<p>利用 #content 只出現在首頁頁面，再配合進階的 CSS 語法，就可以讓首頁和全文/分類頁面出現不同的文章樣式。</p><br />
+<h4>CSS 語法簡要</h4><br />
+<p>真的很簡要，針對初步了解 CSS 語法的人，說明進階的 CSS 語法。一般書上似乎都不講的，大概太像寫程式了吧。</p><br />
+<pre class="language-text"><br />
+CSS Syntax:<br />
+<br />
+1. 一般： single selector<br />
+1.1. single selector ( element )<br />
+p {}<br />
+li {}<br />
+<br />
+1.1.1. single element under specific selector ( specific_element element )<br />
+ul li {}<br />
+<br />
+note: it's defferent than "ul,li {}".<br />
+<br />
+1.2. single ID selector ( #id )<br />
+#content {}<br />
+<br />
+1.2.1. specific element with single ID selector ( element#id )<br />
+div#content {}<br />
+<br />
+note: no space between element and id<br />
+<br />
+1.3. single class selector ( .class )<br />
+.left {}<br />
+<br />
+1.3.1. specific element with single class selector ( element.class )<br />
+p.left {}<br />
+<br />
+note: no space between element and class<br />
+<br />
+2. 群立 (Grouping)：<br />
+2.1. ( element1, element2, ...)<br />
+h1, h2, h3 {}<br />
+<br />
+2.2. ( #id1, #id2 )<br />
+#header, #content, #footer {}<br />
+<br />
+2.3. ( .class1, .class2)<br />
+.left, .right, .center {}<br />
+<br />
+3. 區域性 (特定區間式)：<br />
+3.1. single<br />
+( #id element )<br />
+( .class element )<br />
+( #id .class element )<br />
+( .class #id element )<br />
+<br />
+3.2. Grouping<br />
+( #id element1, #id element2 )<br />
+( #id .class element1, #id .class element2 )<br />
+( #id .class element.class1, #id .class element.class2 )<br />
+<br />
+examples:<br />
+<br />
+h1, h2, h3 {}<br />
+<br />
+div#content .main a,<br />
+div#content .main a.right {<br />
+}<br />
+<br />
+#sidebar #menu .red ul li.active {<br />
+}<br />
+<br />
+<br />
+4. ID 與 class 的差異：<br />
+ID 具可識別性，在同級同類元件中應是唯一的。<br />
+大多數瀏覽器會忽視 ID 重複的錯誤，但操作 javascript 時會不正常。<br />
+ID 與 class 兩者可並用。可以純粹使用 ID 進行元件的命名工作，而使用 class 來定義元件的樣式。<br />
+<br />
+example:<br />
+<br />
+&lt;style type="text/css"&gt;<br />
+div#test1 {<br />
+	border: 2px double;<br />
+}<br />
+<br />
+div#test div#test1 {<br />
+	margin: 5px;<br />
+	border: 1px solid;<br />
+}<br />
+<br />
+p#test1 {text-decoration: underline;text-align: left;}<br />
+<br />
+/* <br />
+上述定義無 ID 重複，因為 div 與 p 是不同類元件，而 div#test1 和 div#test1 div#test1 層級不同。<br />
+*/<br />
+<br />
+div.test2 {background-color: blue;}<br />
+p.right { text-align: right;}<br />
+&lt;/style&gt;<br />
+<br />
+&lt;div id="test1" class="test2"&gt;<br />
+	ABC<br />
+	&lt;div id="test1"&gt;<br />
+	&lt;/div&gt;<br />
+&lt;/div&gt;<br />
+<br />
+&lt;div id="test1"&gt;<br />
+XYZ <br />
+在同一文件中，同類元件的 id 不應重複，對瀏覽器來說不會錯誤 (容錯機制，<br />
+會被當成一般的 style class 處理)，但對 script (ex: javascript) 會造成錯誤，<br />
+不建議使用此類用法。<br />
+&lt;/div&gt;<br />
+<br />
+&lt;p id="test1" class="right"&gt;underline, however align right&lt;/p&gt;<br />
+</pre><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/256262.html">http://blog.roodo.com/rocksaying/archives/256262.html</a></div>

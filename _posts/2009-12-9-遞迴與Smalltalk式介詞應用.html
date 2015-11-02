@@ -1,0 +1,162 @@
+---
+title: 遞迴與Smalltalk式介詞應用
+category: programming
+old-category: Ruby
+tags: [smalltalk,遞迴,迭代,平行指派,後綴條件]
+---
+<p>
+前陣子用 Ruby 寫一個文件區塊的格式化工具，它會先載入整個文件區塊到陣列，然後依序將每個段落交給不同的方法處理。
+被調用的方法，會從陣列中取出它要處理的段落，直到段落結束。
+因為處理過的段落內容已經從陣列中取出，所以下一個方法總是從陣列的開頭繼續處理。
+</p>
+<p>
+我先用 Ruby 寫幾個小程式來演練概念，寫著寫著就玩起來了。
+一共寫了三種作法，分別應用了不同的 Ruby 語法。
+</p>
+<ol>
+    <li>平行指派，後綴式迴圈、無遞迴</li>
+    <li>遞迴式</li>
+    <li>遞迴式，Smalltalk 式介詞應用，加上迭代器</li>
+</ol>
+
+<!--more-->
+<h4>平行指派，後綴式迴圈、無遞迴</h4>
+
+<pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">take</span> <span class="n">x</span>
+  <span class="c1">#yield</span>
+  <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="nf">shift</span><span class="p">,</span> <span class="n">x</span>
+<span class="k">end</span>
+
+<span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1">#這是一個小瑕玼</span>
+
+<span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="o">+=</span><span class="mi">1</span><span class="p">],</span> <span class="n">a</span> <span class="o">=</span> <span class="n">take</span> <span class="n">a</span> <span class="k">while</span> <span class="n">a</span><span class="p">.</span><span class="nf">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+  <span class="c1">#上行讀作: 當 a 還有東西時，就拿出一個放到 v 中。</span>
+<span class="nb">p</span> <span class="n">a</span>
+<span class="nb">p</span> <span class="n">v</span>
+
+<span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="o">+=</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span> <span class="o">=</span> <span class="n">take</span> <span class="n">v</span> <span class="k">until</span> <span class="n">v</span><span class="p">.</span><span class="nf">size</span> <span class="o">&lt;</span> <span class="mi">1</span>
+  <span class="c1">#上行讀作: 從 v 拿出一個東西放到 a 中，直到 v 裡面沒有東西。</span>
+<span class="nb">p</span> <span class="n">a</span>
+<span class="nb">p</span> <span class="n">v</span>
+</code></pre>
+
+
+<p>
+沒有用到遞迴，記憶體需求比遞迴式少。
+不過遞迴式的寫法也不難，一併完成吧。
+</p>
+
+<h4>遞迴式</h4>
+<pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1">#take([H|T]) -&gt; H, take(T);</span>
+<span class="c1">#take([]) -&gt; [].</span>
+
+<span class="k">def</span> <span class="nf">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+  <span class="k">if</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">x</span><span class="p">.</span><span class="nf">shift</span>
+    <span class="n">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+  <span class="k">end</span>
+  <span class="k">return</span> <span class="n">x</span>
+<span class="k">end</span>
+
+<span class="n">take</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span>
+<span class="nb">p</span> <span class="n">a</span>
+<span class="nb">p</span> <span class="n">v</span>
+</code></pre>
+
+
+<h4>Smalltalk 式介詞應用，加上迭代器</h4>
+<p>
+編程大師總是說 Smalltalk 的表達力非常優秀。而 Ruby 的教科書上也常常說 Ruby 的語法可以提供像 Smalltalk 的表達能力，適合開發領域特定語言(DSL)。
+那我就用 Ruby 來玩一下類似 Smalltalk 在訊息中使用介詞的表達能力吧。
+</p>
+
+<pre class="highlight"><code><span class="c1"># take(V, [H|T]) -&gt; take(V, T);</span>
+<span class="c1"># take(_, []) -&gt; [].</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">preposition</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span>
+  <span class="k">if</span> <span class="n">preposition</span> <span class="o">==</span> <span class="ss">:from</span>
+    <span class="n">take</span> <span class="n">y</span><span class="p">,</span> <span class="ss">:to</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span>
+  <span class="k">else</span>
+    <span class="k">if</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+      <span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">x</span><span class="p">.</span><span class="nf">shift</span>
+      <span class="k">yield</span> <span class="n">y</span><span class="p">.</span><span class="nf">last</span> <span class="k">if</span> <span class="nb">block_given?</span>
+      <span class="n">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">preposition</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+  <span class="k">return</span> <span class="n">x</span>
+<span class="k">end</span>
+
+<span class="n">take</span> <span class="n">a</span><span class="p">,</span> <span class="ss">:to</span><span class="p">,</span> <span class="n">v</span>
+<span class="c1">#英文是我們的第一外國語言，應該不用解釋上面那一句話了吧？</span>
+<span class="c1"># a -&gt; v</span>
+
+<span class="nb">p</span> <span class="n">a</span>
+<span class="nb">p</span> <span class="n">v</span>
+
+<span class="c1">#介詞變成 from ，所以方向反過來了。</span>
+<span class="c1"># a &lt;- v</span>
+<span class="n">take</span> <span class="n">a</span><span class="p">,</span> <span class="ss">:from</span><span class="p">,</span> <span class="n">v</span>
+<span class="nb">p</span> <span class="n">a</span>
+<span class="nb">p</span> <span class="n">v</span>
+
+<span class="nb">puts</span> <span class="s1">'印出每次取得的東西'</span>
+<span class="n">take</span><span class="p">(</span> <span class="n">a</span><span class="p">,</span> <span class="ss">:to</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="s2">"Take </span><span class="si">#{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">}</span>
+<span class="nb">p</span> <span class="n">a</span>
+<span class="nb">p</span> <span class="n">v</span>
+</code></pre>
+
+
+<p>
+Smalltalk 可寫成:
+</p>
+<pre class="highlight"><code><span class="n">take</span> <span class="n">a</span> <span class="ss">to: </span><span class="n">v</span><span class="p">.</span>
+<span class="nf">take</span> <span class="n">a</span> <span class="ss">from: </span><span class="n">v</span><span class="p">.</span>
+
+<span class="nf">take</span><span class="p">:</span> <span class="n">x</span> <span class="ss">to: </span><span class="n">y</span>
+  <span class="s2">"your code"</span>
+  <span class="o">^</span><span class="n">x</span>
+
+<span class="ss">take: </span><span class="n">x</span> <span class="ss">from: </span><span class="n">y</span>
+  <span class="s2">"your code"</span>
+  <span class="o">^</span><span class="n">y</span>
+</code></pre>
+
+<p>
+文如其名，近乎日常用語的抽象表達力。
+而且 Smalltalk 可以分成兩個訊息(方法)來實作，
+不像上頭的 Ruby 用 if 分開流程。程式結構更清晰。
+</p>
+
+<p>
+此外，當我在寫遞迴時，我腦中不由得想到 Erlang 的作法。每次從清單中取出頭部處理，尾部作為另一個清單交給下一個方法處理。
+</p>
+<pre class="highlight"><code><span class="nb">method</span><span class="p">([</span><span class="no">H</span><span class="o">|</span><span class="no">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="no">H</span><span class="p">,</span> <span class="nb">method</span><span class="p">(</span><span class="no">T</span><span class="p">);</span>
+<span class="nb">method</span><span class="p">([])</span> <span class="o">-&gt;</span> <span class="p">[]</span><span class="o">.</span>
+</code></pre>
+
+
+<p>
+在我學 Erlang 之前，遞迴程式的設計藍圖從未如此清晰地浮現在我眼前。儘管我對 Erlang 的認識還很粗淺，但是它的序列編程風格，已經成功影嚮我改進遞迴設計。
+</p>
+<p>
+我學過的程式語言不算多，屈指可數。在這之中， Java 語言對我的影嚮最低，趨近於零；事實上我總是儘可能地忘掉 Java 語言的風格，理由不言可知。
+</p>
+
+<p>
+每一種程式語言都有許多獨特的語法，構成形形色色的表達力。儘管我們認為其中一些語法只不過是甜頭、糖衣。但語言的表達能力不可思議地影嚮我們的軟體開發生產力。表達能力愈是接近日常口語或日常符號系統的，它的生產力就愈高。
+</p>
+<p>
+雖然 Smalltalk 等語言並不流行，而且我寫著不同的語言，但那並不妨礙我學習他們的優點。儘可能地嘗試引用他們的概念，強化程式碼的表達能力，提昇生產力。再者，<q>程式碼即文件</q>，程式的表達能力愈貼近日常用語，我就愈不需要維護多份設計文件。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10972865.html">http://blog.roodo.com/rocksaying/archives/10972865.html</a></div>

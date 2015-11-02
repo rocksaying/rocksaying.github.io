@@ -1,0 +1,149 @@
+---
+title: 文件格式之 URI Route Rule 與 CodeIgniter 之實作示範
+category: programming
+old-category: PHP
+tags: [php,codeigniter]
+---
+<div class="tags" style="display:none">Tags: php CodeIgniter</div>
+<p>
+我習慣將控制元件行為的最後一個參數，設為文件(呈現內容)的"格式"，如使用者想要 XML 格式的回傳內容，則傳入 'xml'。例如:
+</p>
+<pre class="language-text">
+程式定義:
+  class Controller {
+    function method( docType ) {
+      // return result as a XML document.
+    }
+  }
+  var controller = new Controller;
+
+調用控制項時的 URI:
+  controller/method/xml
+  # invoke  controller->method('xml');
+</pre>
+<p><em>不過，我更喜歡將"文件格式"這個參數放在 URI 的副檔名部份。這部份我放在文章後段。</em></p>
+
+<!--more-->
+<p>
+再看一個更具體的例子。控制元件 <var>Human</var> 有一個行為 <code>query</code> 可以查詢某人的資料，第一個參數是人名，最後一個參數是查詢結果的資料格式。
+</p>
+<pre class="highlight"><code>class Human {
+    function query( $name, $docType='html') {
+        $result = $db-&gt;query("name={$name}");
+        
+        $view = 'human.' . $docType;
+        
+        showView($view);        
+    }
+}
+</code></pre>
+
+
+<p>
+調用控制元件時的 URI:
+</p>
+
+<fieldset>
+<legend>human/query/rock/html</legend>
+回傳:<br/>
+<pre class="highlight"><code>    <span class="nt">&lt;html&gt;</span>
+        <span class="nt">&lt;title&gt;</span>Rock<span class="nt">&lt;/title&gt;</span>
+        <span class="nt">&lt;table&gt;</span>
+            <span class="nt">&lt;tr&gt;</span>
+                <span class="nt">&lt;td&gt;</span>Name<span class="nt">&lt;/td&gt;</span>
+                <span class="nt">&lt;td&gt;</span>rock<span class="nt">&lt;/td&gt;</span>
+            <span class="nt">&lt;/tr&gt;</span>
+            <span class="nt">&lt;tr&gt;</span>
+                <span class="nt">&lt;td&gt;</span>Address<span class="nt">&lt;/td&gt;</span>
+                <span class="nt">&lt;td&gt;</span>Taiwan<span class="nt">&lt;/td&gt;</span>
+            <span class="nt">&lt;/tr&gt;</span>
+            <span class="nt">&lt;tr&gt;</span>
+                <span class="nt">&lt;td&gt;</span>Age<span class="nt">&lt;/td&gt;</span>
+                <span class="nt">&lt;td&gt;</span>??<span class="nt">&lt;/td&gt;</span>
+            <span class="nt">&lt;/tr&gt;</span>
+        <span class="nt">&lt;/table&gt;</span>
+    <span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+</fieldset>
+
+<fieldset>
+<legend>human/query/rock/xml</legend>
+回傳:<br/>
+<pre class="highlight"><code>    <span class="cp">&lt;?xml version="1.0" encoding="windows-1250"?&gt;</span>
+    <span class="nt">&lt;human&gt;</span>
+        <span class="nt">&lt;name&gt;</span>rock<span class="nt">&lt;/name&gt;</span>
+        <span class="nt">&lt;address&gt;</span>Taiwan<span class="nt">&lt;/address&gt;</span>
+        <span class="nt">&lt;age&gt;</span>??<span class="nt">&lt;/age&gt;</span>
+    <span class="nt">&lt;/human&gt;</span>
+</code></pre>
+
+</fieldset>
+
+<p>
+<em>不過，我更喜歡將"文件格式"這個參數放在 URI 的副檔名部份</em>，讓使用者認為他是直接取得"一份那種格式的文件"。亦即使用者認為他是在觀看一份靜態的文件。再舉前例說明如下:
+</p>
+<pre class="language-text">
+human/query/rock/html
+可寫成:
+human/query/rock.html
+
+
+human/query/rock/xml
+可寫成:
+human/query/rock.xml
+</pre>
+
+<p>
+在 PHP 中，基本上可解析 <var>$_SERVER['PATH_INFO']</var> 的內容取得參數內容。而 CodeIgniter Framework 則可透過 URI Route 的設定，新增一條 route 規則，將 URI 副檔名部份轉接為最後一個 segment 項目。例如:
+</p>
+<pre class="language-text">
+  $route['(.+)(\.)(\w+)$'] = "$1/$3";
+</pre>
+
+<p>
+撰寫程式碼時，我則在控制元件的建構子中設定文件格式。以 CodeIgniter Framework 為例，我通常會以下列所示的方式撰寫控制元件。
+</p>
+
+<pre class="highlight"><code>class Human extends Controller {
+    protected $docType;
+
+    protected $mimeTypeTable = array(
+        'html' =&gt; 'text/html',
+        'xml'  =&gt; 'application/xml',
+        'json' =&gt; 'application/json'
+    );
+
+    function __construct() {
+        parent::__construct();
+
+        $rsegc = $this-&gt;uri-&gt;total_rsegments();
+        if ($rsegc &gt; $this-&gt;uri-&gt;total_segments()) {
+            $this-&gt;docType = $this-&gt;uri-&gt;rsegment($rsegc);
+        }
+        else {
+            $this-&gt;docType = 'html'; //default
+        }
+    }
+
+    function query( $name ) {
+        $result = $db-&gt;query("name={$name}");
+        
+        $viewFile = 'humanQuery.' . $this-&gt;docType;
+
+        $this-&gt;output-&gt;set_header(
+            'Content-type: ' . $this-&gt;mimeTypeTable[$this-&gt;docType]);
+        $this-&gt;load-&gt;view($viewFile);        
+    }
+}
+</code></pre>
+
+
+<p>
+附帶一提，如果案子不小，有很多控制元件，而且每個都支援上述的多種文件格式，那麼我建議按照 CodeIgniter 的方式衍生自定的輸出類別 (<span class="noteRight">CodeIgniter 提供2種擴充，一是 <a href="http://codeigniter.com/user_guide/general/core_classes.html">Extending Core Class</a>，二是 <a href="http://codeigniter.com/user_guide/general/hooks.html">Hook</a>。</span>)，將 <var>$docType</var> 和 <var>$mimeTypeTable</var> 放到自定的輸出類別。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2008/Extend%20core%20libraries%20of%20CodeIgniter%20to%20detect%20the%20request%20file%20type%20and%20load%20applicable%20view.html">Extend core libraries of Code Igniter to detect the request file type and load applicable view</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5569813.html">http://blog.roodo.com/rocksaying/archives/5569813.html</a></div>

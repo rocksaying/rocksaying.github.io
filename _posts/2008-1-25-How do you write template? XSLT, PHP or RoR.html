@@ -1,0 +1,146 @@
+---
+title: How do you write template? XSLT, PHP or RoR?
+category: programming
+old-category: Programming
+tags: [xml,xslt,template,php,ror,web design]
+---
+<div class="tags" style="display:none">Tags: xml xslt template php ror web_design</div>
+<p>
+Using XSLT, PHP, or Ruby on Rails to transform XML documents into XHTML documents. 展示 XSLT, PHP 與 Ruby on Rails 的樣版撰寫風格。
+</p>
+<p>
+在使用樣版引擎之前，我們需要先將資料自外觀中分離，因此 <a href="{{ site.baseurl }}/archives/2008/A%20Note%20of%20HTML%20Form%20and%20XForm.html">A Note of HTML Form and XForm</a> 算是本文的前置文章。當我們將資料和外觀分離時，我們將更進一步考慮如何將外觀樣版化。
+</p>
+
+<!--more-->
+<h4>XML document</h4>
+<pre class="highlight"><code><span class="nt">&lt;bookstore&gt;</span>
+<span class="nt">&lt;catalog&gt;</span>
+
+<span class="nt">&lt;cd&gt;</span>
+  <span class="nt">&lt;title</span> <span class="na">lang=</span><span class="s">"eng"</span><span class="nt">&gt;</span>Harry Potter<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;artist&gt;</span>Potter<span class="nt">&lt;/artist&gt;</span>
+<span class="nt">&lt;/cd&gt;</span>
+
+<span class="nt">&lt;cd&gt;</span>
+  <span class="nt">&lt;title</span> <span class="na">lang=</span><span class="s">"eng"</span><span class="nt">&gt;</span>Learning XML<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;artist&gt;</span>LMX<span class="nt">&lt;/artist&gt;</span>
+<span class="nt">&lt;/cd&gt;</span>
+
+<span class="nt">&lt;/catalog&gt;</span>
+<span class="nt">&lt;/bookstore&gt;</span>
+</code></pre>
+
+
+<h4>
+XSLT style
+</h4>
+<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;</span>
+<span class="nt">&lt;xsl:stylesheet</span> <span class="na">version=</span><span class="s">"1.0"</span>
+<span class="na">xmlns:xsl=</span><span class="s">"http://www.w3.org/1999/XSL/Transform"</span><span class="nt">&gt;</span>
+
+<span class="nt">&lt;xsl:template</span> <span class="na">match=</span><span class="s">"/"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;h2&gt;</span>My CD Collection<span class="nt">&lt;/h2&gt;</span>
+    <span class="nt">&lt;table</span> <span class="na">border=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;tr</span> <span class="na">bgcolor=</span><span class="s">"#9acd32"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Title<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Artist<span class="nt">&lt;/th&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;xsl:for-each</span> <span class="na">select=</span><span class="s">"catalog/cd"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">"title"</span><span class="nt">/&gt;&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">"artist"</span><span class="nt">/&gt;&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;/xsl:for-each&gt;</span>
+    <span class="nt">&lt;/table&gt;</span>
+<span class="nt">&lt;/xsl:template&gt;</span>
+<span class="nt">&lt;/xsl:stylesheet&gt;</span>
+</code></pre>
+
+<p>
+使用 XSLT 的優點在於樣版語法和伺服端實作工具無關。當網頁設計人員在設計網頁樣版時，不必知道程式開發人員使用什麼開發工具。當程式開發人員在爭論用 JSP, ASP.Net, PHP 或 RoR 開發時，那些事跟網頁設計人員一點關係都沒有。
+</p>
+<p>
+現實問題則在於支援 XSLT 的網頁設計工具少，會使用 XSLT 的網頁設計人員更少。
+</p>
+
+
+<h4>
+PHP style
+</h4>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// Select data from XML document.
+</span><span class="nv">$xml</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SimpleXMLElement</span><span class="p">(</span><span class="nv">$xmlSource</span><span class="p">);</span>
+<span class="nv">$resultSet</span> <span class="o">=</span> <span class="nv">$xml</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'catalog/cd'</span><span class="p">);</span>
+
+<span class="c1">// Select data from database by a pseudo object, $db.
+</span><span class="nv">$db</span><span class="o">-&gt;</span><span class="na">select_db</span><span class="p">(</span><span class="s1">'root'</span><span class="p">);</span>  <span class="c1"># match = "/"
+</span><span class="nv">$resultSet</span> <span class="o">=</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s1">'select * from catalog_cd;'</span><span class="p">);</span> <span class="c1"># select="catalog/cd"
+</span><span class="cp">?&gt;</span>
+
+    <span class="nt">&lt;h2&gt;</span>My CD Collection<span class="nt">&lt;/h2&gt;</span>
+    <span class="nt">&lt;table</span> <span class="na">border=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;tr</span> <span class="na">bgcolor=</span><span class="s">"#9acd32"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Title<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Artist<span class="nt">&lt;/th&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+
+<span class="cp">&lt;?php</span> <span class="k">foreach</span> <span class="p">(</span><span class="nv">$resultSet</span> <span class="k">as</span> <span class="nv">$value</span><span class="p">)</span> <span class="o">:</span> <span class="cp">?&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?=</span><span class="nv">$value</span><span class="o">-&gt;</span><span class="na">title</span> <span class="cp">?&gt;</span><span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?=</span><span class="nv">$value</span><span class="o">-&gt;</span><span class="na">artist</span> <span class="cp">?&gt;</span><span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+<span class="cp">&lt;?php</span> <span class="k">endforeach</span><span class="p">;</span> <span class="cp">?&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+</code></pre>
+
+
+<p>
+PHP 是比 XSLT 更早出現的樣版設計技術。但它同時也具有程式開發工具的特性，所以經過多年的快速發展後，晚近者對 PHP 的印象是「網頁開發工具」，而忽視了它作為樣版設計工具的一面。
+</p>
+
+<blockquote>
+PHP is itself a powerful template system, many developers feel it is too powerful or complex for their template designers ...
+<br/>
+<cite><a href="http://framework.zend.com/manual/en/zend.view.scripts.html#zend.view.scripts.templates">Zend Framework</a></cite>
+</blockquote>
+
+<p>由於 PHP 的功能太過強大 (對樣版系統而言)，前些年有人另外發展了一些樣版引擎，例如 Smarty 。但我個人的建議是: 該遺忘它們了。如果你的開發團體想要尋找一個與開發工具無關的樣版系統，現在是該認真考慮 XSLT 的時候。延伸閱讀:</p>
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2007/PHP%20%E4%B8%8D%E9%9C%80%E8%A6%81%E5%8F%A6%E4%B8%80%E5%80%8B%E6%A8%A3%E7%89%88%E5%BC%95%E6%93%8E%20%28Smarty%2C%20PHPLib%2C%20etc%29.html">PHP 不需要另一個樣版引擎</a></li>
+    <li><a href="{{ site.baseurl }}/archives/2007/PHP%20%E4%B8%8D%E9%9C%80%E8%A6%81%E5%8F%A6%E4%B8%80%E5%80%8B%E6%A8%A3%E7%89%88%E5%BC%95%E6%93%8E%2C%20part%202%20-%20%E8%A3%9C%E5%85%85%E8%88%87%E5%9B%9E%E6%87%89.html">PHP 不需要另一個樣版引擎, part 2</a></li>
+</ul>
+
+<h4>
+Ruby on Rails style
+</h4>
+<pre class="highlight"><code><span class="o">&lt;%</span>
+<span class="sr">//</span> <span class="no">Select</span> <span class="n">data</span> <span class="n">from</span> <span class="no">XML</span> <span class="n">document</span><span class="p">.</span>
+<span class="nf">xml</span> <span class="o">=</span> <span class="no">REXML</span><span class="o">::</span><span class="no">Document</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">xmlSource</span><span class="p">).</span><span class="nf">root</span><span class="p">;</span>
+<span class="sx">%&gt;
+    &lt;h2&gt;</span><span class="no">My</span> <span class="no">CD</span> <span class="no">Collection</span><span class="o">&lt;</span><span class="sr">/h2&gt;
+    &lt;table border="1"&gt;
+    &lt;tr bgcolor="#9acd32"&gt;
+      &lt;th align="left"&gt;Title&lt;/</span><span class="n">th</span><span class="o">&gt;</span>
+      <span class="o">&lt;</span><span class="n">th</span> <span class="n">align</span><span class="o">=</span><span class="s2">"left"</span><span class="o">&gt;</span><span class="no">Artist</span><span class="o">&lt;</span><span class="sr">/th&gt;
+    &lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+
+<span class="o">&lt;</span><span class="sx">% REXML::XPath.each(xml, </span><span class="s1">'catalog/cd'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">value</span><span class="o">|</span> <span class="sx">%&gt;
+    &lt;tr&gt;</span>
+        <span class="o">&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="sx">%=value.elements['title'].text %&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;%=</span><span class="n">value</span><span class="p">.</span><span class="nf">elements</span><span class="p">[</span><span class="s1">'artist'</span><span class="p">].</span><span class="nf">text</span> <span class="sx">%&gt;&lt;/td&gt;</span>
+    <span class="o">&lt;</span><span class="sr">/tr&gt;
+&lt;% end %&gt;
+&lt;/</span><span class="n">table</span><span class="o">&gt;</span>
+</code></pre>
+
+
+<h4>Reference</h4>
+<ul>
+    <li><a href="http://www.w3.org/TR/xslt">XSL Transformations (XSLT)
+Version 1.0</a> - W3C Recommendation 16 November 1999</li>
+    <li><a href="http://www.w3.org/TR/xslt20/">XSL Transformations (XSLT) Version 2.0</a> - W3C Recommendation 23 January 2007</li>
+    <li><a href="http://www.w3schools.com/xsl/default.asp">XSLT Tutorial</a></li>
+    <li><a href="http://www.php.net/">PHP</a></li>
+    <li><a href="http://www.rubyonrails.org/">Ruby on Rails</a></li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5147001.html">http://blog.roodo.com/rocksaying/archives/5147001.html</a></div>

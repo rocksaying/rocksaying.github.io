@@ -1,0 +1,438 @@
+---
+title: RESTful 介面實作示範
+category: programming
+old-category: Programming
+tags: [雲端運算,cloud computing,web service,REST,RESTful]
+---
+<p>
+大家好，我又來談 REST 了。雖然我早已在過去的實務工作中採用 RESTful 概念，但似乎在國內大多數人眼中， RESTful 還是個陌生的內容。因為我新任職的公司，才剛在專案中採用 RESTful 工作，還要大家去 survey 一下。也就在這過程中，我才發覺大伙兒對 RESTful 的認知還有不少偏差。最主要的一點還是把過去的 REST 作法混進來了。忽略了 RESTful 字尾的 <em>-ful</em> 所代表的意義。
+</p>
+<p>
+雖然我一年多前在 <a href="{{ site.baseurl }}/archives/2008/REST%20and%20RESTfull%20web%20service.html" class="bookname_notation">REST and RESTful web service</a> 就提過 RESTful 的內容了，不過當時主要放在 REST 和 RESTful 的差異上，假設讀者已經很熟悉 Web 架構與設計模式了。在當時的文章最後，附上的範例程式也僅僅是示範如何把舊的 REST 程式重構支援 RESTful 。沒有示範 RESTful 到底如何與客戶端互動。這篇文章就是在填這個坑。
+</p>
+
+<!--more-->
+<h4>
+REST 基礎觀念
+</h4>
+
+<p>
+REST (REpresentational State Transfer) 的概念來自於 Roy Thomas Fielding 寫的一篇文章
+《<a href="http://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm">Architectural Styles and the Design of Network-based Software Architectures</a>》。
+其概念結合了 HTTP 與 URL 兩種協定，以及如何運用於網路軟體架構設計。 
+</p>
+<p>容我偷懶直接引用我之前的文章，用一段話來說明 RESTful:
+以 URL 定位資源，根據 HTTP 內容指示操作動作與回應訊息。一個符合上述實作方式的網路服務，就稱之為 RESTful web service 。
+有些文章則更進一步，將 ATOM 協定也加了進來，主要是看上 ATOM 格式的特點，將之運用於資源內容的更新工作。
+有些 RESTful 文章還會強調要透過 HTTP Authorization 限制使用者存取資源的權限，而不是用表單加 Cookie。 
+</p>
+
+<h6>規範書與文章參考</h6>
+<ul>
+    <li><a href="http://tools.ietf.org/html/rfc2616">
+    RFC 2616 - Hypertext Transfer Protocol -- HTTP/1.1</a>
+    </li>
+
+    <li><a href="http://en.wikipedia.org/wiki/List_of_HTTP_headers">
+    Wiki:List of HTTP headers</a>, 內容較 RFC2616 新。
+    </li>
+
+    <li><a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes">
+    Wiki:List of HTTP status codes</a>, 內容較 RFC2616 新。
+    </li>
+
+    <li><a href="http://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm">
+    Architectural Styles and the Design of Network-based Software Architectures</a>
+    </li>
+
+    <li><a href="http://www.w3.org/TR/XMLHttpRequest/">
+    XMLHttpRequest</a>
+    </li>
+
+    <li><a href="{{ site.baseurl }}/archives/2008/REST%20and%20RESTfull%20web%20service.html">
+    REST and RESTful web service</a>
+    </li>
+</ul>
+
+<h4>
+業界實務
+</h4>
+<p>
+千萬別以為 RESTful 只是輕量級、中小企業在用的次級品。事實上，眾多 Web 實務案例證明它才是 Web 架構的主流派，所謂 SOAP 不過是多此一舉。
+</p>
+<p>
+目前的大型雲端運算提供者，如 <a href="http://aws.amazon.com/">Amazon Web Services</a> 、Google、IBM 、Microsoft、Sun、GoGrid 等，都支援 RESTful 服務，甚至只提供 RESTful API。
+</p>
+
+<h5>
+業界的 REST-like 實作
+</h5>
+<p>
+我在 <a href="{{ site.baseurl }}/archives/2008/REST%20and%20RESTfull%20web%20service.html" class="bookname_notation">REST and RESTful web service</a> 中，將傳統的 REST 作法稱為 <dfn>REST-like</dfn> ，這基本上不是我獨創的用法，例如知名的網路服務 Facebook 、 GoGrid 等，就將他們的 API 稱為 <q>REST-like</q>。
+</p>
+<blockquote>
+<p>The API uses a REST-like interface. This means that our Facebook method calls are made over the internet by sending HTTP GET or POST requests to the Facebook API REST server . Nearly any computer language can be used to communicate over HTTP with the REST server.
+</p>
+<cite><a href="http://wiki.developers.facebook.com/index.php/API">API - Facebook Developer Wiki</a></cite>
+</blockquote>
+
+<p>
+GoGrid 在 API 見此 [<a href="http://www.gogrid.com/how-it-works/gogrid-API.php">The GoGrid API</a>]，有興趣了解 REST-like 的請自行參考。
+</p>
+
+<p>
+附帶一提，PHP 主要開發商 Zend ，日前邀集了 IBM、Microsoft、GoGrid 一起推出了 <a href="http://simplecloud.org/">Simple Cloud</a> 計劃，它們將針對現行的主要雲端服務項目，以 PHP 實作一組 API 支援它們。對 PHP 開發者來說，這顯然是個好消息，也更進一步地支撐了 PHP 的企業級軟體開發能力。PHP 不是小企業才用的玩具，而是足以支撐大型企業專案的開發工具。
+</p>
+
+<h5>
+業界的 RESTful 實作
+</h5>
+
+<p>
+Sun Microsystem 公開了一套存取它們雲端運算服務的 Web service ，稱為 Sun Cloud API / API for Sun Cloud 。
+這套 API 正是 RESTful 介面的。我取其中一個 method 來看看企業級的 RESTful 實作介面的外觀。
+</p>
+
+<pre class="language-text">
+Get Cloud
+
+Retrieve information about accessible resources.
+
+Synopsis: GET {Well Known URI of the Service}
+Request Headers: Accept, Authorization, X-Cloud-Client-Specification-Version.
+Request Message Body: N/A.
+Response Headers: Content-Length, Content-Type.
+Response Message Body: Cloud.
+Response Status: 200, 400, 401, 403, 404. 
+</pre>
+<cite><a href="http://kenai.com/projects/suncloudapis/pages/CloudAPICloudRequests">Cloud API Specification - Requests to Cloud Resources</a></cite>
+
+<p>
+Synopsis 指出這是 GET 方法的說明。在 Request Headers 中的 Authorization 表示
+Sun Cloud API 是採用 HTTP Authorization 驗證方式，而不是用網頁表單login。
+方法的狀態回傳值也是透過 HTTP Status code ，此例中表明此資源可能傳回 5種狀態，
+200 正常，404 是找不到指定內容，401 是未認證，403 是未授權、400 是錯誤請求。
+初涉 RESTful 的人，往往未了解 Status code 的重要性， Status code 會影嚮 proxy 對資源內容的快取，也會影嚮 client 的處理。
+</p>
+
+<p>
+HTTP Authorization 內容請參考 RFC2616 14.8 節。Apache Http Server 實作內容請參考
+<a href="http://httpd.apache.org/docs/2.2/howto/auth.html">Authentication, Authorization and Access Control</a>。
+</p>
+
+<p>
+Amazon Web Service 也支援 RESTful API ，它們的 API 文件雖然不像 Sun Cloud API 那般清楚條列參數與回傳狀態，但卻清楚列出使用服務過程中，透過 HTTP 交涉的訊息內容。
+對於熟悉 HTTP 協定的開發者，是不錯的示範。各位可以看看 [<a href="http://docs.amazonwebservices.com/AmazonS3/2006-03-01/API/RESTServiceGET.html">Amazon S3 GET Service</a>] 的內容，連 HTTP header 都列出了。
+</p>
+
+
+<h4>
+Demo
+</h4>
+
+<p>
+請各位將下列的兩個 PHP 程式碼複製儲存到自己的主機上，放在你的網頁空間下。
+當然啦你的網頁服務要能跑 PHP ，這麼基本的事就不多說了。
+</p>
+
+<h6>
+index.php
+</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Control</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">function</span> <span class="nf">exceptionResponse</span><span class="p">(</span><span class="nv">$statusCode</span><span class="p">,</span> <span class="nv">$message</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">header</span><span class="p">(</span><span class="s2">"HTTP/1.0 </span><span class="si">{</span><span class="nv">$statusCode</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nv">$message</span><span class="si">}</span><span class="s2">"</span><span class="p">);</span>
+        <span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$statusCode</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nv">$message</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">exit</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'index...'</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">interface</span> <span class="nx">RESTfulInterface</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">restGet</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPut</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPost</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">restDelete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Container</span> <span class="k">extends</span> <span class="nx">Control</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$control</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$segments</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">])</span> <span class="k">or</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'/'</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// $this-&gt;control = $this-&gt;segments = false;
+</span>            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
+        <span class="nb">array_shift</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">);</span> <span class="c1">// first element always is an empty string.
+</span>
+        <span class="nv">$controlName</span> <span class="o">=</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nb">array_shift</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">));</span>
+
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">class_exists</span><span class="p">(</span><span class="nv">$controlName</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$controlFilepath</span> <span class="o">=</span> <span class="nv">$controlName</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span> <span class="nb">file_exists</span><span class="p">(</span><span class="nv">$controlFilepath</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// 載入客戶要求的 control
+</span>                <span class="k">require_once</span> <span class="nv">$controlFilepath</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span> <span class="c1">// 找不到客戶要求的 control
+</span>                <span class="nx">self</span><span class="o">::</span><span class="na">exceptionResponse</span><span class="p">(</span><span class="mi">503</span><span class="p">,</span> <span class="s1">'Service Unavailable!'</span><span class="p">);</span>
+                <span class="c1">// 回傳 501 (Not Implemented) 或 503.
+</span>                <span class="c1">// See also: RFC 2616
+</span>            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$controlName</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'index.php/{control name}/{object id}'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">index</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// Without parameter
+</span>            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="na">index</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="c1">//request resource by RESTful way.
+</span>        <span class="c1">//$method = $this-&gt;restMethodname;
+</span>        <span class="nv">$method</span> <span class="o">=</span> <span class="s1">'rest'</span> <span class="o">.</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nb">strtolower</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'REQUEST_METHOD'</span><span class="p">]));</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="p">,</span> <span class="nv">$method</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="nx">self</span><span class="o">::</span><span class="na">exceptionResponse</span><span class="p">(</span><span class="mi">405</span><span class="p">,</span> <span class="s1">'Method not Allowed!'</span><span class="p">);</span>
+        <span class="p">}</span>
+        
+        <span class="nv">$arguments</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">;</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="nv">$method</span><span class="p">(</span><span class="nv">$arguments</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span> <span class="c1">//end class Container
+</span>
+<span class="nv">$container</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Container</span><span class="p">();</span>
+
+<span class="nv">$container</span><span class="o">-&gt;</span><span class="na">run</span><span class="p">();</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h6>
+Mock.php
+</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Mock</span> <span class="k">extends</span> <span class="nx">Control</span> <span class="k">implements</span> <span class="nx">RESTfulInterface</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">restPost</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'Create resource'</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="s1">'&lt;br/&gt;&lt;pre&gt;'</span><span class="p">;</span>
+        <span class="nb">print_r</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">);</span>
+        <span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">restGet</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$id</span> <span class="o">=</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$id</span> <span class="o">==</span> <span class="s1">'rock'</span><span class="p">)</span>
+            <span class="k">echo</span> <span class="s1">'Read resource: '</span> <span class="o">.</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="c1">// id
+</span>        <span class="k">else</span>
+            <span class="nx">self</span><span class="o">::</span><span class="na">exceptionResponse</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s1">'Not found'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">restPut</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'Update resource: '</span> <span class="o">.</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="k">echo</span> <span class="s1">'&lt;br/&gt; you put data: '</span> <span class="o">.</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'php://input'</span><span class="p">);</span> <span class="c1">// read the raw put data.
+</span>    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">restDelete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'Delete resource: '</span> <span class="o">.</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<div class="note">
+<p>
+眼尖的 PHP 程序員應該會注意到，我雖然定義了 <code>RESTfulInterface</code> ，但其實在程式碼中根本沒有任何作用。
+因為 PHP 的動態能力與反射能力根本不需要仰賴介面來檢查方法。
+我定義 <code>RESTfulInterface</code> 只是在唬弄 Java 語言的使用者。
+</p>
+<p>
+關於 PHP 的反射能力，我之前談過不少，例如<a href="{{ site.baseurl }}/archives/2007/PHP5%20%E7%9A%84%E5%8B%95%E6%85%8B%E5%87%BD%E6%95%B8_%E8%A1%8C%E7%82%BA%E8%AA%BF%E7%94%A8%E6%95%88%E7%8E%87%E6%B8%AC%E8%A9%A6.html">PHP5 的動態函數/行為調用效率測試 </a>、<a href="{{ site.baseurl }}/archives/2007/Reflection%20%E6%96%BC%E8%A8%AD%E8%A8%88%20Framework%20%E6%99%82%E4%B9%8B%E5%AE%89%E5%85%A8%E6%80%A7%E4%BD%9C%E7%94%A8.html">Reflection 於設計 Framework 時之安全性作用 </a>。要從反射能力上挑 Java 的痛腳實在太容易，派 PHP 去叫陣就夠了。
+</p>
+</div>
+
+    <p>
+    當各位將上述的 PHP 程式儲放在可用的網頁空間之後，可自行在瀏覽器中輸入下面的案例網址，觀看反應。
+    別忘了將網址換成你實際的位址...
+    </p>
+    <ul>
+    <li>Case 1: Container 顯示基本用法.<br/>
+    http://your_host/restful_demo/index.php
+    </li>
+
+    <li>Case 2: 要求的服務不存在。<br/>
+    http://your_host/restful_demo/index.php/nothing
+    <p>
+    回應 503
+    </p>
+    </li>
+
+    <li>Case 3: 要求已存在的服務 mock ，但未加參數。<br/>
+    http://your_host/restful_demo/index.php/mock</a>
+    <p>
+    RESTful 要求透過 HTTP status code 回傳執行的結果代碼。
+    在此處找不到客戶要求的 control ，按照這個狀態，應回傳 501 (Not Implemented) 或 503 (Service Unavailable)。(<span class="Onote">有些瀏覽器在收到501或503的回應時，會直接導向它自己的訊息畫面，這時使用者就看不到我們放在回應內容本文中的錯誤訊息。</span>)
+    實務慣例則可以導引到服務說明頁面，說明服務的功能與用法。
+    </p>
+    </li>
+    
+    <li>Case 4: 向服務 mock 讀取 xyz 的內容 （此目標不存在）<br/>
+    http://192.168.1.33/workspace/restful_demo/index.php/mock/xyz</a>
+    <p>
+    目標資源不存在，回應 404 Not Found。初學者在實作 RESTful 服務時最常犯錯的地方，就是在這種情況下回傳 status code 200。你的服務明明就找不到使用者要查的資源，為何回應 200，告訴使用者、瀏覽器、proxy 等人找到資料了？要仔細理解 HTTP 作為一個應用程式協定時，各項 status code 所代表的意義。
+    </p>
+    </li>
+
+    <li>Case 5: 向服務 mock 讀取 rock 的內容<br/>
+    http://your_host/restful_demo/index.php/mock/rock
+    </li>
+
+    </ul>
+
+    <p>
+    HTML Form 僅規範了 GET 和 POST 兩種方法，若要在瀏覽器端向 Web 服務發送
+    PUT 和 DELETE 方法，則需要透過 JavaScript 操作 XMLHttpRequest object 才可
+    實現。
+    </p>
+    <p>
+    所以接下來的示範內容，會用 JavaScript 示範。請將下列的 demo.html 儲放在與上述 PHP 程式相同的目錄下。
+    </p>
+    
+    <h6>
+    demo.html
+    </h6>
+
+<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">src</span><span class="o">=</span><span class="s2">"http://www.google.com/jsapi"</span><span class="o">&gt;&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+
+<span class="kd">var</span> <span class="nx">mockUrl</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">canvas</span><span class="p">;</span>
+
+<span class="nx">google</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="s2">"jquery"</span><span class="p">,</span> <span class="s2">"1.3.2"</span><span class="p">);</span>
+<span class="nx">google</span><span class="p">.</span><span class="nx">setOnLoadCallback</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+    <span class="c1">//Enable Ajax object.</span>
+    <span class="nx">mockUrl</span> <span class="o">=</span> <span class="s1">'http://localhost/test/restful_demo/index.php/mock/'</span><span class="p">;</span>
+    <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="na">url</span><span class="p">:</span> <span class="nx">mockUrl</span> <span class="o">+</span> <span class="s1">'rock'</span><span class="p">,</span>
+        <span class="na">async</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="na">type</span><span class="p">:</span> <span class="s1">'get'</span><span class="p">,</span>
+        <span class="na">data</span><span class="p">:</span> <span class="s1">''</span>
+    <span class="p">};</span>
+
+    <span class="nx">canvas</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">'#canvas'</span><span class="p">);</span>
+
+    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Case 6: 新增資源 (POST)\n'</span> <span class="o">+</span> <span class="nx">demoCase6</span><span class="p">);</span>
+    <span class="nx">demoCase6</span><span class="p">();</span>
+
+    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Next Case 7: 更新資源 (PUT)\n'</span> <span class="o">+</span> <span class="nx">demoCase7</span><span class="p">);</span>
+    <span class="nx">demoCase7</span><span class="p">();</span>
+
+    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Next Case 8: 刪除資源 (DELETE)\n'</span> <span class="o">+</span> <span class="nx">demoCase8</span><span class="p">);</span>
+    <span class="nx">demoCase8</span><span class="p">();</span>
+
+    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Next Case 9: 找不到指定資源\n'</span> <span class="o">+</span> <span class="nx">demoCase9</span><span class="p">);</span>
+    <span class="nx">demoCase9</span><span class="p">();</span>
+
+    <span class="nx">alert</span><span class="p">(</span><span class="s1">'End.'</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="kd">function</span>
+<span class="nx">demoCase6</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 6: 新增資源 (POST)</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'post'</span><span class="p">;</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="s1">'abc=123&amp;def=567'</span><span class="p">;</span>
+    <span class="nx">canvas</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">).</span><span class="nx">responseText</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span>
+<span class="nx">demoCase7</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 7: 更新資源 (PUT)</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'put'</span><span class="p">;</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="s1">'abc=764'</span><span class="p">;</span>
+    <span class="nx">canvas</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">).</span><span class="nx">responseText</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span>
+<span class="nx">demoCase8</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 8: 刪除資源 (DELETE)</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'delete'</span><span class="p">;</span>
+    <span class="nx">canvas</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">).</span><span class="nx">responseText</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span>
+<span class="nx">demoCase9</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 9: 找不到指定資源</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">mockUrl</span> <span class="o">+</span> <span class="s1">'xyz'</span><span class="p">;</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'get'</span><span class="p">;</span>
+    <span class="nx">options</span><span class="p">.</span><span class="nx">complete</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">xhr</span><span class="p">,</span> <span class="nx">statusText</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">alert</span><span class="p">(</span><span class="s1">'Status code: '</span> <span class="o">+</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">status</span><span class="p">);</span>
+    <span class="p">};</span>
+    <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">div</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"canvas"</span> <span class="nx">style</span><span class="o">=</span><span class="s2">"width:500;height:300;border:2px solid black"</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span>
+</code></pre>
+
+
+<ul>
+<li>Case 6: 新增資源 (POST)<br/>
+<pre class="language-text">
+options.type = 'post';
+options.data = 'abc=123&def=567';
+canvas.html( $.ajax(options).responseText );
+</pre>
+</li>
+
+<li>Case 7: 更新資源 (PUT)<br/>
+<pre class="language-text">
+options.type = 'put';
+options.data = 'abc=764';
+canvas.html( $.ajax(options).responseText );
+</pre>
+</li>
+
+<li>Case 8: 刪除資源 (DELETE)<br/>
+<pre class="language-text">
+options.type = 'delete';
+canvas.html( $.ajax(options).responseText );
+</pre>
+</li>
+
+<li>Case 9: 找不到指定資源<br/>
+<pre class="language-text">
+options.url = mockUrl + 'xyz';
+options.type = 'get';
+options.complete = function(xhr, statusText) {
+    alert('Status code: ' + xhr.status);
+};
+$.ajax(options);
+</pre>
+</li>
+</ul>
+
+<p>
+RESTful 示範到此結束，Enjoy RESTful.
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E4%BB%8B%E7%B4%B9.html">index.php - CommonGateway 介紹</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10568163.html">http://blog.roodo.com/rocksaying/archives/10568163.html</a></div>

@@ -1,0 +1,299 @@
+---
+title: XDG規範概念說明
+category: computer
+old-category: 電腦技術
+tags: [gnome,xdg,freedesktop]
+---
+<p>近年的 Linux 桌面環境，處理桌面應用程式選單與項目，依循 FreeDesktop 規格:
+</p>
+
+<ul>
+    <li><a href="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a> </li>
+    <li><a href="http://standards.freedesktop.org/menu-spec/menu-spec-latest.html">Desktop Menu Specification</a> </li>
+    <li><a href="http://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html">Desktop Entry Specification</a> </li>
+    
+</ul>
+
+<p>XDG Menu 支援樹狀選單結構 (menu tree)，樹狀選單的每個節點，都允許包含多個分類項目(category)。選單的葉子則是應用軟體(application)，它們與分類項目連結。選單結構描述於 .menu 文件中，選單內容描述於 .directory 文件，應用軟體的內容描述於 .desktop 文件。
+</p>
+<p>使用關係: .menu -&gt; .directory -&gt; .desktop
+</p>
+
+<!--more-->
+<h5>符號定義</h5>
+
+<h6>.menu:
+</h6>
+
+<ul> 
+ <li>$XDG_CONFIG_DIRS=/etc/xdg</li>
+ 
+ <li>$XDG_CONFIG_DIRS/menus/${XDG_MENU_PREFIX}applications.menu<br/>
+    main application menu layout.</li>
+
+ <li>$XDG_CONFIG_DIRS/menus/applications-merged/*.menu<br/>
+    third parties may add new &lt;Menu&gt; files in this location to create their own sub-menus.</li>
+    
+ <li>$HOME/.config/menus/applications-merged/*.menu</li>
+</ul>
+
+
+<h6>.directory:
+</h6>
+
+<ul>
+ <li>$XDG_DATA_DIRS=/usr/share</li>
+
+ <li>$XDG_DATA_DIRS/desktop-directories/</li>
+ 
+ <li>$HOME/.local/share/desktop-directories/</li>
+</ul>
+
+<h6>.desktop:
+</h6>
+
+<ul>
+
+ <li>$XDG_DATA_DIRS=/usr/share</li>
+
+ <li>$XDG_DATA_DIRS/applications/</li>
+
+ <li>$HOME/.local/share/applications/</li>
+
+</ul>
+
+
+<h5>文件結構與內容
+</h5>
+
+<h6>.menu 描述選單結構:
+</h6>
+
+<pre class="language-text">
+    \-+menu1\categories:a,b
+     |      +submenu1-1\categories:c
+     |
+     +memu2\categories:d
+     |
+     +menu3\categories:c,e
+</pre>
+
+
+<h6>.directory 描述選單內容:
+</h6>
+
+<p>menu1.directory:
+</p>
+
+<pre class="language-text">
+[Desktop Entry]
+Name=附屬應用軟體
+Type=Directory
+</pre>
+
+<p>submenu1-1.directory:
+</p>
+
+<pre class="language-text">
+[Desktop Entry]
+Name=附屬遊戲
+Type=Directory
+</pre>
+
+<p>menu2.directory:
+</p>
+
+<pre class="language-text">
+[Desktop Entry]
+Name=系統管理
+Type=Directory
+</pre>
+
+<p>menu3.directory:
+</p>
+
+<pre class="language-text">
+[Desktop Entry]
+Name=遊戲
+Type=Directory
+</pre>
+
+
+<h6>.desktop 描述應用軟體內容:
+</h6>
+
+<p>xterm.desktop
+</p>
+<pre class="language-text">
+[Desktop Entry]
+Name=終端機
+Type=Application
+Categories=a;d
+</pre>
+
+<p>gedit.desktop
+</p>
+<pre class="language-text">
+[Desktop Entry]
+Name=文字編輯
+Type=Application
+Categories=b
+</pre>
+
+<p>mine.desktop
+</p>
+<pre class="language-text">
+[Desktop Entry]
+Name=踩地雷
+Type=Application
+Categories=c
+</pre>
+
+<p>wow.desktop
+</p>
+<pre class="language-text">
+[Desktop Entry]
+Name=山口山
+Type=Application
+Categories=e
+</pre>
+
+<p>輪廓</p>
+<pre class="language-text">
+    xterm.desktop: {
+      Name: 終端機
+      Categories: a,d
+    }
+    gedit.desktop: {
+      Name: 文字編輯
+      Categories: b
+    }
+    mine.desktop: {
+      Name: 踩地雷
+      Categories: c
+    }
+    wow.desktop: {
+      Name: 山口山
+      Categories: e
+    }
+</pre>
+
+<p>結構與內容結合後，呈現在 user 面前的將是:
+</p>
+
+<pre class="language-text">
+    \-+附屬應用軟體\終端機
+     |             +文字編輯
+     |             +附屬遊戲\踩地雷
+     |
+     +系統管理\終端機
+     |
+     +遊戲\踩地雷
+          +山口山
+</pre>
+
+<h5>相關工具:
+</h5>
+
+<h6>xdg-desktop-menu
+</h6>
+
+<pre class="language-text">
+xdg-desktop-menu install directory-file desktop-file
+
+xdg-desktop-menu install --mode user directory-file desktop-file
+
+# 大批處理
+xdg-desktop-menu install --noupdate directory-file desktop-file
+xdg-desktop-menu install --noupdate directory-file desktop-file
+xdg-desktop-menu install --forceupdate
+</pre>
+
+<h6>update-desktop-database
+</h6>
+
+<p>從 xdg-desktop-menu 的源碼來看，只有安裝 system 項目(system mode)才會呼叫 update-desktop-database。
+</p>
+
+<h6>PyXDG
+</h6>
+
+<p>http://www.freedesktop.org/wiki/Software/pyxdg
+</p>
+
+<h5>客製化部署方式:
+</h5>
+
+<h6>利用 xdg-desktop-database ，安裝共同項目。
+</h6>   
+   <ul>
+    <li>Directory-file 將被複製到 /usr/local/share/desktop-directories</li>
+    <li>Desktop-file 將被複製到 /usr/local/share/applications</li>
+    <li>在 /etc/xdg/menus/applications-merged 目錄中，產生對應 Directory-file 的
+          Menu-file，使用 &lt;include&gt; 標記 Desktop-file 。</li>
+   </ul>
+
+<h6>利用 xdg-desktop-database ，安裝個別使用者項目。
+</h6>
+
+    <ul>
+    <li>Directory-file 將被複製到 $HOME/.local/share/desktop-directories</li>
+    <li>Desktop-file 將被複製到 $HOME/.local/share/applications</li>
+    <li>在 $HOME/.config/menus/applications-merged 目錄中，產生對應 Directory-file 的
+          Menu-file，使用 &lt;include&gt; 標記 Desktop-file 。</li>
+    </ul>
+
+<p>採用上述處理策略時，Desktop-file 中的 Categories 無作用。
+Submenu 的應用程式項目將完全依據 Menu-file 的 &lt;include&gt; 清單。
+</p>
+
+
+<h6>單一 Menu-file 範例
+</h6>
+
+<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"
+    "http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd"&gt;</span>
+<span class="c">&lt;!-- Do not edit manually - generated and managed by xdg-desktop-menu --&gt;</span>
+<span class="nt">&lt;Menu&gt;</span>
+    <span class="nt">&lt;Name&gt;</span>Applications<span class="nt">&lt;/Name&gt;</span>
+    <span class="nt">&lt;Menu&gt;</span>
+        <span class="nt">&lt;Name&gt;</span>menu1<span class="nt">&lt;/Name&gt;</span>
+        <span class="nt">&lt;Directory&gt;</span>menu1.directory<span class="nt">&lt;/Directory&gt;</span>
+        <span class="nt">&lt;Include&gt;</span>
+            <span class="nt">&lt;Filename&gt;</span>xterm.desktop<span class="nt">&lt;/Filename&gt;</span>
+            <span class="nt">&lt;Filename&gt;</span>gedit.desktop<span class="nt">&lt;/Filename&gt;</span>
+        <span class="nt">&lt;/Include&gt;</span>
+    <span class="nt">&lt;/Menu&gt;</span>
+<span class="nt">&lt;/Menu&gt;</span>
+</code></pre>
+
+
+<h6>新增與更新 Menu-file 內容時有 bug。
+</h6>
+
+<p>更新 Submenu 的顯示文字時，有時顯示的是 Menu-file 的 Name 內容，
+而忽略 Directory-file 中的 Name 欄位(與本地化文字)。
+可能是 race-condition，參考: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=365902
+</p>
+
+<blockquote>
+In my opinion, the issue is a race-condition between menu-xdg writing
+the new menus and gnome-panel reading it. Since updating the menus is
+something that will occur independently of menu-xdg, gnome-panel should
+be made more robust. 
+</blockquote>
+
+<p>xdg-desktop-menu 在 uninstall 時有些疏失(Moblin與UNR皆有):
+</p>
+
+<ol>
+ <li>移除 Desktop-file 時，不會移除 Menu-file 中的 include 內容。</li>
+<li> 即使 Submenu 下仍有其他 Desktop-file ，它還是會移除 Directory-file 。
+    與文件說明不符: 
+    A submenu and the associated directory file is only removed when the 
+    submenu no longer contains any menu entries.
+</li>
+ <li>移除 Directory-file 時，不會移除對應的 Menu-file。所以選單上仍然會出現這個
+     Submenu 與 include 的 Desktop，並顯示未經 Directory-file 修飾的名稱。
+ </li>
+</ol><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12889415.html">http://blog.roodo.com/rocksaying/archives/12889415.html</a></div>

@@ -1,0 +1,114 @@
+---
+title: PHP 5.3/6 新增功能 - Late Static Bindings
+category: programming
+old-category: PHP
+tags: [late static bindings,PHP5.3]
+---
+<p>
+PHP5.3/6.0 新增<a href="http://tw2.php.net/manual/en/language.oop5.late-static-bindings.php">延後靜態繫結(late static bindings)</a>功能。
+此功能由關鍵字 <dfn>static</dfn> 實現，係對照 <dfn>self</dfn> 之功能而出現。
+</p>
+<p>
+<dfn>self</dfn> 關鍵字採用儘早靜態繫結策略，PHP 在解譯語法時，就直接將 <code>self</code> 繫結到它所在的類別。<dfn>static</dfn> 關鍵字採用延後靜態繫結(late static bindings)策略，要等到執行到那一段敘述時， PHP 才會根據調用者所屬類別來設定 <code>static</code> 所代表的類別。
+</p>
+
+<!--more-->
+<h4>
+Static 範例
+</h4>
+<p>
+在此例中，PHP 解譯時就設定 Class1 中的 self 等於 Class1 ，故將取出 Class1::$text 之值印出。 PHP 執行到 <code>Class4::foo()</code> 時，因為是透過 Class4 調用 foo() ，
+所以設定 Class3 中的 static 等於 Class4 。故將取出 Class4::$text 之值印出。
+</p>
+<p>
+<a href="http://tw2.php.net/manual/en/function.get-called-class.php">get_called_class()</a> 是 PHP 5.3 新增的函數，配合此函數更容易看出 self 與 static 的差異。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Class1</span> <span class="p">{</span>
+    <span class="c1">// fullname: Class1::$text
+</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class1'</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nx">self</span><span class="o">::</span><span class="nv">$text</span> <span class="o">.</span> <span class="s2">", "</span> <span class="o">.</span> <span class="nb">get_called_class</span><span class="p">()</span> <span class="o">.</span> <span class="s2">" called in</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Class2</span> <span class="k">extends</span> <span class="nx">Class1</span> <span class="p">{</span>
+    <span class="c1">// fullname: Class2::$text
+</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class2'</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">Class2</span><span class="o">::</span><span class="na">foo</span><span class="p">();</span>
+
+<span class="k">class</span> <span class="nc">Class3</span> <span class="p">{</span>
+    <span class="c1">// fullname: Class3::$text
+</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class3'</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="k">static</span><span class="o">::</span><span class="nv">$text</span> <span class="o">.</span> <span class="s2">", "</span> <span class="o">.</span> <span class="nb">get_called_class</span><span class="p">()</span> <span class="o">.</span> <span class="s2">" called in</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Class4</span> <span class="k">extends</span> <span class="nx">Class3</span> <span class="p">{</span>
+    <span class="c1">// fullname: Class4::$text
+</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class4'</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">Class4</span><span class="o">::</span><span class="na">foo</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+請注意第6行是用 self ；第21行則是用 static 。
+</p>
+<pre class="language-text">
+text in class1, Class2 called in
+text in class4, Class4 called in
+</pre>
+<p>
+這時要注意成員的存取屬性不可以是 private 。
+在此例中，如果 Class4::$text 設為 private ，則 <code>Class4::foo()</code> 會擲出試圖存取其他類別私有成員的錯誤。
+因為對 PHP 而言，它實際上是調用 <code>Class3::foo()</code> 去讀取 <code>Class4::$text</code> 之值，並不是同一個類別的成員互相存取。
+</p>
+
+
+<h4>
+forward_static_call()
+</h4>
+<p>
+配合 <dfn>Late static bindings</dfn> ，PHP 新增了 <code><a href="http://tw2.php.net/manual/en/function.forward-static-call.php">forward_static_call()</a> / forward_static_call_array()</code> 函數以補足 <code>call_user_func() / call_user_func_array() </code>的不足。
+</p>
+<p>
+<code>forward_static_call()</code> 只能在類別定義中使用，所以 PHP 可以根據它所在的類別，決定 <code>static</code> 將繫結到哪個類別上。
+而 <code>call_user_func()</code> 可以在任何場所使用，它不帶有所屬類別的資訊，所以 PHP 無法動態繫結 <code>static</code> 所指涉的類別。
+在此情形下， PHP 總是把 <code>static</code> 繫結到 <code>call_user_func()</code> 所調用的類別上。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Class3</span> <span class="p">{</span>
+    <span class="c1">// fullname: Class3::$text
+</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class3'</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="k">static</span><span class="o">::</span><span class="nv">$text</span> <span class="o">.</span> <span class="s2">", "</span> <span class="o">.</span> <span class="nb">get_called_class</span><span class="p">()</span> <span class="o">.</span> <span class="s2">" called in</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Class5</span> <span class="k">extends</span> <span class="nx">Class3</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">callFoo</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nb">forward_static_call</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'Class3'</span><span class="p">,</span> <span class="s1">'foo'</span><span class="p">));</span> <span class="c1">//Class5 called.
+</span>        <span class="nb">call_user_func</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'Class3'</span><span class="p">,</span> <span class="s1">'foo'</span><span class="p">));</span> <span class="c1">//Class3 called.
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">Class5</span><span class="o">::</span><span class="na">callFoo</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<pre class="language-text">
+text in class3, Class5 called in
+text in class3, Class3 called in
+</pre>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20Closures%2C%20const%2C%20and%20others.html">PHP 5.3/6 新增功能 - Closures, const, and others</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10796755.html">http://blog.roodo.com/rocksaying/archives/10796755.html</a></div>

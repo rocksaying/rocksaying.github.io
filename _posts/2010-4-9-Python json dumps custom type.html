@@ -1,0 +1,189 @@
+---
+title: Python json dumps custom type
+category: programming
+old-category: Programming
+tags: [json,python]
+---
+<p>
+使用 <code>json.dumps()</code> 將個體轉換成 JSON 文件時，Python json 模組可以自行處理絕大部份的 Python 內建型別資料，列表請見 <a href="http://docs.python.org/library/json.html#encoders-and-decoders">Performs the following translations in decoding by default.</a>。但是當轉換的個體為自定型別，或者是容器中包含自定型別資料時，你就必須指定 <dfn>default</dfn> 或 <dfn>cls</dfn> 鍵值參數，指示 json.dumps() 如何轉換那些自定型別資料。
+</p>
+
+<!--more-->
+<h4>
+default keyword argument
+</h4>
+<p>
+以 <dfn>default</dfn> 鍵值參數指定自定型別資料的序列化函數或方法。該函數或方法必須接受一個參數。
+</p>
+<p>
+當你指定 <dfn>default</dfn> 鍵值參數時，json.dumps() 仍將使用預設的 <dfn>json.JSONEncoder</dfn> 擷取與轉換資料內容。但是當資料內容的型別是 json.JSONEncoder 所不支援的自定型別時，它就會將這個資料丟給 <dfn>default</dfn> 指定的方法處理。
+</p>
+
+<h4>
+cls keyword argument
+</h4>
+<p>
+另一種處理自定型別轉換動作的方式是使用 <dfn>cls</dfn> 鍵值參數。<dfn>cls</dfn> 鍵值參數必須指定一個以 <dfn>json.JSONEncoder</dfn> 為基礎類別的子類別，而且至少應覆寫 <dfn>default</dfn> 方法。
+</p>
+<p>
+當你指定 <dfn>cls</dfn> 鍵值參數，json.dumps() 將直接使用你指定的類別處理資料轉換動作。
+</p>
+<p>
+大多數情形，我們只需要指定鍵值參數 <dfn>default</dfn> 為我們自定的序列化方法即可。當你想要改變 Python json 模組的預設序列化行為時，你才需要使用鍵值參數 <dfn>cls</dfn> 自定 JSONEncoder 子類別的方式。
+</p>
+
+
+<h4>
+來源個體的處理策略
+</h4>
+<h5>
+容器
+</h5>
+<p>
+容器係指 Python 內建型別中的 <dfn>list</dfn>, <dfn>tuple</dfn>, <dfn>dict</dfn> 。json.dumps() 有能力一一取出容器中的元素，並進一步轉換元素的內容。但若容器中具有自定型別的元素，則你至少要以 <dfn>default</dfn> 指定自定的序列化方法，否則它將擲出 <dfn>TypeError</dfn> 。
+</p>
+
+<pre class="highlight"><code># encoding: utf-8
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+import json
+
+d = {
+    'a': 1,
+    'b': 'b',
+    'list': [1,2,3],
+    'dict': {'x':1, 'y':2},
+    'tuple': (3, 'a')
+}
+
+print json.dumps(d)
+# 容器的元素皆為 Python 內建型別，json.dumps() 可以自行處理。
+
+class T1(object):
+    def __init__(self, value):
+        self.value = value
+
+d = {
+    'a': T1(1),  # 容器內的元素，有一個是自定型別
+    'b': 'b',
+    'list': [1,2,3],
+    'dict': {'x':1, 'y':2},
+    'tuple': (3, 'a')
+}
+
+try:
+    print json.dumps(d)
+except TypeError, err:
+    print str(err)
+#TypeError: &lt;__main__.T1 object at 0x7fd6ffa7ee50&gt; is not JSON serializable
+
+# 1. 使用自定的序列化函數
+def my_json_encode(o):
+    #print type(o)
+    if isinstance(o, T1):
+        return o.value
+    return json.JSONEncoder.default(self, obj)
+
+print json.dumps(d, default=my_json_encode)
+# json 模組會走訪容器的每個元素，當該元素的資料型態是 json.JSONEncoder 不認得的
+# 資料型態時，該元素才會被傳遞給 default 參數指示的序列化函數處理。
+# 在此例中， d.a 欄位之型態為自定類別 T1 ，故 d.a 將會被傳給 my_json_encode()。
+
+# 2. 使用自定的編碼類別
+class my_json_encoder(json.JSONEncoder):
+    def default(self, o):
+        return my_json_encode(o)
+
+print json.dumps(d, cls=my_json_encoder)
+
+</code></pre>
+
+
+<h5>
+自定型別個體
+</h5>
+<p>
+當你直接將一個自定型別個體交給 json.dumps() 時，你必須指定 <dfn>default</dfn> 或 <dfn>cls</dfn> 鍵值參數。因為 json.dumps() 預設使用的 <dfn>json.JSONEncoder</dfn> 類別不會處理自定型別，若你並未指定任何序列化方法或編碼類別時，它將直接擲出 <dfn>TypeError</dfn> 。
+</p>
+<p>
+下列範例利用 Python 的名稱空間能力，將自定型別與搭配的 JSONEncoder 編碼類別放在一起(sample2.py)。而使用者放在另一個源碼文件(sample3.py)。
+</p>
+
+<pre class="highlight"><code># encoding: utf-8
+'''
+sample2.py
+'''
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+import json
+
+class C(object):
+    def __init__(self):
+        self.a = 1
+        self.b = 'b'
+        self.list = [1,2,3]
+        self.dict = {'x': 1, 'y': 2}
+        self.tuple = (3, 'a')
+    
+    def json_serialize(self):
+        '''
+        回傳一個 json.JSONEncoder 認得的內容。
+        一般情形，會把 object 轉換成 dict 。
+        '''
+        result = {
+            'a': self.a,
+            'b': self.b,
+            'list': self.list,
+            'dict': self.dict,
+            'tuple': self.tuple
+        }
+        return result        
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        '''
+        回傳一個 json.JSONEncoder 認得的內容。
+        一般情形，會把 object 轉換成 dict 。
+        '''
+        result = {
+            'a': o.a,
+            'b': o.b,
+            'list': o.list,
+            'dict': o.dict,
+            'tuple': o.tuple
+        }
+        return result        
+
+</code></pre>
+
+
+<pre class="highlight"><code># encoding: utf-8
+'''
+sample3.py
+'''
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+import json
+
+import sample2
+
+if __name__ == '__main__':
+    d = sample2.C()
+    #print json.dumps(d)
+    #TypeError: &lt;__main__.C object at 0x7f5c1db0ed50&gt; is not JSON serializable
+
+    # 1. by default
+    print json.dumps(d, default=sample2.C.json_serialize)
+    
+    # 2. by cls; 利用名稱空間，區分不同模組的 JSONEncoder。
+    print json.dumps(d, cls=sample2.JSONEncoder)
+
+</code></pre>
+
+<p>
+由於 <var>d</var> 本身的資料型態就是 json.JSONEncoder 不認得的，所以它會直接把 <var>d</var> 傳給 C.json_serializer() 。附帶一提，在此你必須寫成 <code> default=C.json_serializer</code>，不能寫 <code>default=d.json_serializer</code>。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12153263.html">http://blog.roodo.com/rocksaying/archives/12153263.html</a></div>

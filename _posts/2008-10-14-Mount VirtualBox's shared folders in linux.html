@@ -1,0 +1,82 @@
+---
+title: Mount VirtualBox's shared folders in linux
+category: computer
+old-category: 電腦技術
+tags: [linux,virtualbox,vm]
+---
+<div class="tags" style="display:none">Tags: linux virtualbox vm</div>
+
+<p>
+日前我在 VirtualBox 配置的虛擬機器上安裝 Linux 系統，並設定 host 主機的幾個共用目錄做為 Shared folder。不過在掛載時出了些狀況。
+</p>
+<pre class="language-text">
+狀況:
+mount -t vboxsf workspace /mnt/vbox/workspace
+
+錯誤訊息:
+/sbin/mount.vboxsf: mounting failed with the error: Protocol error
+</pre>
+
+<!--more-->
+<p>
+後來我是在《<a href="http://www.virtualbox.org/ticket/928">Mounting share directory on Linux host result in Protocol error if default share name is used</a>》這篇討論中找到答案。請看 frank 在該討論中的回應內容:
+</p>
+<blockquote>
+<cite>05/27/08 09:44:50 changed by frank:</cite>
+<br/>
+
+I don't think this is a bug in VirtualBox. There is a known issue with Linux mount: If there exists are directory or file of the same name as your host share then mount expands the full path of that file/directory and passed this expanded name as network share to the mount.vboxsf command which obviously will fail since that guest path is not known to the host. Try to use mount.vboxsf directly (this will work) for such corner cases.
+</blockquote>
+
+<h5>
+解決方案
+</h5>
+
+<dl>
+
+<dt>
+1.直接執行 mount.vboxsf ，而不透過 mount 調用。
+</dt>
+<dd>
+<pre class="language-text">
+錯誤:  mount -t vboxsf workspace /mnt/vbox/workspace
+正確:  mount.vboxsf workspace /mnt/vbox/workspace
+</pre>
+</dd>
+
+<dt>
+2. 設定 /etc/fstab .
+</dt>
+<dd>
+<pre class="language-text">
+workspace   /mnt/vbox/workspace vboxsf  rw  0  0
+</pre>
+<p>
+在系統啟動時，你會看到 mount.vboxsf 用法提示訊息 (usage message)，但是共享資料夾仍然成功被掛載了。若你寫成:
+</p>
+<pre class="language-text">
+workspace   /mnt/vbox/workspace vboxsf  rw,noauto  0  0
+</pre>
+<p>
+它在啟動時仍然可用。然而，當你輸入指令 '<code>mount workspace</code>' 時，將會失敗。指令 mount.vboxsf 會告訴你不存在 'noauto' 選項，故共享資料夾不會被掛載。
+</p>
+</dd>
+
+<dt>
+3. 修改 /etc/rc.d/rc.vboxvfs
+</dt>
+<dd>
+<p>
+將 <code>mount -a -t vboxsf</code> 改成你自定的內容, 例如:
+</p>
+<pre class="language-text">
+# Add this script: /etc/rc.d/rc.vbox-mount
+mount.vboxsf workspace /mnt/vbox/workspace
+
+
+# Insert into /etc/rc.d/rc.vboxvfs
+if [ -x /etc/rc.d/rc.vbox-mount ]; then
+    . /etc/rc.d/rc.vbox-mount
+fi
+</pre>
+</dd><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/7374721.html">http://blog.roodo.com/rocksaying/archives/7374721.html</a></div>

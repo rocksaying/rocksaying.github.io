@@ -1,0 +1,90 @@
+---
+title: 關於分割程式功能以及 mix-in 和 include
+category: programming
+old-category: PHP
+tags: [php,reflection,mix-in,include]
+---
+<div class="tags" style="display:none">Tags: php reflection mix-in include</div>
+<blockquote>
+最近碰到一個分割程式功能的問題，不得已必須用到反映的功能，寫了一個簡單的抽象插件類別
+http://blog.pixnet.net/HACGIS/post/15612808。
+不知道你有沒有更好的解法？
+<cite><a href="{{ site.baseurl }}/archives/2007/%E4%BB%80%E9%BA%BC%E6%98%AF%20Reflection%20%EF%BC%9F.html#comment-16043575">tokimeki</a></cite>
+</blockquote>
+
+<p>
+關於這個問題，我是用所謂「混成(mix-in)」的概念實踐。先前我寫過2篇:
+<a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%E4%B9%8B%E5%8F%AF%E8%A1%8C%E6%80%A7.html">PHP 實踐 mix-in 概念</a>、<a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%20part%202%20-%20MixableClass.html">PHP 實踐 mix-in 概念 part 2</a>。
+</p>
+
+<p>
+另外一位網友是用 <code>include</code> ，參考:
+<a href="http://lp81sam.spaces.live.com/blog/cns!FE9AB5CD84013FC2!324.entry">mix-in?</a>。嚴格來說那不是 mix-n ，稍後說明。這有3個缺點。
+</p>
+
+<!--more-->
+<p>
+第一，因為 <code>include</code> 會進行檔案開啟動作，當你大量使用這技巧時，將會降低效能。
+</p>
+
+<p>
+第二，一個小小的語法缺點，程式外觀不甚雅觀。例如:
+</p>
+<pre class="highlight"><code>class A {
+  var $name = 'world';
+  function say() {
+    include 'plugin/hello.php';
+  }
+
+  include 'plugin/otherMethods.php';
+}
+
+--
+// plugin/hello.php
+echo "Hello, $this-&gt;name";
+
+--
+// plugin/otherMethods.php
+public function bye() {
+  echo "Goodbye, $this-&gt;name";
+}
+--
+</code></pre>
+
+<p>
+當然，這不算什麼大缺點。但從動態性來說，卻可以一眼看出問題。稍後說明。
+</p>
+
+<p>
+第三，也是最重要的一點：嚴格來說它不具動態性，不算混成(mix-in)。
+</p>
+<p>
+混成(mix-in)的特點是「由外而內的重構」。你要混入新方法的程式碼寫在目標類別定義之外。但用 <code>include</code> 時，你要把它 (也就是 '<code>include xxx</code>' 的程式碼) 寫在目標類別定義中。而且不能在運行時變更。
+</p>
+
+<p>
+使用混成(mix-in)添加新的行為時，我並不需要回頭修改目標類別的程式碼內容。而是在目標類別以外的地方做這件事。如下例，使用我之前實作的 <code>MixableClass</code>。
+</p>
+
+<h6>A.php</h6>
+<pre class="highlight"><code>class A extends MixableClass {
+  var $name = 'world';
+}
+</code></pre>
+
+
+<h6>others.php</h6>
+<pre class="highlight"><code>require_once 'A.php';
+function bye() {
+  echo "Goodbye, $this-&gt;name";
+}
+
+A::delegate('A', 'bye', 'bye');
+
+$a = new A;
+$a-&gt;bye();
+</code></pre>
+
+<p>
+透過混成，我不用回頭修改 A.php 這個源碼的內容，而是在別的地方做這件事。是「由外而內」的重構，所以說是 "mix-<em>in</em>"。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5751881.html">http://blog.roodo.com/rocksaying/archives/5751881.html</a></div>

@@ -1,0 +1,78 @@
+---
+title: 以 Apache proxy 與 rewrite modules 解決 Selenium Core 的運行限制
+category: programming
+old-category: Programming
+tags: [unit test,selenium]
+---
+<div class="tags" style="display:none">Tags: unit_test selenium</div>
+
+<p>
+在 Web 應用系統的開發工具中， <a href="http://selenium-core.openqa.org/">Selenium Core</a> 是一套相當著名的測試工具。它的特點是 "<em>直接在真實的瀏覽器中測試各項動作</em>" 。由於現行各家瀏覽器的實作狀況各有所異，所以這項特點可以真實反應 Web 應用系統對各家瀏覽器的相容性。也正由於它是直接在真實的瀏覽器上進行測試，所以它也不可避免地受瀏覽器的功能限制，其中最主要的限制就是 "Same origin policy"(相同來源政策)。
+</p> 
+<p>
+凡是 Ajax 的開發人員，對於 "<a href="http://en.wikipedia.org/wiki/Same_origin_policy">Same origin policy</a>" 一定不陌生。這是瀏覽器保護使用者資料的重要安全措施。而 Selenium Core 是一套以 JavaScript 實作的測試工具，所以也受 Same origin policy 限制。這就使得開發人員在使用 Selenium Core 測試 Web 應用系統時，必須要把 Selenium Core 安裝在 Web 應用系統的目錄之下，以符合瀏覽器的相同來源政策。如果 Selenium Core 和 Web 應用系統的來源不相同，瀏覽器就會回應 Selenium Core 沒有權限載入 Web 應用系統的頁面。如此一來也就無法進行測試工作了。
+</p>
+
+<!--more-->
+<h4>My case</h4>
+<p>
+基本上，我懶得在每個專案中都複製一份 Selenium Core 。另一方面，我在 Apache2/Win32 系統中，碰到疑似 Apache2/Win32 的 bug 。這個狀況是 Apache2/Win32 回傳給瀏覽器的 JavaScript source (.js) 的內容不正確，會有不正常的段落分隔。因為這個狀況導致我無法在公司的工作用電腦 (Apache2/Win32) 使用 Selenium Core。迫不得已，我必須把 Selenium Core 安裝在公司的開發測試用 Linux 主機上。不過，如果我必須把我做的每次小修改都再上傳到那台 Linux 主機上才能測試，實在浪費時間。所以我選擇透過 proxy 的方式，讓瀏覽器認為它是從相同的來源載入 Selenium Core 。
+</p>
+
+<ul>
+    <li>工作用電腦: Win32 系統，安裝 Apache2。主機名稱: rock.mycompany</li>
+    <li>測試用電腦: Linux 系統，安裝 Apache2。主機名稱: linuxtest.mycompany</li>
+    <li>Selenium Core 安裝於 linuxtest.mycompany/selenium_core/</li>
+    <li>專案 Working copy 位於 rock.mycompany/webap1/</li>
+    <li>專案 TestSuite copy 位於 linuxtest.mycompany/testSuite/webap1/</li>
+</ul>
+
+<p>
+原本，我應該要把 Selenium Core 各複製一份在 rock.mycompany/webap1/selenium/ 與 linuxtest.mycompany/testSuite/webap1/selenium/ 。不過我的狀況也如前述，我無法在 rock.mycompany 這台主機上載入 Selenium Core。所以我僅把 Selenium Core 安裝在 linuxtest.mycompany/selenium_core/ 。接著，我需要設定 Apache 的 proxy 和 rewrite  modules，藉此載入遠端的 Selenium Core 。 
+</p>
+
+<h4>Set proxy and rewrite rule</h4>
+<p>
+首先，我開啟 rock.mycompany 這台主機的 Apache 組態檔 httpd.conf 。先啟用 mod_proxy, mod_proxy_httpd, mod_rewrite 這3個 modules 。接著加上一行網址改寫規則，讓 rock.mycompany 的 Apache httpd 透過 proxy 機制去索取 linuxtest.mycompany 主機上的 Selenium Core 內容。
+</p>
+
+<pre class="highlight"><code>LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule rewrite_module modules/mod_rewrite.so
+
+
+# Begin Selenium Core rewrite rule
+
+RewriteEngine On
+
+RewriteRule  /selenium/(.+)$  http://linuxtest.mycompany/selenium_core/$1 [P]
+# To enable flag [P], you must set reverse proxy. 
+# See also: mod_proxy and mod_proxy_http
+
+# End Selenium Core rewrite rule
+
+</code></pre>
+
+
+<p>
+我的改寫規則是: 凡是存取 rock.mycompany 資源的 URL 中含有 '<code>/selenium/</code>' 路徑者，一律改寫為 '<code>http://linuxtset.mycompany/selenium_core/</code>'，並加上 <code>P</code> 旗標，要求 Apache httpd 透過 reverse proxy 機制讀入內容。
+</p>
+<p>
+由於是透過 reverse proxy 機制，所以瀏覽器端並不會改變資源的來源 URL。在瀏覽器眼中，它是從相同來源讀取 Web 應用系統和 Selenium Core 的內容。這點很重要。如果不透過 reverse proxy 讀入，則 Apache2 會將改寫後的 URL 以 HTTP 的 <code>Redirect</code> 指令告知瀏覽器，令瀏覽器改變資源的來源 URL 。這樣就會使 Web 應用系統與 Selenium Core 變成不同來源了。
+</p>
+
+<p>
+我的改寫規則相當寬鬆，不論是 rock.mycompany/webap1/selenium/ 還是 rock.mycompany/webap100/trunk/current/selenium/ ，都會被改寫成同一個 URL。所以我也就不需要複製多份 Selenium Core 。
+</p>
+
+<p>
+最後，除了應用在 Selenium Core 這套軟體上，這種 proxy + rewrite 的方法，也可以解決很多 Ajax 工具的 Same origin policy 限制。但是我必須提醒，水能載舟亦能覆舟。在使用這個方法前，請先了解 Apache 組態設定內容，同時 Web 主機有相對應的防火牆設定。否則請不要輕易地做這件事。
+</p>
+
+<h4>Reference</h4>
+<ul>
+    <li><a href="http://en.wikipedia.org/wiki/Same_origin_policy">Same origin policy</a></li>
+    <li><a href="http://selenium-core.openqa.org/usage.html">Installing Selenium Core</a></li>
+    <li><a href="http://httpd.apache.org/docs/2.2/mod/mod_proxy.html">Apache::mod_proxy</a></li>
+    <li><a href="http://httpd.apache.org/docs/2.2/mod/mod_rewrite.html">Apache::mod_rewrite</a></li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5627955.html">http://blog.roodo.com/rocksaying/archives/5627955.html</a></div>

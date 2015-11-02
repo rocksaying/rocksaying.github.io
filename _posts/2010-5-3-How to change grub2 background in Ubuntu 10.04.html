@@ -1,0 +1,34 @@
+---
+title: How to change grub2 background in Ubuntu 10.04
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,grub2,background]
+---
+<p>Ubuntu 10.04 採用 Grub2 作為啟動管理程式，同時也大幅改寫了設定文件的內容。這讓使用者更容易改變 Grub 的主題樣式(背景圖案與文字顏色)。
+</p>
+
+<p>Ubuntu 10.04 的 Grub2 主題設置文件是 <dfn>/etc/grub.d/05_debian_theme</dfn>。Ubuntu 10.04 大幅改寫了 05_debian_theme 的內容。預設情形，它會去尋找 <dfn>/usr/share/images/desktop-base/moreblue-orbit-grub.png</dfn> 作為 Grub 的背景圖案。一般使用者只要將背景圖檔複製為 <dfn>/usr/share/images/desktop-base/moreblue-orbit-grub.png</dfn> ，再執行 <code>sudo update-grub2</code> 即可。
+</p>
+
+<!--more-->
+<p>對於進階使用者， 05_debian_theme 提供了另一個使用 shell script 的途徑。它會去尋找 <dfn>/usr/share/desktop-base/grub_background.sh</dfn> ，採用其中的設定內容作為主題樣式。此一策略的優先權高於尋找 <dfn>/usr/share/images/desktop-base/moreblue-orbit-grub.png</dfn> 的策略。
+在 <dfn>grub_background.sh</dfn> 中，僅需設定下列項目:
+</p>
+
+<pre class="language-text">
+WALLPAPER="/your/background/image"  # 你的背景圖(background image)
+COLOR_NORMAL="white/black"          # Grub 畫面的 文字顏色/背景顏色 (text-color/background-color)
+COLOR_HIGHLIGHT="magenta/black"     # Grub 選擇項目的 文字顏色/背景顏色
+</pre>
+
+<p>背景圖檔的圖檔格式必須是 PNG 或 TGA 。其尺寸之建議大小是 640x480。如果你想要讓 Grub 背景圖的尺寸大小與桌面一致，可以修改 <dfn>/etc/default/grub</dfn> 文件中的 <var>GRUB_GFXMODE</var> 之值，調整 Grub 運行時的畫面解析度。預設是 640x480 。
+</p>
+
+<p>你可以自行繪製或上網下載其他人提供的背景圖，但要注意影像檔格式需儲存為 PNG 或  TGA 格式 (PNG 較普及，建議使用)。你也可以安裝 <dfn>grub2-splashimage</dfn> 套件，其中提供了一些適合用於 Grub 背景的圖檔。grub2-splashimage 的圖檔會被安裝在 /usr/share/images/grub 。
+</p>
+
+<p>當你改變 <dfn>/usr/share/images/desktop-base/moreblue-orbit-grub.png</dfn> 或 <dfn>grub_background.sh</dfn> 的設定內容後，都需要執行 <code>sudo update-grub2</code> ，才會生效。
+</p>
+
+<p>其他關於 Grub2 的使用內容，可參考 <a href="http://wiki.ubuntu-tw.org/index.php?title=Grub2#.E9.96.8B.E6.A9.9F.E5.BD.B1.E5.83.8F.E5.92.8C.E4.BD.88.E6.99.AF.E4.B8.BB.E9.A1.8C">Grub2 說明</a> 。但是關於背景主題的部份，不必照該文件的內容修改。因為 Ubuntu 10.04 的 <dfn>05_debian_theme</dfn> 已經提供更簡單的設置方式，即本文說明的方式。 grub2-splashimage 也不是必要的套件，它只是提供一些背景圖檔。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12302499.html">http://blog.roodo.com/rocksaying/archives/12302499.html</a></div>

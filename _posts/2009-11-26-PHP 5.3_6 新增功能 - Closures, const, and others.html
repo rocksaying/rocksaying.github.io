@@ -1,0 +1,402 @@
+---
+title: PHP 5.3/6 新增功能 - Closures, const, and others
+category: programming
+old-category: PHP
+tags: [PHP5.3,closure,anonymous function,const,nowdoc]
+---
+<p>
+PHP 5.3 <a href="http://tw2.php.net/manual/en/migration53.new-features.php">新增特性</a>列表與本部落格的系列文章:
+</p>
+<ul>
+    <li><a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20Namespace.html">
+    名稱空間 (Namespace)</a>
+    </li>
+
+    <li><a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20Late%20Static%20Bindings.html">
+    延遲靜態繫結 (Late Static Bindings)</a>
+    </li>
+
+    <li><a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20New%20magic%20methods.html">
+    新的魔術方法, __callStatic and __invoke.</a>
+    </li>
+
+    <li>標記跳躍, Support for jump labels (limited goto) has been added.
+    <br/>
+    就是 goto ，忘了它吧。
+    </li>
+
+    <li>HTTP 串流轉接器(HTTP stream wrapper) 現在將狀態碼 200 到 399 視為成功執行。我不曉得為什麼這會列在新功能中。這看來是為了改善 RESTful service 的支援。
+    </li>
+
+    <li>
+    支援巢狀的例外處理。
+    </li>
+
+    <li>
+    加入一個垃圾收集器，預設開啟。嗯... PHP 沒有垃圾收集功能嗎？Ok, 原本的垃圾回收機制清潔力不夠。
+目前大多數 PHP 程式架構是處於一次性消耗的無狀態環境下，基本上我們都假設程式跑完後行程就自動結束，而行程中配置的資源也會被作業系統回收。
+在這種情形下設計出來的 PHP 程式碼，直接搬到 application container 架構執行時，會出現資源佔用不放的問題。
+所以這功能應該是為了將來發展 PHP 的 application container 而強化的機制。
+    </li>
+
+    <li>閉包、匿名函數(native Closures)(Lambda/Anonymous functions)。
+    </li>
+
+    <li>新的即席文件語法(Nowdoc syntax)。
+    </li>
+
+    <li>
+    關鍵字 const 現在可用於類別定義之外。
+    </li>
+
+    <li>
+    三元運算子(?:)有縮寫形式。
+    </li>
+
+</ul>
+
+<p>
+關於 Closures (匿名函數), Const, Nowdoc 等新功能，將於本文中說明。
+</p>
+
+<!--more-->
+<h4>
+Const
+</h4>
+<p>
+Const 同樣是定義常數的語法，但以往只能用在類別定義中。PHP 5.3 起讓它也能用在類別定義之外。這讓我們可以有一致化的常數表達方式，以後我們可以不用 <code>define()</code> 的寫法。但是 <code>define()</code> 仍然有一件事是 <code>const</code> 做不到的，就是代入變數作為常數名稱。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// before PHP 5.3
+</span><span class="nb">define</span><span class="p">(</span><span class="s1">'CONST1'</span><span class="p">,</span> <span class="s1">'const value 1'</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span> <span class="nb">defined</span><span class="p">(</span><span class="s1">'CONST1'</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">echo</span> <span class="nx">CONST1</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="c1">// after PHP 5.3, you can use const
+</span><span class="k">const</span> <span class="no">CONST2</span> <span class="o">=</span> <span class="s1">'const value 2'</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span> <span class="nb">defined</span><span class="p">(</span><span class="s1">'CONST2'</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">echo</span> <span class="nx">CONST2</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="c1">//但是 define() 可以代入變數作為常數名稱。
+</span><span class="nv">$c</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="nb">define</span><span class="p">(</span><span class="s2">"CONST</span><span class="nv">$c</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"const value </span><span class="nv">$c</span><span class="s2">"</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span> <span class="nb">defined</span><span class="p">(</span><span class="s1">'CONST3'</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">echo</span> <span class="nx">CONST3</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+
+<h4>
+Nowdoc, 無跳脫處理的 Heredoc
+</h4>
+<p>
+<a href="http://tw2.php.net/manual/en/language.types.string.php#language.types.string.syntax.heredoc">Heredoc</a>，一般譯為「即席文件」，是一種表達跨行且預先縮排過的字串語法。它對字串中的跳脫字元與變數處理方式，等同雙引號(")字串。而 <a href="http://tw2.php.net/manual/en/language.types.string.php#language.types.string.syntax.nowdoc">Nowdoc</a> 雖然有一個新名稱，但說穿了就是單引號(')字串版的 Heredoc 。 Nowdoc 不會特別處理跳脫字元與變數，就只是將之視為一般字元。
+</p>
+<p>
+Nowdoc 的語法和 Heredoc 相似，差別在於起始的識別字要用單引號(')括起。為了強化表達力， PHP5.3 也建議大家使用 Heredoc 時，用雙引號(")括起起始的識別字。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$text</span> <span class="o">=</span> <span class="s1">'world'</span><span class="p">;</span>
+
+<span class="nv">$nowdoc</span> <span class="o">=</span> <span class="o">&lt;&lt;&lt;</span><span class="s1">'DOC1'</span>
+<span class="nx">Hello</span> <span class="nv">$text</span><span class="nx">\n</span>
+
+<span class="nx">DOC1</span><span class="p">;</span>
+
+<span class="nv">$heredoc</span> <span class="o">=</span> <span class="o">&lt;&lt;&lt;</span><span class="s2">"DOC2"</span>
+<span class="nx">Hello</span> <span class="nv">$text</span><span class="nx">\n</span>
+
+<span class="nx">DOC2</span><span class="p">;</span>
+
+<span class="k">echo</span> <span class="s2">"---- NOWDOC ----</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nv">$nowdoc</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s2">"---- HEREDOC ----</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nv">$heredoc</span><span class="p">;</span>
+<span class="k">echo</span> <span class="s2">"---- END ----</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+注意輸出結果， Nowdoc 會原原本本地顯示 <em>$text\n</em>。
+</p>
+<pre class="language-text">
+---- NOWDOC ----
+Hello $text\n
+---- HEREDOC ----
+Hello world
+
+---- END ----
+</pre>
+
+
+<h4>
+Shorthand Ternary
+</h4>
+<p>
+縮寫版的 <code>?:</code> 運算子。這是針對一個還算常見的程式碼形式所提供的縮寫法，它可以讓我們省略一個重複的表達式。我們三不五時會用到「當 a 為真時回傳 a ，否則回傳 b 」的式子，即 <code>a ? a : b</code> 。這個縮寫法可以省略「回傳a」的表達式，自動回傳第一個式子的值。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$a</span> <span class="o">=</span> <span class="s1">'123'</span><span class="p">;</span>
+<span class="nv">$b</span> <span class="o">=</span> <span class="s1">'456'</span><span class="p">;</span>
+
+<span class="nv">$c</span> <span class="o">=</span> <span class="nv">$a</span> <span class="o">?</span> <span class="nv">$a</span> <span class="o">:</span> <span class="nv">$b</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nv">$c</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="c1">//after PHP 5.3
+// (expr1) ? (expr2) : (expr3)
+// 當 expr2 省略時，PHP 自動以 expr1 代入。
+</span>
+<span class="nv">$c</span> <span class="o">=</span> <span class="nv">$a</span> <span class="o">?:</span> <span class="nv">$b</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nv">$c</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+
+<h4>
+Closures
+</h4>
+<p>
+Closures ，數學常用譯名為「閉包」或「閉鎖」，我戲稱為「封絕」。不過我個人更常使用「<a href="http://tw2.php.net/manual/en/functions.anonymous.php">匿名函數(Anonymous function)</a>」這一詞彙。各位可以看看我先前發布的<a href="http://search.blog.roodo.com/index.php?q=Anonymous+function&blog=rocksaying&sort=c">匿名函數相關文章</a>。
+</p>
+<p>
+以往 PHP 可以使用 <a href="http://tw2.php.net/manual/en/function.create-function.php">create_function()</a> 建立一個匿名函數，但是寫法非常不方便，基本上我們不會想用以前的方式來寫 PHP 的匿名函數，就算寫了也不一定有我們預期的結果。
+</p>
+<p>
+PHP 5.3 終於提供了一個更好的匿名函數語法，這個語法與 JavaScript 的語法一致，我想各位應該不會感到學習困難。<em>只有一點差異， JavaScript 的匿名函數將共享上層活動領域(scope)的變數；但是 PHP 的匿名函數則不會共享上層活動領域的變數，你必須使用 <code>use</code> 關鍵字將外層變數導入匿名函數內</em>。
+</p>
+
+<p>
+先來看一段 JavaScript 的寫法。
+</p>
+<pre class="highlight"><code><span class="c1">// JavaScript anonymous function</span>
+<span class="nx">i</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="nx">call</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">j</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span><span class="nx">i</span> <span class="o">+</span> <span class="nx">j</span><span class="p">);</span> <span class="c1">//共享外層的變數 i</span>
+<span class="p">}</span>
+
+<span class="nx">call</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+<span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">j</span><span class="p">){</span>
+    <span class="nx">print</span><span class="p">(</span><span class="nx">i</span> <span class="o">+</span> <span class="nx">j</span><span class="p">);</span>
+<span class="p">})(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre>
+
+
+<p>
+PHP 5.3 的寫法則是:
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// PHP anonymous function
+</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="nv">$call</span> <span class="o">=</span> <span class="k">function</span><span class="p">(</span><span class="nv">$j</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="nv">$i</span> <span class="o">+</span> <span class="nv">$j</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//Notice: Undefined variable: i
+</span><span class="p">};</span> <span class="c1">//注意結束的分號(;)
+</span>
+<span class="nv">$call</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+<span class="nv">$call</span> <span class="o">=</span> <span class="k">function</span><span class="p">(</span><span class="nv">$j</span><span class="p">)</span> <span class="k">use</span> <span class="p">(</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span><span class="c1">// use $i of outside
+</span>    <span class="k">echo</span> <span class="nv">$i</span> <span class="o">+</span> <span class="nv">$j</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="nv">$call</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+<span class="cm">/*PHP 不支持這種寫法
+(function($j) use ($i) {
+    echo $i + $j, "\n";
+})(2);
+*/</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<pre class="language-text">
+Notice: Undefined variable: i in anonymous_function.php on line 6
+2
+3
+</pre>
+
+<p>
+接下來示範的是一個可以讓使用者傳入匿名函數的程式。看過<a href="{{ site.baseurl }}/archives/2009/PHP%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html" class="bookname_notation">PHP的中介編程與反射能力示範</a>的人，應該會對下列程式碼感到似曾相識。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">Data</span> <span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$id</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$title</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="s1">'abc'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="c1">//  明確的型別宣告反而會錯誤... Orz
+//  public function each(callback $callback) { 
+</span>    <span class="k">public</span> <span class="k">function</span> <span class="nf">each</span><span class="p">(</span><span class="nv">$callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$rd</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$rd</span><span class="o">-&gt;</span><span class="na">getProperties</span><span class="p">()</span> <span class="k">as</span> <span class="nv">$property</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$key</span> <span class="o">=</span> <span class="nv">$property</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">();</span>
+            <span class="nv">$callback</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$key</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">;</span>
+
+<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">each</span><span class="p">(</span><span class="k">function</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">){</span>
+    <span class="k">echo</span> <span class="s2">"</span><span class="nv">$k</span><span class="s2"> = </span><span class="nv">$v</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">});</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+基本上， PHP 提供的函數中，只要是寫明 <var>$callback</var> 的，都可以用匿名函數作為參數。
+</p>
+<p>
+嚴格來說是 <code>callback</code> 型別的參數就可以用匿名函數。但目前為止(<span class="Onote">本文撰寫時最新版本為PHP 5.3.1</span>)似乎有一個 bug ，如果我將參數列的 <var>$callback</var> 宣告為 <code>callback</code> 型別，PHP 反而會擲出一個錯誤，抱怨我傳給它的是一個 Closure 實體而不是 callback 實體: <q>Catchable fatal error: Argument 1 passed to Data::each() must be an instance of callback, instance of Closure given.</q>。這是 PHP 從 Java 學到的缺點，型別紊亂。所幸 PHP 可以忽略參數的型別宣告，故而我們不必像 Java 程序員那樣精通如何把方形塞進圓洞的技巧。省略參數的型別宣告，會變得較美好。
+</p>
+
+<hr/>
+
+<h5>
+create_function 的潛規則
+</h5>
+<p>
+回覆 <a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20Closures%2C%20const%2C%20and%20others.html#comment-20222933">Chaosrx</a> 的內容。
+</p>
+
+<ol>
+<li>
+PHP 5.3 新增了一個內建類別，叫做 Closure 。 Closure 是真實存在的類別，不像 callback 只是文件上存在的類別(<span class="Onote">別問我為何 callback 不是內建類別，我也不知道</span>)。
+<br/>
+所有採用新式匿名函數語法建立的匿名函數，都是 Closure 的實例。所以宣告 <code>public function each(Closure $callback) {...}</code> 不會發生錯誤，這是很正常的。
+</li>
+<li>
+宣告 <code>public function each(Closure $callback) {...}</code> ，並不需要配合 <code>use Closure;</code>。
+<br/>
+事實上，你直接這樣寫的話，PHP 還會發出一個警告訊息，告訴你 <code>use Closure;</code> 沒有任何作用。因為你沒有定義任何一個叫做 Closure 的名稱空間。
+</li>
+<li>
+Chaosrx 看到的 sources ，一定在某處定義了名稱叫 Closure 的名稱空間，所以它才會寫 <code>use Closure;</code> 。
+<br/>
+注意，「use Closure」與「宣告函數的參數型態為 Closure」是不相干的。
+</li>
+
+<li>
+當你明確地宣告參數型態為 Closure 時，你只能傳遞新式語法建立的匿名函數，而不能傳舊式的 <code>create_function()</code> 建立的匿名函數。
+</li>
+</ol>
+
+<p>
+上述答覆的最後一點，牽涉到 PHP 處理 <code>create_function()</code> 的<em>潛規則</em>。
+</p>
+
+<p>
+首先，我們來看看新、舊兩種語法產生的匿名函數碰上 Closure 型態宣告時會發生什麼事？
+
+<script type="syntaxhighlighter" class="brush: php"><![CDATA[
+<?php
+function test1(Closure $f) {
+    $f();
+}
+
+test1( function(){
+    echo "new anonymous function\n";
+});
+
+test1( create_function('',
+    'echo "old anonymous function\n";'
+)); // Catchable fatal error!
+?>
+]]></script>
+
+<p>
+瞧，PHP 擲出錯誤了。它說我們用 <code>create_function()</code> (舊式匿名函數語法) 建立的東西並不是一個 Closure 的實例。
+</p>
+
+<p>
+那麼 create_function() 建立的是什麼東西？
+</p>
+<p>
+根據 PHP Manual 所說，是 string 。見鬼。我寫了十年PHP，從沒看過 'echo "hello";'() 可以執行。
+</p>
+
+<p>
+很顯然， <code>create_function()</code> 回傳的東西絕對不是單純的字串，它回傳的字串其實是匿名函數的名稱。事實上， PHP 建立了一個特殊的潛規則去處理 <code>create_function()</code> 回傳的字串。那個潛規則就是，所有 <code>create_function()</code> 建立的匿名函數，內部的函數名稱都是以 <code>"\0lambda_"</code> 為首，再接上編號；例如 <code>"\0lambda_1"</code>。<code>create_function()</code> 回傳的字串就是這個名稱。
+</p>
+<p>
+當 PHP 碰到 <code>$s();</code> 且 <var>$s</var> 為字串的敘述時，它會根據字串內容去查函數表。以 <code>"\0lambda_"</code> 為首的，自然就是 lambda 函數。
+</p>
+
+<p>
+當我們知道這個潛規則時，我們就可以玩一個非常有趣的把戲。如下所示範:
+</p>
+
+<script type="syntaxhighlighter" class="brush: php"><![CDATA[
+<?php
+function test2( $f ) {
+    $f();
+}
+
+test2( function(){
+    echo "new anonymous function\n";
+});
+
+// Create our first lambda, so it will be named "\0lambda_1".
+$lambda = create_function('',
+    'echo "old anonymous function\n";'
+);
+
+var_dump($lambda); //string(9) "lambda_1"
+
+test2( "\0lambda_1" ); //It works!
+
+?>
+]]></script>
+
+<p>
+只要我們能夠控制 <code>create_function()</code> 執行的順序，我們還可以玩隨機呼叫不同的 lambda 。
+</p>
+
+<script type="syntaxhighlighter" class="brush: php"><![CDATA[
+<?php
+
+$a = array(
+    'black',
+    'white',
+    'blue',
+    'red',
+    'green'
+);
+
+$lambda_base = create_function('', ''); //empty lambda
+
+preg_match('/\d+$/', $lambda_base, $m);
+$lambda_base = $m[0];
+
+foreach ($a as $c) {
+    create_function('',
+        'echo "paint ' . $c . '\n";'
+    );
+    //create lambda ($lambda_base + 1) to ($lambda_base + 5).
+}
+
+for ($i = 0; $i < 10; $i++) {
+    $n = rand($lambda_base + 1, $lambda_base + count($a) );
+    $lambda = "\0lambda_$n";
+    $lambda(); //every result is difference.
+}
+
+?>
+]]></script>
+
+<p>
+這個把戲看來有趣，其實用途不大。既然 PHP 5.3 正式提供了 Closure 類別，那麼 <code>create_function()</code> 的潛規則便沒有必要繼續存在。 PHP 應該早點將 <code>create_function()</code> 回傳的內容改成 Closure 的實例，才是正途。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/%E9%80%8F%E9%81%8E%20JavaScript%2CRuby%2CPHP%2CC%23%20%E8%AA%9E%E8%A8%80%EF%BC%8C%E7%90%86%E8%A7%A3%20Java%20%E7%9A%84%20Lambda%20%E8%AA%9E%E6%B3%95.html">透過 JavaScript,Ruby,PHP,C# 語言，理解 Java 的 Lambda 語法</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10833753.html">http://blog.roodo.com/rocksaying/archives/10833753.html</a></div>

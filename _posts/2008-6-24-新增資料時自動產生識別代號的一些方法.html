@@ -1,0 +1,110 @@
+---
+title: 新增資料時自動產生識別代號的一些方法
+category: programming
+old-category: SQL/Database
+tags: [sql,serial,max]
+---
+<div class="tags" style="display:none">Tags: sql serial max</div>
+<p>
+時常接觸資料庫應用的編程人員，應該都會遇到需要新增資料後自動產生一個識別代號(ID)的設計。但遺憾的是， SQL Standard 並沒有定義任何相關型態或函數。於是各種資料庫系統都有自己的一套做法。使得這種普遍的應用設計，帶來了一個可攜性陷阱。
+</p>
+
+<p>
+在不考慮使用資料庫系統特定方法的情況下，我長久以來習慣用 <code>MAX(id) + 1</code> 產生識別代號。至於 MySQL 的用戶，我都<strong>特別為它準備另一個 SQL Schema</strong>，改用 MySQL 特有的 <code>AUTO_INCREMENT</code> 欄位屬性。
+</p>
+
+<!--more-->
+<h4>MAX(id)</h4>
+<p>
+首先說明 <code>MAX(id)+1</code> 的方式。理論上，這個方式適用於各種 SQL 資料庫系統。至少我在 PostgreSQL, MS SQL Server 上一直這樣用。
+</p>
+<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="n">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+<span class="k">VALUES</span> <span class="p">(</span>
+	<span class="p">(</span><span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> <span class="k">MAX</span><span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">THEN</span> <span class="mi">1</span> <span class="k">ELSE</span> <span class="k">MAX</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="k">END</span> <span class="k">FROM</span> <span class="n">testid</span><span class="p">),</span>
+	<span class="s1">'abc'</span>
+<span class="p">);</span>
+</code></pre>
+
+<p>
+這個語法是用子查詢敘述呼叫 <code>MAX()</code> 找出目前 <var>id</var> 欄位的最大值再加1，然後將此子查詢的結果做為主查詢中插入 <var>id</var> 欄位的值。
+</p>
+<p>
+它的執行計劃一般是進入交易後，先鎖住主資料表，接著進行子查詢，掃描 index ，取得最大值加一後，完成資料的新增動作。理論上是在同一個交易中完成，所以沒有安全性問題。
+</p>
+<img src="http://blog.roodo.com/rocksaying/8c570f91.png" alt="Explain" />
+
+<p>
+此外，有一些額外的處理技巧可以省下 <code>CASE WHEN MAX(id) IS NULL</code> 這個 filter。例如建立資料表格後立即新增一筆 id 為 0 的空記錄 (或預設記錄)，那麼爾後新增資料時，便不需考慮 <code>MAX(id) IS NULL</code> 的情形。
+</p>
+
+
+<h4>資料庫系統的特定方法</h4>
+<p>
+使用 <code>MAX()</code> 的方法雖然在理論上適用各種 SQL 資料庫，實際上我也一直這樣用。但不久前我終於在 MySQL 上踢到鐵板...
+</p>
+<p>
+日前我寫了一個新的資料庫應用項目，一開始是連接 PostgreSQL ，接著移到測試機上改用 MySQL 。因為我忘了判斷資料庫系統，所以直接套用 <code>MAX(id)</code> 的新增資料方式。當場 MySQL 就丟給我一個錯誤訊息:
+</p>
+<blockquote>
+ErrorNo: 1093;
+You can't specify target table 'testid' for update in FROM clause
+</blockquote>
+
+<p>
+基本上，錯誤訊息表示 MySQL 不允許我在插入資料的主查詢中，再以子查詢去掃描資料表格的索引。我想這代表 MySQL 實作的資料鎖定能力有限，當它以寫入鎖鎖住資料表格後，就連子查詢讀取資料表格的動作也被排拒了。
+</p>
+
+<p>
+Anyway, 當我發覺 MySQL 的鎖定能力有限時，我也不打算在這上頭多花時間。反正我早己習慣<strong>為 MySQL 特別準備一套 SQL schema</strong>。不過，我還是列一下我常用的三種資料庫系統所提供的自動產生識別代號的功能。
+</p>
+
+<table border="1">
+<tr>
+    <th>Database</th>
+    <th>Data Type or Constraint</th>
+    <th>Also apply...</th>
+    <th>Not apply...</th>
+</tr>
+<tr>
+    <td>PostgreSQL (7.x,8.x)</td>
+    <td>SERIAL</td>
+    <td>NOT NULL</td>
+    <td>UNIQUE, PRIMARY KEY</td>
+</tr>
+<tr>
+    <td>MS SQL Server (2000,2005)</td>
+    <td>IDENTITY(1,1)</td>
+    <td>UNIQUE</td>
+    <td>NOT NULL, PRIMARY KEY</td>
+</tr>
+<tr>
+    <td>MySQL (5.x)</td>
+    <td>AUTO_INCREMENT</td>
+    <td>PRIMARY KEY (it's an attribute of key column)</td>
+    <td></td>
+</tr>
+</table>
+
+<h5>Example</h5>
+<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span> <span class="n">SERIAL</span> <span class="k">UNIQUE</span><span class="p">,</span> <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+<span class="c1">-- PostgreSQL, SERIAL is also apply NOT NULL constraint automatically.
+</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">IDENTITY</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+<span class="c1">-- MS SQL Server
+</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span> <span class="n">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span> <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+<span class="c1">-- MySQL, there can be only one auto column and it must be defined as a key.
+</span>
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">testid</span> <span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
+<span class="c1">-- You don't need to specify the value of id.
+</span></code></pre>
+
+
+<p>
+一般而言，我會直接把 PostgreSQL 的 <code>SERIAL</code> 視為等義的 <code>INT NOT NULL IDENTITY(1,1)</code> (MS SQL) 或 <code>INT PRIMARY KEY AUTO_INCREMENT</code>，直接替換。例如 <code>s/\sSERIAL(?=\s*,)/$dbSerialType/gi';</code>
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/6223035.html">http://blog.roodo.com/rocksaying/archives/6223035.html</a></div>

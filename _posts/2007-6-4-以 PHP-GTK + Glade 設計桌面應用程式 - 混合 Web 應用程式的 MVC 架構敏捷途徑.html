@@ -1,0 +1,666 @@
+---
+title: 以 PHP-GTK + Glade 設計桌面應用程式 - 混合 Web 應用程式的 MVC 架構敏捷途徑
+category: programming
+old-category: PHP
+tags: [php,gtk,mvc,framework,標籤語言,delphi]
+---
+<div class="tags" style="display:none">Tags: php gtk mvc framework 標籤語言 delphi</div>
+<p>
+我們一般對 PHP 的印象是：寫 Web 應用程式的工具。其實它也可以作為單純的解譯器運行一般的本地程式， PHP 稱此運行模式為 <a href="http://tw.php.net/manual/en/features.commandline.php">CLI mode</a>。若進一步結合 <a href="http://gtk.php.net/">PHP-GTK</a> 擴充模組 (<span class="Onote">關於 PHP-GTK 的安裝，請參考《<a href="{{ site.baseurl }}/archives/2007/Glade_GTK2%20for%20Windows%20with%20PHP5%20and%20Ruby%20%E5%BF%AB%E9%80%9F%E5%AE%89%E8%A3%9D%E6%8C%87%E5%8D%97.html">Glade/GTK2 for Windows with PHP5 and Ruby 快速安裝指南</a>》</span>) ，我們仍然可以使用 PHP 設計具有圖形使用者介面的桌面應用程式。
+</p>
+<p>
+本文不只單純地說明如何利用 PHP-GTK + Glade 設計桌面應用程式，更要混合現成的 Web 應用程式，一併為各位展示 MVC 架構所帶來的高度彈性與可用性。
+</p>
+
+<!--more-->
+<p>
+PHP 是現今最流行的 Web 應用程式開發工具之一。與基於 MVC 架構的<a href="{{ site.baseurl }}/archives/2006/Framework%20of%20PHP5.html">各種 framework </a>結合之後，開發速度與軟體品質也逐漸提昇。同時這也意味著，有愈來愈多現成的 Model 與 Control 組件可用。 MVC 架構在概念上就已經將使用者輸出入、資料來源、運算處理等等不同工作隔離了，其體質原本就可適應分散式架構。因此對 MVC 架構而言， Web 應用程式與桌面應用程式唯一的差異是使用者介面不同，也就是 View 不同。一但我們嘗試利用 PHP-GTK + Glade 設計桌面應用程式時，我們理論上將可直接使用那些原本是為 Web 應用程式所開發的 Model 與 Control 組件，僅需專注於基於 GTK 函數庫的圖形使用者介面之設計工作。
+</p>
+
+<h4>基於 MVC 架構的 Web 應用程式</h4>
+<p>
+在設計桌面應用程式之前，我們先來看一個基於 MVC 架構所設計的 Web 應用程式。這是一個現成的程式開發資源，我們稍候將直接利用此一現成的資源開發桌面應用程式，而且提供相同的操作功能。
+</p>
+<img src="http://blog.roodo.com/rocksaying/6fd86f27.png" alt="Web應用程式操作圖例"/>
+
+
+<h5>Web 程式相關程式碼</h5>
+<p>本例中的 URL root 為 <code>/test/FormExample</code>。</p>
+<ul>
+<li><a href="#FormExample.php (web ver.)">FormExample.php</a> - Web 應用程式的進入點 (master/loader)。它可呈現使用者的表單輸入網頁，另一方面也是相關 Control 的調用者。它透過 <var>FormExample.php/$controlName/$methodName/$arguments</var> 的格式調用指定的 Control 組件方法，並將回傳值以 <a href="http://www.json.org/">JSON</a> 格式輸出。</li>
+
+<li><a href="#UserControl.php">UserControl.php</a> - UserControl 類，提供使用者資料操作的服務。在本例中，它只有一個 <code>user_profile($userName)</code> 方法。此方法將根據傳入的使用者名稱查詢使用者的相關資料，若無使用者則回傳 <code>false</code>。本例同時將使用者資料直接建立在 UserControl 類之中，故沒有其他的 Model 。</li>
+
+<li><a href="#FormExampleView.phtml">view/web/FormExampleView.phtml</a> - View 的網頁樣版。</li>
+<li><a href="#FormExampleView.js">view/web/FormExampleView.js</a> - 瀏覽器端的 JavaScript 程式，利用 Ajax 技術。</li>
+
+<li><a href="#FormExampleView.php (web ver.)">view/web/FormExampleView.php</a> - Web 應用程式的 View 。</li>
+
+<li>view/web/jquery.js - <a href="http://www.jquery.com">jQuery</a> library。瀏覽器端的 JavaScript 程式所用到的 JavaScript library。</li>
+
+</ul>
+
+<a name="FormExample.php (web ver.)"></a>
+<h6>FormExample.php (web ver.)</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require</span> <span class="s1">'view/web/FormExampleView.php'</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$pathInfoSet</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$pathInfoSet</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"error...&lt;br/&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">list</span><span class="p">(,</span> <span class="nv">$controlName</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">)</span> <span class="o">=</span> <span class="nv">$pathInfoSet</span><span class="p">;</span>
+        <span class="nv">$methodArgs</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$pathInfoSet</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+
+        <span class="nv">$controlName</span> <span class="o">=</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nv">$controlName</span><span class="p">)</span> <span class="o">.</span> <span class="s1">'Control'</span><span class="p">;</span>
+        <span class="k">require</span> <span class="nv">$controlName</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">class_exists</span><span class="p">(</span><span class="nv">$controlName</span><span class="p">)</span>
+            <span class="k">and</span> <span class="p">(</span><span class="nv">$control</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$controlName</span><span class="p">)</span>
+            <span class="k">and</span> <span class="nb">method_exists</span><span class="p">(</span><span class="nv">$control</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="nv">$control</span><span class="o">-&gt;</span><span class="na">results</span> <span class="o">=</span> <span class="nb">call_user_func_array</span><span class="p">(</span>
+                <span class="k">array</span><span class="p">(</span><span class="nv">$control</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">),</span>
+                <span class="nv">$methodArgs</span>
+            <span class="p">);</span>
+            <span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$control</span><span class="o">-&gt;</span><span class="na">results</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FormExampleView</span><span class="p">;</span>
+<span class="nv">$view</span><span class="o">-&gt;</span><span class="na">show</span><span class="p">(</span><span class="nv">$control</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<a name="UserControl.php"></a>
+<h6>UserControl.php</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">UserControl</span> <span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$userTable</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'rock'</span>  <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'userEmail'</span> <span class="o">=&gt;</span> <span class="s1">'rock@example.com'</span><span class="p">,</span> <span class="s1">'userNote'</span> <span class="o">=&gt;</span> <span class="s1">'nothing'</span><span class="p">),</span>
+        <span class="s1">'xman'</span>  <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'userEmail'</span> <span class="o">=&gt;</span> <span class="s1">'xman@example.com'</span><span class="p">,</span> <span class="s1">'userNote'</span> <span class="o">=&gt;</span> <span class="s1">'X'</span><span class="p">)</span>
+    <span class="p">);</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">user_profile</span><span class="p">(</span><span class="nv">$userName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">array_key_exists</span><span class="p">(</span><span class="nv">$userName</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">userTable</span><span class="p">)</span>
+            <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">userTable</span><span class="p">[</span><span class="nv">$userName</span><span class="p">]</span>
+            <span class="o">:</span> <span class="kc">false</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<a name="FormExampleView.phtml"></a>
+<h6>view/web/FormExampleView.phtml</h6>
+<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+<span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"content-type"</span> <span class="na">content=</span><span class="s">"text/html; charset=utf-8"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;title&gt;</span>Form Example<span class="nt">&lt;/title&gt;</span>
+<span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">loadScript</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">urlRoot</span> <span class="o">.</span> <span class="s1">'/view/web/jquery.js'</span><span class="p">);</span> <span class="cp">?&gt;</span>
+<span class="c">&lt;!--script type="text/javascript" src="/test/view/web/jquery.js"&gt;&lt;/script--&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">loadScript</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">urlRoot</span> <span class="o">.</span> <span class="s1">'/view/web/FormExampleView.js'</span><span class="p">);</span> <span class="cp">?&gt;</span>
+
+<span class="nt">&lt;style </span><span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
+<span class="nf">#label</span> <span class="p">{</span>
+    <span class="nl">border</span><span class="p">:</span> <span class="nb">none</span><span class="p">;</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="m">300px</span><span class="p">;</span>
+    <span class="nl">height</span><span class="p">:</span><span class="m">100px</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nt">&lt;/style&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"label"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+
+<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"userName"</span><span class="nt">&gt;</span>姓名: <span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"userName"</span> <span class="na">name=</span><span class="s">"uesrName"</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">size=</span><span class="s">"40"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;br/&gt;</span>
+    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"userEmail"</span><span class="nt">&gt;</span>E-Mail: <span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"userEmail"</span> <span class="na">name=</span><span class="s">"userEmail"</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">size=</span><span class="s">"40"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;br/&gt;</span>
+    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"userNote"</span><span class="nt">&gt;</span>Note: <span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"userNote"</span> <span class="na">name=</span><span class="s">"userNote"</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">size=</span><span class="s">"40"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;p&gt;</span>
+        <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">onclick=</span><span class="s">"on_submit_clicked();"</span><span class="nt">&gt;</span>送出<span class="nt">&lt;/button&gt;</span>
+        <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">onclick=</span><span class="s">"on_close_clicked();"</span><span class="nt">&gt;</span>關閉<span class="nt">&lt;/button&gt;</span>
+    <span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+
+<a name="FormExampleView.php (web ver.)"></a>
+<h6>view/web/FormExampleView.php (web ver.)</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">FormExampleView</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$urlRoot</span> <span class="o">=</span> <span class="s1">'/test/FormExample'</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">loadScript</span><span class="p">(</span><span class="nv">$filePath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s1">'&lt;script type="text/javascript" src="'</span><span class="p">,</span>
+            <span class="nv">$filePath</span><span class="p">,</span> <span class="s1">'"&gt;&lt;/script&gt;'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">show</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">require</span> <span class="s1">'view/web/'</span> <span class="o">.</span> <span class="nx">__CLASS__</span> <span class="o">.</span> <span class="s1">'.phtml'</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<a name="FormExampleView.js"></a>
+<h6>view/web/FormExampleView.js</h6>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">on_submit_clicked</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">userName</span> <span class="o">=</span> <span class="nx">jQuery</span><span class="p">(</span><span class="s1">'input#userName'</span><span class="p">).</span><span class="nx">val</span><span class="p">();</span>
+    <span class="kd">var</span> <span class="nx">serviceUri</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">URL</span> <span class="o">+</span> <span class="s1">'/user/user_profile/'</span> <span class="o">+</span> <span class="nx">userName</span><span class="p">;</span>
+    <span class="c1">//alert(serviceUri);</span>
+    <span class="nx">$</span><span class="p">.</span><span class="nx">getJSON</span><span class="p">(</span><span class="nx">serviceUri</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">json</span><span class="p">){</span>
+        <span class="c1">//alert("JSON Data: " + json.toString());</span>
+        <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">json</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">alert</span><span class="p">(</span><span class="s1">'exist'</span><span class="p">);</span>
+            <span class="nx">s</span> <span class="o">=</span> <span class="s1">'userName: '</span> <span class="o">+</span> <span class="nx">userName</span> <span class="o">+</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">json</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">s</span> <span class="o">+=</span> <span class="nx">p</span> <span class="o">+</span> <span class="s1">': '</span> <span class="o">+</span> <span class="nx">json</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">'#form1 :text'</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">){</span>
+                <span class="nx">s</span> <span class="o">+=</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s1">': '</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">+</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+        <span class="nx">$</span><span class="p">(</span><span class="s1">'#label'</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">on_close_clicked</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h4>設計桌面應用程式</h4>
+<p>
+首先，我們需要改造一下作為主控程式的 <a href="#FormExample.php (web ver.)">FormExample.php</a>，使其依 PHP 的運行模式判斷其所需的 View 。
+</p>
+<p>
+以 PHP 內建的系統常數 <var>PHP_SAPI</var> 便可判斷運行模式。當 <var>PHP_SAPI</var> 之值為 'cli' 時，即為本地程式之運行狀態。
+</p>
+<p>
+我於原本的 view 目錄下建立了 2 個子目錄，分別為 web 與 desktop ，各自放置 Web 應用程式的 View 源碼檔與桌面應用程式的 View 源碼檔。
+</p>
+<h6>FormExample.php (兩用版)</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$viewType</span> <span class="o">=</span> <span class="p">(</span><span class="nx">PHP_SAPI</span> <span class="o">==</span> <span class="s1">'cli'</span> <span class="o">?</span> <span class="s1">'desktop'</span> <span class="o">:</span> <span class="s1">'web'</span><span class="p">);</span>
+<span class="k">require</span> <span class="s1">'view/'</span><span class="o">.</span><span class="nv">$viewType</span><span class="o">.</span><span class="s1">'/FormExampleView.php'</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$pathInfoSet</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$pathInfoSet</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"error...&lt;br/&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="k">list</span><span class="p">(,</span> <span class="nv">$controlName</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">)</span> <span class="o">=</span> <span class="nv">$pathInfoSet</span><span class="p">;</span>
+        <span class="nv">$methodArgs</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$pathInfoSet</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+
+        <span class="nv">$controlName</span> <span class="o">=</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nv">$controlName</span><span class="p">)</span> <span class="o">.</span> <span class="s1">'Control'</span><span class="p">;</span>
+        <span class="k">require</span> <span class="nv">$controlName</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">class_exists</span><span class="p">(</span><span class="nv">$controlName</span><span class="p">)</span>
+            <span class="k">and</span> <span class="p">(</span><span class="nv">$control</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$controlName</span><span class="p">)</span>
+            <span class="k">and</span> <span class="nb">method_exists</span><span class="p">(</span><span class="nv">$control</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="nv">$control</span><span class="o">-&gt;</span><span class="na">results</span> <span class="o">=</span> <span class="nb">call_user_func_array</span><span class="p">(</span>
+                <span class="k">array</span><span class="p">(</span><span class="nv">$control</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">),</span>
+                <span class="nv">$methodArgs</span>
+            <span class="p">);</span>
+            <span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$control</span><span class="o">-&gt;</span><span class="na">results</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="k">require</span> <span class="s1">'UserControl.php'</span><span class="p">;</span>
+    <span class="nv">$control</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">UserControl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FormExampleView</span><span class="p">;</span>
+<span class="nv">$view</span><span class="o">-&gt;</span><span class="na">show</span><span class="p">(</span><span class="nv">$control</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<img src="http://blog.roodo.com/rocksaying/45b65d25.png" alt="桌面應用程式操作圖例"/>
+
+<h5>桌面程式相關程式碼</h5>
+<ul>
+<li><a href="#FormExampleView.glade">view/desktop/FormExampleView.glade</a> - 以 Glade 設計的桌面程式使用者介面。</li>
+
+<li><a href="#View.php">view/desktop/View.php</a> - 衍生自 GladeXML 的 View 基礎類。並按 JavaScript 的習慣，提供 <code>alert()</code>方法。</li>
+
+<li><a href="#FormExampleView.php (gtk ver.)">view/desktop/FormExampleView.php</a> - 桌面程式的 View 。主要實作各種操作介面的事件處理內容。</li>
+</ul>
+
+<a name="FormExampleView.glade"></a>
+<h6>view/desktop/FormExampleView.glade</h6>
+<p>命名方式跟隨 Web 應用程式的慣例。並設主控視窗元件的名稱為 <var>window</var> ，以表示其意義如同 JavaScript 的 <var>window</var> 個體。</p>
+<table border="1">
+<tr>
+    <th>元件</th>
+    <th>事件</th>
+    <th>處理方法</th>
+</tr>
+<tr>
+    <td>window</td>
+    <td>destroy</td>
+    <td>Gtk::main_quit</td>
+</tr>
+<tr>
+    <td>submit</td>
+    <td>clicked</td>
+    <td>on_submit_clicked</td>
+</tr>
+<tr>
+    <td>close</td>
+    <td>clicked</td>
+    <td>on_close_clicked</td>
+</tr>
+</table>
+
+<p>內容過長，不線上顯示。</p>
+<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" standalone="no"?&gt;</span> <span class="c">&lt;!--*- mode: xml -*--&gt;</span>
+<span class="cp">&lt;!DOCTYPE glade-interface SYSTEM "http://glade.gnome.org/glade-2.0.dtd"&gt;</span>
+
+<span class="nt">&lt;glade-interface&gt;</span>
+
+<span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkWindow"</span> <span class="na">id=</span><span class="s">"window"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"width_request"</span><span class="nt">&gt;</span>400<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"height_request"</span><span class="nt">&gt;</span>300<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"title"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>form example<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"type"</span><span class="nt">&gt;</span>GTK_WINDOW_TOPLEVEL<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"window_position"</span><span class="nt">&gt;</span>GTK_WIN_POS_NONE<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"modal"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"resizable"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"destroy_with_parent"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"decorated"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"skip_taskbar_hint"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"skip_pager_hint"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"type_hint"</span><span class="nt">&gt;</span>GDK_WINDOW_TYPE_HINT_NORMAL<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"gravity"</span><span class="nt">&gt;</span>GDK_GRAVITY_NORTH_WEST<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"focus_on_map"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"urgency_hint"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+  <span class="nt">&lt;signal</span> <span class="na">name=</span><span class="s">"destroy"</span> <span class="na">handler=</span><span class="s">"Gtk::main_quit"</span><span class="nt">/&gt;</span>
+
+  <span class="nt">&lt;child&gt;</span>
+    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkVBox"</span> <span class="na">id=</span><span class="s">"vbox1"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"homogeneous"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"spacing"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+
+      <span class="nt">&lt;child&gt;</span>
+	<span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkLabel"</span> <span class="na">id=</span><span class="s">"label"</span><span class="nt">&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"label"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>Hello<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_underline"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_markup"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"justify"</span><span class="nt">&gt;</span>GTK_JUSTIFY_LEFT<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"wrap"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"selectable"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xalign"</span><span class="nt">&gt;</span>0.5<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"yalign"</span><span class="nt">&gt;</span>0.5<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xpad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ypad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ellipsize"</span><span class="nt">&gt;</span>PANGO_ELLIPSIZE_NONE<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"width_chars"</span><span class="nt">&gt;</span>-1<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"single_line_mode"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"angle"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	<span class="nt">&lt;/widget&gt;</span>
+	<span class="nt">&lt;packing&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"padding"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"expand"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"fill"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	<span class="nt">&lt;/packing&gt;</span>
+      <span class="nt">&lt;/child&gt;</span>
+
+      <span class="nt">&lt;child&gt;</span>
+	<span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkTable"</span> <span class="na">id=</span><span class="s">"form1"</span><span class="nt">&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"border_width"</span><span class="nt">&gt;</span>5<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"n_rows"</span><span class="nt">&gt;</span>3<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"n_columns"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"homogeneous"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"row_spacing"</span><span class="nt">&gt;</span>4<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"column_spacing"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkLabel"</span> <span class="na">id=</span><span class="s">"label2"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"label"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>姓名: <span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_underline"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_markup"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"justify"</span><span class="nt">&gt;</span>GTK_JUSTIFY_LEFT<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"wrap"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"selectable"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xalign"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"yalign"</span><span class="nt">&gt;</span>0.5<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xpad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ypad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ellipsize"</span><span class="nt">&gt;</span>PANGO_ELLIPSIZE_NONE<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"width_chars"</span><span class="nt">&gt;</span>-1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"single_line_mode"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"angle"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	    <span class="nt">&lt;packing&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"left_attach"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"right_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"top_attach"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"bottom_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"x_options"</span><span class="nt">&gt;</span>fill<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"y_options"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	    <span class="nt">&lt;/packing&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkLabel"</span> <span class="na">id=</span><span class="s">"label3"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"label"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>E-Mail: <span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_underline"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_markup"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"justify"</span><span class="nt">&gt;</span>GTK_JUSTIFY_LEFT<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"wrap"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"selectable"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xalign"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"yalign"</span><span class="nt">&gt;</span>0.5<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xpad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ypad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ellipsize"</span><span class="nt">&gt;</span>PANGO_ELLIPSIZE_NONE<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"width_chars"</span><span class="nt">&gt;</span>-1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"single_line_mode"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"angle"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	    <span class="nt">&lt;packing&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"left_attach"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"right_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"top_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"bottom_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"x_options"</span><span class="nt">&gt;</span>fill<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"y_options"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	    <span class="nt">&lt;/packing&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkLabel"</span> <span class="na">id=</span><span class="s">"label4"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"label"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>Note: <span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_underline"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_markup"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"justify"</span><span class="nt">&gt;</span>GTK_JUSTIFY_LEFT<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"wrap"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"selectable"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xalign"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"yalign"</span><span class="nt">&gt;</span>0.5<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"xpad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ypad"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"ellipsize"</span><span class="nt">&gt;</span>PANGO_ELLIPSIZE_NONE<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"width_chars"</span><span class="nt">&gt;</span>-1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"single_line_mode"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"angle"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	    <span class="nt">&lt;packing&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"left_attach"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"right_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"top_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"bottom_attach"</span><span class="nt">&gt;</span>3<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"x_options"</span><span class="nt">&gt;</span>fill<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"y_options"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	    <span class="nt">&lt;/packing&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkEntry"</span> <span class="na">id=</span><span class="s">"userName"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_focus"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"editable"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visibility"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"max_length"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"text"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"has_frame"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"invisible_char"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"activates_default"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	    <span class="nt">&lt;packing&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"left_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"right_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"top_attach"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"bottom_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"y_options"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	    <span class="nt">&lt;/packing&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkEntry"</span> <span class="na">id=</span><span class="s">"userEmail"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_focus"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"editable"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visibility"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"max_length"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"text"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"has_frame"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"invisible_char"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"activates_default"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	    <span class="nt">&lt;packing&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"left_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"right_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"top_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"bottom_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"y_options"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	    <span class="nt">&lt;/packing&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkEntry"</span> <span class="na">id=</span><span class="s">"userNote"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_focus"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"editable"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visibility"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"max_length"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"text"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"has_frame"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"invisible_char"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"activates_default"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	    <span class="nt">&lt;packing&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"left_attach"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"right_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"top_attach"</span><span class="nt">&gt;</span>2<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"bottom_attach"</span><span class="nt">&gt;</span>3<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"y_options"</span><span class="nt">&gt;&lt;/property&gt;</span>
+	    <span class="nt">&lt;/packing&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+	<span class="nt">&lt;/widget&gt;</span>
+	<span class="nt">&lt;packing&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"padding"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"expand"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"fill"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	<span class="nt">&lt;/packing&gt;</span>
+      <span class="nt">&lt;/child&gt;</span>
+
+      <span class="nt">&lt;child&gt;</span>
+	<span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkHButtonBox"</span> <span class="na">id=</span><span class="s">"hbuttonbox1"</span><span class="nt">&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"border_width"</span><span class="nt">&gt;</span>5<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"layout_style"</span><span class="nt">&gt;</span>GTK_BUTTONBOX_SPREAD<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"spacing"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkButton"</span> <span class="na">id=</span><span class="s">"submit"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_default"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_focus"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"label"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>送出<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_underline"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"relief"</span><span class="nt">&gt;</span>GTK_RELIEF_NORMAL<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"focus_on_click"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;signal</span> <span class="na">name=</span><span class="s">"clicked"</span> <span class="na">handler=</span><span class="s">"on_submit_clicked"</span><span class="nt">/&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+
+	  <span class="nt">&lt;child&gt;</span>
+	    <span class="nt">&lt;widget</span> <span class="na">class=</span><span class="s">"GtkButton"</span> <span class="na">id=</span><span class="s">"close"</span><span class="nt">&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"visible"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_default"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"can_focus"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"label"</span> <span class="na">translatable=</span><span class="s">"yes"</span><span class="nt">&gt;</span>關閉<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"use_underline"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"relief"</span><span class="nt">&gt;</span>GTK_RELIEF_NORMAL<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"focus_on_click"</span><span class="nt">&gt;</span>True<span class="nt">&lt;/property&gt;</span>
+	      <span class="nt">&lt;signal</span> <span class="na">name=</span><span class="s">"clicked"</span> <span class="na">handler=</span><span class="s">"on_close_clicked"</span><span class="nt">/&gt;</span>
+	    <span class="nt">&lt;/widget&gt;</span>
+	  <span class="nt">&lt;/child&gt;</span>
+	<span class="nt">&lt;/widget&gt;</span>
+	<span class="nt">&lt;packing&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"padding"</span><span class="nt">&gt;</span>0<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"expand"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	  <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"fill"</span><span class="nt">&gt;</span>False<span class="nt">&lt;/property&gt;</span>
+	<span class="nt">&lt;/packing&gt;</span>
+      <span class="nt">&lt;/child&gt;</span>
+    <span class="nt">&lt;/widget&gt;</span>
+  <span class="nt">&lt;/child&gt;</span>
+<span class="nt">&lt;/widget&gt;</span>
+
+<span class="nt">&lt;/glade-interface&gt;</span>
+</code></pre>
+
+
+
+<a name="View.php"></a>
+<h6>view/desktop/View.php</h6>
+<p>
+設計 View 時，桌面應用程式有許多與 Web 應用程式之設計差異。在 Web 應用程式中，程序員並不需要處理使用者介面的諸多細節。但桌面應用程式就需要決定何時顯現視窗及視覺元件，何時進入等待使用者操作動作的迴圈，以及如何自視覺元件之中取得使用者輸入的資料。將這些細節封裝在此 View 基礎類。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">class</span> <span class="nc">View</span> <span class="k">extends</span> <span class="nx">GladeXML</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$viewFilePath</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// $viewFilePath is requiried. Let PHP check it.
+</span>        <span class="c1">//echo $viewFilePath, "\n";
+</span>
+        <span class="nv">$args</span> <span class="o">=</span> <span class="nb">func_get_args</span><span class="p">();</span>
+        <span class="nb">call_user_func_array</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'GladeXML'</span><span class="p">,</span><span class="s1">'__construct'</span><span class="p">),</span> <span class="nv">$args</span><span class="p">);</span>
+        <span class="c1">//parent::__construct(...)
+</span>
+        <span class="c1">//name of default GtkWindow's instance
+</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_widget</span><span class="p">(</span><span class="s1">'window'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$widgetName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_widget</span><span class="p">(</span><span class="nv">$widgetName</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">show</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$callBackControl</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span> <span class="o">=</span> <span class="nv">$callBackControl</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signal_autoconnect_instance</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
+        <span class="nx">Gtk</span><span class="o">::</span><span class="na">main</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">alert</span><span class="p">(</span><span class="nv">$msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$msgDialog</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">GtkMessageDialog</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window</span><span class="p">,</span>
+            <span class="nx">Gtk</span><span class="o">::</span><span class="na">DIALOG_MODAL</span><span class="p">,</span> <span class="nx">Gtk</span><span class="o">::</span><span class="na">MESSAGE_ERROR</span><span class="p">,</span> <span class="nx">Gtk</span><span class="o">::</span><span class="na">BUTTONS_OK</span><span class="p">,</span> <span class="nv">$msg</span><span class="p">);</span>
+        <span class="nv">$rc</span> <span class="o">=</span> <span class="nv">$msgDialog</span><span class="o">-&gt;</span><span class="na">run</span><span class="p">();</span>
+        <span class="nv">$msgDialog</span><span class="o">-&gt;</span><span class="na">destroy</span><span class="p">();</span>
+        <span class="k">return</span> <span class="nv">$rc</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">protected</span> <span class="nv">$inputGetMethodMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'GtkEntry'</span> <span class="o">=&gt;</span> <span class="s1">'get_text'</span><span class="p">,</span>
+        <span class="s1">'GtkFileChooserButton'</span> <span class="o">=&gt;</span> <span class="s1">'get_filename'</span>
+    <span class="p">);</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="o">&amp;</span><span class="nf">fetchFormValues</span><span class="p">(</span><span class="nv">$formName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nv">$widgets</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$formName</span><span class="o">-&gt;</span><span class="na">get_children</span><span class="p">();</span>
+            <span class="nv">$inputGetMethodMap</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">inputGetMethodMap</span><span class="p">;</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$widgets</span> <span class="k">as</span> <span class="nv">$widget</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$gobj</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_widget</span><span class="p">(</span><span class="nv">$widget</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
+                <span class="nv">$className</span> <span class="o">=</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$gobj</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">array_key_exists</span><span class="p">(</span><span class="nv">$className</span><span class="p">,</span> <span class="nv">$inputGetMethodMap</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="c1">//echo $widget-&gt;name, ': ', get_class($gobj), "\n";
+</span>                    <span class="nv">$formValues</span><span class="p">[</span><span class="nv">$widget</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">]</span>
+                        <span class="o">=</span> <span class="nv">$gobj</span><span class="o">-&gt;</span><span class="nv">$inputGetMethodMap</span><span class="p">[</span><span class="nv">$className</span><span class="p">]();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$formValues</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$formValues</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+
+<a name="FormExampleView.php (gtk ver.)"></a>
+<h6>view/desktop/FormExampleView.php</h6>
+<p>
+這是桌面程式的 FormExampleView.php 。 Web 版載入 FormExampleView.phtml ，而桌面版則載入 FormExampleView.glade 。至於事件處理方法，在此處的 PHP 程式碼工作，與 Web 版中的 <a name="#FormExampleView.js">FormExampleView.js</a> 中的 JavaScript 程式所負責的工作相同。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require</span> <span class="s1">'View.php'</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">FormExampleView</span> <span class="k">extends</span> <span class="nx">View</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//load $path/$className.glade
+</span>        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">(</span>
+            <span class="nb">substr</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">strrpos</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">,</span> <span class="nx">DIRECTORY_SEPARATOR</span><span class="p">))</span>
+            <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="nx">__CLASS__</span> <span class="o">.</span> <span class="s1">'.glade'</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">on_close_clicked</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">Gtk</span><span class="o">::</span><span class="na">main_quit</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">on_submit_clicked</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$form</span> <span class="o">=&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fetchFormValues</span><span class="p">(</span><span class="s1">'form1'</span><span class="p">);</span>
+        <span class="nb">print_r</span><span class="p">(</span><span class="nv">$form</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">((</span><span class="nv">$profile</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="na">user_profile</span><span class="p">(</span><span class="nv">$form</span><span class="p">[</span><span class="s1">'userName'</span><span class="p">])))</span> <span class="p">{</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$profile</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$form</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">alert</span><span class="p">(</span><span class="s1">'exist'</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="nv">$s</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$form</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$s</span> <span class="o">.=</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nv">$v</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">refresh_label</span><span class="p">(</span><span class="nv">$s</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">refresh_label</span><span class="p">(</span><span class="nv">$text</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">label</span><span class="o">-&gt;</span><span class="na">set_text</span><span class="p">(</span><span class="nv">$text</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+程式碼即文件。本文儘可能地精簡程式碼內容，只使用恰好能展示本文目的之內容。請各位自行閱讀源碼，細細體會 (好吧，我承認我是懶得打字了)。
+</p>
+<p>
+本文於設計桌面應用程式時，完全使用了原有的 Control 與 Model 組件的程式碼。儘管那些 Control 與 Model 原本是為了 Web 應用程式所設計，但本文仍然未做任何修改便可運用如常。在設計桌面應用程式時所需要做的，就是專注於 View 的內容。本文除了示範如何實作一個封裝 GladeXML 的 View 基礎類，亦適切地展示了 MVC 架構的設計彈性與可用性。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3400303.html">http://blog.roodo.com/rocksaying/archives/3400303.html</a></div>

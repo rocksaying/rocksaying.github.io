@@ -1,0 +1,201 @@
+---
+title: 再探 JavaScript的中介編程 foreach
+category: programming
+old-category: JavaScript
+tags: [javascript,metaprogramming,中介編程]
+---
+<p>
+網友 WanCW 在 <a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">JavaScript的中介編程與反射能力示範</a> 一文中<a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html#comment-20046335">回應</a> <q>文章中的 foreach() 並未產生新的程式或是修改現有的程式，好像不太能算是 metaprogramming？</q>
+</p>
+<p>
+並非如此，其實 foreach 在中介編程(metaprogramming)的領域是經典樣式。只是我上文的例子太精簡，以至於看不出它的威力。嗯，如果不來個複雜點的程式碼，確實不容易看出 foreach 到底可以幫我們省下多少程式碼。我就來個複雜點的示範吧。
+</p>
+
+<!--more-->
+<h4>傳統迭代控制結構</h4>
+<p>
+首先，我先寫一段傳統的程式碼。我分別配置了一個陣列<var>a</var>和一個 XML 文件 <var>x</var>。接著用<code>for(;;){}</code>迭代控制結構去傾印它們的內容。
+</p>
+<p class="note">
+本文範例中使用了 <dfn>Document</dfn> 資料型別，而這是以網頁瀏覽器為宿主時才會擁有的原生型別，所以請透過瀏覽器(如 Firefox, IE)等執行。如果不知道如何執行的讀者，可以開啟 <a href="http://www.squarefree.com/shell/shell.html">JavaScript shell</a> 此網頁，把程式碼剪貼到上面去執行。
+</p>
+
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">];</span>
+
+<span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">implementation</span><span class="p">.</span><span class="nx">createDocument</span> <span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">items</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'items'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">item</span><span class="p">,</span> <span class="nx">i</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">item</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'item'</span><span class="p">);</span>
+    <span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">x</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="nx">i</span><span class="p">));</span>
+    <span class="nx">items</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">x</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">items</span><span class="p">);</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s1">'==== foreach 使用前 ===='</span><span class="p">);</span>
+
+<span class="c1">//走訪 array ，你要寫 array 的程式碼</span>
+<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">v</span> <span class="o">=</span> <span class="nx">a</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+
+    <span class="nx">print</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//走訪 xml ，你要寫 xml 的程式碼</span>
+<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span>
+     <span class="nx">i</span><span class="p">;</span>
+     <span class="nx">i</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nx">v</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
+
+    <span class="nx">print</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+如無意外，你會看到兩次 01234。這分別是 <var>a</var> 和 <var>x</var> 的傾印結果。
+經驗豐富的程序員知道這種 <code>for(;;){}</code> 迭代控制結構在程式中的重複頻率有多高。
+不論你的迭代內容是要做什麼，只要你想從頭到尾走訪一遍，你就要重複輸入一次<code>for(;;){}</code>。
+</p>
+
+<h4>
+抽出迭代控制結構，化為 foreach
+</h4>
+<p>
+遵循 <em>DRY</em> (程序員天生是懶人) 原則，這種重複的程式碼就要抽離出來。
+我分別定義了兩個建構者(Java叫"類別")， <dfn>DataArray</dfn> 負責陣列，<dfn>DataXml</dfn> 負責 XML 文件。同樣都定義了 <dfn>foreach</dfn> 方法。而它們的內容其實就是上面的 <code>for(;;){}</code> ，我把它們搬進類別中了。
+至於迭代內容則以函數加以參數化，傳給 foreach 調用。
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">DataArray</span><span class="p">(</span><span class="nx">init</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">init</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">v</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">v</span> <span class="o">=</span> <span class="nx">a</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+
+            <span class="nx">f</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">DataXml</span><span class="p">(</span><span class="nx">init</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="nx">init</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">v</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span>
+             <span class="nx">i</span><span class="p">;</span>
+             <span class="nx">i</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nx">v</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
+
+            <span class="nx">f</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="c1">//順便定義 print(v)</span>
+<span class="kd">function</span> <span class="nx">pv</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">print</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h4>
+使用 foreach 取代迭代控制結構
+</h4>
+<p>
+接下來就是重頭戲了，
+</p>
+<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s1">'==== foreach 使用後 ===='</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">da</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataArray</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+
+<span class="nx">da</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="nx">pv</span> <span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">dx</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataXml</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+
+<span class="nx">dx</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="nx">pv</span> <span class="p">);</span>
+
+</code></pre>
+
+<p>
+瞧，一整個簡化了，你不用再看見重複的 <code>for(;;){}</code> 了。甚至不用再區分 array 或 xml 而寫不同的程式碼。
+</p>
+<p>
+好戲就這樣嗎？不，還沒呢。精彩的總是壓軸演出。
+</p>
+<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s1">'==== 再進一步 ===='</span><span class="p">);</span>
+
+<span class="nx">containers</span> <span class="o">=</span> <span class="p">[</span><span class="nx">da</span><span class="p">,</span> <span class="nx">dx</span><span class="p">];</span>
+
+<span class="p">(</span><span class="k">new</span> <span class="nx">DataArray</span><span class="p">(</span><span class="nx">containers</span><span class="p">)).</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="nx">pv</span> <span class="p">)</span>
+<span class="p">});</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s1">'不用 foreach 的話，你要這樣寫'</span><span class="p">);</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">containers</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">d</span> <span class="o">=</span> <span class="nx">containers</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'[object XMLDocument]'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//... 請自己copy上面走訪 x 的程式碼</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'[object ???'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//如果有一堆不同資料型態，你要寫下一排 else if...</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">//... 請自己copy上面走訪 a 的程式碼</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<p>
+有沒有添加 foreach 語法的差異性有多大，現在是一目瞭然。
+</p>
+
+<blockquote>
+<p>
+8.8 Custom Control Structures
+</p>
+<p>
+Ruby’s use of blocks, coupled with its parentheses-optional syntax, make it very easy
+to define iterator methods that look like and behave like control structures.
+</p>
+<cite>
+Flanagan and Matz, The Ruby Programming Language, page 281, O'Reilly 2008
+</cite>
+</blockquote>
+
+<p>
+在 JavaScript 中，自定的 foreach 可以讓我們把重複的迭代控制碼 <code>for(;;){}</code> 寫在個體方法中。我們只需要將處理元素內容的迭代器(包在 for {} 區塊中的那些程式碼)，透過一般函數或匿名函數加以參數化傳給 foreach ，它就自動幫我們做好迭代控制工作了。
+</p>
+<p>
+看看上面的例子，我們在使用 foreach 後省下了一大堆程式碼，這正是 metaprogramming 。
+</p>
+<p>
+如果覺得上述的示範還是不算中介編程，那麼不妨換個方式來看本文的例子。請把 foreach 看成一段 macro，而不要看成一個函數。那麼當我寫下 <code>d.foreach( pv );</code> 之後，各位就可以想像成 JavaScript 自動把上面那一行代換成（產生）<code>
+for (xxx;xxx;xxx) { v = i; pv(v) } </ocde>
+</p>
+<p>
+當然我上面的例子中顯示，JavaScript這個 "foreach" 巨集還具有判斷對象型別套用不同<code>for(;;){}</code>的功能。在 C++ 中，這是用 template 來做的.
+</p>
+
+<blockquote>
+<p>
+One style of programming which focuses heavily on metaprogramming is language-oriented programming, which is done via domain-specific programming languages.
+</p>
+<cite>metaprogramming@Wikipedia</cite>
+</blockquote>
+<p>
+除了macro或eval的方式，其實 JavaScript 更傾向於透過 DSL 的方式去實踐中介編程。用 JavaScript 去加強 JavaScript 自己（不透過其他語言），改變了 JavaScript 原本的編程風格。如果你做的夠多，甚至可以讓你以後寫出完全不像 JavaScript 語法的 JavaScript 程式碼。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E9%A1%9E%E5%88%A5%E5%AE%9A%E7%BE%A9%E6%93%B4%E5%85%85%E8%83%BD%E5%8A%9B.html">JavaScript的類別定義擴充能力</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/Ruby%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">Ruby的中介編程與反射能力示範</a></li>
+<li><a href="{{ site.baseurl }}/archives/2009/%E5%BE%9E%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E4%BE%86%E8%AB%87%20Java%20%E8%AA%9E%E8%A8%80.html">從中介編程與反射能力來談 Java 語言</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10637755.html">http://blog.roodo.com/rocksaying/archives/10637755.html</a></div>

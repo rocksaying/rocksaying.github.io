@@ -1,0 +1,215 @@
+---
+title: 以源碼探索 PHP 查詢 MySQL 後儲存資料結果的方式
+category: programming
+old-category: SQL/Database
+tags: [php,mysql,database,記憶體管理]
+---
+<div class="tags" style="display:none">Tags: php mysql database 記憶體管理</div>
+<p>
+基於以下系列討論內容的一大串源碼追蹤。以印證討論內容。
+</p>
+<ul>
+<li><a href="http://twpug.net/modules/newbb/viewtopic.php?viewmode=flat&type=&topic_id=3094&forum=35">TWPUG同主題討論串</a></li>
+<li><a href="{{ site.baseurl }}/archives/2008/TWPUG%20-%20cakephp%E6%8F%9B%E9%A0%81%E6%95%88%E8%83%BD%E8%88%87%E6%9E%B6%E6%A7%8B%E5%9B%9E%E6%87%89%E4%B9%8B%E4%BA%8C.html">TWPUG - cakephp換頁效能與架構回應之二</a></li>
+</ul>
+<p>
+<strong>Remember this: Open your mind, use the source.</strong>
+</p>
+
+<!--more-->
+<h4>
+Source code version: PHP-5.2.5 release</h4>
+
+<h5>
+/ext/mysql/php_mysql.c</h5>
+
+<p>
+1.line: 1395-1400, context of mysql_query()
+</p>
+<pre class="highlight"><code><span class="cm">/* {{{ proto resource mysql_query(string query [, int link_identifier])
+   Sends an SQL query to MySQL */</span>
+<span class="n">PHP_FUNCTION</span><span class="p">(</span><span class="n">mysql_query</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">php_mysql_do_query</span><span class="p">(</span><span class="n">INTERNAL_FUNCTION_PARAM_PASSTHRU</span><span class="p">,</span> <span class="n">MYSQL_STORE_RESULT</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+2.line: 1404-1409, context of mysql_unbuffered_query()
+</p>
+<pre class="highlight"><code><span class="cm">/* {{{ proto resource mysql_unbuffered_query(string query [, int link_identifier])
+   Sends an SQL query to MySQL, without fetching and buffering the result rows */</span>
+<span class="n">PHP_FUNCTION</span><span class="p">(</span><span class="n">mysql_unbuffered_query</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">php_mysql_do_query</span><span class="p">(</span><span class="n">INTERNAL_FUNCTION_PARAM_PASSTHRU</span><span class="p">,</span> <span class="n">MYSQL_USE_RESULT</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p> 
+3.line: 1345-1359, context of php_mysql_do_query_general()
+</p> 
+<pre class="highlight"><code>	<span class="k">if</span><span class="p">(</span><span class="n">use_store</span> <span class="o">==</span> <span class="n">MYSQL_USE_RESULT</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">mysql_result</span><span class="o">=</span><span class="n">mysql_use_result</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">conn</span><span class="p">);</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="n">mysql_result</span><span class="o">=</span><span class="n">mysql_store_result</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">conn</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mysql_result</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">PHP_MYSQL_VALID_RESULT</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">conn</span><span class="p">))</span> <span class="p">{</span> <span class="cm">/* query should have returned rows */</span>
+			<span class="n">php_error_docref</span><span class="p">(</span><span class="nb">NULL</span> <span class="n">TSRMLS_CC</span><span class="p">,</span> <span class="n">E_WARNING</span><span class="p">,</span> <span class="s">"Unable to save result set"</span><span class="p">);</span>
+			<span class="n">RETURN_FALSE</span><span class="p">;</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="n">RETURN_TRUE</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="n">MySG</span><span class="p">(</span><span class="n">result_allocated</span><span class="p">)</span><span class="o">++</span><span class="p">;</span>
+	<span class="n">ZEND_REGISTER_RESOURCE</span><span class="p">(</span><span class="n">return_value</span><span class="p">,</span> <span class="n">mysql_result</span><span class="p">,</span> <span class="n">le_result</span><span class="p">);</span>
+</code></pre>
+
+
+<p>
+上面的源碼內容符合 PHP Manual, <a href="http://www.mysqlperformanceblog.com/2007/07/06/php-large-result-sets-and-summary-tables/">PHP Large result sets and summary tables</a> 等文的解釋。當程序員透過 <code>mysql_query()</code> 查詢時，資料結果集(result set)會被儲存在 client (即PHP 這端)。而用 <code>mysql_unbuffered_query()</code> 時，則只會在 clinet 儲存 "current row"。
+</p>
+
+<h4>MySQL 5.1 Reference Manual</h4>
+<p>
+看完 PHP 的源碼，再看 MySQL 的部份，以進一步確認 MySQL 的源碼實際上是否符合前述解釋。
+</p>
+<p>
+PHP 源碼顯示，PHP 的 <code>mysql_query()</code> 調用 MySQL C API 的 <code>mysql_store_result()</code>，<code>mysql_unbuffered_query()</code> 調用 MySQL C API 的 <code>mysql_use_result()</code>。故列示於下。
+</p>
+
+<blockquote><h6><a href="http://dev.mysql.com/doc/refman/5.1/en/mysql-store-result.html">
+mysql_store_result()</a></h6>
+
+<p>
+mysql_store_result() reads the entire result of a query to the client, allocates a MYSQL_RES structure, and places the result into this structure.
+</p>
+</blockquote>
+<p>
+在 client 端配置一個 <var>MYSQL_RES</var> 的結構體，並儲放資料結果於此結構中。
+</p>
+
+<blockquote><h6><a href="http://dev.mysql.com/doc/refman/5.1/en/mysql-use-result.html">
+mysql_use_result()</a></h6>
+<p>
+mysql_use_result() initiates a result set retrieval but does not actually read the result set into the client like mysql_store_result() does. Instead, each row must be retrieved individually by making calls to mysql_fetch_row().
+</p>
+</blockquote>
+
+<blockquote><h6><a href="http://dev.mysql.com/doc/refman/5.1/en/c-api-datatypes.html">
+MYSQL_RES</a></h6>
+
+<p> 
+This structure represents the result of a query that returns rows (SELECT, SHOW, DESCRIBE, EXPLAIN). The information returned from a query is called the result set in the remainder of this section.
+</p>
+</blockquote>
+
+<h4>Source code version: mysql-5.1.21-beta</h4>
+<p>
+接著我們看 MySQL 源碼以印證手冊說明。
+</p>
+
+<h5>
+/include/mysql.h</h5>
+
+line: 316-332, context of MYSQL_RES
+<pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">st_mysql_res</span> <span class="p">{</span>
+  <span class="n">my_ulonglong</span>  <span class="n">row_count</span><span class="p">;</span>
+  <span class="n">MYSQL_FIELD</span>	<span class="o">*</span><span class="n">fields</span><span class="p">;</span>
+  <span class="n">MYSQL_DATA</span>	<span class="o">*</span><span class="n">data</span><span class="p">;</span>
+  <span class="n">MYSQL_ROWS</span>	<span class="o">*</span><span class="n">data_cursor</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">lengths</span><span class="p">;</span>		<span class="cm">/* column lengths of current row */</span>
+  <span class="n">MYSQL</span>		<span class="o">*</span><span class="n">handle</span><span class="p">;</span>		<span class="cm">/* for unbuffered reads */</span>
+  <span class="k">const</span> <span class="k">struct</span> <span class="n">st_mysql_methods</span> <span class="o">*</span><span class="n">methods</span><span class="p">;</span>
+  <span class="n">MYSQL_ROW</span>	<span class="n">row</span><span class="p">;</span>			<span class="cm">/* If unbuffered read */</span>
+  <span class="n">MYSQL_ROW</span>	<span class="n">current_row</span><span class="p">;</span>		<span class="cm">/* buffer to current row */</span>
+  <span class="n">MEM_ROOT</span>	<span class="n">field_alloc</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">field_count</span><span class="p">,</span> <span class="n">current_field</span><span class="p">;</span>
+  <span class="n">my_bool</span>	<span class="n">eof</span><span class="p">;</span>			<span class="cm">/* Used by mysql_fetch_row */</span>
+  <span class="cm">/* mysql_stmt_close() had to cancel this result */</span>
+  <span class="n">my_bool</span>       <span class="n">unbuffered_fetch_cancelled</span><span class="p">;</span>  
+  <span class="kt">void</span> <span class="o">*</span><span class="n">extension</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">MYSQL_RES</span><span class="p">;</span>
+</code></pre>
+
+<p>
+<var>MYSQL_RES</var> 所包含的內容有二種情形。一種是 bufered, 另一種是 unbuffered 。剛好對應 <code>mysql_store_result(), mysql_use_result()</code> 的儲存策略。
+</p>
+
+<h5>
+/sql/client.c</h5>
+<p>
+繼續觀察 <code>mysql_store_result()</code> 的源碼內容。
+</p>
+
+line: 2802-2844, context of mysql_store_result()
+<pre class="highlight"><code><span class="n">MYSQL_RES</span> <span class="o">*</span> <span class="n">STDCALL</span> <span class="nf">mysql_store_result</span><span class="p">(</span><span class="n">MYSQL</span> <span class="o">*</span><span class="n">mysql</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">MYSQL_RES</span> <span class="o">*</span><span class="n">result</span><span class="p">;</span>
+  <span class="n">DBUG_ENTER</span><span class="p">(</span><span class="s">"mysql_store_result"</span><span class="p">);</span>
+  <span class="cm">/* read from the actually used connection */</span>
+  <span class="n">mysql</span> <span class="o">=</span> <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">last_used_con</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">fields</span><span class="p">)</span>
+    <span class="n">DBUG_RETURN</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">status</span> <span class="o">!=</span> <span class="n">MYSQL_STATUS_GET_RESULT</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">set_mysql_error</span><span class="p">(</span><span class="n">mysql</span><span class="p">,</span> <span class="n">CR_COMMANDS_OUT_OF_SYNC</span><span class="p">,</span> <span class="n">unknown_sqlstate</span><span class="p">);</span>
+    <span class="n">DBUG_RETURN</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">status</span><span class="o">=</span><span class="n">MYSQL_STATUS_READY</span><span class="p">;</span>		<span class="cm">/* server is ready */</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="p">(</span><span class="n">MYSQL_RES</span><span class="o">*</span><span class="p">)</span> <span class="n">my_malloc</span><span class="p">((</span><span class="n">uint</span><span class="p">)</span> <span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">MYSQL_RES</span><span class="p">)</span><span class="o">+</span>
+					      <span class="k">sizeof</span><span class="p">(</span><span class="n">ulong</span><span class="p">)</span> <span class="o">*</span>
+					      <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">field_count</span><span class="p">),</span>
+				      <span class="n">MYF</span><span class="p">(</span><span class="n">MY_WME</span> <span class="o">|</span> <span class="n">MY_ZEROFILL</span><span class="p">))))</span>
+  <span class="p">{</span>
+    <span class="n">set_mysql_error</span><span class="p">(</span><span class="n">mysql</span><span class="p">,</span> <span class="n">CR_OUT_OF_MEMORY</span><span class="p">,</span> <span class="n">unknown_sqlstate</span><span class="p">);</span>
+    <span class="n">DBUG_RETURN</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">methods</span><span class="o">=</span> <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">methods</span><span class="p">;</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">eof</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>				<span class="cm">/* Marker for buffered */</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">lengths</span><span class="o">=</span><span class="p">(</span><span class="n">ulong</span><span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">result</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">result</span><span class="o">-&gt;</span><span class="n">data</span><span class="o">=</span>
+	<span class="p">(</span><span class="o">*</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">methods</span><span class="o">-&gt;</span><span class="n">read_rows</span><span class="p">)(</span><span class="n">mysql</span><span class="p">,</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">fields</span><span class="p">,</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">field_count</span><span class="p">)))</span>
+  <span class="p">{</span>
+    <span class="n">my_free</span><span class="p">((</span><span class="n">uchar</span><span class="o">*</span><span class="p">)</span> <span class="n">result</span><span class="p">,</span><span class="n">MYF</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    <span class="n">DBUG_RETURN</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">affected_rows</span><span class="o">=</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">row_count</span><span class="o">=</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">data</span><span class="o">-&gt;</span><span class="n">rows</span><span class="p">;</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">data_cursor</span><span class="o">=</span>	<span class="n">result</span><span class="o">-&gt;</span><span class="n">data</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">;</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">fields</span><span class="o">=</span>	<span class="n">mysql</span><span class="o">-&gt;</span><span class="n">fields</span><span class="p">;</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">field_alloc</span><span class="o">=</span>	<span class="n">mysql</span><span class="o">-&gt;</span><span class="n">field_alloc</span><span class="p">;</span>
+  <span class="n">result</span><span class="o">-&gt;</span><span class="n">field_count</span><span class="o">=</span>	<span class="n">mysql</span><span class="o">-&gt;</span><span class="n">field_count</span><span class="p">;</span>
+  <span class="cm">/* The rest of result members is bzeroed in malloc */</span>
+  <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">fields</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>				<span class="cm">/* fields is now in result */</span>
+  <span class="n">clear_alloc_root</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mysql</span><span class="o">-&gt;</span><span class="n">field_alloc</span><span class="p">);</span>
+  <span class="cm">/* just in case this was mistakenly called after mysql_stmt_execute() */</span>
+  <span class="n">mysql</span><span class="o">-&gt;</span><span class="n">unbuffered_fetch_owner</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DBUG_RETURN</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>				<span class="cm">/* Data fetched */</span>
+<span class="p">}</span>
+</code></pre>
+
+
+line: 1309-1312, context of cli_read_rows()
+
+<pre class="highlight"><code><span class="cm">/* Read all rows (fields or data) from server */</span>
+
+<span class="n">MYSQL_DATA</span> <span class="o">*</span><span class="n">cli_read_rows</span><span class="p">(</span><span class="n">MYSQL</span> <span class="o">*</span><span class="n">mysql</span><span class="p">,</span><span class="n">MYSQL_FIELD</span> <span class="o">*</span><span class="n">mysql_fields</span><span class="p">,</span>
+			  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fields</span><span class="p">)</span>
+</code></pre>
+
+<p>
+源碼內容顯示 <code>mysql_store_result()</code> 會註記資料結果為 "buffered"，並清除 "unbuffered" 策略的相關內容。藉由函數指標 <code>read_rows</code> 調用 <code>cli_read_rows()</code> ，將資料結果集讀取至 client 。
+</p>
+
+<h4>結論</h4>
+<p>
+在<a href="http://twpug.net/modules/newbb/viewtopic.php?viewmode=flat&type=&topic_id=3094&forum=35">前一系列</a>的討論中，我們的出發點是 CakePHP 的資料庫存取行為，因為 CakePHP 使用的是 <code>mysql_query()</code>，而非 <code>mysql_unbuffered_query()</code>，所以我們對資料結果集的記憶體配置方式，也是針對 <code>mysql_query()</code>。事實上，絕大多數的案例中， PHP 程序員使用的都是 <code>mysql_query()</code> 而非 <code>mysql_unbuffered_query()</code>。
+</p>
+<p>
+我在稍後的回應中也說明，PHP 的 MySQL 函數，可以區分2種儲存策略 (即<code>mysql_query()</code> 與 <code>mysql_unbuffered_query()</code>)。不過 FIEND 顯然忽視這點，隻字未提<code>mysql_unbuffered_query()</code>，始終堅持他的認知: "資料結果應該是儲存在 DB 端"。亦即他認為只有一種策略。
+</p>
+<p>
+Ok, 也許資料庫管理與規劃書籍介紹的策略只有一種，但那是通則、是理論。但此處討論的卻是 PHP 查詢 MySQL 的實例。我說明的內容，並不是我的個人認知，而是<strong>程式碼明擺著的事實</strong>。如果 FIEND 還要說誰的 DB觀念不好，在誤導別人，請去對 PHP 和 MySQL 的開發團隊說吧。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4986803.html">http://blog.roodo.com/rocksaying/archives/4986803.html</a></div>

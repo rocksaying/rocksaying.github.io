@@ -1,0 +1,151 @@
+---
+title: 透過 JavaScript,Ruby,PHP,C# 語言，理解 Java 的 Lambda 語法
+category: programming
+old-category: Programming
+tags: [lambda, ananonymous function, closure, 匿名函數]
+---
+<p>
+日前 OpenJDK 發表了第一版的 Java Lambda 語法 (<a href="http://www.infoq.com/news/2010/06/lambda-syntax-debate">First Version of Java Lambda Syntax Sparks Debate</a>)，語法好壞，爭論不斷。本文分別列出了以 JavaScript, PHP, Ruby, C# 語言模仿 Java Lambda 範例的程式碼。
+</p>
+
+<p>
+在數學中，lambda 有一個嚴謹的定義。但在是程式語言中，lambda 有另一個更廣泛的理解，即「匿名函數」(anonymous function)。在大多數程式語言中，根本沒有區分 lambda 與匿名函數，因此有些程式語言用 lambda 稱呼，有些程式語言用匿名函數稱呼。本文使用了五種程式語言，所以在稱呼上，會夾雜使用 lambda 與匿名函數。
+</p>
+
+<!--more-->
+<h5>Java</h5>
+
+<pre class="highlight"><code><span class="kt">int</span> <span class="n">i1</span> <span class="o">=</span> <span class="err">#</span><span class="o">()(</span><span class="mi">3</span><span class="o">).();</span>
+<span class="n">assertTrue</span><span class="o">(</span><span class="mi">3</span> <span class="o">==</span> <span class="n">i1</span><span class="o">);</span>
+
+<span class="n">Integer</span> <span class="n">i2</span> <span class="o">=</span> <span class="err">#</span><span class="o">()(</span><span class="mi">3</span><span class="o">).();</span>
+<span class="n">assertTrue</span><span class="o">(</span><span class="mi">3</span> <span class="o">==</span> <span class="n">i2</span><span class="o">);</span>
+
+<span class="kt">int</span> <span class="n">i3</span> <span class="o">=</span> <span class="err">#</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">)(</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">).(</span><span class="mi">3</span><span class="o">);</span>
+<span class="n">assertTrue</span><span class="o">(</span><span class="mi">4</span> <span class="o">==</span> <span class="n">i3</span><span class="o">);</span>
+</code></pre>
+
+
+<p>Java 的 lambda 語法看來怪怪的？我熟悉的程式語言還算屈指可數，兩手並用就算得出來，我看到這語法是楞了一下，這還是 Java 嗎？專精 Java 的程序員看了更是不習慣，我同事第一眼還以為這是 jQuery 。
+</p>
+
+<p>說它怪，但其實也不太難懂。待我點撥怎麼寫，立馬就會。就以 JavaScript 為例吧。先用 JavaScript 的語法寫出來，如下所示。
+</p>
+
+<h5>JavaScript</h5>
+
+<pre class="highlight"><code><span class="nx">i1</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">})()</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">i1</span><span class="p">)</span>
+
+<span class="nx">i2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">}()</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">i2</span><span class="p">)</span>
+
+<span class="nx">i3</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">x</span><span class="p">){</span><span class="k">return</span> <span class="nx">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}(</span><span class="mi">3</span><span class="p">);</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">i3</span><span class="p">)</span>
+</code></pre>
+
+
+<p>JavaScript 不會主動將函式的最後一行結果視為回傳值，必須以 return 回傳。其他細項可參閱 <a href="{{ site.baseurl }}/archives/2007/The%20practice%20of%20anonymous%20recursion%20function%20in%20JavaScript.html">The practice of anonymous recursion function in JavaScript</a> 。
+</p>
+
+<p>接著做三件事。第一，JavaScript 語法的 <code>function</code> 換成 Java lambda 語法的 <code>#</code>；第二，把包著函數本體的 <code>{ }</code> 換成 <code>( )</code>；第三，Java 是靜態型別語言，所以你必須再為參數列中的每個參數加上型態宣告。這樣就完工了。閱讀方式請反向理解。
+</p>
+
+<p>如果你想要在定義 lambda 之後立即調用，在 JavaScript 中，我們只需要直接在定義後套用「( )運算子」 <code>operator ( )</code>即可。但是 Java 並不將符號 <code>( )</code> 視為運算子，你想這麼做，就要在 lambda 本體與 <code>( )</code>之間加上屬性連接符 <code>.</code>，因此就出現了 <code>#()(3).()</code> 這種句子 。只是這樣在語法上就出現分岐了，因為這種寫法看來仿彿 <code>.</code> 才是「( )運算子」。按 Java 一慣的語法，至少也該在連接符之後加上一個方法名稱，例如 <code>#()(3).call()</code>，讀起來也會清楚些。
+</p>
+
+<p>在我看來，以上所述也涵蓋了 Java lambda 現行語法為人垢病之處。其實還不少，本文就列了四個。
+</p>
+
+<ol>
+    <li>
+      新增符號 <code>#</code> 代表 lambda ，而不用關鍵字 <code>function</code>或 <code>lambda</code> (從JavaScript 改寫為 Java lambda 的第一個動作)。在 Java 的語言文化中，向來是不喜用特殊符號做事的；反而在 shell script 很常使用特殊符號。所以這個用法，被人批為像是 Perl 的程式碼。</li>
+    <li>
+      混用 <code>( )</code> 與 <code>{ }</code> 包覆 lambda 本體，而不是一貫採用表達程式碼區塊的 <code>{ }</code> (從JavaScript 改寫為 Java lambda 的第二個動作)。看看其他語言的 lambda 語法，Java lambda 區分成用 <code>( )</code> 與 <code>{ }</code> 兩種使用情境，實在是找人麻煩啊。
+    </li>
+    <li>
+      lambda 的參數列清單中，要加上型態宣告(從JavaScript 改寫為 Java lambda 的第三個動作)。若參數是 int 這種原生型態還好；若是自定義的類別，往往是長長一串名稱。如 lambda 要傳兩三個參數，說不定參數列清單的字數，就比 lambda 本體的程式碼字數還多。被這麼一搞，lambda 的使用價值可就打五折了。
+    </li>
+    <li>
+      直接調用 lambda 時，還要加一個連接符 <code>.</code>。具體缺點如上述，不再重複。
+    </li>
+</ol>
+
+<p>同樣的例子，我們再來看看其他程式語言如何寫。
+</p>
+
+<h5>
+PHP5.3 / PHP6
+</h5>
+
+<p>PHP5 到了 5.3版以後才增加匿名函數的語法，基本上照抄 JavaScript。細項請參閱 <a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20Closures%2C%20const%2C%20and%20others.html">PHP 5.3/6 新增功能 - Closures</a> 。此外，基於 PHP 的語法限制，它不允許你在定義後直接以 <code>()運算子</code> 調用匿名函數。但是它可以直接作為其他函數的參數使用，所以我們可以用 <code>call_user_func()</code> 實現定義後立即調用的目的。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$f1</span> <span class="o">=</span> <span class="k">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">;};</span>
+<span class="nv">$i1</span> <span class="o">=</span> <span class="nv">$f1</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$i1</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="nv">$i2</span> <span class="o">=</span> <span class="nb">call_user_func</span><span class="p">(</span> <span class="k">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">;}</span> <span class="p">);</span>
+<span class="k">echo</span> <span class="nv">$i2</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="nv">$i3</span> <span class="o">=</span> <span class="nb">call_user_func</span><span class="p">(</span> 
+    <span class="k">function</span><span class="p">(</span><span class="nv">$x</span><span class="p">){</span><span class="k">return</span> <span class="nv">$x</span><span class="o">+</span><span class="mi">1</span><span class="p">;},</span> 
+    <span class="mi">3</span> <span class="p">);</span>
+<span class="k">echo</span> <span class="nv">$i3</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h5>
+Ruby
+</h5>
+
+<p>Ruby 有相當靈活而強大的 closure 與 lambda 能力，與一致的表達語法。模仿本文的 Java 程式碼需要利用 <code>Kernel.proc</code> 實現。細項可參閱 <a href="{{ site.baseurl }}/archives/2007/Block%20and%20Proc.html">Ruby block and Proc</a> 。
+</p>
+
+<pre class="highlight"><code><span class="n">i1</span> <span class="o">=</span> <span class="nb">lambda</span><span class="p">{</span><span class="mi">3</span><span class="p">}.</span><span class="nf">call</span>
+<span class="nb">puts</span> <span class="n">i1</span>
+
+<span class="c1"># lambda equivalents to proc</span>
+<span class="n">i2</span> <span class="o">=</span> <span class="nb">proc</span><span class="p">{</span><span class="mi">3</span><span class="p">}.</span><span class="nf">call</span>
+<span class="nb">puts</span> <span class="n">i2</span>
+
+<span class="n">i3</span> <span class="o">=</span> <span class="nb">proc</span><span class="p">{</span><span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}.</span><span class="nf">call</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="nb">puts</span> <span class="n">i3</span>
+</code></pre>
+
+
+<h5>
+C# 3.0
+</h5>
+
+<pre class="highlight"><code><span class="n">using</span> <span class="n">System</span><span class="p">;</span>
+
+<span class="n">public</span> <span class="n">class</span> <span class="n">Hello</span>
+<span class="p">{</span>
+    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">Func</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">f1</span> <span class="o">=</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="mi">3</span><span class="p">;</span>
+        <span class="n">var</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">f1</span><span class="p">();</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i1</span><span class="p">);</span>
+        
+        <span class="c1">//Sorry, I don't know how to do like this.
+</span>        <span class="c1">//int i2 = (() =&gt; 3)();
+</span>        <span class="c1">//Thanks to laneser.
+</span>        <span class="n">var</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Func</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">();</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i2</span><span class="p">);</span>
+
+        <span class="n">Func</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">f3</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+        <span class="n">var</span> <span class="n">i3</span> <span class="o">=</span> <span class="n">f3</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i3</span><span class="p">);</span>
+        
+        <span class="c1">// LINQ use case:
+</span>        <span class="c1">// var results = from(table).where(x =&gt; x &gt; 100).select();
+</span>    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+單獨使用時， C# 的 lambda 語法看來也很奇怪。但若放入 LINQ 敘述中就不同了。渾然天成，仿彿一體。MSDN 有關於 C# Lambda 語法的詳細說明，請參閱 <a href="http://msdn.microsoft.com/en-us/library/bb397687.aspx">Lambda Expressions (C# Programming Guide) @ MSDN</a> 。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12742243.html">http://blog.roodo.com/rocksaying/archives/12742243.html</a></div>

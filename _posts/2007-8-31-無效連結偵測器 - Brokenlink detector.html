@@ -1,0 +1,855 @@
+---
+title: 無效連結偵測器 - Brokenlink detector
+category: programming
+old-category: JavaScript
+tags: []
+---
+<p>
+利用 Ajax 技術實作的無效連結偵測器。基本上，它是純 JavaScript 實作品，在 IE 和 Firefox 上都測試過。只有一個外部資源不是用 JavaScript 實作的，就是供 XmlHttpRequest 讀取其他網頁內容的 proxy 。
+</p>
+
+<!--more-->
+<img src="http://blog.roodo.com/rocksaying/80a95f7c.png" alt="操作圖例"/>
+
+<h6>Brokenlink detector.htm</h6>
+<p>
+第525行設定 proxy 的網址。第669行到673行可調整是否偵測外部網域的連結頁面。
+</p>
+<pre class="highlight"><code><span class="c">&lt;!--</span><span class="p">?</span><span class="nx">php</span>
+<span class="nx">include</span> <span class="s1">'../../../include/cp_header.php'</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span> <span class="nx">file_exists</span><span class="p">(</span><span class="s2">"../language/"</span><span class="p">.</span><span class="nx">$xoopsConfig</span><span class="p">[</span><span class="s1">'language'</span><span class="p">].</span><span class="s2">"/main.php"</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+	<span class="nx">include</span> <span class="s2">"../language/"</span><span class="p">.</span><span class="nx">$xoopsConfig</span><span class="p">[</span><span class="s1">'language'</span><span class="p">].</span><span class="s2">"/main.php"</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="c1">//global $xoopsDB;</span>
+<span class="c1">//$myts =&amp; MyTextSanitizer::getInstance();</span>
+<span class="nx">$pagetitle</span> <span class="o">=</span> <span class="s2">"&lt;h4&gt;"</span><span class="p">.</span><span class="nx">_MD_ADMIN_NAME</span><span class="p">.</span><span class="s2">"&lt;/h4&gt;"</span><span class="p">;</span>
+
+<span class="nx">xoops_cp_header</span><span class="p">();</span>
+<span class="p">?</span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
+<span class="c1">//  Brokenlink detector</span>
+<span class="c1">//  Copyright (C) 2006 shirock</span>
+<span class="c1">//  ------------------------------------------------------------------------ //</span>
+<span class="c1">//  This program is free software; you can redistribute it and/or modify     //</span>
+<span class="c1">//  it under the terms of the GNU General Public License as published by     //</span>
+<span class="c1">//  the Free Software Foundation; either version 2 of the License, or        //</span>
+<span class="c1">//  (at your option) any later version.                                      //</span>
+<span class="c1">//                                                                           //</span>
+<span class="c1">//  You may not change or alter any portion of this comment or credits       //</span>
+<span class="c1">//  of supporting developers from this source code or any supporting         //</span>
+<span class="c1">//  source code which is considered copyrighted (c) material of the          //</span>
+<span class="c1">//  original comment or credit authors.                                      //</span>
+<span class="c1">//                                                                           //</span>
+<span class="c1">//  This program is distributed in the hope that it will be useful,          //</span>
+<span class="c1">//  but WITHOUT ANY WARRANTY; without even the implied warranty of           //</span>
+<span class="c1">//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //</span>
+<span class="c1">//  GNU General Public License for more details.                             //</span>
+<span class="c1">//                                                                           //</span>
+<span class="c1">//  You should have received a copy of the GNU General Public License        //</span>
+<span class="c1">//  along with this program; if not, write to the Free Software              //</span>
+<span class="c1">//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //</span>
+<span class="c1">// ------------------------------------------------------------------------- //</span>
+<span class="cm">/*
+	Simply XmlHttpRequest creator. by shirock.
+*/</span>
+<span class="kd">function</span> <span class="nx">NewXmlHttpRequest</span><span class="p">()</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+	<span class="k">try</span> <span class="p">{</span>
+  		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+  		<span class="c1">// for almost all browsers. (Maybe included M$IE7)</span>
+	<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE</span><span class="p">){</span>
+  		<span class="k">try</span> <span class="p">{</span>
+    		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Msxml2.XMLHTTP"</span><span class="p">);</span>
+  		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE2</span><span class="p">)</span> <span class="p">{</span>
+    		<span class="k">try</span> <span class="p">{</span>
+      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Microsoft.XMLHTTP"</span><span class="p">);</span>
+    		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">NotSupported</span><span class="p">)</span> <span class="p">{</span>
+      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+    		<span class="p">}</span>
+  		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">HttpRequest</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">AsyncRequest</span><span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="nx">callback</span><span class="p">,</span> <span class="nx">postdata</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">method</span> <span class="o">=</span> <span class="nx">method</span><span class="p">;</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">setUrl</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">callback</span> <span class="o">=</span> <span class="nx">callback</span><span class="p">;</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">setCallback</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">callback</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">postdata</span> <span class="o">=</span> <span class="nx">postdata</span><span class="p">;</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">send</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="p">)</span> <span class="p">{</span>
+			<span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span> <span class="o">=</span> <span class="nx">NewXmlHttpRequest</span><span class="p">();</span>
+
+            <span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        		<span class="k">if</span> <span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="na">status</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span>
+            		    <span class="na">statusText</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">statusText</span><span class="p">,</span>
+            		    <span class="na">responseText</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">responseText</span><span class="p">,</span>
+            		    <span class="na">responseXML</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">responseXML</span><span class="p">,</span>
+            		    <span class="na">argument</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span>
+                    <span class="p">};</span>
+
+        			<span class="k">if</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">status</span> <span class="o">&gt;=</span> <span class="mi">200</span> <span class="o">&amp;&amp;</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">300</span><span class="p">)</span> <span class="p">{</span>
+        				<span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">success</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span>
+        			<span class="p">}</span>
+        			<span class="k">else</span> <span class="p">{</span>
+        				<span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">failure</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span>
+        			<span class="p">}</span>
+        		<span class="p">}</span>
+        	<span class="p">}</span>
+
+			<span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">method</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+		    <span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">postdata</span><span class="p">);</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/*
+HTTP 1.1 status code define,
+also see RFC-2616(http://www.faqs.org/rfcs/rfc2616)
+by shirock.
+*/</span>
+<span class="nx">AsyncRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">HTTPStatusCode</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="s2">"100"</span> <span class="p">:</span> <span class="s1">'Continue'</span><span class="p">,</span>
+	<span class="s2">"101"</span> <span class="p">:</span> <span class="s1">'Switching Protocols'</span><span class="p">,</span>
+	<span class="s2">"200"</span> <span class="p">:</span> <span class="s1">'OK'</span><span class="p">,</span>
+	<span class="s2">"201"</span> <span class="p">:</span> <span class="s1">'Created'</span><span class="p">,</span>
+	<span class="s2">"202"</span> <span class="p">:</span> <span class="s1">'Accepted'</span><span class="p">,</span>
+	<span class="s2">"203"</span> <span class="p">:</span> <span class="s1">'Non-Authoritative Information'</span><span class="p">,</span>
+	<span class="s2">"204"</span> <span class="p">:</span> <span class="s1">'No Content'</span><span class="p">,</span>
+	<span class="s2">"205"</span> <span class="p">:</span> <span class="s1">'Reset Content'</span><span class="p">,</span>
+	<span class="s2">"206"</span> <span class="p">:</span> <span class="s1">'Partial Content'</span><span class="p">,</span>
+	<span class="s2">"300"</span> <span class="p">:</span> <span class="s1">'Multiple Choices'</span><span class="p">,</span>
+	<span class="s2">"301"</span> <span class="p">:</span> <span class="s1">'Moved Permanently'</span><span class="p">,</span>
+	<span class="s2">"302"</span> <span class="p">:</span> <span class="s1">'Found'</span><span class="p">,</span>
+	<span class="s2">"303"</span> <span class="p">:</span> <span class="s1">'See Other'</span><span class="p">,</span>
+	<span class="s2">"304"</span> <span class="p">:</span> <span class="s1">'Not Modified'</span><span class="p">,</span>
+	<span class="s2">"305"</span> <span class="p">:</span> <span class="s1">'Use Proxy'</span><span class="p">,</span>
+	<span class="s2">"307"</span> <span class="p">:</span> <span class="s1">'Temporary Redirect'</span><span class="p">,</span>
+	<span class="s2">"400"</span> <span class="p">:</span> <span class="s1">'Bad Request'</span><span class="p">,</span>
+	<span class="s2">"401"</span> <span class="p">:</span> <span class="s1">'Unauthorized'</span><span class="p">,</span>
+	<span class="s2">"402"</span> <span class="p">:</span> <span class="s1">'Payment Required'</span><span class="p">,</span>
+	<span class="s2">"403"</span> <span class="p">:</span> <span class="s1">'Forbidden'</span><span class="p">,</span>
+	<span class="s2">"404"</span> <span class="p">:</span> <span class="s1">'Not Found'</span><span class="p">,</span>
+	<span class="s2">"405"</span> <span class="p">:</span> <span class="s1">'Method Not Allowed'</span><span class="p">,</span>
+	<span class="s2">"406"</span> <span class="p">:</span> <span class="s1">'Not Acceptable'</span><span class="p">,</span>
+	<span class="s2">"407"</span> <span class="p">:</span> <span class="s1">'Proxy Authentication Required'</span><span class="p">,</span>
+	<span class="s2">"408"</span> <span class="p">:</span> <span class="s1">'Request Time-out'</span><span class="p">,</span>
+	<span class="s2">"409"</span> <span class="p">:</span> <span class="s1">'Conflict'</span><span class="p">,</span>
+  	<span class="s2">"410"</span> <span class="p">:</span> <span class="s1">'Gone'</span><span class="p">,</span>
+	<span class="s2">"411"</span> <span class="p">:</span> <span class="s1">'Length Required'</span><span class="p">,</span>
+	<span class="s2">"412"</span> <span class="p">:</span> <span class="s1">'Precondition Failed'</span><span class="p">,</span>
+	<span class="s2">"413"</span> <span class="p">:</span> <span class="s1">'Request Entity Too Large'</span><span class="p">,</span>
+	<span class="s2">"414"</span> <span class="p">:</span> <span class="s1">'Request-URI Too Large'</span><span class="p">,</span>
+	<span class="s2">"415"</span> <span class="p">:</span> <span class="s1">'Unsupported Media Type'</span><span class="p">,</span>
+	<span class="s2">"416"</span> <span class="p">:</span> <span class="s1">'Requested range not satisfiable'</span><span class="p">,</span>
+	<span class="s2">"417"</span> <span class="p">:</span> <span class="s1">'Expectation Failed'</span><span class="p">,</span>
+	<span class="s2">"500"</span> <span class="p">:</span> <span class="s1">'Internal Server Error'</span><span class="p">,</span>
+	<span class="s2">"501"</span> <span class="p">:</span> <span class="s1">'Not Implemented'</span><span class="p">,</span>
+	<span class="s2">"502"</span> <span class="p">:</span> <span class="s1">'Bad Gateway'</span><span class="p">,</span>
+	<span class="s2">"503"</span> <span class="p">:</span> <span class="s1">'Service Unavailable'</span><span class="p">,</span>
+	<span class="s2">"504"</span> <span class="p">:</span> <span class="s1">'Gateway Time-out'</span><span class="p">,</span>
+	<span class="s2">"505"</span> <span class="p">:</span> <span class="s1">'HTTP Version not supported'</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">style</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text/css'</span><span class="o">&gt;</span>
+<span class="p">.</span><span class="nx">status_standby</span> <span class="p">{</span>
+    <span class="nl">color</span><span class="p">:</span> <span class="nx">green</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="p">.</span><span class="nx">status_busy</span> <span class="p">{</span>
+    <span class="nl">color</span><span class="p">:</span> <span class="nx">red</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">transactions_status</span> <span class="nx">caption</span> <span class="p">{</span>
+	<span class="nl">width</span><span class="p">:</span> <span class="mi">300</span><span class="nx">px</span><span class="p">;</span>
+	<span class="nx">border</span><span class="o">-</span><span class="na">bottom</span><span class="p">:</span> <span class="mi">1</span><span class="nx">px</span> <span class="err">#</span><span class="nx">c0c0c0</span> <span class="kr">double</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">transactions_status</span> <span class="nx">td</span> <span class="p">{</span>
+	<span class="nl">border</span><span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
+	<span class="nl">width</span><span class="p">:</span> <span class="mi">20</span><span class="nx">px</span><span class="p">;</span>
+	<span class="nx">text</span><span class="o">-</span><span class="na">align</span><span class="p">:</span> <span class="nx">center</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="p">{</span>
+	<span class="nl">display</span><span class="p">:</span> <span class="nx">block</span><span class="p">;</span>
+	<span class="nx">list</span><span class="o">-</span><span class="nx">style</span><span class="o">-</span><span class="na">position</span><span class="p">:</span> <span class="nx">inside</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="nx">li</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="p">.</span><span class="nx">ok</span> <span class="p">{</span>
+	<span class="nx">list</span><span class="o">-</span><span class="nx">style</span><span class="o">-</span><span class="na">image</span><span class="p">:</span> <span class="nx">url</span><span class="p">(..</span><span class="o">/</span><span class="nx">images</span><span class="o">/</span><span class="nx">bookopen</span><span class="p">.</span><span class="nx">gif</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="p">.</span><span class="nx">error</span> <span class="p">{</span>
+	<span class="nl">color</span><span class="p">:</span> <span class="nx">red</span><span class="p">;</span>
+	<span class="nx">list</span><span class="o">-</span><span class="nx">style</span><span class="o">-</span><span class="na">image</span><span class="p">:</span> <span class="nx">url</span><span class="p">(..</span><span class="o">/</span><span class="nx">images</span><span class="o">/</span><span class="nx">user_logout</span><span class="p">.</span><span class="nx">gif</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="nx">li</span> <span class="p">.</span><span class="nx">href</span> <span class="p">{</span>
+	<span class="nx">padding</span><span class="o">-</span><span class="na">right</span><span class="p">:</span> <span class="mi">5</span><span class="nx">px</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="nx">li</span> <span class="p">.</span><span class="nx">errorMessage</span> <span class="p">{</span>
+	<span class="nx">padding</span><span class="o">-</span><span class="na">left</span><span class="p">:</span> <span class="mi">5</span><span class="nx">px</span><span class="p">;</span>
+	<span class="nx">border</span><span class="o">-</span><span class="na">left</span><span class="p">:</span> <span class="mi">2</span><span class="nx">px</span> <span class="err">#</span><span class="mi">000</span> <span class="nx">solid</span><span class="p">;</span>
+
+	<span class="nx">text</span><span class="o">-</span><span class="na">decoration</span><span class="p">:</span> <span class="nx">underline</span><span class="p">;</span>
+    <span class="nl">color</span><span class="p">:</span> <span class="nx">red</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="sr">/style&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="nx">input</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text'</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'url'</span> <span class="nx">name</span><span class="o">=</span><span class="s1">'url'</span> <span class="nx">size</span><span class="o">=</span><span class="s1">'60'</span> <span class="nx">maxlength</span><span class="o">=</span><span class="s1">'1024'</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'&lt;?=XOOPS_URL?&gt;/'</span><span class="o">/&gt;&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="nx">label</span><span class="o">&gt;</span><span class="err">偵測深度</span><span class="p">:</span> <span class="o">&lt;</span><span class="sr">/label&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="nx">select</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'depth'</span> <span class="nx">name</span><span class="o">=</span><span class="s1">'depth'</span><span class="o">&gt;</span>
+	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'1'</span><span class="o">&gt;</span><span class="mi">1</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'2'</span><span class="o">&gt;</span><span class="mi">2</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'3'</span><span class="o">&gt;</span><span class="mi">3</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'4'</span><span class="o">&gt;</span><span class="mi">4</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'5'</span><span class="o">&gt;</span><span class="mi">5</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'6'</span><span class="o">&gt;</span><span class="mi">6</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/select&gt;</span><span class="err">
+</span><span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span>
+<span class="o">&lt;</span><span class="nx">label</span><span class="o">&gt;</span><span class="err">工作數</span><span class="p">:</span> <span class="o">&lt;</span><span class="sr">/label&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="nx">select</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'poolsize'</span> <span class="nx">name</span><span class="o">=</span><span class="s1">'poolsize'</span><span class="o">&gt;</span>
+	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'1'</span><span class="o">&gt;</span><span class="mi">1</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'5'</span><span class="o">&gt;</span><span class="mi">5</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'10'</span><span class="o">&gt;</span><span class="mi">10</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'15'</span><span class="o">&gt;</span><span class="mi">15</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'20'</span><span class="o">&gt;</span><span class="mi">20</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/select&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">button</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'button'</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'check'</span><span class="o">&gt;</span><span class="err">確定</span><span class="o">&lt;</span><span class="sr">/button&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">table</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'transactions_status'</span> <span class="nx">width</span><span class="o">=</span><span class="s1">'300'</span> <span class="nx">border</span><span class="o">=</span><span class="s1">'1'</span> <span class="nx">cellspacing</span><span class="o">=</span><span class="s1">'0'</span> <span class="nx">style</span><span class="o">=</span><span class="s1">'display: none;'</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">caption</span><span class="o">&gt;</span><span class="err">工作指示燈</span><span class="o">&lt;</span><span class="sr">/caption&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="nx">tbody</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nx">tr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="sr">/tr&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/tbody&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/table&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">div</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'brokenlink'</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">ul</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'s'</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="sr">/ul&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text/javascript'</span><span class="o">&gt;</span>
+<span class="kd">function</span> <span class="nx">_append_item</span><span class="p">(</span><span class="nx">task</span><span class="p">,</span> <span class="nx">ul</span><span class="p">,</span> <span class="nx">level</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
+	<span class="nx">ul</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
+	<span class="nx">item</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">paddingLeft</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="nx">level</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
+
+	<span class="kd">var</span> <span class="nx">spanHref</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'span'</span><span class="p">);</span>
+	<span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">spanHref</span><span class="p">);</span>
+	<span class="nx">spanHref</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">;</span>
+	<span class="nx">spanHref</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'href'</span><span class="p">;</span>
+
+	<span class="k">if</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="nx">item</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'ok'</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="k">else</span> <span class="p">{</span>
+	    <span class="nx">item</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'error'</span><span class="p">;</span>
+
+		<span class="kd">var</span> <span class="nx">spanErrorMessage</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'span'</span><span class="p">);</span>
+		<span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">spanErrorMessage</span><span class="p">);</span>
+		<span class="nx">spanErrorMessage</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'ERROR: '</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">code</span>
+	        <span class="o">+</span> <span class="s1">', '</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">text</span><span class="p">;</span>
+		<span class="nx">spanErrorMessage</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'errorMessage'</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">level</span> <span class="o">&gt;=</span> <span class="nx">level</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">subUl</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'ul'</span><span class="p">);</span>
+        <span class="nx">ul</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">subUl</span><span class="p">);</span>
+        <span class="nx">level</span><span class="o">++</span><span class="p">;</span>
+
+        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//var_dump( i + ' : ' + task.childUrls[i] );</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">])</span> <span class="p">{</span>
+            	<span class="nx">subTask</span> <span class="o">=</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">].</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">;</span>
+	            <span class="nx">_append_item</span><span class="p">(</span><span class="nx">subTask</span><span class="p">,</span> <span class="nx">subUl</span><span class="p">,</span> <span class="nx">level</span><span class="p">);</span>
+			<span class="p">}</span>
+			<span class="k">else</span> <span class="p">{</span>
+			    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">' is not in visitedUrls.'</span><span class="p">);</span>
+			<span class="p">}</span>
+        <span class="p">}</span>
+
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">showComplishedQueue</span><span class="p">()</span> <span class="p">{</span>
+	<span class="c1">//var_dump(visitedUrls);</span>
+	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
+	<span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">);</span>
+	<span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'h3'</span><span class="p">);</span>
+	<span class="nx">p</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'Complished!'</span><span class="p">;</span>
+	<span class="nx">r</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">p</span><span class="p">);</span>
+	<span class="kd">var</span> <span class="nx">ul</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'ul'</span><span class="p">);</span>
+	<span class="nx">r</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">ul</span><span class="p">);</span>
+
+	<span class="nx">_append_item</span><span class="p">(</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">complishedQueue</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">ul</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+	<span class="nx">checkStandby</span><span class="p">();</span>
+<span class="p">};</span>
+
+<span class="kd">function</span> <span class="nx">_global_transactions_status_change</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">stat</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">status</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">);</span>
+    <span class="nx">status</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">)[</span><span class="nx">index</span><span class="p">].</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'status_'</span> <span class="o">+</span> <span class="nx">stat</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">function</span> <span class="nx">_global_transactions_status_standby</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">_global_transactions_status_change</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="s1">'standby'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kd">function</span> <span class="nx">_global_transactions_status_busy</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">_global_transactions_status_change</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="s1">'busy'</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kd">function</span> <span class="nx">_global_transactions_status_init</span><span class="p">(</span> <span class="nx">size</span> <span class="p">)</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">status_bar</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tr'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+	<span class="kd">var</span> <span class="nx">td</span> <span class="o">=</span> <span class="nx">status_bar</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">);</span>
+	<span class="k">while</span><span class="p">(</span><span class="nx">td</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="nx">status_bar</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span> <span class="nx">td</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">);</span>
+	<span class="p">}</span>
+	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">size</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    	<span class="kd">var</span> <span class="nx">td</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'td'</span><span class="p">);</span>
+    	<span class="nx">status_bar</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">td</span><span class="p">);</span>
+    	<span class="nx">td</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'#'</span><span class="p">;</span>
+    	<span class="nx">_global_transactions_status_standby</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">Callback</span><span class="p">(</span><span class="nx">transactions</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">argument</span> <span class="o">=</span> <span class="p">{</span>
+		<span class="s1">'taskQueue'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">,</span>
+		<span class="s1">'complishedQueue'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">complishedQueue</span><span class="p">,</span>
+		<span class="s1">'visitedUrls'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">,</span>
+		<span class="s1">'transactions'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">,</span>
+		<span class="s1">'transactionsIndex'</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+		<span class="s1">'task'</span><span class="p">:</span> <span class="kc">null</span>
+	<span class="p">};</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">success</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">;</span>
+		<span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">;</span>
+		<span class="c1">//var level = task.level;</span>
+		<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">o</span><span class="p">;</span>
+
+		<span class="kd">var</span> <span class="nx">isOutSide</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+		<span class="k">if</span><span class="p">(</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">urlBase</span> <span class="o">==</span> <span class="kc">false</span>
+		<span class="o">||</span> <span class="nx">url</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="s1">'^'</span> <span class="o">+</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">urlBase</span><span class="p">,</span><span class="s1">'i'</span><span class="p">)</span> <span class="p">)</span>  <span class="p">)</span>
+		<span class="p">{</span>
+			<span class="c1">// if urlBase is false, it means no limit, can detect outer page.</span>
+			<span class="c1">// so think as not outside.</span>
+		    <span class="nx">isOutSide</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nx">isOutSide</span> <span class="o">&amp;&amp;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">level</span> <span class="o">&lt;</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">depth</span><span class="p">)</span> <span class="p">{</span>
+		    <span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^</span><span class="se">\s</span><span class="sr">*/</span><span class="p">,</span> <span class="s1">''</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\s</span><span class="sr">*$/</span><span class="p">,</span> <span class="s1">''</span><span class="p">);</span> <span class="c1">// trim</span>
+		    <span class="kd">var</span> <span class="nx">matches</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">'?'</span><span class="p">);</span>
+		    <span class="kd">var</span> <span class="nx">baseUrl</span> <span class="o">=</span> <span class="nx">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+		    <span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span>
+		    <span class="k">if</span><span class="p">(</span> <span class="nx">i</span> <span class="o">==</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'//'</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+		        <span class="nx">baseUrl</span> <span class="o">+=</span> <span class="s1">'/'</span><span class="p">;</span>
+		    <span class="p">}</span>
+		    <span class="k">else</span> <span class="p">{</span>
+		        <span class="nx">baseUrl</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">);</span>
+		    <span class="p">}</span>
+
+		    <span class="kd">var</span> <span class="nx">host</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'//'</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">));</span>
+		    <span class="kd">var</span> <span class="nx">matches</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">responseText</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/&lt;a</span><span class="se">[^</span><span class="sr">&lt;</span><span class="se">]</span><span class="sr">*</span><span class="se">\s</span><span class="sr">+href=</span><span class="se">([</span><span class="sr">'"</span><span class="se">]?)[</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+.*</span><span class="se">\1</span><span class="sr">/gi</span><span class="p">);</span>
+			<span class="kd">var</span> <span class="nx">wo_matches</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">responseText</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/window</span><span class="se">\.</span><span class="sr">open</span><span class="se">\(([</span><span class="sr">'"</span><span class="se">]?)[</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+.*</span><span class="se">\1</span><span class="sr">/gi</span><span class="p">);</span>
+			<span class="k">if</span><span class="p">(</span><span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
+			    <span class="k">if</span><span class="p">(</span><span class="nx">wo_matches</span><span class="p">)</span> <span class="p">{</span>
+			    	<span class="nx">matches</span> <span class="o">=</span> <span class="nx">matches</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">wo_matches</span><span class="p">);</span>
+				<span class="p">}</span>
+			<span class="p">}</span>
+			<span class="k">else</span> <span class="p">{</span>
+			    <span class="nx">matches</span> <span class="o">=</span> <span class="nx">wo_matches</span><span class="p">;</span>
+			<span class="p">}</span>
+
+		    <span class="k">if</span><span class="p">(</span><span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
+		        <span class="kd">var</span> <span class="nx">href</span><span class="p">;</span>
+		        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">matches</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		            <span class="k">if</span><span class="p">(</span> <span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'&lt;'</span><span class="p">)</span> <span class="p">{</span>
+		            	<span class="nx">href</span> <span class="o">=</span> <span class="sr">/&lt;a</span><span class="se">[^</span><span class="sr">&lt;</span><span class="se">]</span><span class="sr">*</span><span class="se">\s</span><span class="sr">+href=</span><span class="se">([</span><span class="sr">'"</span><span class="se">]?)([</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+</span><span class="se">)</span><span class="sr">.*</span><span class="se">\1</span><span class="sr">/i</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">])[</span><span class="mi">2</span><span class="p">];</span>
+					<span class="p">}</span>
+					<span class="k">else</span> <span class="p">{</span>
+		            	<span class="nx">href</span> <span class="o">=</span> <span class="sr">/window</span><span class="se">\.</span><span class="sr">open</span><span class="se">\(([</span><span class="sr">'"</span><span class="se">]?)([</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+</span><span class="se">)</span><span class="sr">.*</span><span class="se">\1</span><span class="sr">/i</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">])[</span><span class="mi">2</span><span class="p">];</span>
+					<span class="p">}</span>
+
+		            <span class="kd">var</span> <span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+		            <span class="c1">// Does start with protocol:// ?</span>
+		            <span class="kd">var</span> <span class="nx">parts</span> <span class="o">=</span> <span class="nx">href</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^</span><span class="se">\w</span><span class="sr">+:/</span><span class="p">);</span>
+		            <span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nx">parts</span> <span class="o">||</span> <span class="nx">parts</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+		            	<span class="k">if</span><span class="p">(</span><span class="nx">href</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'/'</span><span class="p">)</span> <span class="p">{</span>
+		            	    <span class="nx">href</span> <span class="o">=</span> <span class="nx">host</span> <span class="o">+</span> <span class="nx">href</span><span class="p">;</span>
+		            	<span class="p">}</span>
+		            	<span class="k">else</span> <span class="p">{</span>
+		                	<span class="nx">href</span> <span class="o">=</span> <span class="nx">baseUrl</span> <span class="o">+</span> <span class="nx">href</span><span class="p">;</span>
+		            	<span class="p">}</span>
+
+		            	<span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+		            <span class="p">}</span>
+		            <span class="k">else</span> <span class="p">{</span>
+		                <span class="k">if</span><span class="p">(</span><span class="nx">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http:"</span>
+						<span class="o">&amp;&amp;</span> <span class="nx">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"https:"</span><span class="p">)</span>
+		            	<span class="p">{</span>
+		                    <span class="k">continue</span><span class="p">;</span>   <span class="c1">// skip, not http or https</span>
+		            	<span class="p">}</span>
+
+		            	<span class="kd">var</span> <span class="nx">indexLastDoubleSlashes</span> <span class="o">=</span> <span class="nx">href</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'//'</span><span class="p">);</span>
+		            	<span class="kd">var</span> <span class="nx">indexLastSlash</span> <span class="o">=</span> <span class="nx">href</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span>
+		            	<span class="k">if</span><span class="p">(</span><span class="nx">indexLastDoubleSlashes</span> <span class="o">==</span> <span class="nx">indexLastSlash</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+		            	   <span class="nx">href</span> <span class="o">+=</span> <span class="s1">'/'</span><span class="p">;</span>
+		            	   <span class="c1">// it's a root directory without '/' as trail char.</span>
+		            	<span class="p">}</span>
+
+		            	<span class="k">if</span><span class="p">(</span><span class="nx">href</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">host</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="o">==</span> <span class="nx">host</span><span class="p">)</span> <span class="p">{</span>
+		            		<span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+		            	<span class="p">}</span>
+		            	<span class="k">else</span> <span class="p">{</span>
+		            		<span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+		            	<span class="p">}</span>
+		            <span class="p">}</span>
+
+					<span class="k">this</span><span class="p">.</span><span class="nx">appendChildUrls</span><span class="p">(</span><span class="nx">task</span><span class="p">,</span> <span class="nx">href</span><span class="p">);</span>
+
+		            <span class="k">if</span><span class="p">(</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span><span class="nx">href</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span><span class="nx">href</span><span class="p">].</span><span class="nx">argument</span> <span class="p">)</span> <span class="p">{</span>
+		                <span class="c1">// had visited, skip.</span>
+		                <span class="k">continue</span><span class="p">;</span>
+		            <span class="p">}</span>
+		            <span class="k">else</span> <span class="p">{</span>
+		                <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">href</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+		               	<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="k">new</span> <span class="nx">Task</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">href</span><span class="p">)</span> <span class="p">);</span>
+		            <span class="p">}</span>
+
+		        <span class="p">}</span> <span class="c1">// for each matches</span>
+			<span class="p">}</span> <span class="c1">// end of if(matches)</span>
+		<span class="p">}</span> <span class="c1">// end of if(level &lt; o.argument.depth)</span>
+
+		<span class="k">this</span><span class="p">.</span><span class="nx">endTransaction</span><span class="p">(</span><span class="nx">o</span><span class="p">);</span>
+
+		<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">);</span>
+		<span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
+		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="o">+</span> <span class="s1">': ok.'</span><span class="p">;</span>
+		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">" childUrls: "</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
+	<span class="p">}</span> <span class="c1">// end of event handler success</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">failure</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+		<span class="c1">//window.alert('failure');</span>
+		<span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">o</span><span class="p">;</span>
+		<span class="k">this</span><span class="p">.</span><span class="nx">endTransaction</span><span class="p">(</span><span class="nx">o</span><span class="p">);</span>
+
+		<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">);</span>
+		<span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
+		<span class="nx">item</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="s1">'red'</span><span class="p">;</span>
+		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="o">+</span> <span class="s1">': failure.'</span><span class="p">;</span>
+		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">" childUrls: "</span> <span class="o">+</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
+	<span class="p">}</span> <span class="c1">// end of event handler failure</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">appendChildUrls</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">,</span> <span class="nx">href</span><span class="p">)</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">isInChildUrls</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		    <span class="k">if</span><span class="p">(</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">==</span> <span class="nx">href</span><span class="p">)</span> <span class="p">{</span>
+		        <span class="nx">isInChildUrls</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+		        <span class="k">break</span><span class="p">;</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nx">isInChildUrls</span> <span class="p">)</span> <span class="p">{</span>
+		    <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="nx">href</span> <span class="p">);</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">endTransaction</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+		<span class="c1">//release slot</span>
+		<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">poolCheckout</span><span class="p">(</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactionsIndex</span> <span class="p">);</span>
+
+		<span class="k">this</span><span class="p">.</span><span class="nx">appendComplishedTask</span><span class="p">(</span><span class="nx">o</span><span class="p">);</span>
+		<span class="k">this</span><span class="p">.</span><span class="nx">checkPoolAndTask</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">);</span>
+	<span class="p">}</span> <span class="c1">// end of function Callback.endTransaction</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">appendComplishedTask</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">;</span>
+		<span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">code</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">status</span><span class="p">;</span>
+		<span class="k">if</span><span class="p">(</span> <span class="nx">AsyncRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">HTTPStatusCode</span><span class="p">[</span> <span class="nx">o</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="p">)</span> <span class="p">{</span>
+			<span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="nx">AsyncRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">HTTPStatusCode</span><span class="p">[</span> <span class="nx">o</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">];</span>
+			<span class="c1">//the o.statusText always returns 'OK'...</span>
+		<span class="p">}</span>
+		<span class="k">else</span> <span class="p">{</span>
+		    <span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="s1">'Undefined Error!'</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">complishedQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="nx">task</span> <span class="p">);</span>
+	<span class="p">}</span> <span class="c1">// end of function Callback.appendComplishedTask</span>
+
+	<span class="k">this</span><span class="p">.</span><span class="nx">checkPoolAndTask</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">transactions</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span><span class="p">(</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+		<span class="o">&amp;&amp;</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">isPoolAllDone</span><span class="p">()</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span>
+		<span class="p">{</span>
+			<span class="nb">window</span><span class="p">.</span><span class="nx">clearInterval</span><span class="p">(</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">interval</span> <span class="p">);</span>
+			<span class="c1">//window.alert('complished');</span>
+			<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">transactions</span><span class="p">.</span><span class="nx">done</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+				<span class="nx">showComplishedQueue</span><span class="p">();</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span> <span class="c1">// end of function Callback.checkPoolAndTask</span>
+
+<span class="p">}</span> <span class="c1">// end of function Callback</span>
+
+<span class="kd">function</span> <span class="nx">Task</span><span class="p">(</span><span class="nx">level</span><span class="p">,</span> <span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">level</span> <span class="o">=</span> <span class="nx">level</span><span class="p">;</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">=</span> <span class="p">{</span>
+	  <span class="na">code</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+	  <span class="na">text</span><span class="p">:</span> <span class="kc">null</span>
+	<span class="p">};</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">childUrls</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">transactions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">Transaction</span><span class="p">:</span> <span class="kd">function</span> <span class="nx">Transaction</span><span class="p">(</span><span class="nx">transactions</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">this</span><span class="p">.</span><span class="nx">transaction</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AsyncRequest</span><span class="p">(</span> <span class="s1">'GET'</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="kc">null</span> <span class="p">);</span>
+		<span class="k">this</span><span class="p">.</span><span class="nx">callback</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Callback</span><span class="p">(</span> <span class="nx">transactions</span> <span class="p">);</span> <span class="c1">// pass transactions self.</span>
+	<span class="p">},</span>
+
+	<span class="na">taskQueue</span><span class="p">:</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(),</span>
+	<span class="na">clearTaskQueue</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
+	<span class="p">},</span>
+
+	<span class="na">complishedQueue</span><span class="p">:</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(),</span>
+	<span class="na">clearComplishedQueue</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">complishedQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
+	<span class="p">},</span>
+
+	<span class="na">visitedUrls</span><span class="p">:</span> <span class="p">{</span>
+	<span class="p">},</span> <span class="c1">// new empty object.</span>
+
+	<span class="na">urlBase</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+	<span class="na">depth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+	<span class="na">done</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+
+	<span class="c1">//proxy: '&lt;?=XOOPS_URL?&gt;/modules/brokenlink/admin/proxy.php',</span>
+	<span class="na">proxy</span><span class="p">:</span> <span class="s1">'proxy.php'</span><span class="p">,</span>
+
+	<span class="na">pool</span><span class="p">:</span> <span class="p">[</span> <span class="kc">null</span> <span class="p">],</span>
+	<span class="na">poolBusy</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+	<span class="na">setPool</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">size</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">this</span><span class="p">.</span><span class="nx">pool</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(</span><span class="nx">size</span><span class="p">);</span>
+		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">size</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="nx">poolBusy</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+		<span class="nx">_global_transactions_status_init</span><span class="p">(</span><span class="nx">size</span><span class="p">);</span>
+	<span class="p">},</span>
+
+	<span class="na">poolCheckin</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="kd">var</span> <span class="nx">index</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">_global_transactions_status_busy</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+
+				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="k">this</span><span class="p">.</span><span class="nx">Transaction</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+				<span class="k">this</span><span class="p">.</span><span class="nx">poolBusy</span><span class="o">++</span><span class="p">;</span>
+				<span class="nx">index</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>
+
+				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactionsIndex</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>
+				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span> <span class="o">=</span> <span class="nx">task</span><span class="p">;</span>
+
+				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">setUrl</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">proxy</span> <span class="o">+</span> <span class="s1">'?url='</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="cm">/*anchor.href*/</span> <span class="p">);</span>
+				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">setCallback</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">callback</span> <span class="p">);</span>
+				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">send</span><span class="p">();</span>
+
+				<span class="k">break</span><span class="p">;</span>
+			<span class="p">}</span>
+		<span class="p">}</span> <span class="c1">// end of for</span>
+		<span class="k">return</span> <span class="nx">index</span><span class="p">;</span>
+	<span class="p">},</span> <span class="c1">// end of function transaction.poolCheckin</span>
+
+	<span class="na">poolCheckout</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span> <span class="nx">index</span> <span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">poolBusy</span><span class="o">--</span><span class="p">;</span>
+
+	    <span class="nx">_global_transactions_status_standby</span><span class="p">(</span><span class="nx">index</span><span class="p">);</span>
+	<span class="p">},</span>
+
+	<span class="na">isPoolAllDone</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+	    <span class="k">return</span> <span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">poolBusy</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">?</span> <span class="kc">false</span> <span class="p">:</span> <span class="kc">true</span><span class="p">);</span>
+	<span class="p">},</span>
+
+	<span class="na">_getTransaction</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">index</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">poolCheckin</span><span class="p">(</span><span class="nx">task</span><span class="p">);</span>
+		<span class="k">return</span> <span class="p">(</span> <span class="nx">index</span> <span class="o">===</span> <span class="kc">false</span> <span class="p">?</span> <span class="kc">false</span> <span class="p">:</span> <span class="kc">true</span> <span class="p">);</span>
+	<span class="p">},</span>
+
+	<span class="na">getPage</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^</span><span class="se">\s</span><span class="sr">*/</span><span class="p">,</span> <span class="s1">''</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\s</span><span class="sr">*$/</span><span class="p">,</span> <span class="s1">''</span><span class="p">);</span> <span class="c1">// trim</span>
+
+   		<span class="cm">/*
+		var matches = url.split('?');
+		var baseUrl = matches[0];
+		var i = baseUrl.lastIndexOf('/');
+		if( i == baseUrl.indexOf('//')+1) {
+		    baseUrl += '/';
+		}
+		else {
+			baseUrl = baseUrl.substring(0, i + 1 );
+		}
+		var host = baseUrl.substring(0, baseUrl.indexOf('/', baseUrl.indexOf('//')+2));
+		var anchor = {
+		  'host': host,
+		  'base': baseUrl,
+		  'level': level,
+		  'href': url
+		};*/</span>
+
+		<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_getTransaction</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="o">==</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+		  <span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">task</span><span class="p">);</span>
+		<span class="p">}</span>
+
+	<span class="p">},</span>
+
+  	<span class="na">interval</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+
+	<span class="na">clearAll</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">clearTaskQueue</span><span class="p">();</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">clearComplishedQueue</span><span class="p">();</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">visitedUrls</span> <span class="o">=</span> <span class="p">{};</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">setPool</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+	    <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+	        <span class="nb">window</span><span class="p">.</span><span class="nx">clearInterval</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="p">);</span>
+		<span class="p">}</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+	    <span class="k">this</span><span class="p">.</span><span class="nx">done</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">},</span>
+
+  <span class="na">travel</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="k">else</span> <span class="p">{</span>
+      <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">setInterval</span><span class="p">(</span><span class="s1">'transactions.travel()'</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+	<span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">getPage</span><span class="p">(</span><span class="nx">task</span><span class="p">);</span>
+
+	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+<span class="p">};</span>
+
+<span class="kd">function</span> <span class="nx">checkGo</span><span class="p">(</span><span class="nx">el</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">urlTextBox</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'url'</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">urlTextBox</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nx">disableCheckClick</span><span class="p">();</span>
+
+    <span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
+    <span class="k">while</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'block'</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'h3'</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'ul'</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="p">}</span>
+
+	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'block'</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'執行中...'</span><span class="p">;</span>
+
+    <span class="nx">transactions</span><span class="p">.</span><span class="nx">clearAll</span><span class="p">();</span>
+
+    <span class="nx">transactions</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="k">new</span> <span class="nx">Task</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">urlTextBox</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="p">);</span>
+
+    <span class="nx">transactions</span><span class="p">.</span><span class="nx">depth</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'depth'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
+
+	<span class="c1">//if( goOutSide ) {</span>
+	<span class="c1">//  transactions.urlBase = false;</span>
+	<span class="c1">//else {</span>
+    <span class="nx">transactions</span><span class="p">.</span><span class="nx">urlBase</span> <span class="o">=</span> <span class="nx">urlTextBox</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+    <span class="c1">//}</span>
+
+    <span class="nx">transactions</span><span class="p">.</span><span class="nx">setPool</span><span class="p">(</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'poolsize'</span><span class="p">).</span><span class="nx">value</span> <span class="p">);</span>
+
+	<span class="nx">transactions</span><span class="p">.</span><span class="nx">done</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nx">transactions</span><span class="p">.</span><span class="nx">travel</span><span class="p">();</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">enableCheckClick</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">elm</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">elm</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// IE</span>
+        <span class="nx">elm</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onclick'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span> <span class="c1">// DOM</span>
+        <span class="nx">elm</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'click'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">disableCheckClick</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">elm</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">elm</span><span class="p">.</span><span class="nx">detachEvent</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// IE</span>
+        <span class="nx">elm</span><span class="p">.</span><span class="nx">detachEvent</span><span class="p">(</span><span class="s1">'onclick'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span> <span class="c1">// DOM</span>
+        <span class="nx">elm</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="s1">'click'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="p">(</span><span class="kd">function</span> <span class="nx">checkStandby</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">enableCheckClick</span><span class="p">();</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'確定'</span><span class="p">;</span>
+<span class="p">})();</span>
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="c">&lt;!--</span><span class="p">?</span><span class="nx">php</span>
+<span class="nx">xoops_cp_footer</span><span class="p">();</span>
+<span class="p">?</span><span class="o">--&gt;</span>
+</code></pre>
+
+
+<h6>proxy.php</h6>
+<p>
+因為 XmlHttpRequest 有相同網址資源存取限制，所以 Brokenlink detector 需要一個 proxy 以讀取其他網頁的內容。Proxy 可以用任何工具撰寫，只要記住 Brokenlink detector 總是以 <code>?url=連結網址</code> 的形式調用 proxy。例如: <code>proxy.php?url=連結網址</code>。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">//  Proxy for XmlHttpRequest of JavaScript
+//  Copyright (C) 2006 shirock
+//  ------------------------------------------------------------------------ //
+//  This program is free software; you can redistribute it and/or modify     //
+//  it under the terms of the GNU General Public License as published by     //
+//  the Free Software Foundation; either version 2 of the License, or        //
+//  (at your option) any later version.                                      //
+//                                                                           //
+//  You may not change or alter any portion of this comment or credits       //
+//  of supporting developers from this source code or any supporting         //
+//  source code which is considered copyrighted (c) material of the          //
+//  original comment or credit authors.                                      //
+//                                                                           //
+//  This program is distributed in the hope that it will be useful,          //
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of           //
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
+//  GNU General Public License for more details.                             //
+//                                                                           //
+//  You should have received a copy of the GNU General Public License        //
+//  along with this program; if not, write to the Free Software              //
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //
+// ------------------------------------------------------------------------- //
+</span>
+<span class="cm">/* for Xoops
+include '../../../mainfile.php';
+
+if (!defined('XOOPS_ROOT_PATH')) {
+	header("HTTP/1.0 403", true, 403);
+    exit();
+}
+*/</span>
+
+<span class="k">function</span> <span class="nf">ProxyGetPage</span> <span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+
+	<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">header</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+	<span class="nb">curl_setopt</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_HTTPHEADER</span><span class="p">,</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">header</span><span class="p">);</span>
+
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_SSL_VERIFYPEER</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'verifypeer'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'verifypeer'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">false</span><span class="p">)</span> <span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'returntransfer'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'returntransfer'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">true</span><span class="p">)</span> <span class="p">);</span>
+	<span class="c1">//curl_setopt($ch,    CURLOPT_VERBOSE, 1); ########### debug
+</span>	<span class="c1">//curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+</span>	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEJAR</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiejar'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiejar'</span><span class="p">]</span> <span class="o">:</span> <span class="nx">XOOPS_ROOT_PATH</span><span class="o">.</span><span class="s1">'/cache/curl_cookie'</span><span class="p">)</span> <span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEFILE</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiefile'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiefile'</span><span class="p">]</span> <span class="o">:</span> <span class="nx">XOOPS_ROOT_PATH</span><span class="o">.</span><span class="s1">'/cache/curl_cookie'</span><span class="p">)</span> <span class="p">);</span>
+
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_CONNECTTIMEOUT</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'connecttimeout'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'connecttimeout'</span><span class="p">]</span> <span class="o">:</span> <span class="mi">30</span><span class="p">)</span> <span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FAILONERROR</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'failonerror'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'failonerror'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">true</span><span class="p">)</span> <span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FOLLOWLOCATION</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'followlocation'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'followlocation'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">true</span><span class="p">)</span> <span class="p">);</span>
+
+	<span class="k">if</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'post'</span><span class="p">])</span> <span class="k">and</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'post'</span><span class="p">]</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_POST</span><span class="p">,</span> <span class="kc">true</span> <span class="p">);</span>
+		<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CUROPT_POSTFIELDS</span><span class="p">,</span> <span class="nv">$_POST</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="k">else</span> <span class="p">{</span>
+	    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_POST</span><span class="p">,</span> <span class="kc">false</span> <span class="p">);</span>
+	<span class="p">}</span>
+
+	<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">text</span> <span class="o">=</span> <span class="nb">curl_exec</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+
+	<span class="k">if</span><span class="p">(</span><span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">))</span> <span class="p">{</span>
+		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span> <span class="o">=</span> <span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span> <span class="o">=</span> <span class="nb">curl_error</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="k">else</span> <span class="p">{</span>
+		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="nb">curl_close</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+	<span class="k">return</span> <span class="nv">$response</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="cm">/*===============================================================*/</span>
+<span class="cm">/* for Xoops
+require_once XOOPS_ROOT_PATH."/kernel/object.php";
+
+$config_handler =&amp; xoops_gethandler('config');
+$criteria = new CriteriaCompo(new Criteria('conf_modid', 0));
+$criteria-&gt;add(new Criteria('conf_catid', XOOPS_CONF_METAFOOTER));
+$config =&amp; $config_handler-&gt;getConfigs($criteria, true);
+
+if (empty($xoopsUser)) {
+    header("HTTP/1.0 403", true, 403);
+    exit();
+}
+*/</span>
+
+<span class="nv">$opts</span> <span class="o">=</span> <span class="k">array</span> <span class="p">(</span>
+	<span class="s1">'returntransfer'</span> <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">,</span>
+	<span class="s1">'connecttimeout'</span> <span class="o">=&gt;</span> <span class="mi">10</span>
+<span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">])</span> <span class="k">or</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">]))</span> <span class="p">{</span>
+	<span class="nb">header</span><span class="p">(</span><span class="s2">"HTTP/1.0 404 "</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="mi">404</span><span class="p">);</span>
+    <span class="k">exit</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+	<span class="nv">$url</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="nv">$response</span> <span class="o">=</span> <span class="nx">ProxyGetPage</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">switch</span><span class="p">(</span><span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span><span class="p">)</span> <span class="p">{</span>
+	    <span class="k">case</span> <span class="mi">22</span><span class="o">:</span>
+	        <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/(.+): (\d{3})$/'</span><span class="p">,</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">,</span> <span class="nv">$ers</span><span class="p">);</span>
+	        <span class="nb">header</span><span class="p">(</span><span class="s2">"HTTP/1.0 </span><span class="si">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span> <span class="p">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span><span class="s2">", true, </span><span class="nv">$ers[2]</span><span class="s2">);
+	        //echo "</span><span class="nx">HTTP</span><span class="o">/</span><span class="mf">1.0</span> <span class="p">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span> <span class="p">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span><span class="s2">";
+	        break;
+	    default:
+	        header("</span><span class="nx">HTTP</span><span class="o">/</span><span class="mf">1.0</span> <span class="mi">404</span> <span class="p">{</span><span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="mi">404</span><span class="p">);</span>
+	        <span class="k">break</span><span class="p">;</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4052641.html">http://blog.roodo.com/rocksaying/archives/4052641.html</a></div>

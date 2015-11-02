@@ -1,0 +1,139 @@
+---
+title: 延續《分割程式功能以及 mix-in 和 include》的討論
+category: programming
+old-category: PHP
+tags: [php,mix-in]
+---
+<div class="tags" style="display:none">Tags: php mix-in</div>
+
+<p>延續《<a href="{{ site.baseurl }}/archives/2008/%E9%97%9C%E6%96%BC%E5%88%86%E5%89%B2%E7%A8%8B%E5%BC%8F%E5%8A%9F%E8%83%BD%E4%BB%A5%E5%8F%8A%20mix-in%20%E5%92%8C%20include.html#comment-16075849">分割程式功能以及 mix-in 和 include</a>》的討論。tokimeki 說: <q>既然已經在外部定義了function，直接調用function不就好了嗎？</q></p>
+<p>
+我直接委派函數的原因是 PHP 語法限制。用函數比用靜態成員函數(類別方法)或一般成員函數(個體行為)要容易寫。請看我在另一篇的回應: <a href="{{ site.baseurl }}/archives/2007/PHP%20%E5%AF%A6%E8%B8%90%20mix-in%20%E6%A6%82%E5%BF%B5%20part%202%20-%20MixableClass.html#comment-4229555">這牽涉到 PHP 的動態能力限制。</a>。
+</p>
+
+<!--more-->
+<p>
+至於不直接調用 function 這點，那是因為直接調用 function 的方式將損失動態性，或者說 "彈性"。如下例:
+</p>
+
+<pre class="highlight"><code>//--------
+function foo() { echo 'foo'; }
+function bar() { echo 'bar'; }
+
+class A extends MixableClass {
+}
+class B {
+  function say() { echo 'BBB'; }
+}
+
+function allSay($a) {
+  foreach ($a as $o) {
+    $o-&gt;say();
+  }
+}
+
+//--------
+$a = array(new A, new A, new B);
+
+$a[0]-&gt;say = 'foo';
+$a[1]-&gt;say = 'bar';
+
+allSay($a);
+
+/*
+foo();
+bar();
+$a[2]-&gt;say();
+*/
+</code></pre>
+
+
+<p>
+以這例子來說，我只需要知道我要調用 say 行為，其他都不用管了。如果直接調用函數，哪要如何寫？把 allSay($a); 這行改成沒有彈性的三行？
+</p>
+
+<p>
+tokimeki又說: <q>我所需要的是「擴充」該類別的功能，換言之，他必須能像繼承一般，可以調用類別內protected的方法</q>。
+</p>
+
+<p>
+先看繼承，我的 MixableClass 的設計目標就是要能繼承，這點並沒有什麼問題。至於說到擴充 protected method 的事，Ruby 可以做到這一點，但 PHP 不行。以 PHP 的動態能力來看，不允許你混入 protected 或 private method。
+</p>
+<p>
+Ruby 可以 'open class' 後改變原有類別的任何方法 (包括 protected method)。如下例:
+</p>
+
+<pre class="highlight"><code><span class="k">class</span> <span class="nc">A</span>
+  <span class="k">def</span> <span class="nf">say</span>
+  <span class="k">end</span>
+  <span class="kp">protected</span> <span class="ss">:say</span>
+
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">say</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1">#open class A</span>
+<span class="k">class</span> <span class="nc">A</span>
+  <span class="k">def</span> <span class="nf">say</span>
+    <span class="nb">print</span> <span class="s1">'hello'</span>
+  <span class="k">end</span>
+  <span class="kp">protected</span> <span class="ss">:say</span>
+<span class="k">end</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="no">A</span><span class="p">.</span><span class="nf">new</span>
+<span class="n">a</span><span class="p">.</span><span class="nf">run</span>
+
+</code></pre>
+
+
+<p>
+第20行的 <code>a.run</code> 可以證明上例並不是定義一個新的 A 類別覆蓋先前的 A 類別。因為第2段 <code>class A</code> 的定義中，並沒有提到 <code>run</code> 這個行為。如果是覆蓋而非 'open' ，那麼就不會有 <code>run</code> 行為。
+</p>
+<p>
+想學 Runy 這麼做嗎？ PHP 會告訴你發生重覆定義類別的錯誤。
+</p>
+
+<p>
+或許我們可以在 MixableClass 的 <code>prototypeDelegate()</code> 中多加一個指定存取屬性的參數，然後在 <code>__call()</code> 中排除嘗試調用註明 protected 的混入方法。不過 PHP 的動態能力不足以應付這種情形: <em>我們不知道是誰 call?</em> 別忘了個體調用自己的行為時，也會透過 <code>__call()</code> (當它原本沒有定義時)。
+</p>
+
+<p>
+按 PHP 目前的能力來看，想要達成你的需求，要嘛用 include ，要不就用 hook 的技巧：你預先在方法定義中埋入 hook points ，然後你在外部插入 hooks 。
+</p>
+
+<pre class="highlight"><code>class A {
+    protected static $hooks = false;
+
+    function __construct() {
+        if ( !self::$hooks ) {
+            self::$hooks = array();
+            foreach ( get_class_methods(get_class($this)) as $methodName ) {
+                self::$hooks['pre_' . $methodName] = create_function('', 'return true;');
+                self::$hooks['post_' . $methodName] = create_function('', 'return true;');
+                echo $methodName, "\n";
+            }
+        }
+    }
+
+    protected function say() {
+        call_user_func(self::$hooks['pre_say']);
+
+        echo 'hello';
+
+        call_user_func(self::$hooks['post_say']);
+    }
+
+    public function run() {
+        return $this-&gt;say();
+    }
+    /*
+    ...
+    其他省略，各位應該知道怎麼做了吧？
+    */
+}
+
+$a = new A;
+$a-&gt;run();
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5763473.html">http://blog.roodo.com/rocksaying/archives/5763473.html</a></div>

@@ -1,0 +1,148 @@
+---
+title: VirtualBox 以 Ubuntu 作為 Guest OS 時的客端額外功能使用筆記
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,VirtualBox]
+---
+<p>
+我用 VirtualBox 安裝 Ubuntu 作為 Guest OS 時，使用客端額外功能 (Guest Additionals) 碰到了一些狀況，留個解決方法的筆記。
+</p>
+<p>
+軟體版本:
+</p>
+<ul>
+  <li>
+    Host OS: Ubuntu 9.04
+  </li>
+  <li>
+    VirtualBox 2.14 OSE - 我安裝的是 Ubuntu 9.04 內建的開源碼版本。
+  </li>
+  <li>
+    Guest OS: Ubuntu 9.04
+  </li>
+</ul>
+<p>
+另外，我透過 VirtualBox 使用介面的 [裝置] => [安裝額外功能] 下載客端額外功能的 ISO 檔時總是失敗。
+我建議用支援續傳的下載軟體，例如 wget 或 flashget ，直接到 VirtualBox 官方網站下載。
+下載網址是: <a href="http://download.virtualbox.org/virtualbox/">http://download.virtualbox.org/virtualbox/</a> 。
+按 VirtualBox 的版本，到符合的目錄下找 VBoxGuestAdditions_?.?.?.iso ，例如我用的是 2.14 版，那就找
+<a href="http://download.virtualbox.org/virtualbox/2.1.4/VBoxGuestAdditions_2.1.4.iso">VBoxGuestAdditions_2.1.4.iso</a>。
+目錄下也有使用手冊(UserManual.pdf)，有興趣多了解的可順便下載。
+</p>
+
+<!--more-->
+<h4>
+安裝前的修改動作，影響 guest Ubuntu 的螢幕解析度
+</h4>
+<p>
+如果直接按照安裝手冊說明的方式操作，那麼當你重新啟動 guest system 後，你的 guest Ubuntu 會告訴你找不到 vboxvideo 模組，你的 X-window 將以低解析度模式啟動。
+這實在是個令人困擾的情形，所幸在 <a href="http://www.ubuntugeek.com/ubuntu-904jaunty-and-virtualbox-video-driver-for-xguest-additions.html">Ubuntu 9.04(Jaunty) and Virtualbox video driver for X(Guest Additions)</a> 中有解決方案。
+</p>
+
+<ol>
+  <li>
+    先按手冊指示，在 guest Ubuntu 中掛載 VBoxGuestAdditions ISO 光碟。
+  </li>
+  <li>
+    接著切換帳號為 root (sudo -i)，進入 /media/cdrom 目錄，先將安裝程式解壓縮。例如:
+    <pre class="language-term">
+    cd /media/cdrom
+    sudo  ./VBoxLinuxAdditions-x86.run  --target  /tmp/vbox –-keep -–noexec
+    #注意你的CPU版本，64位元CPU請跑 VBoxLinuxAdditions-amd64.run 
+    </pre>
+  </li>
+  <li>
+    進入解開的目錄中，編輯 install.sh ，將第 415行的 '1.5.99.* | 1.6 )' 改成 '1.5.99.* | 1.6.0 )'。存檔。
+  </li>
+  <li>
+    執行 ./install.sh 。完成。
+  </li>
+</ol>
+
+<p>
+當我按照上述的修改動作完成安裝客端額外功能後，我的 guest Ubuntu 終於擺脫 800x600 的小螢幕，可以設定更大的解析度。
+</p>
+
+
+<h4>
+分享資料夾
+</h4>
+
+<p>
+分享資料夾的設定方式是 [裝置］ => [分享資料夾]，按 ＋ 新增。
+新增晝面中，上欄的 Folder Path 填入 Host OS 想要分享給 Guest OS 的目錄。可以按旁邊的箭頭瀏覽，這樣總不會填錯了吧。
+下欄的 Folder Name 填入 Guest OS 會看到的分享資料夾名稱。
+</p>
+
+<h5>
+VirtualBox 掛載分享資料夾的老毛病
+</h5>
+<p>
+我在掛載分享資料夾時，一直碰到 Protocol Error 的錯誤。
+google 之後才發現這是老毛病，我幾年前就碰過了。
+既然是老朋友，那解決方式就知道了。
+</p>
+
+<pre class="language-term">
+$ mount -t vboxsf workspace /mnt/workspace
+mounting failed with the error: Protocol error
+</pre>
+<p>
+使用 mount 指令時，來源的分享資料夾名稱不能和掛載位置的目錄名稱相同。
+</p>
+
+<pre class="language-term">
+$ mount.vboxsf workspace /mnt/workspace
+</pre>
+<p>
+OK! 直接用 mount.vboxsf 就可以同名了。
+</p>
+
+<p>
+如果我們想把 Mount 動作寫在 fstab 中讓系統自動掛入呢？
+寫在 fstab 中的裝置，都會調用 mount 指令掛載，這就會碰到上述提到的名稱不能相同的狀況。
+如果不想要取不同的名稱，那麼可以利用unix系統的檔案名稱分大小寫的特性。把 VirtualBox 的分享資料夾名稱的首字母大寫，要掛載的目錄名稱全小寫，這樣就不會發生錯誤。
+</p>
+
+<p>
+例如:
+</p>
+<pre class="language-text">
+# fstab (Ubuntu 9.04可用)
+<em>W</em>orkspace  /mnt/workspace  vboxsf
+</pre>
+<p class="note">
+Notice: mount.vboxsf 不認得 defaults 選項，所以後面不用再加 defaults 。
+</p>
+
+<h5>
+指定一般帳號為分享資料夾掛載後的檔案所有者
+</h5>
+<p>
+以一般帳號掛載共享資料夾，並且設定掛載後的檔案所有者為一般帳號，需使用 uid=???,gid=??? 選項。
+</p>
+<p>
+例如我在 guest Ubuntu 的工作時常要存取 host 分享資料夾的內容，但分享資料夾掛載後，
+檔案的擁有者是 root ，而我在 guest Ubuntu 是用 rock 作為帳號。
+如此一來，我每次都要 sudo 後才能儲存分享資料夾中的文件，實在不方便。
+所以我需要指定掛載後的檔案擁有者為 rock 。
+</p>
+<pre class="language-term">
+rock@desktop$ sudo mount.vboxsf -o uid=1000,gid=1000 Workspace /home/my_account/workspace
+</pre>
+<p class="note">
+雖然我很想用 <code>uid=`id -u`,gid=`id -u`</code> 的寫法，但是別忘了我是透過 sudo 執行的，
+因此之後接的 <code>id -u</code> 回報的是有效使用者的 UID ，也就是 root 的 UID 。
+只好老老實實地填入數字。
+</p>
+
+<p>fstab的寫法</p>
+<pre class="language-text">
+# fstab
+Workspace  /home/my_account/workspace  vboxsf  uid=1000,gid=1000  0  0
+</pre>
+
+<p>
+我將 Windows XP 作為 Guest OS 時，使用客端額外功能很順利，就補充一下分享資料夾的事。
+Windows XP 作為 Guest OS 時，是透過網路連線磁碟機的方式掛載分享資料夾。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10460743.html">http://blog.roodo.com/rocksaying/archives/10460743.html</a></div>

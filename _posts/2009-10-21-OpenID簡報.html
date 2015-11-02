@@ -1,0 +1,167 @@
+---
+title: OpenID簡報
+category: computer
+old-category: 電腦技術
+tags: [web service,REST,OpenID]
+---
+<p>
+OpenID 是一種去中心化的身份認證系統，建置簡便，甚至不需要一個帳號管理中心伺服器。
+在 OpenID 中的使用案例中，參與者分成三種，即:
+</p>
+<ul>
+    <li>End-user - 最終使用者，即服務的一般用戶，每一個用戶都使用一個 URL 來代表
+    自己。</li>
+    <li>Identity provider - 身份提供者。身份登錄與驗證的服務提供者。</li>
+    <li>Relying party - 委託者，向 Identity provider 請求驗證身份的參與者。
+    通常是其他的服務提供者。</li>
+</ul>
+
+<!--more-->
+<p>
+除了身份的辯證外，OpenID 也規範了委託者可以透過 <a href="http://openid.net/specs/openid-simple-registration-extension-1_0.html">
+OpenID Simple Registration Extension 1.0</a> 向身份提供者查詢使用者的基本資訊。
+Simple Registration Extension 指定了部份欄位的用途，例如: 
+</p>
+<ul>
+    <li>
+    openid.sreg.nickname:
+        Any UTF-8 string that the End User wants to use as a nickname. 
+    </li>
+    <li>
+    openid.sreg.email:
+        The email address of the End User as specified in section 3.4.1 of [RFC2822] (Resnick, P., “Internet Message Format,” .). 
+    </li>
+    <li>
+    openid.sreg.fullname:
+        UTF-8 string free text representation of the End User's full name. 
+    </li>
+    <li>
+    openid.sreg.language:
+        End User's preferred language as specified by ISO639. 
+    </li>
+</ul>
+<p>
+更多的欄位用途請參考 <a href="http://openid.net/specs/openid-simple-registration-extension-1_0.html">
+OpenID Simple Registration Extension 1.0</a> 。
+</p>
+
+
+<h4>
+OpenID 的三方交涉概念
+</h4>
+
+<p>
+OpenID 協定規範了代表最終使用者的 agent (例如Web瀏覽器)與身份提供者和委託者交涉的內容，
+agent 藉由 Cookie 保存認證狀態。憑此狀態，agent 可以存取其他的服務資源，而無需使
+用者再次輸入密碼。
+</p>
+
+<p>
+例如 mydomain.com 是身份提供者 （Identity provider)。
+rock 在 mydomain.com 登錄了他的身份，則 rock 可以用 http://mydomain.com/rock 這個 URL 代表他。
+接著 rock 想要使用 Gmail 服務，就以 http://mydomain.com/rock 簽入 Gmail ，此時 Gmail 就是委託者（Relying party） 。
+Gmail 會從代表 rock 的 URL 中，找出這個身份的提供者是 mydomain.com ，接著就依
+OpenID 規範的交涉協定驗證 rock 是否已經登入了。
+</p>
+<p>
+如果 rock 事先已經在 mydomain.com 完成登入動作，那麼 Gmail 就會得到 rock 已登入
+的回應，rock 就不需要再次輸入帳號和密碼。反之若 rock 尚未在任何地方登入，那麼
+Gmail 的頁面就要導向到 mydomain.com 的登入頁面去，讓 rock 完成登入動作。將使用者
+導向到登入頁面的動作，是 OpenID 協定的交涉動作之一。
+</p>
+
+<fieldset>
+<legend>
+The OpenID Authentication Process
+</legend>
+<img src="http://blog.roodo.com/rocksaying/28f31ffd.png" alt="The OpenID Authentication Process"/>
+<p>
+本圖取自「
+<a href="http://www.readwriteweb.com/archives/google_is_now_an_openid_provider.php">
+Google is Now an OpenID Provider
+</a>
+」。
+</p>
+</fieldset>
+
+<h4>
+OpenID 實作品
+</h4>
+
+<p>
+基本上，委託者是根據代表身份的 URL 判斷身份提供者是誰。例如 URL 是 http://mydomain.com/rock ，
+則身份提供者就是 mydomain.com 。委託者可以直接根據 ID 找到身份提供者要求驗證。
+因此，在一般情形下，OpenID 系統不需要所謂的身份認證中心伺服器。
+甚至於，一個最終使用者可以自己當自己的身份提供者。
+</p>
+<p>
+例如 rock 架設了個人主機 rock.idv.tw ，啟動了 Identity provider 的服務。
+那麼 rock 就可以用 http://rock.idv.tw/ 代表他自己。
+當有人(任何人)以 http://rock.idv.tw/ 這個 URL 向任何一個支援 OpenID 的網路伺服
+要求服務時，那些服務者就要向 rock.idv.tw 驗證身份。
+</p>
+<p>
+Niemira 的 <a href="http://siege.org/projects/phpMyID/">phpMyID</a> 用了
+1800行的 PHP code 實作了一個單一帳號的身份提供者軟體。使用者僅須在自己的主機上
+安裝此程式，就可以做自己的身份提供者。
+</p>
+
+<p>在 <a href="http://developer.yahoo.com/openid/bestpractices.html">
+Yahoo! OpenID Usability Research</a> 文章中，補充了許多關於使用者體驗改善的事項，
+可以讓軟體系統支援 OpenID 功能時，對使用者更為友善。
+</p>
+
+<p>
+OpenID 已經有相當多的實作品，包含 Libraries/API 在內。這些 Libraries 可以提供
+編程人員在軟體中實現 Identity provider 、Relying party 功能。
+</p>
+<p>
+OpenID Foundation 提供了一份 Libraries 清單：<a href="http://openid.net/developers/libraries/">Libraries</a>。
+</p>
+
+<ul>
+    <li><a href="http://code.google.com/p/dyuproject/">
+    dyuproject</a> - java REST framework, openid 2.0 relying party, oauth consumer and service provider, JSON IOC.
+    </li>
+    <li><a href="http://code.google.com/p/joid/">
+    JOID</a> - JOID lets you create both OpenID 2.0 relying parties and identity providers.
+    </li>
+    <li><a href="http://wso2.org/projects/identity">
+    WSO2 Identity Server</a> - WSO2 Identity Server is an open source identity and entitlement management server having Information Cards, OpenID and XACML support.
+    </li>
+</ul>
+
+<h4>
+References
+</h4>
+
+<ul>
+    <li><a href="http://zh.wikipedia.org/wiki/OpenID">
+    Wiki:OpenID</a>
+    </li>
+
+    <li><a href="http://openid.net/">
+    OpenID Foundation</a>
+    </li>
+
+    <li><a href="http://wiki2008.openid.net/Run_your_own_identity_server">
+    Run your own identity server</a>
+    </li>
+
+    <li><a href="http://www.openidenabled.com/">
+    OpenID Enabled!</a>
+    </li>
+
+    <li><a href="http://www.readwriteweb.com/archives/google_is_now_an_openid_provider.php">
+    Google is Now an OpenID Provider</a>
+    </li>
+
+    <li><a href="http://developer.yahoo.com/openid/bestpractices.html">
+    Yahoo! OpenID Usability Research.</a>
+    </li>
+
+    <li><a href="http://openid-provider.appspot.com/">
+    OpenID for Google Accounts</a>
+    </li>
+
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10405437.html">http://blog.roodo.com/rocksaying/archives/10405437.html</a></div>

@@ -1,0 +1,188 @@
+---
+title: How to change Ubuntu loading splash/background in Ubuntu 10.04
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,background]
+---
+<p>Ubuntu 10.04 採用 Plymouth 取代 xsplash ，所以 Ubuntu 9.10 及以前版本的啟動畫面修改方式全都不適用。但是 Plymouth 提供了更簡單的修改方式。
+</p>
+
+<p>Ubuntu 10.04 的 Plymouth 設定文件都放置在 <dfn>/lib/plymouth</dfn> 目錄內。與主題樣式有關的設定文件放置於 <dfn>/lib/plymouth/themes</dfn> ，預設主題樣式文件為 <dfn>default.plymouth</dfn>。其內容大致如下:
+</p>
+
+<pre class="language-text">
+[Plymouth Theme]
+Name=Ubuntu Logo
+Description=A theme that features a blank background with a logo.
+ModuleName=script
+
+[script]
+ImageDir=/lib/plymouth/themes/ubuntu-logo
+ScriptFile=/lib/plymouth/themes/ubuntu-logo/ubuntu-logo.script
+</pre>
+
+<p>觀其內容，稍有經驗的使用者應該很快就能理解該如何下手修改了。
+</p>
+
+<!--more-->
+<p>第一段 <dfn>[Plymouth Theme]</dfn> 中的 <var>ModuleName</var> 指示 Plymouth 載入它的 script.so 模組處理主題內容。基本上，這一段的內容固定不變。
+</p>
+
+<p>第二段 <dfn>[script]</dfn> 就是配合 script.so 模組的設定項目了。顧名思義，<var>ImageDir</var> 指示啟動畫面圖檔的放置目錄；<var>ScriptFile</var> 指示啟動畫面處理過程的指令稿內容。這個指令稿使用的是 Plymouth script 語法，指令稿的內容並不難讀懂。通常我們只需要修改幾處變數內容即可；除非你要做繁複的畫面特效，否則不需要深入了解。
+</p>
+
+<h4>
+快速修改法
+</h4>
+
+<p>稍有經驗的使用者在看完 <dfn>default.plymouth</dfn> 的內容後，大概就知道如何修改了。如果你只是想要換一下啟動畫面的Logo影像，那麼只需要把你的圖檔複製到 <dfn>/lib/plymouth/themes/ubuntu-log</dfn> ，替換掉原本的 ubuntu_logo.png 即可。我建議先將原本的 ubuntu_logo.png 備份起來。
+</p>
+
+<pre class="language-term">
+$ cd /lib/plymouth/themes/ubuntu-logo
+$ sudo mv ubuntu_logo.png ubuntu_logo.png.bak
+$ sudo cp <var>/your/image</var> ubuntu_logo.png
+</pre>
+
+<p>若你想一併換掉底下跑動的啟動進度顯示圖像，就準備兩個相對應的圖像，一個表示關閉(progress_dot_off.png)，一個表示亮起(progress_dot_on.png)。依樣畫葫蘆，將它們複製到 <dfn>/lib/plymouth/themes/ubuntu-log</dfn> ，替換掉原本的圖檔。
+</p>
+
+<p>按照 ubuntu-logo.script 的原定步驟，它會將Logo圖像顯示在螢幕中央偏上方四分之一高處。將啟動進度圖像顯示在主要圖像的下方，相隔四分之一高。我們不必特意調整圖像大小， ubuntu-logo.script 會自動去計算圖像安排的位置。
+</p>
+
+<h4>
+進階 - 自定樣式
+</h4>
+
+<p>如果你想要自定一個啟動畫面樣式，那麼可以在 <dfn>/lib/plymouth/themes</dfn> 下建立一個子目錄，例如 my-theme ，將 ubuntu-logo/ubuntu-logo.plymouth 與 ubuntu-logo-logo.script 複製過去。再將你準備好的圖檔也複製過去。接著修改 <dfn>/etc/alternatives/default.plymouth</dfn> 的符號連結目標為你的 plymouth 。如下操作:
+</p>
+
+<pre class="language-term">
+$ cd /lib/plymouth/themes
+$ sudo mkdir my-theme
+$ cd my-theme
+$ sudo cp ../ubuntu-logo/ubuntu-logo.script my-theme.script
+$ sudo cp ../ubuntu-logo/ubuntu-logo.plymouth my-theme.plymouth
+$ sudo cp <var>/your/images</var> .
+
+$ cd /etc/alternatives
+$ sudo rm default.plymouth
+$ sudo ln -s /lib/plymouth/themes/my-theme/my-theme.plymouth default.plymouth 
+</pre>
+
+<p>修改 my-theme.plymouth 中的 <var>ImageDir</var> 與 <var>ScriptFile</var> 的內容。
+</p>
+<pre class="language-text">
+[Plymouth Theme]
+Name=Ubuntu Logo
+Description=A theme that features a blank background with a logo.
+ModuleName=script
+
+[script]
+ImageDir=/lib/plymouth/themes/my-theme
+ScriptFile=/lib/plymouth/themes/my-theme/my-theme.script
+</pre>
+
+<p>修改 my-theme.script ，尋找 <var>logo_filename</var> (約170行處)，你會看到圖像檔名的設定內容，將它們改成你的圖像檔名。
+</p>
+
+<pre class="code">
+
+if (bits_per_pixel == 4) {
+    logo_filename = "Splash-GnomeDarkSplashScreen.png";
+    progress_dot_off_filename = "progress_dot_off16.png";
+    progress_dot_on_filename = "progress_dot_on16.png";
+    password_field_filename = "password_field16.png";
+} else {
+    logo_filename = "Splash-GnomeDarkSplashScreen.png";
+    progress_dot_off_filename = "progress_dot_off.png";
+    progress_dot_on_filename = "progress_dot_on.png";
+    password_field_filename = "password_field.png";
+}
+
+</pre>
+
+<p>尋找 <var>Window.SetBackgroundTopColor</var> 與 <var>Window.SetBackgroundBottomColor</var> (約165行處)。可以設定 plymouth 的背景色。
+</p>
+
+<p>我們可以在 <a href="http://art.gnome.org/themes/splash_screens">GNOME Art</a> 找到許多合法的 Logo 圖像。
+</p>
+
+<img src="http://blog.roodo.com/rocksaying/ea477bbf.png" alt="Splash-GnomeDarkSplashScreen (C) LGPL" />
+
+<p>以上列之 Logo 圖像為例，我們可以進一步修改進度圖像的顯示位置，讓它們顯示在 Logo 圖像的區塊內，提高美觀度。
+</p>
+
+<p>尋找 <var>logo.y = Window.GetY () </var> (約188行) ，將它的計算公式改為呈現在正中央，而非中央偏上。再尋找 <var>progress_indicator.y = logo.y + logo.height</var> (約211行)，將計算公式改為 Logo 圖像底部上移 50 點。50點是根據 Splash-GnomeDarkSplashScreen.png 與 progress_dot_on.png 的高度計算所得。請根據你的 Logo 圖像內容，調整上移點數。
+</p>
+
+<pre class="code">
+# 約188行
+logo.y = Window.GetY () + Window.GetHeight () / 2 - logo.height / 2; 
+
+# 約211行
+progress_indicator.y = logo.y + logo.height - 50;
+
+</pre>
+
+<p>到此為止，我們完成了自定樣式的設計工作。再執行 <code>sudo update-initramfs -u </code>，重開機後，就可以觀看我們設計的啟動畫面了。
+</p>
+
+<h4>
+顯示晶片微調
+</h4>
+<p>
+不同的顯示晶片，也會影嚮 Plymouth splash 的呈現效果。有些系統開機時只看到狀態圖示在跑，而看不到背景圖；但關機時卻會看到背景圖。有些系統則是用16色模式顯示。有些系統則是用較低的解析度顯示。種種狀況不一而足。就我個人調整經驗，這些缺失效果，可以嘗試用下列兩種方式來修正。
+</p>
+
+<h5>啟用 framebuffer</h5>
+<p>
+此解法適用對象是看不到背景圖，或是用低解析度顯示的狀況。
+</p>
+<p>
+新增或編輯 <dfn>/etc/initramfs-tools/conf.d/splash</dfn>，增加一行 <code>FRAMEBUFFER=y</code>。儲存文件後，再執行 <code>update-initramfs -u</code> 更新。
+</p>
+<pre class="language-term">
+$ sudo -i
+# echo FRAMEBUFFER=y &gt;&gt; /etc/initramfs-tools/conf.d/splash
+# update-initramfs -u
+</pre>
+
+<h5>指定 grub 的解析度</h5>
+<p>這適用 Plymouth 以低解析度顯示或是16色模式顯示的狀況。我個人經驗是， nVidia 顯示晶片的使用者，升級顯示卡驅動程式為 nVidia 提供的版本後，經常出現這種狀況。這個解法分成兩步驟，如果第一個步驟就能修正，則不必再改第二個步驟。在 Ubuntu 10.04 中，這兩個步驟都要修改 <dfn>/etc/default/grub</dfn>，找到下列的段落內容。
+</p>
+
+<pre class="language-text">
+# The resolution used on graphical terminal
+# note that you can use only modes which your graphic card supports via VBE
+# you can see them in real GRUB with the command `vbeinfo'
+#GRUB_GFXMODE=640x480
+#GRUB_GFXPAYLOAD_LINUX=keep
+
+</pre>
+
+<p>
+第一個修正步驟，編輯 <dfn>/etc/default/grub</dfn> ，啟用 <code>GRUB_GFXPAYLOAD_LINUX=keep</code> 選項。然後更新 grub2 與 initramfs 。
+</p>
+<pre class="language-term">
+$ sudo update-grub2 
+$ sudo update-initramfs -u
+</pre>
+<div class="note">
+在其他版本中，這個設定項目位在 <dfn>/etc/grub.d/00_header</dfn>，而且要自己手動添加。位置是加到 <code>set gfxmode=${GRUB_GFXMODE}</code> 的下一行，內容是 <code>set gfxpayload=keep</code>。
+</div>
+
+<p>
+如果重開機後，Plymouth 已可正常呈現效果，則不必再進行下一步。如果仍有問題，則你需要再進第二步修改，強制指定解析度。
+</p>
+<p>
+根據你的螢幕解析度，修改 <code>GRUB_GFXMODE</code> 之值。例如你的 LCD 螢幕解析度是 1680x1050 ，則設定為 <code>GRUB_GFXMODE=1680x1050</code>。然後更新 grub2 與 initramfs 。
+</p>
+<p>
+如果終於解決了，恭喜你。如果還是有問題，你就只好再繼續請教 google 了。
+</p>
+
+<h6>參考文件</h6>
+<ul>
+    <li><a href="http://www.ubuntugeek.com/quick-tipplymouth-themes-in-ubuntu-10-04-lucid-lynx.html">Plymouth themes: Fix, install, create in Ubuntu 10.04 (Lucid Lynx)</a></li>
+</ul><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12306099.html">http://blog.roodo.com/rocksaying/archives/12306099.html</a></div>

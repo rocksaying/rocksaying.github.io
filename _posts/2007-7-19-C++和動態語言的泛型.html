@@ -1,0 +1,134 @@
+---
+title: C++和動態語言的泛型
+category: programming
+old-category: Programming
+tags: [metaprogramming,動態語言,generic,template]
+---
+<div class="tags" style="display:none">Tags: metaprogramming 動態語言 generic template</div>
+<p>
+cf 的<a href="{{ site.baseurl }}/archives/2007/STL%20Vector_Map%20%E7%9A%84%E4%BD%BF%E7%94%A8%E7%B7%B4%E7%BF%92%2C%20%E9%99%84%20Ruby%20%E5%B0%8D%E7%85%A7%E7%A8%8B%E5%BC%8F%E7%A2%BC.html#comment-11558653">回應</a> 中提到了 polymorphism 和 generic 的看法。我的看法稍有不同。
+</p>
+<p>
+我眼中的泛型(generic)，若用非常簡化的方式來表達，就是不管型別，只看程式形式，亦即演算法。如稍候例舉的 max() 就是一種泛型演算法 (STL 也有一個同名的演算法)。我的說法和其他人的說法應該沒什麼不同。那麼多型(polymorphism)、泛型和樣板(templete)之間有什麼關係？端視程式語言的特性而定。
+</p>
+<p>
+首先，多型(polymorphism)具有類別繼承的性質，是個體導向(OO)的概念，但泛型(generic) 不是個體導向概念。我們同樣可以在只有基礎資料型態，沒有繼承觀念的環境中使用泛型設計，只是彈性就低多了。在個體導向語言中，藉由類別繼承與動態連結的能力，才能充分發揮泛型設計的優點。
+</p>
+
+<!--more-->
+<p>
+其次，說到泛型與樣板的關係。C/C++語言要求明確的型別，所以 C/C++ 如果沒有代換型別的能力，就實現不了泛型。C++ 樣板原意是「型別參數化」(這是C++之父最初提出樣板概念時的說法)，意義表達很精確。所以C++要談泛型，要先從樣板著手。雖然樣板是在個體導向功能之後才加入 C++ 的功能，但它也可以先於個體導向之前存在。例如函數樣板(Function template) 就可以這樣使用。我們可以按傳統 C 那樣設計程式，但用函數樣板幫助程序員減少編寫重複的相似程式碼。精確地說，是將程式碼的產生工作由程序員轉給編譯器。
+</p>
+<p>
+若從泛型與編譯器的關係來看，沒有編譯器的動態語言環境就不需要樣板的功能。See also: <a href="http://www.approximity.com/ruby/Comparison_rb_st_m_java.html">Ruby versus Smalltalk versus ...</a>. 所以 cf 說「我還沒有在其他的地方看過」是很合理的，因為 Ruby, Perl, JavaScript 等動態環境中用不著。故不能以「是否具備樣板功能」判定程式語言的泛型支援能力。
+</p>
+
+<h4>C 和樣板</h4>
+<p>
+以下範例，使用 C 的方式設計程式，且無視個體導向能力，僅運用樣板進行泛型設計。
+</p>
+<h5>使用樣板前</h5>
+<p>
+下列範例用到了 C99 後加入的 Overload 功能。如果不使用 Overload ，那麼函數名稱通常要分別寫成: <code>max_i(), max_f(), max_c(), print_i(), print_f(), print_c()</code> 等相似的名稱。那是更為傳統的寫法。
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">max</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// Overload max()
+</span><span class="kt">float</span> <span class="nf">max</span><span class="p">(</span><span class="kt">float</span> <span class="n">n</span><span class="p">,</span> <span class="kt">float</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// Overload max()
+</span><span class="kt">char</span> <span class="nf">max</span><span class="p">(</span><span class="kt">char</span> <span class="n">n</span><span class="p">,</span> <span class="kt">char</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">print</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// Overload print()
+</span><span class="kt">void</span> <span class="nf">print</span><span class="p">(</span><span class="kt">float</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// Overload print()
+</span><span class="kt">void</span> <span class="nf">print</span><span class="p">(</span><span class="kt">char</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">float</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">2</span><span class="p">.</span><span class="mi">321</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">123</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">x</span> <span class="o">=</span> <span class="sc">'x'</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="sc">'y'</span><span class="p">;</span>
+
+    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">));</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">));</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">));</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h5>使用 Template 後</h5>
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+</span>
+<span class="n">template</span> <span class="o">&lt;</span><span class="kr">typename</span> <span class="n">var</span><span class="o">&gt;</span> <span class="n">var</span> <span class="n">max</span><span class="p">(</span><span class="n">var</span> <span class="n">n</span><span class="p">,</span> <span class="n">var</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">template</span> <span class="o">&lt;</span><span class="kr">typename</span> <span class="n">var</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="n">var</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// specialized print()
+</span><span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="kt">float</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// specialized print()
+</span><span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="kt">char</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">float</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">2</span><span class="p">.</span><span class="mi">321</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">123</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">x</span> <span class="o">=</span> <span class="sc">'x'</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="sc">'y'</span><span class="p">;</span>
+
+    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">));</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">));</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">));</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+一個只用基本資料型態的 C 程式，在使用樣板進行泛型設計之後，程式碼內容成功地減肥了。
+</p>
+
+<h5>動態語言</h5>
+<p>
+我個人並非以語法區分動態語言和靜態語言，參閱《<a href="{{ site.baseurl }}/archives/2007/%E5%A6%82%E4%BD%95%E5%8D%80%E5%88%86%E5%8B%95%E6%85%8B%E8%AA%9E%E8%A8%80%E5%92%8C%E9%9D%9C%E6%85%8B%E8%AA%9E%E8%A8%80.html">如何區分動態語言和靜態語言</a>》。傳統上沒有編譯器的程式語言，如 Ruby, JavaScript, Perl, Python 等，我們目前慣稱為動態語言。這些程式語言的語意通常就有泛型概念。如下列 JavaScript 程式中的 <code>max()</code>，和 C++ 樣板相比，沒什麼不同。
+</p>
+
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">max</span><span class="p">(</span><span class="nx">n</span><span class="p">,</span> <span class="nx">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nx">n</span> <span class="o">&gt;=</span> <span class="nx">m</span> <span class="p">?</span> <span class="nx">n</span> <span class="p">:</span> <span class="nx">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">e</span> <span class="o">=</span> <span class="mf">2.321</span><span class="p">,</span> <span class="nx">f</span> <span class="o">=</span> <span class="mf">1.123</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="s1">'x'</span><span class="p">,</span> <span class="nx">y</span> <span class="o">=</span> <span class="s1">'y'</span><span class="p">;</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">f</span><span class="p">));</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span><span class="p">));</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">));</span>
+</code></pre>
+
+
+<p>
+從語法與語意看，動態語言的語法其實就是泛型的。它們只是因為沒有編譯動作，而不得不 late binding 。並不得不仰賴其他的處理策略。參考《<a href="{{ site.baseurl }}/archives/2007/Metaprogramming%20-%20To%20Use%20C_C%2B%2B%20with%20Dynamic%20Languages%20is%20Easier%20Than%20Pure%20C%2B%2B.html">Use C/C++ with Dynamic Languages is Easier Than Pure C++</a>》及《<a href="{{ site.baseurl }}/archives/2007/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E4%B8%AD%E7%9A%84%E4%BB%8B%E9%9D%A2%EF%BC%8C%E5%9C%A8%E5%80%8B%E9%AB%94%E4%B9%8B%E9%96%93%E5%8D%94%E8%AD%B0%E4%BA%92%E5%8B%95%E8%A1%8C%E7%82%BA%E7%9A%84%E5%A4%9A%E7%A8%AE%E5%BD%A2%E5%BC%8F.html">個體之間協議互動行為的多種形式</a>》。
+</p>
+<p>
+動態語言之中，有些有編譯器的實作品，例如 JavaScript 。在 .Net Framework 中有一個 JScript compiler 。<em>然而這些編譯器的實作功能殘缺不齊。它們充其量只能檢查語法，而不會檢查型態</em>。如果廠商真的要實作 JavaScript 的編譯器，那麼應該要如同 C/C++ 那樣附帶一個宣告文件，或者是引用 TDD 概念要求附帶一個 Test case ，供編譯器檢查型態才對。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3684523.html">http://blog.roodo.com/rocksaying/archives/3684523.html</a></div>

@@ -1,0 +1,151 @@
+---
+title: 嘗試使用 Java 的 reflection 重構指派資料欄位值的程式碼
+category: programming
+old-category: C/C++/C#/Java
+tags: [reflection,反射,refactor,DRY,重構]
+---
+<p>
+如果你熟悉動態語言，你大概會嘗試使用 Java 的反射(reflection)來重構程式碼。我個人提供一個重構經驗，告訴你使用 Java 的反射時，你可能會感到失望。
+</p>
+<p>
+這是一段透過 Hibernate 進行的資料更新動作。我從使用者端取得要更新的資料項，接著先向 Hibernate 查詢要更新的資料項目是否存在，存在的話再把新的資料內容更新進去。
+</p>
+
+<!--more-->
+<p>
+我要求「查詢是否存在」與「更新資料」這兩個動作要在同一筆交易中進行，看起來應該不會有什麼麻煩。不幸的是， Hibernate 本於 ORM 觀念，將資料項繫結到了查詢動作所取得的 <var>oldItem</var> 上。因此當我要求 Hibernate 使用另一個 <var>item</var> 內的資料更新時， Hibernate 拒絕了我的要求。儘管 id 欄位值一樣，但它不承認 <var>item</var> 是指定資料項的新內容，它認為我應該要用 <var>oldItem</var> 更新。
+</p>
+
+<p>
+對此，我一開始用了一個直接的解法。程式碼於下。
+</p>
+
+<pre class="highlight"><code><span class="kd">public</span> <span class="n">ReturnCode</span> <span class="nf">update</span><span class="p">(</span><span class="n">Product</span> <span class="n">item</span><span class="o">)</span> <span class="o">{</span>
+	<span class="n">ReturnCode</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Success</span><span class="o">;</span>
+	<span class="n">session</span> <span class="o">=</span> <span class="n">sessionFactory</span><span class="o">.</span><span class="na">openSession</span><span class="o">();</span>
+    <span class="n">Product</span> <span class="n">oldItem</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+
+	<span class="k">try</span> <span class="o">{</span>
+		<span class="n">tx</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">beginTransaction</span><span class="o">();</span>
+
+		<span class="n">oldItem</span> <span class="o">=</span> <span class="n">session_findById</span><span class="o">(</span><span class="n">session</span><span class="o">,</span> <span class="n">item</span><span class="o">.</span><span class="na">getId</span><span class="o">());</span>
+		<span class="k">if</span> <span class="o">(</span><span class="n">oldItem</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="n">oldItem</span><span class="o">.</span><span class="na">setContent</span><span class="o">(</span><span class="n">item</span><span class="o">.</span><span class="na">getContent</span><span class="o">());</span>
+			<span class="n">oldItem</span><span class="o">.</span><span class="na">setTitle</span><span class="o">(</span><span class="n">item</span><span class="o">.</span><span class="na">getTitle</span><span class="o">());</span>
+			<span class="n">oldItem</span><span class="o">.</span><span class="na">setPrice</span><span class="o">(</span><span class="n">item</span><span class="o">.</span><span class="na">getPrice</span><span class="o">());</span>
+			<span class="c1">//我知道這樣做非常愚蠢。但是ORM只認同這種做法。</span>
+			<span class="c1">//幸好這個資料結構只有兩三個欄位，而不是十幾個欄位。</span>
+    		<span class="n">session</span><span class="o">.</span><span class="na">update</span><span class="o">(</span><span class="n">oldItem</span><span class="o">);</span>
+		<span class="o">}</span>
+		<span class="k">else</span> <span class="o">{</span>
+			<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">NotExists</span><span class="o">;</span>
+		<span class="o">}</span>
+		<span class="n">tx</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+	<span class="o">}</span>
+	<span class="k">catch</span><span class="o">(</span><span class="n">HibernateException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+		<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+		<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Failed</span><span class="o">;</span>
+	<span class="o">}</span>
+	<span class="n">session</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+	<span class="k">return</span> <span class="n">rc</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+
+<p>
+請看上列程式碼中間那一連三行的 <code>oldItem.setXxx( item.getXxx() )</code>。
+我知道這樣做非常愚蠢，因為它不斷的重複相同動作，犯了 DRY (Don't Repeat Yourself) 的錯誤。
+幸好這個資料結構只有兩三個欄位，而不是十幾個欄位。
+但如果我日後改變設計，增改欄位，那麼我勢必要回頭進來這兒增刪程式碼。
+</p>
+
+<p>
+Ok, 為了避免修改時的邊際效應，我決定用 Java 笨重的反射功能重構上述的程式碼。重構結果於下。
+</p>
+
+<pre class="highlight"><code><span class="kd">public</span> <span class="n">ReturnCode</span> <span class="nf">update</span><span class="p">(</span><span class="n">Product</span> <span class="n">item</span><span class="o">)</span> <span class="o">{</span>
+	<span class="n">ReturnCode</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Success</span><span class="o">;</span>
+	<span class="n">session</span> <span class="o">=</span> <span class="n">sessionFactory</span><span class="o">.</span><span class="na">openSession</span><span class="o">();</span>
+    <span class="n">Product</span> <span class="n">oldItem</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+
+	<span class="k">try</span> <span class="o">{</span>
+		<span class="n">tx</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">beginTransaction</span><span class="o">();</span>
+
+		<span class="n">oldItem</span> <span class="o">=</span> <span class="n">session_findById</span><span class="o">(</span><span class="n">session</span><span class="o">,</span> <span class="n">item</span><span class="o">.</span><span class="na">getId</span><span class="o">());</span>
+		<span class="k">if</span> <span class="o">(</span><span class="n">oldItem</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="c1">//oldItem.setContent(item.getContent());</span>
+			<span class="c1">//... !!!DRY!!!!</span>
+			<span class="k">try</span> <span class="o">{</span>
+				<span class="n">Class</span><span class="o">&lt;</span><span class="n">Product</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="o">(</span><span class="n">Class</span><span class="o">&lt;</span><span class="n">Product</span><span class="o">&gt;)</span> <span class="n">item</span><span class="o">.</span><span class="na">getClass</span><span class="o">();</span>
+				<span class="n">String</span> <span class="n">setMethodName</span> <span class="o">=</span> <span class="kc">null</span><span class="o">,</span> <span class="n">getMethodName</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+				<span class="n">Method</span> <span class="n">methods</span><span class="o">[]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="na">getMethods</span><span class="o">();</span>
+				<span class="k">for</span> <span class="o">(</span><span class="n">Method</span> <span class="n">method</span> <span class="o">:</span> <span class="n">methods</span> <span class="o">)</span> <span class="o">{</span>
+					<span class="n">setMethodName</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+					<span class="c1">//找出 setXxx()</span>
+					<span class="k">if</span> <span class="o">(</span><span class="n">setMethodName</span><span class="o">.</span><span class="na">matches</span><span class="o">(</span><span class="s">"^set[A-Z].*"</span><span class="o">)</span> <span class="o">)</span> <span class="o">{</span>
+                        <span class="c1">//得出新方法名稱 getXxx</span>
+						<span class="n">getMethodName</span> <span class="o">=</span> <span class="n">setMethodName</span><span class="o">.</span><span class="na">replaceFirst</span><span class="o">(</span><span class="s">"^set"</span><span class="o">,</span> <span class="s">"get"</span><span class="o">);</span>
+						<span class="n">Method</span> <span class="n">getMethod</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="n">getMethodName</span><span class="o">);</span>
+						<span class="c1">// object = item.getXxx()</span>
+						<span class="n">Object</span> <span class="n">object</span> <span class="o">=</span> <span class="n">getMethod</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">item</span><span class="o">,</span> <span class="o">(</span><span class="n">Object</span><span class="o">[])</span><span class="kc">null</span><span class="o">);</span>
+						<span class="c1">// oldItem.setXxx(object)</span>
+						<span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">oldItem</span><span class="o">,</span> <span class="n">object</span><span class="o">);</span>
+					<span class="o">}</span>
+				<span class="o">}</span>
+				<span class="n">session</span><span class="o">.</span><span class="na">update</span><span class="o">(</span><span class="n">oldItem</span><span class="o">);</span>
+			<span class="o">}</span>
+			<span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+				<span class="c1">// relfection exception...</span>
+				<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+				<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Failed</span><span class="o">;</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+		<span class="k">else</span> <span class="o">{</span>
+			<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">NotExists</span><span class="o">;</span>
+		<span class="o">}</span>
+		<span class="n">tx</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+	<span class="o">}</span>
+	<span class="k">catch</span><span class="o">(</span><span class="n">HibernateException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+		<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+		<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Failed</span><span class="o">;</span>
+	<span class="o">}</span>
+	<span class="n">session</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+	<span class="k">return</span> <span class="n">rc</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+
+
+<p>
+重構的結果看起來挺複雜的，但其實它只是要做動態語言兩行可以表達的事。
+</p>
+<p>
+PHP 表達的方式是:
+</p>
+<pre class="highlight"><code>foreach ($oldItem as $key =&gt; $value)
+    $oldItem-&gt;$key = $item-&gt;$key;
+</code></pre>
+
+<p>
+JavaScript 表達的方式是:
+</p>
+<pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">key</span> <span class="k">in</span> <span class="nx">oldItem</span><span class="p">)</span>
+    <span class="nx">oldItem</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">item</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</code></pre>
+
+
+<p>
+《超越Java (Beyond Java)》的作者 Tate 在書中說: <q>如果你花時間在 Smalltalk ，你大概會更常使用 Java 的反射</q>。我覺得這一點還要接上後半句: <q>好吧，我可能對你的要求太嚴格了</q>。
+</p>
+<p>
+我一直認為 Reflection 其實是 Java/C# 等缺乏個體自識能力之語言才有的詞彙 (見<a href="{{ site.baseurl }}/archives/2007/%E4%BB%80%E9%BA%BC%E6%98%AF%20Reflection%20%EF%BC%9F.html" class="bookname_notation">什麼是Reflection?</a>)，在 <a href="{{ site.baseurl }}/archives/2009/%E5%BE%9E%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E4%BE%86%E8%AB%87%20Java%20%E8%AA%9E%E8%A8%80.html" class="bookname_notation">從中介編程與反射能力來談 Java 語言  </a> 系列文章中也說過: <q>在強型態的動態語言中，一個個體認識自己（自識）是再自然不過的事，所謂反射就像呼吸一樣自然，讓人感覺不到它的存在</q>。正因為在動態語言中，自識(反射)處理起來非常地自然，所以我們才會頻繁地使用的，甚至沒有意識到這個動作有何特殊。
+</p>
+<p>
+然而，當在我 Java 中嘗試使用反射能力處理本文所提的這項<em>應該很簡單的</em>重構動作時，我卻有強烈地窒息感。在動態語言中，這只不過是一件到公園去呼吸新鮮空氣般輕鬆的事。 Java 卻強迫我們載上氧氣瓶與面罩去爬山。
+</p>
+<p>
+那段重構後的程式碼，迂迴曲折，無法讓人一眼看出它的意圖，醜得連它媽媽都不認得(呃... 好像是我寫的)。熟悉動態語言編程的程序員，確實會想要用 Java 的反射來做一些很自然的事，但是我們只會感到窒息。當我艱苦地達成目標後，我只想對那段程式碼吐口水，存檔之後就再也不想回頭多看幾眼了。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/%E8%88%87%20metavige%20%E5%92%8C%20alexchen%20%E5%B0%8D%E8%A9%B1%20Java%20%E8%AA%9E%E8%A8%80.html">與 metavige 和 alexchen 對話 Java 語言</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10867569.html">http://blog.roodo.com/rocksaying/archives/10867569.html</a></div>

@@ -1,0 +1,79 @@
+---
+title: 《Java technology, IBM style~ A new era in Java technology》讀後雜記
+category: programming
+old-category: C/C++/C#/Java
+tags: [java]
+---
+<p>
+我曾耳聞將來只有 JDK7 而不會有 Java7 的傳言(<a href="http://www.jroller.com/scolebourne/entry/no_more_java_7">No more Java 7</a>)。雖然結局尚未到來，但看 <a href="http://www.ibm.com/developerworks/java/library/j-java7.html">Java technology, IBM style: A new era in Java technology</a> 中的用字遣詞，傳言似乎真有那麼點可信度了。
+</p>
+<p>
+雖然 Oracle 收購 Sun 之後，附帶取得 Java 內容的控制權，但 IBM 顯然決意擴大它對 Java 內容的影響力。在 <a href="http://www.ibm.com/developerworks/java/library/j-java7.html">Java technology, IBM style: A new era in Java technology</a> 中，IBM 提出了不少項目。觀其態勢，既便 Oracle 最後不將這些內容納入 Oracle Java 7 specification，IBM SDK for Java v7 也會支援。在 JCP 的成員中，IBM 不是唯一有這打算的。 Apache 基金會也有自己的一套想法。
+</p>
+
+<!--more-->
+<h5>
+強型別？弱型別？
+</h5>
+<p>
+Java 語言的教士們，總是強調 Java 語言是強型別語言(strongly typed)，程式執行時比較安全。但事實上， JVM 的 bytecode 卻是弱型別機制(loosely typed)。JVM 在執行程式時，已經拋掉型別資訊了；如果你用過 Java 的泛型(generic)，將會深刻地體會這件事。也因此，程式其實是在弱型別環境下執行。Java 語言編譯器在編譯時強制程式碼的型別相符，和程式執行時的安全性，是兩碼子事。
+</p>
+<p>
+JVM 依賴前端的 Java 語言編譯器進行強制性的型別匹配工作，因此它本身不在乎型別資訊，並不會什麼大問題。然後，當 JVM 上不只有 Java 語言時，這就有問題了。例如 Ruby, Python, Groovy 等支援動態型別的程式語言，由於它們的資料型別要等到執行時才能確知，理論上 JVM 要能提供它們這些幫助。但 JVM 目前幫不了它們，所以那些動態語言解譯器的實作者，就必須自己運用反射功能，處理動態型別的資料存取與方法調用工作。因此形成它們在 JVM 上的效能瓶頸。
+</p>
+<p>
+對於上述狀況，Java7 (JSR 292) 將會新增一組 bytecode ，在 bytecode 層級下，提供動態型別的方法調用能力。動態語言解譯器便不需要自己用反射功能處理。
+</p>
+
+<h5>
+小小的語法改變，提高程式可讀性
+</h5>
+<p>
+以下內容，是早見於其他程式語言中，並且證明它們可有效提高程式可讀性。
+</p>
+<ul>
+    <li>字串將可以用於 <code>switch</code> 敘述。</li>
+    <li>從語言層級支持容器(Collection)的使用。</li>
+    <li>改良的泛型型別推斷。</li>
+</ul>
+
+<h6>字串將可以用於 <code>switch</code> 敘述</h6>
+<p>
+我曾在使用 <a href="{{ site.baseurl }}/archives/2009/Java%20Enum%20and%20Generic.html">Java 的 Enum 與 Generic</a> 時，抱怨過 <code>String</code> 不能用在 <code>switch</code> 敘述中。使得我必須使用較冗長且不易讀的 <code>if (enumData.toString() == "Xxx")</code> 敘述。等到 Java7 後，這方面的困擾應該會減少一些了。
+</p>
+
+<h6>從語言層級支持容器(Collection)的使用</h6>
+<p>
+現階段的 Java 平台上，是以 class 層級支援容器類別(Collection)。而在 Java 語言中，並不提供任何容器操作的支援，它只是單純的把 Collection 視為一般的類別來操作。在許多方面來看，這就形成了許多表達方式不一致的情形。從 OO 純度更高的 Smalltalk, Ruby 語言來看，這顯示 Java 語言沒有做到更高層次的資料抽象化。
+</p>
+<p>
+以陣列為例，Java 原生型態中的 <dfn>array</dfn> 與類別 <dfn>List</dfn> 儘管都是抽象化的陣列，但卻有截然不同的操作方式。例如你可以在定義一個 array 時一併指派各元素的內容。但你不能用相同的語法初始一個 List 。你對 array 資料使用 <code>[]</code> 運算符取得元素值，但對 List 資料卻要使用 <code>get()</code> 方法。
+</p>
+<p>
+在 Java7 中，至少將支援 Collection 的初始化語法，你將可以在定義一個 Collection 資料時，使用類似定義 array 的語法，一併設定 Collection 各元素的內容。至於 <code>[]</code> 運算符的使用... 似乎仍不支援。
+</p>
+<div class="note">
+C# 1.0 支援運算子覆載，你可以自行定義 <code>operator[]</code> 方法，就可使用 <code>[]</code> 運算子存取容器元素。 C# 3.0 支援容器初始化語法。
+</div>
+
+<h6>改良的泛型型別推斷</h6>
+<p>
+改良的泛型型別推斷則和 C# 3.0 的匿名型態 <dfn>var</dfn> 有異曲同工之妙。它可以讓我們少輸入等號兩邊重複的型態資訊。
+</p>
+<pre class="highlight"><code>//pre Java7, 我們輸入了兩次泛型型態資訊 &lt;String, List&lt;String&gt;&gt;
+Map&lt;String, List&lt;String&gt;&gt; anagrams = new HashMap&lt;String, List&lt;String&gt;&gt;();
+
+//Java7, 根據等號左邊的泛型型態資訊推斷右邊的型態
+Map&lt;String, List&lt;String&gt;&gt; anagrams = new HashMap&lt;&gt;();
+
+//C# 3.0 則是從等號右邊推斷左邊的型態
+var anagrams = new HashMap&lt;String, String&gt;();
+</code></pre>
+
+
+<p>
+IDE 工具可以幫我們輸入那些冗長又重複的程式碼，但不能幫我們閱讀程式。閱讀程式碼始終要由程序員自己來看，任何提高表達一致性與可讀性的語法，總是提供正面助益。
+</p>
+<p>
+除非專案需要，否則我不會主動用 Java 撰寫任何程式，故而我並不在乎 Java7 與 JDK7 的歧異。但我還是會關注 Java 語言的改變。撇開 Java7 與 JDK7 的歧異不談，我在 <a href="http://www.ibm.com/developerworks/java/library/j-java7.html">Java technology, IBM style: A new era in Java technology</a> 看到一些遲來的改變。我之所以說遲來的改變，是因為與 Java 語言同世代的程式語言幾乎都已經具備那些內容了。對 Java 語言的使用者而言，這些改變應該是好消息。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12235343.html">http://blog.roodo.com/rocksaying/archives/12235343.html</a></div>

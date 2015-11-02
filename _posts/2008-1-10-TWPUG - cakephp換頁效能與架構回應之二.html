@@ -1,0 +1,154 @@
+---
+title: TWPUG - cakephp換頁效能與架構回應之二
+category: programming
+old-category: PHP
+tags: [php5,spl,sql,cakephp,記憶體管理]
+---
+<div class="tags" style="display:none">Tags: php5 spl sql cakephp 記憶體管理</div>
+<p>於 TWPUG 之回應內容，點擊連結參閱: <a href="http://twpug.net/modules/newbb/viewtopic.php?topic_id=3094&post_id=11654#forumpost11653">原文章串之回應內容</a>。
+</p>
+<p>
+本文內容主要討論 PHP 資料查詢函數的記憶體管理機制。
+</p>
+<blockquote>
+FIEND:<br/><br/>
+
+如果 我的 db 有 一千萬筆資料
+我全部都要入 變數 再 count ...
+應該會 error ....
+<br/><br/>
+1. count 陣列變數太誇張了..<br/>
+我在 db 而且 findall 我己經下 limit 了說<br/>
+塞入 變數 的想法 真的很酷 不敢用會被打死 .
+</blockquote>
+
+<p>
+FIEND 不了解查詢結果的記憶體管理機制。當 PHP 向 DB 查詢資料後，資料內容就已經被儲存在 PHP 這方的記憶體內容了。說的更明白些，例如: 
+<code>$resource = mysql_query($query);</code>。此時 <var>$resource</var> 已經是一個儲存了查詢結果的變數(但型態不是陣列)。如果查詢結果有一千萬筆資料，那麼 <var>$resource</var> 就會配置那麼多的記憶體空間儲存那一千萬筆資料。接著再使用 mysql_fetch_array() 等方法取出個別資料記錄。
+</p>
+
+<!--more-->
+<p><strong>Read The Manual!</strong></p>
+<blockquote>
+<h5>PHP Manual::mysql_query</h5>
+<p>
+The returned result resource should be passed to mysql_fetch_array(), and other functions for dealing with result tables, to access the returned data.
+</p>
+
+<h5>PHP Manual::mysql_free_result</h5>
+<p>
+mysql_free_result() will free all memory associated with the result identifier result. 
+</p>
+<p>
+mysql_free_result() only needs to be called if you are concerned about how much memory is being used for queries that return large result sets.
+</p>
+</blockquote> 
+<p>
+<em>PHP 口中的 resource 其實就是一個"塞入很多內容的變數"。而被查詢出的一千萬筆資料並不是保存在 DB 端。</em>
+</p>
+
+<p>
+有碼有真相，來一段測試過程。首先查詢一個上萬筆的記錄結果，然後 sleep() 暫停 PHP 程式執行。再以 top(Unix) 或 工作管理員(windows) 觀看 PHP 程式查詢前後使用的記憶體變化量，就知道查詢的資料結果是被儲存在哪了。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$link</span> <span class="o">=</span> <span class="nb">mysql_connect</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="s1">'mysql_user'</span><span class="p">,</span> <span class="s1">'mysql_password'</span><span class="p">);</span>
+
+<span class="nv">$query</span> <span class="o">=</span> <span class="s1">'SELECT * FROM my_table'</span><span class="p">;</span> <span class="c1">//有幾萬筆資料的查詢結果
+</span>
+<span class="nv">$resource</span> <span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span><span class="nv">$query</span><span class="p">,</span> <span class="nv">$link</span><span class="p">);</span>
+
+<span class="nb">sleep</span><span class="p">(</span><span class="mi">120</span><span class="p">);</span> <span class="c1">//暫停2分鐘
+</span>
+<span class="nb">mysql_free_result</span><span class="p">(</span><span class="nv">$resource</span><span class="p">);</span>
+
+<span class="nb">sleep</span><span class="p">(</span><span class="mi">120</span><span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+
+<h4>Resource, Array and ArrayObject</h4>
+<blockquote>
+FIEND:<br/><br/>
+
+mysql_result 的 method 並沒有在 db_souces 下被運用.<br/>
+一般情況下 , 我會利用 mysql_result 去取 出我要的 第 n 筆的 record .<br/>
+然後用 while 告訴它我只要取幾筆..<br/>
+而在沒有 conettion close 之前.<br/>
+我就可以用 mysql_num_rows 去取得它的個數.<br/>
+而我也沒有用 limit 去 下 query .<br/>
+所以我可以 要出 我要的二種資料.<br/>
+mysql 的function 並不是只有 fetch_array ....<br/>
+為什麼一定要用 limit 去達成 page 效果<br/>
+而 model 和 db_souces 又沒有提供 result 的用法<br/>
+如此 即為 為什麼我覺得 cake在換頁的表現有待加強.
+</pre></blockquote>
+
+<p>
+一個經驗老道的 PHP programmer ，會定義一個 <a href="http://www.php.net/~helly/php/ext/spl/classArrayObject.html">SPL::ArrayObject</a> 的衍生類別，將 resource 及存取函數都封裝進去。(關於 SPL::ArrayObject 亦可參閱我的另一篇文章: <a href="{{ site.baseurl }}/archives/2007/SPL~Use%20ArrayObject%20and%20ArrayIterator%20to%20Overload%20Operators%20of%20Array.html">SPL: Use ArrayObject and ArrayIterator to Overload Operators of Array</a>) 
+</p>
+
+<pre class="highlight"><code>$resource = mysql_query($query);
+
+class ResultSet extends ArrayObject {
+    protected $resource;
+
+    public function __construct($resource) {
+        $this-&gt;resource = $resource;
+    }
+    
+    public function count() {
+        return mysql_num_rows($this-&gt;resource);
+    }
+
+    public function offsetGet($index) {
+        return mysql_result($this-&gt;resource, $index);
+    }  
+}
+
+$dbResultSet = new ResultSet($resource);
+
+echo count($dbResultSet);
+
+
+$record = mysql_result($resource, 0);
+
+$record = $dbResultSet[0];
+</code></pre>
+
+
+<p>
+如此一來，用 count() 取得資料結果筆數有何問題？啥，CakePHP 沒用 ArrayObject ，而是直接把 resource 的記錄內容轉成原生型態陣列(primitive type array)？那也沒什麼不好啊，直接用陣列運算子就能操作資料了，比 mysql_xxx() 更簡單。所以FIEND抱怨 "mysql_result 的 method 並沒有在 db_souces 下被運用"，這毫無意義。
+</p>
+
+<p>
+再說到 limit 的問題，這實際上就是記憶體管理的問題，也就是我在本文第一段回應的內容，在換頁功能中使用 limit 就是為了節省記憶體。
+</p>
+
+<p>
+最後，我要修正一下我<a href="{{ site.baseurl }}/archives/2008/TWPUG%20-%20cakephp%E6%8F%9B%E9%A0%81%E6%95%88%E8%83%BD%E8%88%87%E6%9E%B6%E6%A7%8B.html">前篇回應</a>的錯誤。我前篇回應了忽略了 findAll() 有 limit n 的敘述在內，所以用 count() 得到的數目必定小於等於 n ，而不是結果總筆數。因為一次 交易只能回傳一個結果。就此而言，先用 findAll() 再用 findCount() 是不得已的舉措。
+</p>
+
+<p>
+就算我在一次交易中塞入2行查詢敘述，一個查內容(limit n)，一個查 count ，但 DB 只會回傳最後一行查詢敘述的結果，第一行敘述的結果則不會回傳。
+</p>
+<p>
+不過老練的 SQL 人員會一招 UNION 指令，可以把2個查詢敘述併成一行，使得2個查詢結果合併為一個，就可以傳回來了。
+</p>
+
+<h4>mysql_query 的記憶體配置</h4>
+<p>
+FIEND 又說他向 MySQL 查詢傳回數萬筆資料結果的動作時，並不會受到 PHP 的 memory_limit 的限制。剛好有這麼一篇 <a href="http://www.mysqlperformanceblog.com/2007/07/06/php-large-result-sets-and-summary-tables/">PHP Large result sets and summary tables</a> 解釋原因。
+</p>
+<blockquote>
+Because by default mysql_query uses mysql_store_result C library call and buffers all result set in the process memory. Not good if there are over 50 millions of rows. Note this limit is not controlled by memory_limit PHP config variable because that only controls memory which passes via PHP memory management which does not apply to MySQL result set.
+</blockquote>
+
+<p>
+該文中明白指出 mysql_query 跳過 PHP 內建記憶體配置機制，而直接使用 mysql C library 的函數儲存資料在 PHP 程序這端。而 memory_limit 只會管制到 PHP 內建記憶體配置機制的使用上限。所以 mysql_query 查詢大量資料時，不會受到 memory_limit 的限制。
+</p>
+<p>
+但是其他資料庫的查詢函數則是用 PHP內建記憶體配置機制儲存資料。所以當我用 PHP 向 PostgreSQL, MS SQL 等 DB 查詢大筆資料內容時，就會受到 memory_limit 的限制。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4903965.html">http://blog.roodo.com/rocksaying/archives/4903965.html</a></div>

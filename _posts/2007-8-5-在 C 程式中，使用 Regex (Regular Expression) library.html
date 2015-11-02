@@ -1,0 +1,158 @@
+---
+title: 在 C 程式中，使用 Regex (Regular Expression) library
+category: programming
+old-category: C/C++/C#/Java
+tags: [c,regex,bbslib]
+---
+<div class="tags" style="display:none">Tags: C Regex bbslib</div>
+<p>
+我以前維護學校的 Firebird BBS 系統時，寫了一套 library ，其中字串處理部份包含了 Regex library 的使用函數。源碼可於此下載: <a href="http://home.educities.edu.tw/fbtip/">bbslib2 sources tarball</a>。接下來的 Regex library 說明內容，都取自其中的源碼，不另行列出。
+</p>
+<p>
+Regex 於其他程式語言中之應用現狀，可見《<a href="{{ site.baseurl }}/archives/2007/Regular%20Expression%20%28RegExp%29%20in%20JavaScript.html">Regular Expression (RegExp) in JavaScript</a>》、《<a href="http://tw.php.net/manual/en/ref.regex.php">PHP Manual:Regular Expression Functions (POSIX Extended)</a>》等。
+</p>
+
+<!--more-->
+<h4>Make Regex library</h4>
+<p>
+POSIX.2 規範了 Regex (Regular Expression，字樣規則式) 的介面內容(API)，是以基於 C 語言的 Regex library 實作品，皆應遵循此介面。現行 Linux/FreeBSD 系統中，大多已安裝。若是在 Windows 平台上使用 MinGW32 的使用者，可下載此版本: <a href="http://home.educities.edu.tw/fbtip/dl_software.html#otherwise">HS REGEX routines</a>，這是我當時從 Apache httpd 的源碼中取出的版本，並加上 MinGW32 適用的 Makefile (Makefile.Mingw32) 。或者，下載 <a href="http://directory.fsf.org/regex.html">GNU Regex</a>。以上兩套 Regex library 之介面符合 POSIX.2 規範。
+</p>
+<p>
+Make 後，得到 libregex.a 之靜態函數庫。 Make 過程中顯示「找不到 xxx\libregex.a」是正常訊息，勿需理會。將 regex.h 複製到 MinGW\include 目錄中，libregex.a 複製到 MinGW\lib 目錄中，即完成安裝動作。
+</p>
+<pre class="language-text">
+C:\User\fbtip\others\regex&gt; make -f Makefile.Mingw32
+gcc -I. -DPOSIX_MISTAKE  -DWIN32   -c -o regcomp.o regcomp.c
+gcc -I. -DPOSIX_MISTAKE  -DWIN32   -c -o regexec.o regexec.c
+gcc -I. -DPOSIX_MISTAKE  -DWIN32   -c -o regerror.o regerror.c
+gcc -I. -DPOSIX_MISTAKE  -DWIN32   -c -o regfree.o regfree.c
+del libregex.a
+找不到 C:\User\fbtip\others\regex\libregex.a
+ar cr libregex.a regcomp.o regexec.o regerror.o regfree.o
+ranlib libregex.a
+
+C:\User\fbtip\others\regex&gt;
+</pre>
+
+<h4>Patterns of POSIX.2 REGEX</h4>
+<p>
+POSIX Regex 可用的規則樣式等於 PHP 的 <a href="http://tw.php.net/manual/tw/function.ereg.php">ereg()/eregi()</a> 。以下是一些可用的樣式規則:
+</p>
+<pre class="language-text">
+ ^  定位規則，文字開頭
+ $  定位規則，文字尾端
+ .  單一規則，代表任意字元
+ [chars]    單一規則，有 chars 裡其中一個字元
+ [^chars]   單一規則，沒有 chars 裡其中一個字元
+ ?  倍數規則， 0 或 1 個的前導符號
+ *  倍數規則， 0 或多個的前導符號
+ +  倍數規則， 1 或多個的前導符號
+ {n,m}  表示前一符號在字串中的重覆次數。
+    例如 <code>A{2}</code> 表示 'A' 重覆兩次 (即 'AA') ；
+    <code>A{2,}</code> 表示字串含有 2 到無數多個 'A' ；
+    <code>A{2,5}</code> 表示含有 2 到 5 個 'A' 。
+ \char  轉義，將 char 視為一般字元，而非樣式規則字元
+ (string)   子樣式規則，將 string 記憶起來，歸於一組。
+            稍後可利用 \n 的方式，將第 n 組 string 提出。
+</pre>
+<p>
+Perl 另行擴充了一套樣式規則，如 <code>\d, \w</code> 等等；PHP 稱之為 PCRE。這些樣式規則不適用於此處。POSIX.2 之規則為 <code>[:digit:], [:alnum:]</code> 等，詳見 manpage: regex(7)。此外，PCRE 和 POSIX.2 REGEX 之敘述方式亦略有不同。PCRE 要求字樣規則前後以斜線(/)字元括起，如<code>/[a-z]/</code>；但 POXIS.2 則不需要，直接寫 <code>[a-z]</code> 即可。
+</p>
+
+<h4>Use Case</h4>
+<p>
+在 <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib2 sources tarball</a> 中的 strexp/ci_strcmp.c ，實作了一組 Regex 字串比對函數 - strcmp_regex()/strcasecmp_regex() - ，並含有使用說明及測試碼。操作範例如下所示:
+</p>
+<pre class="language-text">
+C:\User\fbtip\software\bbslib\strexp&gt;
+    gcc -DMAIN -o ci_strcmp ci_strcmp.c -lregex
+
+ci_strcmp.c: In function `main':
+ci_strcmp.c:280: warning: return type of 'main' is not `int'
+
+C:\User\fbtip\software\bbslib\strexp&gt; ci_strcmp
+Input exp: ^[a-z][0-9]+$
+Input str: a123
+ci_strcmp(a123,^[a-z][0-9]+$) = -29
+strcmp_match(a123,^[a-z][0-9]+$) = 1
+strcmp_regex(a123,^[a-z][0-9]+$) = 0
+Input exp: ^[0-9][a-z]+$
+Input str: a123
+ci_strcmp(a123,^[0-9][a-z]+$) = -29
+strcmp_match(a123,^[0-9][a-z]+$) = 1
+strcmp_regex(a123,^[0-9][a-z]+$) = 1
+Input exp:
+
+</pre>
+
+<p>
+Regex 除了字串比對功能外，還有字串配對提取功能(match)。由於 strexp/ci_strcmp.c 中並無實作此功能，故另列範例程式碼於下。API說明參閱 manpage: regexec(3)。
+</p>
+
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;regex.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">regex_t</span> <span class="n">preg</span><span class="p">;</span>
+    <span class="n">regmatch_t</span> <span class="n">pmatch</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
+    <span class="kt">size_t</span> <span class="n">nmatch</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">cflags</span> <span class="o">=</span> <span class="n">REG_EXTENDED</span> <span class="o">|</span> <span class="n">REG_ICASE</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">rc</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">],</span> <span class="n">reg</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="n">str</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+
+    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Input exp: "</span><span class="p">);</span>
+        <span class="n">fgets</span><span class="p">(</span><span class="n">reg</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">stdin</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">reg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'\n'</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+        <span class="n">strtok</span><span class="p">(</span><span class="n">reg</span><span class="p">,</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Input str: "</span><span class="p">);</span>
+        <span class="n">fgets</span><span class="p">(</span><span class="n">str</span><span class="p">,</span><span class="mi">256</span><span class="p">,</span><span class="n">stdin</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'\n'</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+        <span class="n">strtok</span><span class="p">(</span><span class="n">str</span><span class="p">,</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+        <span class="k">if</span><span class="p">(</span> <span class="n">regcomp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preg</span><span class="p">,</span> <span class="n">reg</span><span class="p">,</span> <span class="n">cflags</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="n">puts</span><span class="p">(</span><span class="s">"regex compile error!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">regexec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preg</span><span class="p">,</span> <span class="n">str</span><span class="p">,</span> <span class="n">nmatch</span><span class="p">,</span> <span class="n">pmatch</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="n">regfree</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preg</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">printf</span><span class="p">(</span><span class="s">"no match</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nmatch</span> <span class="o">&amp;&amp;</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_so</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">len</span> <span class="o">=</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_eo</span> <span class="o">-</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_so</span><span class="p">;</span>
+            <span class="n">strncpy</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">str</span> <span class="o">+</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_so</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+            <span class="n">buf</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
+            <span class="n">printf</span><span class="p">(</span><span class="s">"sub pattern %d is %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<pre class="language-text">
+C:\User\fbtip&gt; gcc -o pmatch pmatch.c -lregex
+C:\User\fbtip&gt; pmatch
+Input exp: ([0-9]+)([a-z]+)
+Input str: 123bcxsfdas89y
+sub pattern 0 is 123bcxsfdas
+sub pattern 1 is 123
+sub pattern 2 is bcxsfdas
+Input exp:
+
+</pre>
+<p>
+定義一組容納子樣式字串指標偏移值的陣列 <var>pmatch</var>，其型態為 <code>regmatch_t</code>。並定義 <var>nmatch</var> 以指示陣列大小。<var>pmatch</var> 之中儲存的並不是字串指標，而是子樣式字串在來源字串的偏移位址的起始與終止值。
+</p>
+<p>
+Regex (含規範 POSIX.2) 出現在 C 語言中的歷史相當久，在 unix 族系的作業系統中應用相當普遍。至於 C++ ，俟 Boost::Regex 納入下一代 C++ 規範後，方有一致的使用方式。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3866523.html">http://blog.roodo.com/rocksaying/archives/3866523.html</a></div>

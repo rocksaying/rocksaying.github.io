@@ -1,0 +1,244 @@
+---
+title: Hello Autoconf, the GNU Build System
+category: programming
+old-category: Programming
+tags: [gnu,autoconf,make]
+---
+<blockquote>
+Autoconf solves an important problem—reliable discovery of system-specific build and runtime information.
+<cite>The GNU Build System</cite>
+</blockquote>
+
+<p>
+一名資深的 Linux 程序員，應該很熟悉下列的軟體源碼安裝動作:
+</p>
+<pre class="language-term">
+./configure
+make
+make install
+</pre>
+<p>
+<dfn>configure</dfn> 是由 GNU 軟體建構系統產生的自動組態指令稿，它可以檢查源碼編譯前的相依項目，並按照系統環境產生搭配的 Makefile 。所以使用者可以用相同的操作指令，完成軟體源碼的編譯動作。本文將以一個 hello 程式為例，說明如何產生符合 GNU 軟體開發指南的 <dfn>configure</dfn>。
+</p>
+
+<!--more-->
+<p>
+我寫了一個 hello.c ，放置在源碼子目錄 src 中 (這是慣例)。接下來，我要為這個小程式建立一個自動組態建置項目(autoconf/automake)。
+</p>
+<fieldset>
+<legend>
+src/hello.c
+</legend>
+<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">"Hello world."</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+</fieldset>
+
+<h4>
+Package information
+</h4>    
+
+<p>
+建立下列關於軟體套件資訊的四份文件。內容多寡按你的意願決定，你甚至可以讓它們的內容是空白的。但檔案一定要存在。
+</p>
+
+<ul>
+  <li>
+    AUTHORS<br/>
+    作者資訊。
+  </li>
+  <li>
+    ChangeLog<br/>
+    異動記錄。
+  </li>
+  <li>
+    NEWS<br/>
+    最新消息。
+  </li>
+  <li>
+    README<br/>
+    軟體說明、軟體介紹。
+  </li>
+</ul>
+
+<p>
+automake 要求你建立上列的四份文件。此外，當你要建立 deb 包時，你也會需要上列四份文件。
+</p>
+
+<p>
+此外，以下兩份文件是可選項目。
+</p>
+<ul>
+  <li>
+    INSTALL<br/>
+    軟體安裝文件。可由 automake 產生。
+  </li>
+  <li>
+    COPYING<br/>
+    著作權宣告文件。可由 automake 自動複製一份，但它複製的是 GPL v3 宣告。
+    若你使用其他的著作權授權方式，你應自行複製。
+  </li>
+</ul>
+
+
+<h4>
+建立 Autoconf script
+</h4>
+
+<p>
+我們要建立一份 <dfn>configure.ac</dfn> 指示 Autoconf 要檢查的系統組態內容。以 hello.c 為例，下列是 configure.ac 的最少必要內容。如果你想要檢查特定的套件版本、library 或系統資訊，請參考 <a href="http://www.gnu.org/software/autoconf/manual/html_node/Making-configure-Scripts.html#Making-configure-Scripts">Making configure Scripts</a> 了解詳細內容。<a href="{{ site.baseurl }}/archives/2010/Autoconf%20%E6%AA%A2%E6%9F%A5%E9%A1%8D%E5%A4%96%E5%87%BD%E6%95%B8%E5%BA%AB.html">Autoconf檢查額外函數庫</a> 一文中展示了一份更多檢查項目的 configure.ac 。
+</p>
+
+<fieldset>
+<legend>
+configure.ac
+</legend>
+<pre class="language-text">
+AC_INIT([hello],[1.0],[bug-automake@gnu.org])
+AM_INIT_AUTOMAKE([])
+AC_PROG_CC
+
+#AC_CONFIG_FILES([
+AC_OUTPUT([
+    Makefile
+    src/Makefile
+])
+</pre>
+</fieldset>
+
+<p>
+接著，我們要建立對應的 <dfn>Makefile.am</dfn> 作為 Automake 產生 Makefile 的範本。
+</p>
+
+<p>
+在源碼的根目錄中，一定要有一份 Makefile.am ，其它要處理的子目錄中也有個別的 Makefile.am。依慣例，軟體源碼放置於 src 目錄內，資料文件放置於 data 目錄內。處理軟體源碼的 automake script 便應位於 src/Makefile.am.
+</p>
+
+<fieldset>
+<legend>
+Makefile.am
+</legend>
+<pre class="language-text">
+SUBDIRS = src
+dist_doc_DATA = README
+</pre>
+</fieldset>
+
+<fieldset>
+<legend>
+src/Makefile.am
+</legend>
+<pre class="language-text">
+bin_PROGRAMS = hello
+hello_SOURCES = hello.c
+
+# automake 會自動產生一組產生 bin_PROGRAMS 的行為。
+# 如下所示，所以我們通常不必自己寫。
+#hello$(EXEEXT): $(hello_OBJECTS) $(hello_DEPENDENCIES) 
+#        @rm -f hello$(EXEEXT)
+#                $(LINK) $(hello_OBJECTS) $(hello_LDADD) $(LIBS)
+</pre>
+</fieldset>
+
+<p>
+到此先作小結，針對 hello.c ，我們需要手動建立的文件內容如下所示。其他的文件，都將由 autoconf/automake 幫我們產生。
+</p>
+<pre class="language-text">
+.
+|-- AUTHORS
+|-- ChangeLog
+|-- configure.ac
+|-- Makefile.am
+|-- NEWS
+|-- README
+`-- src
+    |-- hello.c
+    `-- Makefile.am
+</pre>
+
+<h4>
+產生 configure
+</h4>
+
+<p>
+依序操作下列指令，產生 configure 指令稿。
+</p>
+
+<p>
+第一步: <code>aclocal</code>. 它會產生 aclocal.m4, autom4te.cache. aclocal.m4 定義了一些 autoconf 會使用的巨集，例如 AM_INIT_AUTOMAKE 。
+</p>
+
+<p>
+第二步: <code>autoconf</code>. 它會產生 configure, config.status 等文件。
+</p>
+
+<p>
+第三步: <code>automake --add-missing</code>. 這會產生 Makefile.in ，並自動添加某些有預設內容的文件，例如 INSTALL, COPYING。
+</p>
+
+<p>
+基本上，到此為止，由 autoconf,automake 自動產生出來的文件，都可以加入版本管理庫。
+當你以源碼形式散佈軟體時，其他人僅需執行接下來的 configure 與 make 。
+</p>
+
+<h4>
+建置你的軟體
+</h4>
+<p>
+當你完成上述的步驟之後，接著就是我們熟悉的源碼建立動作了。
+<code>./configure</code> 產生 Makefile；<code>make</code> 編譯源碼。
+</p>
+
+<h4>
+更複雜的建置項目
+</h4>
+<p>
+上述的操作指令是最基本的工作，隨著軟體項目內容的擴充，我們通常需要調整更多細節、進行更多的操作工作。所幸，有許多現成的 auto generate 工具，整合了特定軟體項目所需的 autoconf, automake 內容，可以用一行指令幫助我們完成上述的細部操作。
+</p>
+
+<p>
+例如，開發 GNOME 桌面程式，可以安裝 gnome-common 套件，執行 gnome-autogen.sh 完成針對 C/C++ 與 GNOME 開發環境的 autoconf, automake 工作。
+</p>
+<p>
+使用 C# 開發 Mono 程式時，可以下載 <a href="http://www.go-mono.com/archive/monoskel-0.1.tar.gz">monoskel</a>，執行其中的 autogen.sh 完成針對 Mono 開發環境的 autoconf, automake 工作。參考 <a href="http://www.mono-project.com/Guidelines:Application_Deployment">Guidelines:Application_Deployment</a>。
+</p>
+
+<ul>
+  <li>
+    <a href="http://www.gnu.org/software/autoconf/manual/">GNU Autoconf - Creating Automatic Configuration Scripts</a>
+  </li>
+  <li>
+    <a href="http://www.gnu.org/software/automake/manual/">GNU Automake manual</a> 
+  </li>
+  <li>
+    <a href="http://www.gnu.org/software/autogen/manual/">GNU AutoGen manual</a>
+  </li>
+  <li>
+    <a href="{{ site.baseurl }}/archives/2010/Autoconf%20%E6%AA%A2%E6%9F%A5%E9%A1%8D%E5%A4%96%E5%87%BD%E6%95%B8%E5%BA%AB.html">Autoconf檢查額外函數庫</a>
+  </li>
+  <li>
+    <a href="http://tetralet.luna.com.tw/index.php?op=ViewArticle&articleId=200&blogId=1">利用 Autotools 來建立 Makefile 檔案</a>
+  </li>
+  <li>
+    <a href="http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html">HowTo Autotools - Distributing source code with autoconf and automake</a>
+  </li>
+  <li>
+    <a href="http://www.openismus.com/documents/linux/using_libraries/using_libraries">Using C/C++ libraries with Automake and Autoconf</a>
+  </li>
+  <li>
+    <a href="http://www.seul.org/docs/autotut/">autotut: Using GNU auto{conf,make,header}</a>
+  </li>
+  <li>
+    <a href="http://mi.eng.cam.ac.uk/~er258/code/autoconf/">A brief introduction to Autoconf</a>
+  </li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/Autoconf%20%E6%AA%A2%E6%9F%A5%E9%A1%8D%E5%A4%96%E5%87%BD%E6%95%B8%E5%BA%AB.html">Autoconf 檢查額外函數庫</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12687975.html">http://blog.roodo.com/rocksaying/archives/12687975.html</a></div>

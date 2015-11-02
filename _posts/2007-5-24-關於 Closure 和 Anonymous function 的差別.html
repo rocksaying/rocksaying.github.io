@@ -1,0 +1,88 @@
+---
+title: 關於 Closure 和 Anonymous function 的差別
+category: programming
+old-category: JavaScript
+tags: [匿名函數,closure]
+---
+<div class="tags" style="display:none">Tags: 匿名函數 Closure</div>
+<p>
+jaceju 在 <a href="http://blog.roodo.com/jaceju/archives/3274481.html">Anonymous functions in PHP</a> 說某個 PHP 研討會討論了匿名函數 (anonymous function) 在 PHP 中的需求性。 jaceju 注明 Jim Wilson 說匿名函式和 closure 是完全不一樣的東西，而他自己看不出兩者的差別。
+</p>
+<p>
+我在寫 JavaScript 時，常常碰到這個問題。用 JavaScript 也比較容易說明兩者的差異。
+</p>
+
+<!--more-->
+<p>
+JavaScript 語法支持匿名函數(Anonymous function)[<span class="Onote">參考<a href="{{ site.baseurl }}/archives/2007/The%20practice%20of%20anonymous%20recursion%20function%20in%20JavaScript.html">The practice of anonymous recursion function in JavaScript</a>以了解匿名函數在 JavaScript 中的應用</span>]，但不支持封絕(Closure)</a>[<span class="Onote"><a href="{{ site.baseurl }}/archives/2007/Closure%20%E8%A9%B2%E7%BF%BB%E8%AD%AF%E7%82%BA%E5%B0%81%E7%B5%95%E9%82%84%E6%98%AF%E9%96%89%E9%8E%96%E7%A9%BA%E9%96%93.html">我稱為封絕</a>，也有人稱它閉鎖空間或閉包，還是記住 Closure 這個詞吧</span>]。 JavaScript 必須使用一些技巧實現 Closure ，因此我們反而容易看出這兩者的差別。
+</p>
+
+<pre class="highlight"><code><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">fs</span> <span class="o">=</span> <span class="p">[];</span>
+<span class="kd">function</span> <span class="nx">run_fs</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">fs</span><span class="p">[</span><span class="nx">j</span><span class="p">];</span> <span class="nx">f</span><span class="p">;</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">fs</span><span class="p">[</span><span class="o">++</span><span class="nx">j</span><span class="p">])</span> <span class="p">{</span>
+        <span class="nx">f</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s1">'Pure anonymous function\n'</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">fs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span><span class="nx">print</span><span class="p">(</span><span class="nx">i</span><span class="p">);}</span>
+<span class="p">}</span>
+<span class="nx">run_fs</span><span class="p">();</span>
+
+<span class="nx">print</span><span class="p">(</span><span class="s1">'Closure\n'</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">fs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//closure.</span>
+        <span class="k">return</span> <span class="kd">function</span><span class="p">(){</span><span class="nx">print</span><span class="p">(</span><span class="nx">i</span><span class="p">);}</span>
+    <span class="p">})(</span><span class="nx">i</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">run_fs</span><span class="p">();</span>
+</code></pre>
+
+
+<p>
+建議使用 <a href="{{ site.baseurl }}/archives/2007/%E9%87%8D%E6%96%B0%E8%AA%8D%E8%AD%98%20JavaScript%20part%202%2C%20%E4%BA%92%E5%8B%95%E7%92%B0%E5%A2%83%20%28command%20line%20mode%29.html">JavaScript shell</a> 執行上面這段程式碼。若有人想用 .Net 的 JScript compiler (jsc.exe) 編譯再執行，也可以啦。其結果如下所示:
+</p>
+<pre class="language-text">
+Pure anonymous function
+3
+3
+3
+Closure
+0
+1
+2
+</pre>
+
+<p>
+第一段 (line 3~7) 實際上是在陣列 <var>fs</var> 中儲存了 3 個純匿名函數的參照，這3個函數參照應該指向同一段程式碼 (content)。當它們執行 <code>print(i);</code> 時，使用的是第1行定義的 <var>i</var> 。此時， <var>i</var> 之值為 3 ，故3個函數的執行結果都是 3 。
+</p>
+<p>
+第二段 (line 17~20) 的寫法就不一樣了，此一寫法產生了一個 Closure 。 Closure 擁有一個獨立的 content 儲存其中的局部內容。故在此例中的 <var>i</var> 實際上是儲存在一個與外界隔離的 content 之中的區域變數，並不是第一行所定義的 <var>i</var>。同樣在此 Closure 之中的匿名函數，將使用這個被隔離的區域變數 <var>i</var>。由於此時這3個獨立的content中的 <var>i</var> 之值不同，故每次函數的執行結果都不同。
+</p>
+<p>
+順便提一下記憶體回收的事。在第二段定義並執行了3次匿名函數實例。這3個匿名函數實例各自產生了一個獨立的 content 。一般情形時，執行之後其 content 內容就會被系統收回。但在此例中，我又在這 content 中定義了一個匿名函數 (第19行)，並將之回傳後儲存在 <var>fs</var> 陣列。由於 content 中的資源 - 即其中的匿名函數 - 被尚存在的資源 <var>fs</var> 所指涉，故不會被系統回收。直到 <var>fs</var> 消逝之後，系統才會收回此例所產生的3個獨立 content 佔有的記憶體。
+</p>
+<hr/>
+<p>補充一份參考文件。由 Martin Fowler 寫的 《<a href="http://martinfowler.com/bliki/Closure.html">Closure</a>》。Fowler 也寫了一個 JavaScript 的例子。因為他寫的例子有點長，我改了一個簡潔版，如下所示:
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">Employee</span><span class="p">()</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">paidMore</span><span class="p">(</span><span class="nx">amount</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span> <span class="k">return</span> <span class="nx">e</span><span class="p">.</span><span class="nx">salary</span> <span class="o">&gt;</span> <span class="nx">amount</span><span class="p">;</span> <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">highPaid</span> <span class="o">=</span> <span class="nx">paidMore</span><span class="p">(</span><span class="mi">150</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">john</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Employee</span><span class="p">();</span>
+<span class="nx">john</span><span class="p">.</span><span class="nx">salary</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
+<span class="nx">print</span><span class="p">(</span><span class="nx">highPaid</span><span class="p">(</span><span class="nx">john</span><span class="p">));</span>
+</code></pre>
+
+
+<p>
+我的例子是用匿名函數創造 Closure ，而 Fowler 的例子則是用具名函數 <var>paidMore()</var> 創造 Closure 。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3337623.html">http://blog.roodo.com/rocksaying/archives/3337623.html</a></div>

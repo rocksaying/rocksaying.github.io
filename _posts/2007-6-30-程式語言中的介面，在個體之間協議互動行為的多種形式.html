@@ -1,0 +1,185 @@
+---
+title: 程式語言中的介面，在個體之間協議互動行為的多種形式
+category: programming
+old-category: C/C++/C#/Java
+tags: [interface,class,method,動態語言]
+---
+<div class="tags" style="display:none">Tags: interface class method 動態語言</div>
+<p>
+<a href="{{ site.baseurl }}/archives/2007/PHP5%20%E7%9A%84%E5%80%8B%E9%AB%94%E5%B0%8E%E5%90%91%E8%83%BD%E5%8A%9B%E5%95%8F%E9%A1%8C%20-%20magic%20methods%20%E5%92%8C%20interface.html#comment-11093665">racklin 說</a>: <q>我的重點還是只放在 "關注類別是否有實作方法" 也就是 "介面" 的這個概念, 因為原文是討論這個議題</q>. 嗯，我大概是跳太快了。我清楚 interface 是什麼。所以<a href="{{ site.baseurl }}/archives/2007/PHP5%20%E7%9A%84%E5%80%8B%E9%AB%94%E5%B0%8E%E5%90%91%E8%83%BD%E5%8A%9B%E5%95%8F%E9%A1%8C%20-%20magic%20methods%20%E5%92%8C%20interface.html#comment-11089281">我的回應</a>是在說明「個體之間如何協議互動行為」亦即「軟體合約」的形式。
+</p>
+<p>
+以C/C++為例，在早期，程序員學了 C++ 可是還是要寫 C 程式的時代，我們會自己用 C 語言實作類別繼承、動態連結等觀念。但我們用的是 C compiler 而非 C++ compiler ，所以很多事我們必須自己處理。其中一點就是個體行為的協議。方法一、在函數文件上說明傳入的個體需擁有哪些行為，我在函數中會檢查此個體是否擁有此行為(函數指標是否為給定了)。方法二、限定一個 struct (只有純函數指標宣告)，呼叫者要自己填一張函數指標表傳入，這其實就是 interface 的概念。
+</p>
+
+<!--more-->
+<p>
+例如下列的程式碼，就是用 struct 宣告一張個體行為介面表。完整程式碼可見於 <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib-20010331</a>。
+</p>
+<pre class="highlight"><code><span class="cm">/*
+  string_i.h Header file of string interface.
+    Copyright (C) 1998, Sh Yunchen, rock@bbs.isu.edu.tw
+  Licensed by GNU Lesser General Public License.
+*/</span>
+<span class="cp">#if !defined( __STRING_I_H )
+#define __STRING_I_H
+</span>
+<span class="k">struct</span> <span class="n">stringinterface</span>
+<span class="p">{</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">striobj</span><span class="p">;</span>
+  <span class="kt">size_t</span> <span class="p">(</span><span class="o">*</span><span class="n">length</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">);</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">text</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">);</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">strcpy</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">stringinterface</span> <span class="n">string_i</span><span class="p">;</span>
+
+<span class="cp">#endif	// defined( __STRING_I_H )
+</span></code></pre>
+
+
+<p>
+使用方式通常如下列所示。宣告一個 buffer struct ，定義需要的函數。建構函數中要配置並指派函數指標。注意，這是 C ，不是 C++ 。一切要自己來。用 Java 的用語說明，此 buffer 類別的用途，在於將 primitive type 的字串轉成 object 。亦即 buffer 是一個 Wrapper Class 。最後在 main 和 print_content_and_length 中展示了近似 C++ 的敘述。
+</p>
+<pre class="highlight"><code><span class="cm">/*
+  buffer.c String buffer routines.
+    Copyright (C) 1999, Sh Yunchen, shirock@mail.educities.edu.tw
+  Licensed by GNU Lesser General Public License.
+*/</span>
+<span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include "string_i.h"
+</span>
+<span class="k">struct</span> <span class="n">buffer</span>
+<span class="p">{</span>
+  <span class="n">string_i</span> <span class="n">striobj</span><span class="p">;</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">bufptr</span><span class="p">;</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">freeptr</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">buffer</span> <span class="n">buffer_t</span><span class="p">;</span>
+
+<span class="kt">size_t</span> <span class="nf">buffer_length</span><span class="p">(</span><span class="k">const</span> <span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">strlen</span><span class="p">(</span><span class="n">b</span><span class="o">-&gt;</span><span class="n">bufptr</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">char</span><span class="o">*</span> <span class="nf">buffer_text</span><span class="p">(</span><span class="k">const</span> <span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">b</span><span class="o">-&gt;</span><span class="n">bufptr</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">char</span><span class="o">*</span> <span class="nf">buffer_strcpy</span><span class="p">(</span><span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">strcpy</span><span class="p">(</span><span class="n">b</span><span class="o">-&gt;</span><span class="n">bufptr</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">buffer_t</span><span class="o">*</span> <span class="nf">buffer_construct</span><span class="p">(</span><span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="n">bufptr</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">buffer_t</span> <span class="o">*</span><span class="n">tmp</span><span class="p">;</span>
+  <span class="k">if</span><span class="p">(</span> <span class="n">b</span><span class="o">==</span><span class="nb">NULL</span> <span class="p">)</span>
+    <span class="n">tmp</span><span class="o">=</span><span class="p">(</span><span class="n">buffer_t</span> <span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer_t</span><span class="p">));</span>
+  <span class="k">else</span>
+    <span class="n">tmp</span><span class="o">=</span><span class="n">b</span><span class="p">;</span>
+  <span class="n">memset</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer_t</span><span class="p">));</span>
+  <span class="c1">// all of the elements set to clear (null).
+</span>  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">striobj</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span>
+  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">length</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_length</span><span class="p">;</span>
+  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">text</span>    <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_text</span><span class="p">;</span>
+  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">strcpy</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_strcpy</span><span class="p">;</span>
+
+  <span class="n">bufptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
+  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">bufptr</span> <span class="o">=</span> <span class="n">bufptr</span><span class="p">;</span>
+
+  <span class="k">if</span><span class="p">(</span> <span class="n">b</span><span class="o">==</span><span class="nb">NULL</span> <span class="p">)</span>
+    <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">freeptr</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span> <span class="c1">//MALLOC
+</span>  <span class="k">else</span>
+    <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">freeptr</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">tmp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/*
+  Define a function use string_i.
+*/</span>
+<span class="kt">void</span> <span class="nf">print_content_and_length</span><span class="p">(</span><span class="n">string_i</span><span class="o">*</span> <span class="n">str</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Length of %s is %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+        <span class="n">str</span><span class="o">-&gt;</span><span class="n">text</span><span class="p">(</span><span class="n">str</span><span class="p">),</span> <span class="n">str</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">buffer_t</span> <span class="n">buf</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">s</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+
+    <span class="n">buffer_construct</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
+
+    <span class="n">buf</span><span class="p">.</span><span class="n">striobj</span><span class="p">.</span><span class="n">strcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="s">"hello world"</span><span class="p">);</span>
+
+    <span class="n">print_content_and_length</span><span class="p">((</span><span class="n">string_i</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
+    <span class="c1">//因為address對齊了， &amp;buf = &amp;buf-&gt;striobj.
+</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<p>
+在當時，因為我們總是用強迫轉型的方式傳遞個體，所以 struct 中的宣告，僅是告知程序員應有什麼，對 compiler 是沒用的。程序員要自己掌握型態，軟體合約在程序員腦中、口中與文件中。
+</p>
+
+<p>
+當然，C++/Java compiler 就不用那麼麻煩了。它會幫我們處理這些小事。它們會幫我們維護那張表，而 interface 的宣告內容就成為函數的說明文件之一。若以虛擬碼巨集表示:
+</p>
+
+<pre class="highlight"><code>declare interface ObjectAccess
+    method get(k)
+    method set(k, v)
+end
+
+define class Obj implements ObjectAccess
+    id
+end
+
+#expand Obj
+type Obj
+    id
+    method get(k)
+    method set(k, v)
+end
+#end
+
+function test(interface Abc o);
+
+var a;
+test(a);
+
+#expand
+    #if a has method 'get' and method 'set'
+        call test(a);
+    #else
+        #throw TYPE ERROR
+    #end
+#end
+</code></pre>
+
+
+<p>
+上述動作隱含於 C++/Java 的 compile 動作中，而在動態語言中往往是明顯地呈現在程式碼中。這並無不妥，因為動態語言往往具有中介語言／巨集語言的泛型表達能力。
+</p>
+<pre class="highlight"><code>function test(o) {
+    if o.has_method?('get') and o.has_method?('set')
+        do something
+    else
+        throw TYPE ERROR
+    end
+}
+</code></pre>
+
+<p>
+對於錯誤捕捉之事。靜態語言仰賴各種宣告資訊，提供 compiler 在編譯時期核對。但我因為以往有 C 語言實作的經驗，所以向來不太倚重 interface 防錯能力。
+</p>
+<p>
+另一方面，動態語言沒有編譯時期，它們在執行時期才能確定個體資訊，故必須仰賴更動態的處理策略。現行最有效的策略就是玩真的，提供 test case 供 tester 在執行時期測試。
+</p>
+<p>
+嗯。我這幾天就一直在想，為什麼我在寫動態語言程式時，不像寫 C/C++ 那麼強調型態宣告，卻不覺得程式會出錯？後來想到了，那是因為有 <abbr title="Test-Driven Development">TDD</abbr>。而且 tester 所產生的結果更可靠。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E8%88%8A%E7%A8%8B%E5%BC%8F%E7%A2%BC%E4%B8%AD%E7%9A%84%20void%2A%20%E8%BD%89%E5%9E%8B.html">舊程式碼中的 void* 轉型</a></li>
+<li><a href="{{ site.baseurl }}/archives/2007/C%2B%2B%E5%92%8C%E5%8B%95%E6%85%8B%E8%AA%9E%E8%A8%80%E7%9A%84%E6%B3%9B%E5%9E%8B.html">C  和動態語言的泛型</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3556355.html">http://blog.roodo.com/rocksaying/archives/3556355.html</a></div>

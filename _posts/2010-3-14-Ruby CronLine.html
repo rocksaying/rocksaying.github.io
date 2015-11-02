@@ -1,0 +1,87 @@
+---
+title: Ruby CronLine
+category: programming
+old-category: Ruby
+tags: [Ruby,Ruby on Rails,scheduler,cron]
+---
+<p>
+Cron 是 Unix 平台上的工作排程服務，它有一套特定的時間記述方式，俗稱 crontab (See crontab(5))。例如 <code>* 30 5,12,17 * * *</code> 表示每逢 5點30分、12點30分與17點30分時，執行工作。CronLine 則是使用 Ruby 所實作的一個用於解析 crontab 的類別。它的源碼來自於  <a href="http://rufus.rubyforge.org/rufus-scheduler/">Rufus::Scheduler</a> 。
+</p>
+
+<!--more-->
+<p>
+利用 Rufus::Scheduler ，我們可以很簡單地實作一個 Cron 服務。不過基於某些目的，我單獨地取出它的 CronLine class 使用。源碼位於 <a href="http://github.com/jmettraux/rufus-scheduler/raw/87f9291514b7b77bd5c488244c04f2718fdf5798/lib/rufus/sc/cronline.rb">cronline.rb</a> 。配合 Ruby on Rails 的名稱慣例，我將源碼文件的名稱改為 cron_line.rb 。
+</p>
+<p>
+Ruby on Rails 的自動載入機制是根據類別名稱轉小寫，並以底線分隔單字，取得源碼文件名稱與路徑。例如:
+</p>
+<ol>
+    <li>
+      類別名稱是大小寫夾雜時，轉小寫並以底線分隔單字，作為源碼文件名稱。<br/>
+      CronLine.new -> load lib/cron_line.rb
+    </li>
+    <li>
+      類別名稱是單純一字時，轉小寫作為源碼文件名稱。<br/>
+      Cronline.new -> load lib/cronline.rb
+    </li>
+    <li>
+      前綴 namespace 時，將 namespace 視為子目錄名稱。<br/>
+      Rufus::CronLine.new -> load lib/rufus/cron_line.rb
+    </li>
+</ol>
+<p>
+我選擇第一種方式儲放 CronLine 的源碼文件，並移除源碼中的 <code>module Rufus</code> 敘述。當然我們也可以直接使用 <dfn>require</dfn> 指令明確地指示類別源碼的載入名稱，此時就不一定要按照上述的方式處理文件名稱與 <code>module Rufus</code> 敘述。
+</p>
+
+<p>
+下列是一個測試與範例程式。
+</p>
+<script type="syntaxhighlighter" class="brush: ruby;"><![CDATA[
+#!/usr/bin/ruby
+# encoding: utf-8
+
+require 'test/unit'
+require 'cron_line'
+require 'time'
+
+class TestCronLine < Test::Unit::TestCase
+    def test_not_match
+        cron = CronLine.new "* 10 * * * *"
+        assert !(cron.matches? Time.local 2000, 1, 1, 1, 1, 0)
+    end
+
+    def test_match
+        cron = CronLine.new "* 10 * * * *"
+        assert cron.matches? Time.local 2000, 1, 1, 1, 10, 0
+    end
+
+    def test_match_without_second
+        cron = CronLine.new "10 * * * *"
+        assert !(cron.matches? Time.local 2000, 1, 1, 1, 1)
+        assert cron.matches? Time.local 2000, 1, 1, 1, 10
+    end
+
+    def test_match_day_hour_min
+        cron = CronLine.new "*/2 */2 1,3,5 * *"
+        assert !(cron.matches? Time.local 2000, 1, 1, 1, 1)
+        assert cron.matches? Time.local 2000, 1, 1, 2, 30
+    end
+    
+    def test_next_time
+        cron = CronLine.new "*/10 * * * * *"
+
+        start_time = Time.new
+        next_time = cron.next_time Time.new
+        sleep (next_time - start_time).to_i + 1
+        end_time = Time.new
+
+        assert next_time.sec <= end_time.sec and end_time.sec <= next_time.sec + 1
+    end
+
+end
+
+]]></script>
+
+<p>
+一般而言，我們首先將一個 crontab 的時間記述字串做為 CronLine 實例的建構參數。接著我們再透過自定的輪詢機制，定期地取得目前時間，再調用 <code>cron.matches</code> 方法判斷目前時間是否符合 crontab 所指定的時間區間內，即可決定是否要執行工作了。例如上列測試程式的第5個測試項目，第35行，使用<code>cron.next_time Time.new</code> 得到下一個 crontab 指示的時間區段還有多久時間，再用 <code>sleep</code> 方法讓程序沉睡到指定時間區段後醒過來。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11948255.html">http://blog.roodo.com/rocksaying/archives/11948255.html</a></div>

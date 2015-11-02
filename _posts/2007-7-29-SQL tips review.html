@@ -1,0 +1,61 @@
+---
+title: SQL tips review
+category: programming
+old-category: SQL/Database
+tags: [sql]
+---
+<div class="tags" style="display:none">Tags: SQL</div>
+<p>
+jaceju <a href="http://blog.roodo.com/jaceju/archives/3719291.html">提到</a> 一篇關於 MySQL 查詢效率的文章: <a href="http://www.thespanner.co.uk/2007/07/23/php-mysql-tips/">PHP Mysql tips</a>。基本上，該文所列的最快語法，我全部都不建議使用。因為都是 MySQL 特有語法，不具有可移植性。雖然該文主要就是在談 MySQL tips ，但基於可移植性的理由，這種語法能不用就不用。
+</p>
+<p>
+其他的 SQL 系統，如 PostgreSQL, SQL Server 等等，都針對標準語法(ANSI SQL)做了最佳化。使用同樣的標準語法查詢時，它們的表現不比 MySQL 差。
+</p>
+
+<!--more-->
+<h5>平行交易處理</h5>
+<p>
+該文之 Recordsets 中的第2種用法，有平行處理的陷阱。例如同時間有另一個行程要執行刪除動作時，若 SQL 查詢引擎將這個刪除動作插在第一行查詢動作和第二行查詢動作之間處理，那麼第一行查詢所得的記錄筆數，和第二行查詢所得的數字，就會不一樣。
+</p>
+<p>
+基本上，一段 SQL 敘述就是一筆交易。就算我把兩段敘述放在同一個送往 SQL 查詢引擎的字串中， SQL 查詢引擎一般還是將之視為兩筆交易動作。所以應該以 <code>BEGIN;</code>...<code>COMMIT;</code> 包住兩段敘述，使之成為一筆交易。此外，在每段敘述最後加上一個分號(;) 是好習慣。
+</p>
+<pre class="highlight"><code><span class="k">BEGIN</span><span class="p">;</span>
+<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="k">table</span> <span class="k">WHERE</span> <span class="n">Condition</span><span class="p">;</span>
+<span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="n">PrimaryKey</span><span class="p">)</span> <span class="k">FROM</span> <span class="k">table</span> <span class="k">WHERE</span> <span class="n">Condition</span><span class="p">;</span>
+<span class="k">COMMIT</span><span class="p">;</span>
+</code></pre>
+
+<p>
+該文之 Best practice 提到的內容其實是 SQL 程式設計的通則。
+</p>
+
+<h6>1. Always use lowercase for table names.</h6>
+<p>
+表格名稱應全部使用小寫字母的理由在於 MySQL 內定名稱是全部轉小寫 (ANSI SQL 規範表格名稱則是全部轉大寫)。在查詢句中以大小寫交錯的形式表示表格名稱是多餘的，那只是為了提高句子可讀性。但規範中亦指出，使用雙引號括起表格名稱時，可抑止查詢引擎的大寫轉小寫動作，亦即可使查詢引擎區分表格名稱的大小寫。
+</p>
+<p>
+下例中，前兩行都會去查詢 <var>MYUSER</var> 表格，第三行則是查詢 <var>"MyUser"</var>表格。只有使用雙引號括起表格名稱時，大小寫差異才會具有識別作用。
+</p>
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">id</span> <span class="k">FROM</span> <span class="n">MyUser</span><span class="p">;</span>
+<span class="k">SELECT</span> <span class="n">id</span> <span class="k">FROM</span> <span class="n">myuser</span><span class="p">;</span>
+<span class="k">SELECT</span> <span class="n">id</span> <span class="k">FROM</span> <span class="nv">"MyUser"</span><span class="p">;</span>
+</code></pre>
+
+
+
+<h6>2. Always prepend the table name to the field.</h6>
+<p>
+毫無疑問，這會加快表格聯結時的速度。事實上，有些 SQL 查詢引擎會以錯誤訊息提示程序員，在聯結查詢句中，應該在欄位前加上表格名稱。
+</p>
+
+<h6>3. Always create a primary id field.</h6>
+<h6>4. Index fields used for joins.</h6>
+<p>
+第3,4點都是索引技巧。使用建立索引的欄位 - 尤其是在條件式和聯結式中 - 永遠比沒建立索引的欄位有效率。數值型態的索引又比字串型態的索引更快更節省空間。
+</p>
+
+<h6>5. Use a separate logging table.</h6>
+<p>
+嗯，這點和查詢效率無關，主要是看系統規劃的需求。如果系統要求使用者可以查看單筆記錄的修改歷程，那麼就需要建立一個歷程記錄的關聯表格。並沒有充分的理由支持將修改歷程的欄位放在主要表格。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3784555.html">http://blog.roodo.com/rocksaying/archives/3784555.html</a></div>

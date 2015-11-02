@@ -1,0 +1,109 @@
+---
+title: SQLite/PHP/Apache 設定筆記
+category: programming
+old-category: SQL/Database
+tags: [php,sqlite,database]
+---
+<div class="tags" style="display:none">Tags: php sqlite database</div>
+<p>
+SQLite 目前有兩種版本，一是 SQLite 2，另一為 SQLite 3。PHP 兩種都支援，但所需的擴充項(extension)並不相同。
+</p>
+<blockquote>
+<a href="http://www.sqlite.org/">SQLite</a> is a software library that implements a self-contained, serverless, zero-configuration, transactional SQL database engine.<br/>
+<cite>SQLite Home Page</cite>
+</blockquote>
+<p>
+在 PHP 中使用 SQLite2 ，必須載入 SQLite 擴充項(sqlite.so/php_sqlite.dll)。
+</p>
+
+<p>
+在 PHP 中使用 SQLite3 ，必須載入 PDO_SQLite 擴充項(pdo_sqlite.so/php_pdo_sqlite.dll)。同時這也表示兩件事。一，SQLite3 是 PDO 擴充項的一個工廠(factory) ，你必須透過 PDO 介面去呼叫 SQLite3 的方法。二，PHP5 或以上的版本才支援 PDO 擴充項，故 PHP4 不能使用 SQLite3。
+</p>
+
+<!--more-->
+<div class="note">
+<p>
+SQLite 擴充項 (sqlite.so/php_sqlite.dll) 支援的是 SQLite2 。這兩種版本的資料庫檔案格式不相容。你無法用 SQLite3 去開啟一個由 SQLite2 所建立的資料庫檔案。
+</p>
+<pre class="highlight"><code>
+$databaseFile = 'myDatabase';
+
+//In php.ini
+//extension=pdo.so
+//extension=pdo_sqlite.so
+//
+//open myDatabase via SQLite3 engine
+$db3 = new PDO('sqlite:' . $databaseFile);
+
+//In php.ini
+//extension=sqlite.so
+//
+// open myDatabase via SQLite2 engine
+$db2 = sqlite_open($databaseFile);
+$db2 = new SQLiteDatabase($databaseFile);
+
+if ( !$db2 and is_writable($databaseFile) ) {
+    echo $databaseFile . ' 無法開啟. 它可能是由 SQLite3 所建立，格式不相容.'
+}
+</code></pre>
+
+</div>
+
+<h4>Linux平台的檔案讀寫權限事項</h4>
+
+<p>
+SQLite 採取直接讀寫本機資料庫檔案的儲存機制，故程序的 UID或GID 必須擁有資料庫檔案及<em>其所屬目錄</em>的讀寫權限(Read and Write)。請特別注意強調之處: <em>其所屬目錄</em>。僅設定資料庫檔案的讀寫權限，仍不足 SQLite 操作所需。還必須設定目錄的讀寫權限。
+</p>
+<p>
+基於上述的讀寫權限要求，建議搭配群組(GROUP)機制維護 SQLite 的資料庫檔案。例如建立一個名稱為 sqlite 的群組，並將允許讀寫 SQLite 資料庫檔案的使用者加入此群組中。而資料庫檔案儲放的目錄之擁有者群組也設為 sqlite 。舉例如下:
+</p>
+<pre class="language-text">
+# edit /etc/group. add group sqlite and put rock to sqlite's user list.
+[root]$ groupadd sqlite
+[root]$ usermod -G user,sqlite rock
+
+# relogin as rock
+[rock]$ cd ~
+[rock]$ pwd
+/home/rock
+
+[rock]$ mkdir database
+[rock]$ chgrp sqlite database
+[rock]$ chmod 770 database
+[rock]$ ls -l
+drwxrwx---  rock sqlite  database
+
+[rock]$ cd database
+[rock]$ touch myDatabase
+[rock]$ chgrp sqlite myDatabase
+[rock]$ chmod 660 myDatabase
+[rock]$ ls -l
+-rw-rw----  rock sqlite  myDatabase
+
+
+# try to create table and data.
+[rock]$ sqlite3 myDatabase
+SQLite version 3.3.6
+Enter ".help" for instructions
+sqlite&gt; CREATE TABLE "Test" (id INT PRIMARY KEY, name VARCHAR(10));
+sqlite&gt; INSERT INTO "Test" VALUES (1, 'rock');
+sqlite&gt; SELECT * FROM "Test";
+1|rock
+
+</pre>
+
+<div class="note">
+在將使用者加入另一個群組後，該使用者必須重新登入，新的群組設定才會生效。否則 chgrp 操作將回應 'Operation not permitted' 的錯誤。
+</div>
+
+
+<h4>Apache的注意事項</h4>
+<p>
+當一個 Apache module (包含 PHP module) 開啟 SQLite 的資料庫檔案後，基本上會配置一個子行程保持資料庫檔案的開啟狀態。當你透過檔案操作指令改變資料庫檔案的屬性後，可能需要重新啟動 Apache 以關閉先前開啟資料庫檔案的子行程，才能確保 Apache module 操作 SQLite 資料庫檔案的正確性。
+</p>
+<p>
+例如你寫了一個 PHP script 交由 Apache/PHP 執行，而且你的 PHP script 開啟了一個 SQLite 資料庫檔案。當你在 shell 下使用 chown/chgrp/chmod 改變了資料庫檔案的擁有者與屬性後，通常需要重新啟動 Apache 服務，才能確保你的 PHP script 可以正確操作該資料庫檔案。
+</p>
+<p>
+又如你是在 Win32 平台下運行 Apache/PHP 服務，則你甚至必須先關閉 Apache 服務，才能變更資料庫的屬性或者刪除資料庫。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/6319337.html">http://blog.roodo.com/rocksaying/archives/6319337.html</a></div>

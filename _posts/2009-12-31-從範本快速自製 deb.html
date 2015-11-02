@@ -1,0 +1,161 @@
+---
+title: 從範本快速自製 deb
+category: computer
+old-category: 電腦技術
+tags: [linux,debian,deb,dpkg]
+---
+<p>
+有許多工具可以幫我們打包 deb ，但是最基本的工具是 dpkg-deb 。只要了解 dpkg-deb 的用法，甚至可以自行開發一個 deb 打包工具。
+</p>
+<p>
+下載一個既有的套件 deb 作為範本修改，可以省掉許多摸索的時間。
+</p>
+
+<!--more-->
+<h4>
+dpkg 工具與範本
+</h4>
+
+<p>
+dpkg-deb 常用功能:
+</p>
+
+<ul>
+    <li>-b, --build: 將指定的目錄內容，打包為 deb.</li>
+    <li>-c, --contents: 顯示 deb 的目錄結構與檔案.</li>
+    <li>-x, --extract: 解開一個 deb 的內容到指定目錄。但是不包含 controll files.</li>
+    <li>-I, --info: 顯示 deb 的資訊，包括 control files.</li>
+    <li>-e, --control: 解開一個 deb 的內容到指定目錄(預設定 ./DEBIAN).</li>
+</ul>
+
+<p>
+上列的 dpkg-deb 功能選項，也是 dpkg 工具的相同功能選項。例如執行 <kbd>dpkg -I hello.deb</kbd> 時，dpkg 背後實際上會去呼叫 <kbd>dpkg-deb -I hello.deb</kbd>。
+</p>
+
+<p>
+我們可以先下載一個最簡單的 deb ，作為我們自製 deb 時的範本。按照 Debian 慣例，我們下載 hello 這個套件的 deb ，再複製到自己的家目錄。
+</p>
+
+<pre class="language-term">
+$ sudo apt-get -d install hello
+
+$ cp /var/cache/apt/archives/hello_2.2-3_i386.deb ~
+</pre>
+
+<h4>
+deb 目錄內容
+</h4>
+<p>
+首先，我們先用 <kbd>dpkg -x</kbd> 解開 hello deb ，假設我們解開放到 mydeb 目錄。接著用 <kbd>dpkg -e</kbd> 將 controll files 解開放到 mydeb/DEBIAN 目錄。
+</p>
+<pre class="language-term">
+$ dpkg -x hello_2.2-3_i386.deb  mydeb
+
+$ dpkg -e hello_2.2-3_i386.deb  mydeb/DEBIAN
+</pre>
+
+<p>
+我們進入 mydeb 目錄，這時的 mydeb 目錄，就是安裝 deb 時的根目錄。所以 mydeb 目錄內的 usr/bin/hello 這個檔案，安裝時會被複製到 /usr/bin/hello 。自製 deb 時，我們需要做的第一件事，就是在 mydeb 目錄下，建立安裝的目錄與檔案結構。
+</p>
+<p>
+按照 Debian 慣例，套件的文件會放在 /usr/share/doc/$package_name 。共用檔案會放在 /usr/share/$package_name 目錄。執行檔會放在 /usr/bin 或 /usr/share/$package_name/bin 或 /usr/local/bin 。組態檔會放在 /etc/$package_name 或 /usr/share/$package_name/etc 或 /usr/local/etc/$package_name 。
+</p>
+
+<p>
+再看 mydeb/<dfn>DEBIAN</dfn> 目錄，這是我們放 control files 之處。一定要有的 control file 就是 <dfn>control</dfn> (<span class="Onote">本文說明的是 binary package。如要打包 source package，則需要更多必要文件，請參考<a href="http://www.debian.org/doc/debian-policy/ch-source.html">Debian Policy Manual Chapter 4 - Source packages</a></span>)。我們可以參考 hello deb 的 control 編輯我們自製 deb 的套件資訊。我們必須要自填的套件資訊欄位如下:
+</p>
+
+<ul>
+    <li>Package: 套件名稱</li>
+    <li>Version: 版本編號</li>
+    <li>Architecture: 套件適用架構。i386 表示 x86 32bit架構；all 表示所有架構都適用，例如 Java 程式、shell scripts。</li>
+    <li>Maintainer: 維護者的姓名與資訊。</li>
+    <li>Depends: 相依套件。</li>
+    <li>Section: 套件分類。devel: 開發工具類；web: Web應用程式；network: 網路工具類，等等。</li>
+    <li>Priority: 套件重要性。我們自行開發的 deb ，此欄都是填 optional 或 extra 。</li>
+    <li>Description: 套件說明文字。可以多行，但第二行起，都要在開頭空一格。</li>
+</ul>
+
+<p>
+我們還可以在 mydeb/DEBIAN 目錄下放置下列四個可以選擇的安裝程序 (scripts):
+</p>
+<ul>
+    <li>preinst: 安裝前執行的 script。當 dpkg 將檔案複製到指定目錄前，會執行它。當套件更新時，也會執行它。如果你安裝的套件是一個 demon ，那麼你可以將停止 demon 的動作放在這，以便更新套件前先停止運行中的 demon。</li>
+    <li>postinst: 安裝後執行的 script。當 dpkg 將檔案複製到指定目錄前，會執行它。大部份的安裝動作會寫在這。</li>
+    <li>prerm: 移除套件前執行的 script 。</li>
+    <li>postrm: 移除套件後執行的 script 。</li>
+</ul>
+
+<p>
+script 的回傳值如果不是零，那麼 dpkg 將會標記此套件的狀態為「壞狀態」(<span class="Onote">dpkg manual::INFORMATION ABOUT PACKAGES</span>)。所謂壞狀態是指:
+</p>
+<ul>
+    <li>half-installed - The installation of the package has been started, but not completed for some reason.</li>
+    <li>not-installed - The package is not installed on your system.</li>
+    <li>unpacked - The package is unpacked, but not configured.</li>
+    <li>half-configured - The package is unpacked and configuration has been started, but not yet completed for some reason.</li> 
+</ul>
+
+<p>
+其他的 control files ，會由 dpkg 自行產生，我們不必更動。
+</p>
+
+
+<p>
+在我們將軟體打包為 deb 之前，我們的 mydeb 目錄的結構，長得像下列所示。實際內容依各位的項目而定。
+</p>
+
+<ul><li>mydeb/
+<ul><li>usr/
+<ul><li>bin/
+<ul><li><var>$program_binary...</var>
+</li></ul></li><li>share/
+<ul><li>doc/
+<ul><li><var>$package_name</var>/
+<ul><li><var>$package_documents</var>, 例如 LICENSE, README. 自己決定。
+</li><li>LICENSE
+</li><li>README
+</li></ul></li></ul></li><li><var>$package_name</var>/
+<ul><li>lib/
+
+</li><li>bin/
+</li><li>icons/
+</li></ul></li></ul></li></ul></li><li>DEBIAN/
+<ul><li>control
+</li><li>postinst
+</li></ul></li></ul></li></ul>
+
+<h4>
+打包 deb
+</h4>
+<p>
+檔案都準備好了，那就可以執行 <kbd>dpkg -b</kbd> 打包為 deb 了。deb 的檔名是可選的，如果未給，那麼預設的 deb 檔名就是目錄名稱。
+</p>
+<pre class="language-term">
+$ dpkg -b mydeb  myhello_0.1234-1.deb
+</pre>
+
+<p>
+建立 deb 的動作流程，大致就是:
+</p>
+<ol>
+    <li>建立一個目錄作為 deb 內容的根目錄。
+    </li>
+    <li>在 deb 內容的根目錄下，建立安裝內容的目錄結構，將要安裝的檔案放入。
+    </li>
+    <li>在 deb 內容的根目錄下，建立名稱叫 <dfn>DEBIAN</dfn> 的目錄，放控制檔。
+    </li>
+    <li>在 DEBIAN 目錄下，建立 <dfn>control</dfn> ，這是套件資訊。
+    </li>
+    <li>在 DEBIAN 目錄下，建立安裝程序的 scripts 。
+    </li>
+    <li>使用 dpkg -b 將目錄打包為 deb 。
+    </li>
+</ol>
+
+<p>
+當你逐漸熟悉打包 deb 的動作後，你就可以把它們寫進你的建置檔 (Makefile, build.xml) ，或者設計一個打包工具來做這些事。
+</p>
+<p>
+請參考《<a href="http://www.debian.org/doc/manuals/maint-guide/index.zh-tw.html">Debian新維護人員手冊</a>》了解更多關於 deb 打包的事項。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11239791.html">http://blog.roodo.com/rocksaying/archives/11239791.html</a></div>

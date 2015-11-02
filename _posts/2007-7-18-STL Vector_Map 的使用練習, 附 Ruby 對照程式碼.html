@@ -1,0 +1,170 @@
+---
+title: STL Vector/Map 的使用練習, 附 Ruby 對照程式碼
+category: programming
+old-category: C/C++/C#/Java
+tags: [c++,stl]
+---
+<div class="tags" style="display:none">Tags: C++ STL</div>
+<p>
+最近在練習使用 C++ STL 中的 Container 功能。嗯，寫著寫著，覺得很不順手啊。例如不能用 Vector/Set/Map 直接建表。Stack 的 pop() 方法沒有回傳值；我用 C 寫的 stack 功能， pop() 是會推一個值出來的。
+</p>
+<p>
+挑了兩個 STL Container 的練習程式碼，再用 Ruby 寫一段相同的。兩相比較，也算在吐槽吧。
+</p>
+
+<!--more-->
+<h5>Vector 練習</h5>
+<p>
+把字元陣列的內容放入 Vector 容器 <var>vec</var> 中。將 <var>vec</var> 中的每個字元都轉換成大寫字母，最後倒著顯示。
+</p>
+<p>
+輸出結果如下:
+</p>
+<pre class="language-text">
+H
+e
+l
+l
+o
+O
+L
+L
+E
+H
+</pre>
+
+<h6>C++: 21-3.cc</h6>
+<p>
+不接受 <code>vector vec("Hello")</code> 的寫法。每次要建立一個容器時，總少不了重覆的存入動作程式碼。
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+</span><span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="n">vec</span><span class="p">;</span>
+    <span class="kt">char</span><span class="o">*</span> <span class="n">ps</span><span class="p">;</span>
+    
+    <span class="k">for</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">ps</span> <span class="o">=</span> <span class="s">"Hello"</span><span class="p">;</span> <span class="o">*</span><span class="n">ps</span> <span class="o">!=</span> <span class="sc">'\0'</span><span class="p">;</span> <span class="o">++</span><span class="n">ps</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">vec</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="o">*</span><span class="n">ps</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iter</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">iter</span> <span class="o">=</span> <span class="n">vec</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">iter</span> <span class="o">!=</span> <span class="n">vec</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">iter</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">iter</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">vec</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">vec</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="sc">'a'</span> <span class="o">&amp;&amp;</span> <span class="n">vec</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="sc">'z'</span><span class="p">)</span>
+            <span class="n">vec</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="mh">0x20</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;::</span><span class="n">reverse_iterator</span> <span class="n">riter</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">riter</span> <span class="o">=</span> <span class="n">vec</span><span class="p">.</span><span class="n">rbegin</span><span class="p">();</span> <span class="n">riter</span> <span class="o">!=</span> <span class="n">vec</span><span class="p">.</span><span class="n">rend</span><span class="p">();</span> <span class="o">++</span><span class="n">riter</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">riter</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h6>Ruby: 21-3.rb</h6>
+<pre class="highlight"><code><span class="n">vec</span> <span class="o">=</span> <span class="s2">"Hello"</span>
+
+<span class="n">vec</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="s1">''</span><span class="p">).</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">c</span><span class="o">|</span>
+    <span class="nb">puts</span> <span class="n">c</span>
+<span class="k">end</span>
+
+<span class="n">vec</span><span class="p">.</span><span class="nf">upcase!</span>
+<span class="n">vec</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="s1">''</span><span class="p">).</span><span class="nf">reverse_each</span> <span class="k">do</span> <span class="o">|</span><span class="n">c</span><span class="o">|</span>
+    <span class="nb">puts</span> <span class="n">c</span>
+<span class="k">end</span>
+</code></pre>
+
+
+<h5>Map 練習</h5>
+<p>
+用 Map 建立一個顏色名稱與 RGB 代碼的對照表。輸出結果如下列:
+</p>
+<pre class="language-text">
+blue       => #0000ff   
+red        => #ff0000   
+green      => #00ff00   
+black      => #ffffff   
+white      => #000      
+'blue' Find! It's value is #0000ff
+</pre>
+
+<h6>C++: 22-2.cc</h6>
+<p>
+原本用 C 字串陣列，後來改用 <code>String</code> 陣列。然而這個陣列 <var>ss</var> 只是「初始值」，還要重覆將這些初始值存入 Map 容器 <var>myMap</var> 中的程式碼。
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;string&gt;
+#include &lt;map&gt;
+</span>
+<span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="cm">/*char* ss[][2] = {
+        {"black",   "#ffffff"},
+        {"white",   "#000"},
+        {"blue",    "#0000ff"},
+        {"red",     "#ff0000"},
+        {"green",   "#00ff00"},
+        {NULL, NULL}
+    };*/</span>
+    <span class="n">string</span> <span class="n">ss</span><span class="p">[][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">{</span><span class="s">"black"</span><span class="p">,</span>   <span class="s">"#ffffff"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"white"</span><span class="p">,</span>   <span class="s">"#000"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"blue"</span><span class="p">,</span>    <span class="s">"#0000ff"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"red"</span><span class="p">,</span>     <span class="s">"#ff0000"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"green"</span><span class="p">,</span>   <span class="s">"#00ff00"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">""</span><span class="p">,</span> <span class="s">""</span><span class="p">}</span>
+    <span class="p">};</span>
+
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="n">myMap</span><span class="p">;</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iter</span><span class="p">;</span>
+    
+    <span class="c1">//for (int i = 0; ss[i][0]; ++i)
+</span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">!</span><span class="n">ss</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">empty</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">myMap</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span><span class="n">string</span><span class="o">&gt;::</span><span class="n">value_type</span><span class="p">(</span><span class="n">ss</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">ss</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]));</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">iter</span> <span class="o">=</span> <span class="n">myMap</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">iter</span> <span class="o">!=</span> <span class="n">myMap</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">iter</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">setiosflags</span><span class="p">(</span><span class="n">ios</span><span class="o">::</span><span class="n">left</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">setw</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="o">*</span><span class="n">iter</span><span class="p">).</span><span class="n">first</span>
+            <span class="o">&lt;&lt;</span> <span class="s">" =&gt; "</span> <span class="o">&lt;&lt;</span> <span class="n">setw</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="o">*</span><span class="n">iter</span><span class="p">).</span><span class="n">second</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="n">iter</span> <span class="o">=</span> <span class="n">myMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">"blue"</span><span class="p">))</span> <span class="o">!=</span> <span class="n">myMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"'blue' Find! It's value is "</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="o">*</span><span class="n">iter</span><span class="p">).</span><span class="n">second</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+
+<h6>Ruby: 22-2.rb</h6>
+<p>
+Ruby 可以直接建立對照表，不需要另外建立容器。
+</p>
+<pre class="highlight"><code><span class="n">ss</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="ss">:black</span>  <span class="o">=&gt;</span>  <span class="s2">"#ffffff"</span><span class="p">,</span>
+    <span class="ss">:white</span>  <span class="o">=&gt;</span>  <span class="s2">"#000"</span><span class="p">,</span>
+    <span class="ss">:blue</span>   <span class="o">=&gt;</span>  <span class="s2">"#0000ff"</span><span class="p">,</span>
+    <span class="ss">:red</span>    <span class="o">=&gt;</span>  <span class="s2">"#ff0000"</span><span class="p">,</span>
+    <span class="ss">:green</span>  <span class="o">=&gt;</span>  <span class="s2">"#00ff00"</span>
+<span class="p">};</span>
+
+<span class="n">ss</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">|</span>
+    <span class="nb">printf</span> <span class="s2">"%-10s =&gt; %-10s</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+    <span class="c1"># Data type is dynamic, so printf in Ruby is safe.</span>
+<span class="k">end</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">ss</span><span class="p">[</span><span class="s1">'blue'</span><span class="p">.</span><span class="nf">to_sym</span><span class="p">])</span>
+    <span class="nb">puts</span> <span class="s2">"'blue' Find! It's value is </span><span class="si">#{</span><span class="n">ss</span><span class="p">[</span><span class="ss">:blue</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3679815.html">http://blog.roodo.com/rocksaying/archives/3679815.html</a></div>

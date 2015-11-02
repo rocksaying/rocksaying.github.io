@@ -1,0 +1,261 @@
+---
+title: Apache SSI 摘要
+category: computer
+old-category: 電腦技術
+tags: [apache,ssi,html]
+lastupdated: 2005-07-18
+---
+<p>
+SSI是Server-Side Inclues的縮寫。 其意為，提供一個可含括(Includes)在html文件的控制指令，並能在伺服端(Server-Side)加以解析的功能。在閱讀本文前，我假設各位跟我一樣，了解SSI的用途，曾閱讀過Apache所提供的SSI文件(Module mod_include)，並在使用時，和我碰到一樣的困擾。
+</p>
+
+<!--more-->
+
+<h2><a name="目錄">目錄</a></h2>
+<ul>
+  <li><a href="#前言">前言</a></li>
+  <li><a href="#什麼是SSI">什麼是SSI</a></li>
+  <li><a href="#啟動SSI">啟動SSI</a></li>
+  <li><a href="#基本指令">基本指令</a></li>
+  <li><a href="#變數">變數</a></li>
+  <li><a href="#流程控制指令">流程控制指令</a></li>
+</ul>
+<h2><a name="指令(Elements)列表">指令(Elements)列表</a></h2>
+<ul>
+  <li><a href="#config">config</a></li>
+  <li><a href="#echo">echo</a></li>
+  <li><a href="#exec">exec</a></li>
+  <li><a href="#fsize">fsize</a></li>
+  <li><a href="#flastmod">flastmod</a></li>
+  <li><a href="#include">include</a></li>
+  <li><a href="#printenv">printenv</a></li>
+  <li><a href="#set">set</a></li>
+</ul>
+<h2><a href="#案例問答">案例問答</a></h2>
+<hr />
+<h2><a href="#目錄" name="前言">前言</a></h2>
+<p>SSI是Apache中，一項基本的網頁內容程式化機制，但不知是文件寫的太簡單，還是我不習慣，SSI的語法對我來說，可還真是獨特，我花了許多功夫才搞清楚要如何撰寫。</p>
+<p>但是在實際使用過後，才發現SSI其實是一項非常方便的功能，利用幾個簡單的控制動作，就可以做到許多人用CGI或一些Server-Side
+  Script所要做的事。 我主要在利用其控制網頁內容的版面。</p>
+<p>在閱讀本文前，我假設各位跟我一樣，了解SSI的用途，曾閱讀過Apache所提供的SSI文件(Module mod_include)，並在使用時，和我碰到一樣的困擾。</p>
+<h2><a href="#目錄" name="什麼是SSI">什麼是SSI</a></h2>
+<p>SSI是Server-Side Inclues的縮寫。 其意為，提供一個可含括(Includes)在html文件的控制指令，並能在伺服端(Server-Side)加以解析的功能。</p>
+<h2><a href="#目錄" name="啟動SSI">啟動SSI</a></h2>
+<p>啟動SSI的控制權在網頁主機管理者的手上，一般使用者請去函詢問。</p>
+<p>網頁主機管理者，可利用下列指令查詢你的httpd server是否支援SSI功能:</p>
+<pre class="language-text"><code># httpd -l</cpde></pre>
+<p>若是組態設定檔(通常是 httpd.conf)中，是否載入了 mod_include 的 module:</p>
+<pre class="language-text"><samp>LoadModule includes_module path_of_your_module/mod_include.so</samp></pre>
+<p>若其中包含了 mod_include ，則 httpd server 可支援 SSI 。</p>
+<p>而以下的指令，將影嚮各網頁提供者，對 SSI 功能使用上的限制。</p>
+<h3>AddType/AddHandler</h3>
+<p>Apache 建議在組態設定檔中，加上下列兩項設定指令，以提供 SSI :</p>
+<pre class="language-text"><code>AddType text/html .shtml
+AddHandler server-parsed .shtml</code></pre>
+<p>第一行在指示將 .shtml 的文件之 MIME 型態，視為 text/html ，即一般的 HTML文件。 這表示了 SSI
+  只能用在 HTML文件中，你無法在非 HTML文件中，如純文字文件中使用，因為只要碰到這種檔案， http server 一律是回傳 text/html型態給瀏覽器。
+  而第二行在指示，將 .shtml文件，交給 server-parsed 這個 handler 去處理，這個 handler 將讀取 .shtml文件的內容，將一般的文字直接送給瀏覽器，而碰到
+  SSI 指令時，則先解析，再將執行後的結果送給瀏覽器。</p>
+<p>為了相容前版的使用，其 MIME TYPE 被設定為 <code>text/x-server-parsed-html</code>
+  或 <code>text/x-server-parsed-html3 </code>者，亦會被解析。</p>
+<p>除了利用副檔名來判別外，尚可利用檔案屬性的 execute
+  位元來決定。 這要利用 XBitHack 指令來設定。 當 XBitHack On 時，具有 user execute 位元的一般html文件，亦將被解析。
+  當 XBitHack Full 時，也會將具有 group execute 位元的一般html文件，交由 SSI 解析。</p>
+<h3>Options</h3>
+<p>光是加上 handler 的指示尚不足，還必須要以 Options 指令，指示可使用 SSI 的範圍。 一般是用在 &lt;Directory&gt;
+  區段中，但若有設定 AllowOverride Options 時，也允許在 .htaccess 檔案中使用 Options 指令。</p>
+<p>若想提供此範圍完整的 SSI 功能，加上指令 Options Includes (只提供 SSI 功能)，或 Options
+  +Includes (在原有功能上，再加上 SSI 的功能)， Apache 的老手該了解，有無 '+' 號的意義並不相同。</p>
+<p>若提供 SSI 功能，但不希望使用 SSI 的 #exec 及 #include 指令時，可在 Options 後面再加上
+  +IncludesNOEXEC 的設定。</p>
+<h2><a href="#目錄" name="基本指令">基本指令</a></h2>
+<p>在原文件中，將 SSI 的控制字彙，稱為 Elements ，不過一般來說，我們都把它當指令看待。</p>
+<p>SSI 根據 SGML 文件的說明，使用下列語法:</p>
+<p><code>&lt;!--#element attribute=&quot;value&quot; attribute=&quot;value&quot; ... --&gt;</code></p>
+<p>要注意的是，屬性值必須要用雙引號括號，不可省略。 而終端符號 (--&gt;) 前，必須要有一個空格。</p>
+<h3>指令(Elements)列表</h3>
+<h4><a href="#指令(Elements)列表" name="config">config</a></h4>
+<p>控制指令的輸出結果。屬性(attribute)有下列可用:</p>
+<ul type="disc">
+  <li>errmsg<br />
+    當 SSI指令執行有誤時，傳回給瀏覽器的訊息。</li>
+  <li>sizefmt<br />
+    檔案大小的輸出格式。若屬性值為 &quot;bytes&quot; ，則以 bytes 為大小輸出單位。若屬性值為 &quot;abbrev&quot;
+    ，則以 KB 或 MB 為大小輸出單位。</li>
+  <li>timefmt<br />
+    設定時間的輸出格式。其屬性值為一格式表示字串，此字串的格式表示內容，與 strftime(3) 一致，請參考 strftime(3) 的 manpage
+    。</li>
+</ul>
+<p>例:</p>
+<pre class="language-text"><code>&lt;!--#config errmsg=&quot;SSI Error&quot; sizefmt=&quot;abbrev&quot; timefmt=&quot;%b %d, %Y&quot; --&gt;</code></pre>
+<p>以 KB 或 MB 為大小輸出單位。使用美式時間格式(月 日, 年)。</p>
+<h4><a href="#指令(Elements)列表" name="echo">echo</a></h4>
+<p>印出一個變數的值，若變數未設定，則印出 (none) 。 屬性有:</p>
+<ul>
+  <li>var<br />
+    屬性值是變數的名稱。 變數名稱前，不加 '$' 符號。</li>
+</ul>
+<p>例:</p>
+<pre class="language-text"><code>&lt;!--#echo var=&quot;QUERY_STRING&quot; var=&quot;REMOTE_HOST&quot;--&gt;</code></pre>
+<h4><a href="#指令(Elements)列表" name="exec">exec</a></h4>
+<p>執行一個 shell 命令或 CGI script。 命令或 script 的輸出將被印出。 屬性有:</p>
+<ul>
+  <li>cgi<br />
+    執行一個 CGI script ， script 的位置，必須用 URL 表示法。 而 PATH_INFO 及 QUERY_STRING 的內容，是來自瀏覽器送給該.shtml文件的值，不能把它寫在
+    script 的 URL 中。 若 CGI script 傳回了一個 Location: 的 header 時 (這表示要轉導向別的文件) ，將被轉換成一個
+    &lt;A&gt; 標籤表示。</li>
+  <li>cmd<br />
+    呼叫 /bin/sh 執行這個字串中的命令。</li>
+</ul>
+<p>SSI所定義的變數，將透過環境變數，傳遞給命令或 script 。例:</p>
+<pre class="language-text"><code>Document loaded on &lt;!--#exec cmd=&quot;/bin/date&quot; --&gt;</code></pre>
+<h4><a href="#指令(Elements)列表" name="fsize">fsize</a></h4>
+<p>印出指定檔案的大小。 屬性有:</p>
+<ul>
+  <li>file<br />
+    一個檔案，其路徑不可超出目前文件的路徑。</li>
+  <li>virtual<br />
+    一個以 URL 路徑表示的文件，其路徑不可以 '/' 開頭。</li>
+</ul>
+<p>例:</p>
+<pre class="language-text"><code>&lt;!--#fsize file=&quot;download/xyz.tar.gz&quot; --&gt;</code></pre>
+<h4><a href="#指令(Elements)列表" name="flastmod">flastmod</a></h4>
+<p>印出指定文件的最後修改時間。 屬性值跟 fsize 一樣。</p>
+<h4><a href="#指令(Elements)列表" name="include">include</a></h4>
+<p>將其他文件的內容插入目前文件中。 若其他文件是可執行的檔案，則像 exec 一樣地執行該檔案後，將其輸出結果插入文件中。</p>
+<p>若只想提供插入其他文件內容的動作，而不想提供執行的動作，則可利用 Option +IncludesNOEXEC 設定限定之。</p>
+<p>屬性有:</p>
+<ul>
+  <li>file<br />
+    插入一個一般檔案的內容。</li>
+  <li>virtual<br />
+    插入一個 URL 指示的文件的內容。</li>
+</ul>
+<p>屬性值的注意事項與 exec 相同。例:</p>
+<pre class="language-text"><code>&lt;!--#include file=&quot;my_head.inc&quot; --&gt;</code></pre>
+<h4><a href="#指令(Elements)列表" name="printenv">printenv</a></h4>
+<p>印出目前所有變數的值，沒有屬性。 這算是一個純測試用功能，實用性不大。例:</p>
+<pre class="language-text"><code>&lt;!--#printenv --&gt;</code></pre>
+<h4><a href="#指令(Elements)列表" name="set">set</a></h4>
+<p>設定一個變數。</p>
+<p>屬性有:</p>
+<ul>
+  <li>var<br />
+    指定變數的名稱。</li>
+  <li>value<br />
+    指定該變數的值。</li>
+</ul>
+<p>例:</p>
+<pre class="language-text"><code>&lt;!--#set var=&quot;myvar1&quot; value=&quot;123&quot; --&gt;
+&lt;!--#set var=&quot;myvar2&quot; value=&quot;${myvar1}.html&quot; --&gt;
+&lt;!--#echo var=&quot;myvar2&quot; --&gt;</code></pre>
+<h2><a href="#目錄" name="變數">變數</a></h2>
+<p>若要在 value 中引用其他變數的值時，須在變數名稱前加上 '$' 符號，若變數名稱後沒有空格來分隔一般字元的話，請用 '{ }' 括起欲引用的變數名稱。</p>
+<p>環境變數將自動成為 SSI 中可用的變數，亦可使用 #set 自定變數。 SSI 中的變數，也能給被呼叫的程式參用。</p>
+<p>下面是 SSI 額外提供的變數:</p>
+<ul>
+  <li>DATE_GMT<br />
+    現在的格林威治標準時間。</li>
+  <li>DATE_LOCAL<br />
+    現在的本地時區時間。</li>
+  <li>DOCUMENT_NAME<br />
+    不包含目錄的檔案名稱。</li>
+  <li>DOCUMENT_URI<br />
+    被索求的文件的 URL 。</li>
+  <li>LAST_MODIFIED<br />
+    目前文件的最後修改時間。</li>
+</ul>
+<h2><a href="#目錄" name="流程控制指令">流程控制指令</a></h2>
+<p>流程控制指令可讓我們選擇性的印出網頁的內容，而不是將所有內容都送往瀏覽器。</p>
+<pre class="language-text"><code>&lt;!--#if expr=&quot;test_condition&quot; --&gt;
+&lt;!--#elif expr=&quot;test_condition&quot; --&gt;
+&lt;!--#else --&gt;
+&lt;!--#endif --&gt;</code></pre>
+<p>#if 和 #endif 必須成對表示，不可省略後面的 #endif 。</p>
+<p>流程控制指令中，最麻煩的是 test_condition 的寫法，整個 test_condition 必須被雙引號括起，而要在 test_condition
+  中表示一個字串時，該字串也必須用單引號或雙引號括起，這時在字串的雙引號前，就要加上 '\' 符號才行，因此，一個字串比較的 test_condition
+  往往以 &quot;\&quot;$DOCUMENT_URI\&quot; = \&quot;abc/foot.html\&quot;&quot; 的難看型式表示。</p>
+<p>有下列的 test_condition</p>
+<ul>
+  <li>string<br />
+    若 string 不是空的，即為 true 。</li>
+  <li>string1 = string2</li>
+  <li>string1 != string2</li>
+  <li>string1 &lt; string2</li>
+  <li>string1 &lt;= string2</li>
+  <li>string1 &gt; string2</li>
+  <li>string1 &gt;= string2<br />
+    比較 string1 和 string2 ，若 string2 是以 '/ /' 括起的，則表示使用常規表示法(regex)來比較。</li>
+</ul>
+<p>可以使用 (), !, &amp;&amp;, 和 || 來組來多個 test_condition 。例:</p>
+<pre class="language-text"><code>&lt;!--#if expr=&quot;$QUERY_STRING&quot; --&gt;
+I get a query string.
+&lt;!--#if expr=&quot;'$QUERY_STRING' = '/^[0-9]/'&quot; --&gt;
+NUMBER.
+&lt;!--#elif expr=&quot;'$QUERY_STRING' = '/^[a-zA-Z]/'&quot; --&gt;
+ALPHA.
+&lt;!--#else --&gt;
+SPECIAL.
+&lt;!--#endif --&gt;
+&lt;!--#endif --&gt;</code></pre>
+
+<h2><a href="#目錄" name="案例問答">案例問答</a></h2>
+
+<blockquote>
+<ul>
+<li>Q1: 是由我的router偵測,資料秀在螢幕上??還是我router的專屬網站執行程式透過router讀取到訊號強度才秀在螢幕上的呢??
+</li>
+<li>Q2: 如果是由專屬網站執行程式才做到這個顯示訊號強度的功能,是否我不連到那個網站就不會有這個顯示訊號強度的功能
+</li>
+<li>Q3: 「啟動SSI的控制權在網頁主機管理者的手上」是指我的router還是router的專屬網站???
+</li>
+</blockquote>
+<p>
+Q1 跟 Q2 實際上是一個問題。流程如下:
+</p>
+<ol>
+<li>
+Browser 閱讀 web server 上的 html 文件 (包含 SSI 語法)， web server 依 html 文件中的 SSI 指令啟動訊號強度偵測程式，訊號強度偵測程式向 router 查詢訊號強度後，將輸出結果透過 web server 傳送給 Browser 。
+</li>
+<li>
+router 和 web server 之間必須能進行連線，訊號強度偵測程式的存放位置可以有下列情形:
+<ol>
+<li>
+router 有專屬的通訊協定可以查詢訊號強度，則強度偵測程式應該放在 web server 上，偵測程式透過 router 專屬通訊協定向 router 查詢訊號強度。
+</li>
+<li>
+router 本身亦提供 http 服務，則偵測程式即可以放在 router 上也可放在 webserver 上。但 SSI 語法必須要用 <code>&lt;!--#include virtual=&quot;http://your.server.which.you.put.cgi/cgi-bin/wireless_single_detect.cgi&quot; --&gt;</code>
+<pre class="language-text"><samp>
+example:
+
+browser open http://your.webserver.com/welcome.html
+---[welcome.html]---
+&lt;html&gt;
+&lt;body&gt;
+&lt;img src=&quot;&lt;!--#include virtual='http://your.server.which.you.put.cgi/cgi-bin/wireless_single_detect.cgi' --&gt;&quot; /&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+--------------------
+</samp></pre>
+<p>
+wireless_single_detect.cgi 查詢訊號強度後，將訊號強度以圖形格式 (image/jpeg or image/gif) 輸出。附帶一提，在這種作法下，使用者也可以用 browser 直接啟動這支 cgi 而得到一張訊號強度圖，請特別注意 cgi 的安全性問題。
+</p>
+</li>
+</ol>
+</li>
+</ol>
+
+<p>關於 Q3 :</p>
+<ul>
+<li>
+觀念一: html 文件要放在 web server (網頁主機) 上，才能透過網頁被瀏覽閱讀。
+</li>
+<li>
+觀念二: 如果想要在 html 文件中使用 SSI 語法的話，必須要 web server 的管理者在設定檔中 (httpd.conf) 開啟 SSI 的選項。
+</li>
+</ul>
+<p>
+你的 router 和 web server 是同一台主機嗎？再者，你有權限修改 web server 的設定嗎？「網頁主機」指的是 web server 。在某些使用者權限劃份明確的組織裡，就算 router 和 web server 是安裝在同一台電腦主機中， router 的管理者也可能沒有權限修改 web server 的設定，而要與 web server 的管理者協調後，再由 web server 管理者修改。
+</p>
+
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/280048.html">http://blog.roodo.com/rocksaying/archives/280048.html</a></div>

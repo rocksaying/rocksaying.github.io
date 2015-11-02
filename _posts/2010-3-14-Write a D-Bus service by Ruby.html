@@ -1,0 +1,247 @@
+---
+title: Write a D-Bus service by Ruby
+category: programming
+old-category: Ruby
+tags: [Ruby, D-Bus]
+---
+<h4>
+Install Ruby DBus
+</h4>
+<p>
+前往 <a href="https://trac.luon.net/ruby-dbus/">ruby-dbus</a> ，下載壓縮包 (tarball) 並解壓。
+</p>
+<p>
+詳細安裝方式請閱讀壓縮包內的 README ，基本上只需要執行下列三個動作:
+</p>
+<ol>
+    <li>ruby setup.rb config</li>
+    <li>ruby setup.rb setup</li>
+    <li>sudo ruby setup.rb install</li>
+</ol>
+
+<p>
+Test:
+</p>
+<pre class="language-term">
+irb> require 'dbus'
+true
+</pre>
+
+<!--more-->
+<h4>
+Write a D-Bus service
+</h4>
+
+<script type="syntaxhighlighter" class="brush: ruby;"><![CDATA[
+#!/usr/bin/ruby
+# coding: utf-8
+=begin rdoc
+= Ruby DBus example
+
+Ruby D-Bus Tutorial:
+http://trac.luon.net/data/ruby-dbus/tutorial/index.html
+
+Ruby D-Bus implementation:
+https://trac.luon.net/ruby-dbus/
+
+查詢 Hello service:
+dbus-send --session --print-reply \
+    --dest=blog.rock.hello \
+    /blog/rock/hello \
+    org.freedesktop.DBus.Introspectable.Introspect
+
+調用 say method:
+dbus-send --session --print-reply --dest=blog.rock.hello \
+    /blog/rock/hello \
+    blog.rock.hello.say \
+    string:"Hello" boolean:true
+
+調用 stop method:
+dbus-send --session --print-reply --dest=blog.rock.hello \
+    /blog/rock/hello \
+    blog.rock.hello.stop
+
+觸發 event_say signal:
+dbus-send --session --print-reply --dest=blog.rock.hello \
+    --type=signal /blog/rock/hello \
+    blog.rock.hello.event_say \
+    string:"Signal hello"
+
+=end
+
+require 'dbus'
+
+=begin rdoc
+
+Hello service
+
+Inheriting from DBus::Object
+
+DBus Service name: blog.rock.hello
+
+=end
+class Hello < DBus::Object
+    @@name = 'blog.rock.hello'
+    @@path = '/' + @@name.tr('.', '/')
+
+    # Service name
+    def self.name
+        @@name
+    end
+
+    # Service object path
+    def self.path
+        @@path
+    end
+
+    # Export interface, *blog.rock.hello*, in this service.
+    # One DBus service could have many interfaces.
+    dbus_interface 'blog.rock.hello' do
+
+        # Export *say* method in this interface.
+        # say(message, timeout)
+        #
+        # in: input arguments
+        # out: output
+        # s: type string
+        # b: type boolean
+        # http://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-signatures
+        dbus_method :say, "in message:s, in timeout:b, out reply:s" do |message, timeout|
+            puts "[INFO] message: #{message}, timeout: #{timeout}"
+
+            notify 'Say', message, timeout
+
+            return "I say #{message}"
+        end
+
+        # Export *stop* method in this interface.
+        # stop()
+        dbus_method :stop do
+            main_quit
+        end
+
+        # Export *event_say* signal in this interface.
+        # yield message
+        #
+        # Signal only accepts input arguments.
+        dbus_signal :event_say, "message:s"
+
+    end
+
+    attr_reader :bus
+
+    def initialize
+        # @bus = DBus::SessionBus.instance
+        #  or
+        @bus = DBus.session_bus
+
+        super(@@path)
+
+        service = bus.request_service(@@name)
+        service.export(self)
+
+        init_notifier
+    end
+
+  private
+    def init_notifier  #:nodoc:
+        notifications_service = 'org.freedesktop.Notifications'
+        notifications_object = '/' + notifications_service.tr('.', '/')
+        notifications_interface = notifications_service
+
+        @notifier = bus.service(notifications_service).object(notifications_object)
+        # This is a proxy object.
+
+        # We need to do this before invoke any dbus method.
+        # This fills in instance.
+        @notifier.introspect
+
+        # Set default interface.
+        @notifier.default_iface = notifications_interface
+    end
+
+    def notify(title='', message='', timeout=false, icon='icon')  #:nodoc:
+        @notifier.Notify('Hello', 0, icon, title, message, [], {}, timeout ? 1 : 0)
+    end
+end
+
+=begin rdoc
+Signal Recipient
+
+Listen to *event_say* of blog.rock.hello.
+
+=end
+class SignalRecipient
+    def initialize
+        bus = DBus.session_bus
+
+        hello_service = Hello.name
+        hello_path = Hello.path
+        hello_interface = Hello.name
+
+        hello_object = bus.service(hello_service).object(hello_path)
+        # This is a proxy object.
+
+        # We need to do this before invoke any method.
+        # This fills in instance.
+        hello_object.introspect
+
+        # Waiting for a signal
+        # 指定介面與訊號名稱
+        # event_say pass a string:message.
+        hello_interface_object = hello_object[hello_interface]
+        hello_interface_object.on_signal(bus, 'event_say') do |message|
+            puts "I get signal(#{message})"
+        end
+    end
+end
+
+def main_quit
+    $main.quit
+end
+
+service = Hello.new
+recipient = SignalRecipient.new
+
+puts "Working..."
+
+$main = DBus::Main.new
+$main << service.bus
+$main.run
+
+]]></script>
+
+
+<h5>
+D-Bus signal
+</h5>
+<p>
+有 2 種方式綁定 D-Bus signal。
+</p>
+
+<p>第一種方式: bind with interface。<code>interface.on_signal(bus, signal_name, &block)</code>
+</p>
+
+<script type="syntaxhighlighter" class="brush: ruby;"><![CDATA[
+    hello_interface_object = hello_object[hello_interface]
+    hello_interface_object.on_signal(bus, 'event_say') do |message|
+        puts "I get signal(#{message})"
+    end
+]]></script>
+
+
+<p>第二種方式: bind with proxy object。<code>object.on_signal(signal_name, &block)</code>
+</p>
+
+<script type="syntaxhighlighter" class="brush: ruby;"><![CDATA[
+    # You must set default_iface before bind the signal.
+    hello_object.default_iface = hello_interface
+    hello_object.on_signal('event_say') do |message|
+        puts "I get signal(#{message})"
+    end
+]]></script>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/D-Bus%20%E7%94%A8%E9%80%94%E8%AA%AA%E6%98%8E.html">D-Bus 用途說明</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11949071.html">http://blog.roodo.com/rocksaying/archives/11949071.html</a></div>

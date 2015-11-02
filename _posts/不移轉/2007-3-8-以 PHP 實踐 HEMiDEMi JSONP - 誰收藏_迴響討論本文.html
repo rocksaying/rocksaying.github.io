@@ -1,0 +1,68 @@
+---
+title: 以 PHP 實踐 HEMiDEMi JSONP - 誰收藏/迴響討論本文
+category: programming
+old-category: PHP
+tags: [php,json,ajax]
+---
+<div class="tags" style="display:none">php json ajax</div>
+<p>
+不久前，我寫了《網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案：<a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88.html">基礎概念</a>、<a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88%2C%20Google%20%E7%9A%84%E6%96%B9%E5%BC%8F.html">Google的方式</a>》，其中就以<a href="http://www.hemidemi.com/">HEMiDEMi</a> 書籤服務為主要案例討論如何可以增加查詢服務之使用彈性。我前兩篇談的 JSON 資料包裹，又稱 <a href="http://ajaxian.com/archives/jsonp-json-with-padding">JSON with Padding (JSONP)</a>。
+</p>
+
+<!--more-->
+<p>
+前兩天，<a href="http://racklin.blogspot.com/">阿土伯</a> 就發表了《<a href="http://racklin.blogspot.com/2007/03/hemidemi-jsonp.html">HEMiDEMi JSONP - 誰收藏/迴響討論本文</a>》。既然阿土伯已經發了以 Yahoo Pipes 實踐的方式，那我也發一下以 PHP 實踐的方式。主要提供給擁有獨立主機的部落客使用。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="cm">/*
+Licensed by GNU Lesser General Public License (GNU LGPL) with any version.
+*/</span>
+<span class="c1">// Usage:
+</span><span class="err">$必要參數</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'url'</span>       <span class="o">=&gt;</span> <span class="s1">'網頁網址，應為 encodeURIComponent() 編碼字串'</span><span class="p">,</span>
+    <span class="s1">'service'</span>   <span class="o">=&gt;</span> <span class="s1">'查詢服務'</span><span class="p">,</span>
+    <span class="s1">'callback'</span>  <span class="o">=&gt;</span> <span class="s1">'處理回傳資料的函數名稱'</span>
+<span class="p">);</span>
+
+<span class="nv">$hemidemiServiceMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'users'</span>     <span class="o">=&gt;</span> <span class="s1">'http://www.hemidemi.com/rss/bookmark/$urlMd5Hash/users.xml'</span><span class="p">,</span>
+    <span class="s1">'comment'</span>   <span class="o">=&gt;</span> <span class="s1">'http://www.hemidemi.com/rss/bookmark/$urlMd5Hash/comment.xml'</span>
+<span class="p">);</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="err">$必要參數</span> <span class="k">as</span> <span class="nv">$arg</span> <span class="o">=&gt;</span> <span class="nv">$message</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="nv">$arg</span><span class="p">]))</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"需要 </span><span class="si">{</span><span class="nv">$arg</span><span class="si">}</span><span class="s2"> 指定</span><span class="si">{</span><span class="nv">$message</span><span class="si">}</span><span class="s2">, 例如: query.php?service=users&amp;url=xxx&amp;callback=handler</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="nv">$$arg</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="nv">$arg</span><span class="p">];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$hemidemiServiceMap</span><span class="p">[</span><span class="nv">$service</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"無</span><span class="si">{</span><span class="nv">$service</span><span class="si">}</span><span class="s2">服務</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nv">$sourceUrl</span> <span class="o">=</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+<span class="nv">$urlMd5Hash</span> <span class="o">=</span> <span class="nb">md5</span><span class="p">(</span><span class="nv">$sourceUrl</span><span class="p">);</span>
+
+<span class="nv">$wordTable</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'url'</span> <span class="o">=&gt;</span> <span class="nv">$sourceUrl</span><span class="p">,</span>
+    <span class="s1">'urlMd5Hash'</span> <span class="o">=&gt;</span> <span class="nv">$urlMd5Hash</span><span class="p">,</span>
+    <span class="s1">'service'</span> <span class="o">=&gt;</span> <span class="nv">$service</span>
+<span class="p">);</span>
+
+<span class="nv">$queryUrl</span> <span class="o">=</span> <span class="nb">strtr</span><span class="p">(</span><span class="nv">$hemidemiServiceMap</span><span class="p">[</span><span class="nv">$service</span><span class="p">],</span> <span class="nv">$wordTable</span><span class="p">);</span>
+
+<span class="nv">$rss</span> <span class="o">=</span> <span class="nb">simplexml_load_file</span><span class="p">(</span><span class="nv">$queryUrl</span><span class="p">);</span>
+<span class="k">echo</span> <span class="nv">$callback</span><span class="p">,</span> <span class="s1">'('</span><span class="p">,</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$rss</span><span class="p">),</span> <span class="s1">');'</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+使用範例如: <var>sample.php?url=xxx&service=users&callback=handler</var> ，相關內容請參考《網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案：<a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88.html">基礎概念</a>、<a href="{{ site.baseurl }}/archives/2007/%E7%B6%B2%E8%B7%AF%E6%9C%8D%E5%8B%99%E8%88%87%E7%B4%94%20JavaScript%20%E6%87%89%E7%94%A8%E4%B9%8B%20JSON%20%E8%B3%87%E6%96%99%E5%8C%85%E8%A3%B9%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88%2C%20Google%20%E7%9A%84%E6%96%B9%E5%BC%8F.html">Google的方式</a>》。在此順便修正一個錯誤。在前篇中提到用 <code>encodeURIComponent</code> 編碼網頁 URL 後組成 REST 查詢的 URL ，這其實不能作用，我們只能將 URL 編碼後的字串放在查詢字串，亦即接在問號(?)後的字串。
+</p>
+<p>
+當初寫好這程式後，就碰到一些狀況。像版本問題，程式中使用了只有 PHP5 才支援的函數，而多數虛擬主機服務商只提供 PHP4 ，所以用不了。也有防火牆問題，有些虛擬主機服務商加了防火牆，在主機上運作的 PHP 程式無法連線索取外部資料，所以也不能運作。基於以上種種，我才建議 <a href="http://www.hemidemi.com/board/hemidemi.feedback/thread/50710">HEMiDEMi</a> 能否提供 JSONP 的方式。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2820611.html">http://blog.roodo.com/rocksaying/archives/2820611.html</a></div>

@@ -1,0 +1,384 @@
+---
+title: Stack - Example for Operators of Array Overload
+category: programming
+old-category: PHP
+tags: [php,spl,iterator,overloading]
+---
+<div class="tags" style="display:none">Tags: php spl iterator overloading</div>
+<p>
+實作一個 Stack 。具備下列特性:
+</p>
+<ol>
+  <li>後進先出。</li>
+  <li>順序走訪時，同樣按後進先出原則走訪。亦即由後往前走訪。</li>
+  <li>可用索引運算子<code>[]</code>窺探 Stack 的內容。</li>
+  <li>不允許用索引運算子改變 Stack 的內容。</li>
+</ol>
+<p>
+本文之示範直接實作 Iterator, ArrayAccess, Countable 三個介面，而不繼承 <code>ArrayIterator</code> 等類別。ArrayIterator 類具有 sort() 等方法，但我並不打算對 Stack 進行排序，故我不繼承。若我繼承 ArrayIterator ，則我必須覆寫 sort 等方法，無此必要。
+</p>
+
+<!--more-->
+<h5>Stack.php</h5>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="sd">/**
+ * interface Iterator: +current(), +key(), +next(), +rewind(), +valid()
+ *
+ * interface ArrayAccess: +offsetExists(), +offsetGet(), +offsetSet(),
+ *                        +offsetUnset()
+ *
+ * interface Countable: +count()
+ *
+ * interface SeekableIterator: +seek()
+ */</span>
+<span class="k">class</span> <span class="nc">Stack</span>
+<span class="k">implements</span> <span class="nx">Iterator</span><span class="p">,</span> <span class="nx">ArrayAccess</span><span class="p">,</span> <span class="nx">Countable</span>
+<span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$size</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$table</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$sp</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$tp</span><span class="p">;</span> <span class="c1">//traval point
+</span>    
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$size</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">size</span> <span class="o">=</span> <span class="nv">$size</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$size</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tp</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * Stack's method
+     * Note: I don't know how to overload empty().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">isEmpty</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * Stack's method
+     * @return Top point of stack.
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">push</span><span class="p">(</span><span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span> <span class="o">&lt;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">size</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
+            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'stack is full!'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * Stack's method
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="o">&amp;</span><span class="nf">pop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$result</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="o">--</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span><span class="p">];</span>
+            <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span><span class="p">]);</span>
+            <span class="k">return</span> <span class="nv">$result</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'stack is empty'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * implements methods of interface Countable.
+     * overload count()/hook into count()
+     * @return how many elements are pushed in the stack.
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">count</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * implements methods of interface ArrayAccess.
+     */</span>
+    <span class="sd">/**
+     * It means: $array[$index] = $v
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetSet</span><span class="p">(</span><span class="nv">$index</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'peak-only!'</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$index</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * It means:  $v = $array[$index]
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetGet</span><span class="p">(</span><span class="nv">$index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="cm">/*if ($index &gt; $this-&gt;sp or $index &lt; 0)
+            throw new Exception('out of range');*/</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$index</span><span class="p">];</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * It means: isset($array[$index])
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetExists</span><span class="p">(</span><span class="nv">$index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$index</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * It means: unset($array[$index])
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetUnset</span><span class="p">(</span><span class="nv">$index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'peak-only!'</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * implements methods of interface Iterator.
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">current</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">table</span><span class="p">[</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tp</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">key</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tp</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">next</span><span class="p">()</span> <span class="p">{</span>
+        <span class="o">--</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tp</span><span class="p">;</span>
+        <span class="cm">/*document said void, but I return self.*/</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">rewind</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tp</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">sp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">valid</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tp</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+Example:
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">require</span> <span class="s1">'Stack.php'</span><span class="p">;</span>
+<span class="nv">$s</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Stack</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+<span class="nv">$s</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="s1">'apple'</span><span class="p">);</span>
+<span class="nv">$s</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="s1">'orange'</span><span class="p">);</span>
+<span class="k">echo</span> <span class="s2">"There are "</span><span class="p">,</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$s</span><span class="p">),</span> <span class="s2">" elements in stack</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$s</span> <span class="k">as</span> <span class="nv">$i</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"stack[ </span><span class="nv">$i</span><span class="s2"> ] is </span><span class="nv">$v</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">echo</span> <span class="nv">$s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//peak the value of first element in stack.
+</span><span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h6>StackTest.php</h6>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nb">define</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">,</span> <span class="s2">"StackTest::main"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestCase.php"</span><span class="p">;</span>
+<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestSuite.php"</span><span class="p">;</span>
+
+<span class="k">require_once</span> <span class="s1">'Stack.php'</span><span class="p">;</span>
+
+<span class="sd">/**
+ * Test class for Stack.
+ * Generated by PHPUnit_Util_Skeleton on 2007-06-26 at 09:19:57.
+ */</span>
+<span class="k">class</span> <span class="nc">StackTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
+    <span class="sd">/**
+     * Runs the test methods of this class.
+     *
+     * @access public
+     * @static
+     */</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">require_once</span> <span class="s2">"PHPUnit/TextUI/TestRunner.php"</span><span class="p">;</span>
+
+        <span class="nv">$suite</span>  <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestSuite</span><span class="p">(</span><span class="s2">"StackTest"</span><span class="p">);</span>
+        <span class="nv">$result</span> <span class="o">=</span> <span class="nx">PHPUnit_TextUI_TestRunner</span><span class="o">::</span><span class="na">run</span><span class="p">(</span><span class="nv">$suite</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * Sets up the fixture, for example, open a network connection.
+     * This method is called before a test is executed.
+     *
+     * @access protected
+     */</span>
+    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">size</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Stack</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">size</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testIsEmpty().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testIsEmpty</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">isEmpty</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testPush().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testPush</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">size</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span> <span class="mi">100</span> <span class="p">));</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="s1">'FULL'</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$expected</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fail</span><span class="p">(</span><span class="s1">'An expected Exception has not been raised.'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testPop().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testPop</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">pop</span><span class="p">());</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">pop</span><span class="p">());</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">isEmpty</span><span class="p">());</span>
+
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">pop</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$expected</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fail</span><span class="p">(</span><span class="s1">'An expected Exception has not been raised.'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testCount().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testCount</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">count</span><span class="p">());</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">));</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">));</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">pop</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testCurrent().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testCurrent</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertNull</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">current</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testKey().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testKey</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">key</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testRewind().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testRewind</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">rewind</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">key</span><span class="p">());</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">current</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testValid().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testValid</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">valid</span><span class="p">());</span>
+        <span class="k">while</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">valid</span><span class="p">())</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">next</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">valid</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testOffsetSet().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testOffsetSet</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">offsetSet</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$expected</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fail</span><span class="p">(</span><span class="s1">'An expected Exception has not been raised.'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testOffsetGet().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testOffsetGet</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">offsetGet</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testOffsetExists().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testOffsetExists</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">offsetExists</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">offsetExists</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * @todo Implement testOffsetUnset().
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testOffsetUnset</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">try</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">offsetUnset</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+            <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="p">}</span>
+        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$expected</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fail</span><span class="p">(</span><span class="s1">'An expected Exception has not been raised.'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**
+     * test foreach
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">testForeach</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$testArray</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'black'</span><span class="p">,</span> <span class="s1">'blue'</span><span class="p">,</span> <span class="s1">'red'</span><span class="p">,</span> <span class="s1">'green'</span><span class="p">,</span> <span class="s1">'white'</span><span class="p">);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$testArray</span><span class="p">);</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">push</span><span class="p">(</span><span class="nv">$testArray</span><span class="p">[</span><span class="nv">$i</span><span class="p">]));</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$testArray</span><span class="p">[</span><span class="nv">$i</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
+        <span class="p">}</span>
+        
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$testArray</span><span class="p">),</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="p">));</span>
+
+        <span class="nv">$i</span> <span class="o">=</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$testArray</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$i</span><span class="p">,</span> <span class="nv">$k</span><span class="p">);</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$testArray</span><span class="p">[</span><span class="nv">$i</span><span class="p">],</span> <span class="nv">$v</span><span class="p">);</span>
+            <span class="o">--</span><span class="nv">$i</span><span class="p">;</span>
+            <span class="c1">//echo "$k = $v\n";
+</span>        <span class="p">}</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nv">$i</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">q</span><span class="o">-&gt;</span><span class="na">isEmpty</span><span class="p">());</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nx">PHPUnit_MAIN_METHOD</span> <span class="o">==</span> <span class="s2">"StackTest::main"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">StackTest</span><span class="o">::</span><span class="na">main</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3542135.html">http://blog.roodo.com/rocksaying/archives/3542135.html</a></div>

@@ -1,0 +1,109 @@
+---
+title: dbus-glib bindings 入門磚
+category: programming
+old-category: Programming
+tags: [gnome,D-Bus,autoconf,make,glib]
+---
+<p>當你需要用 C 語言實作一個 D-Bus 服務時，你有兩種選擇。其一，使用 D-Bus Low-Level API ( <a href="http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html">D-Bus Low-Level API Tutorial</a>)。但是 D-Bus 開發人員強烈建議我們不要使用這種方法 (<q>WARNING: you should NOT use this API unless you absolutely have to.</q>)。其二，使用 dbus-glib bindings 。絕大多數時候，我們都將採用此一方法。
+</p>
+
+<!--more-->
+<p>你首先需要參考 <a href="http://dbus.freedesktop.org/doc/dbus-tutorial.html">DBus Tutorial</a> 這篇文章。這篇文章說明了 D-Bus 的設計概念與運作機制。然而，它的內容太少，遠遠不足以支撐你完成工作。真正能幫助你完成 D-Bus 服務實作工作的文件中，訊息最完整的是「<a href="http://live.gnome.org/DBusGlibBindings">DBusGlibBindings</a> 」的源碼 (licensed by GPL)。
+</p>
+
+<p>其次，dbus-glib binding 架構在 GNOME (Gnome Network Object Model Environment) 之上。所以必須先學習 GNOME 核心的 Object system (GObject) 才能運用。在此要特別說明 GNOME 的意思，<dfn>GNOME is GNU Network Object Model Environment</dfn>. 它代表兩項意涵: 1. 桌面環境。 2. 使用 C 語言建立的 Object-oriented development platform。在 dbus-glib binding 中， GNOME 的用途是第2個: 使用 C 語言建立的 Object-oriented development platform。跟桌面環境沒有關係。所以不要以為 dbus-glib binding 只能運作在具有 X Window 的桌面環境上，它也可以運作在純文字環境。
+</p>
+
+<p>在 GNU/Linux 環境下，GNOME (glib) 大幅擴展了 C 語言的基礎函數庫內容，其重要性與豐富度，可比 C++ 的 Boost Libraries。學習它有很大的好處。
+</p>
+
+<p>Debian/Ubuntu required package: dbus-glib-1, gnome-common, libdbus-glib-1-dev 
+</p>
+
+<p>到 <a href="http://live.gnome.org/DBusGlibBindings">DBusGlibBindings</a> ，下載源碼包 (program.tar.gz), 解開後，執行其中的 <code>autogen.sh</code> 產生 Autoconf 與 Automake 所需的文件，包含 configure 與 Makefile 。
+</p>
+
+<p>DBusGlibBindings源碼包具有 Autoconf 與 Automake 的建置架構，幫我們處理了許多繁複的工具操作。我們通常只需要修改 program.c 以及相對應的 D-Bus 服務介面宣告文件(XML格式)，便可產生自定的 D-Bus 服務。
+</p>
+
+<h5>Glib 參考文件
+</h5>
+
+<p>
+當你用 C 語言開發 D-Bus 服務時，你絕大多數時間是在跟 glib 打交道。在我的經驗中，下列手冊是我們一定要了解的內容。
+</p>
+
+<ul>
+ <li><a href="http://library.gnome.org/devel/gobject/stable/">
+ GObject Reference Manual</a></li>
+ 
+ <li><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html">
+ GLib Basic Types</a></li>
+ 
+ <li><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Enumeration-and-Flag-Types.html">
+ GLib Enumeration and Flag Types</a></li>
+ 
+ <li><a href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html">
+ GLib Error Reporting</a></li>
+ 
+ <li><a href="http://library.gnome.org/devel/glib/unstable/glib-Quarks.html">
+ GLib Quarks</a></li>
+</ul>
+
+<h5>D-Bus 參考文件
+</h5>
+
+<ul>
+
+ <li><a href="{{ site.baseurl }}/archives/2010/D-Bus%20service%20activation.html">
+ D-Bus service activation</a></li>
+ 
+ <li><a href="http://dbus.freedesktop.org/doc/dbus-tutorial.html">
+ D-Bus Tutorial</a></li>
+ 
+ <li><a href="http://dbus.freedesktop.org/doc/dbus-glib/index.html">
+ D-Bus GLib bindings - Reference Manual</a></li>
+
+ <li><a href="http://dbus.freedesktop.org/doc/api/html/">
+ D-Bus low-level API</a></li>
+ 
+ <li><a href="http://rhythmbox.sourcearchive.com/documentation/0.9.6/main_8c-source.html">
+ rhythmbox source codes</a></li>
+ <li><a href="http://network-manager.sourcearchive.com/documentation/0.8-1/nm-system-config-error_8c-source.html">
+ network-manager source codes</a></li>
+
+</ul>
+
+<h5>Autoconf, Automake
+</h5>
+
+<p>
+關於 Autoconf, Automake 的使用，可以參考下列兩篇我寫的文章。
+</p>
+
+<ul>
+ <li><a href="{{ site.baseurl }}/archives/2010/Hello%20Autoconf%2C%20the%20GNU%20Build%20System.html">
+ Hello Autoconf, the GNU Build System</a></li>
+ <li><a href="{{ site.baseurl }}/archives/2010/Autoconf%20%E6%AA%A2%E6%9F%A5%E9%A1%8D%E5%A4%96%E5%87%BD%E6%95%B8%E5%BA%AB.html">
+ Autoconf 檢查額外函數庫</a></li>
+</ul>
+
+<h5>其他語言的 DBus bindings
+</h5>
+
+<p>
+除了 C 語言，我也使用 Ruby, Python 和 PHP 實作與使用 D-Bus 服務。
+</p>
+
+<ul>
+ <li><a href="{{ site.baseurl }}/archives/2010/Write%20a%20D-Bus%20service%20by%20Ruby.html">
+ Write a D-Bus service by Ruby</a></li>
+ <li><a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">
+ Write a PHP DBus client</a></li>
+ <li>Write a D-Bus service by Python (working...)</li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/D-Bus%20%E7%94%A8%E9%80%94%E8%AA%AA%E6%98%8E.html">D-Bus 用途說明</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12976701.html">http://blog.roodo.com/rocksaying/archives/12976701.html</a></div>

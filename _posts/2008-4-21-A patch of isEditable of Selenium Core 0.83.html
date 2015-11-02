@@ -1,0 +1,79 @@
+---
+title: A patch of isEditable of Selenium Core 0.83
+category: programming
+old-category: Programming
+tags: [selenium,web dev]
+---
+<div class="tags" style="display:none">Tags: selenium web_dev</div>
+<p>
+日前配合 <a href="http://selenium-core.openqa.org/">Selenium</a> 撰寫一個 Web 應用軟體的測試案例，案例中有一句斷言要判定指定的表單輸入欄位是唯讀的 (readonly)。我個人很直覺地使用了 <code>assetrNotEditable</code>，但測試結果卻是錯的。後來我又試了 <code>assertEditable</code>、<code>assertAttribute</code> 及 <code>assertNotAttribute</code> 等寫法。始終無法正確而一致地判定輸入欄位的唯讀屬性 (readonly)。
+</p>
+<p>
+依據參考文件 (Selenium IDE Reference) ，<code>assertEditable/assertNotEditable</code> 的說明，這兩種斷言都是調用 <code>isEditable()</code> 判斷。於是我開啟 selemium-api.js 後搜尋 <code>isEditable</code> ，找出它的源碼內容。結果發現它只判斷輸入控制元件 (input element) 的 <var>disabled</var> 屬性，而未判斷 <var>readonly</var> 屬性。
+</p>
+
+<!--more-->
+<p>
+基本上，<var>disabled</var> 與 <var>readonly</var> 對使用者而言，同樣都令輸入控制元件不能修改內容。兩者的差別主要在於，一個具 <var>disabled</var> 屬性的輸入控制元件，其值不會被遞交回伺服器；而 <var>readonly</var> 屬性的輸入控制元件，其值可能會被遞交回伺服器 (在 W3C HTML Specification 中，這句話的意義等同 "視瀏覽器實作而定")。如下例所示:
+</p>
+
+<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">"test.php"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"i1"</span> <span class="na">name=</span><span class="s">"i1"</span> <span class="na">value=</span><span class="s">"1"</span> <span class="na">disabled=</span><span class="s">"disabled"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"i2"</span> <span class="na">name=</span><span class="s">"i2"</span> <span class="na">value=</span><span class="s">"2"</span> <span class="na">readonly=</span><span class="s">"readonly"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"i3"</span> <span class="na">name=</span><span class="s">"i3"</span> <span class="na">value=</span><span class="s">"3"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre>
+
+<br/>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">echo</span> <span class="s1">'&lt;pre&gt;'</span><span class="p">;</span>
+<span class="nb">print_r</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">);</span>
+<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+因為 <var>i1</var> 具有 <var>disabled</var> 屬性，其值不會被遞交。而<var>i2</var> 僅具有 <var>readonly</var> 屬性，雖然使用者不能修改欄位內容，但其值仍會被遞交。故 test.php 受理後只會收到 <var>i2,i3</var> 兩個輸入控制元件的值。如下所示:
+</p>
+<pre class="language-text">
+Array
+(
+    [i2] => 2
+    [i3] => 3
+)
+</pre>
+
+<p>
+對使用者而言，這些細節是他們感受不到的。按理說，<code>assertEditable/assertNotEditable</code> 應該會同時判斷輸入控制元件的 <var>disabled</var> 與 <var>readonly</var> 這兩個屬性。可惜 Selenium Core 並不這麼做。雖然不知道原因，不過開發中的案子已經在不少地方使用 <var>readonly</var> (主要是用於資料欄位的"檢視"動作)，於是我選擇修改 Selenium Core 的 <code>isEditable</code> 內容。
+</p>
+
+
+<p>
+如果開發團隊習慣使用 <var>readonly</var> 令輸入控制元件之值不可被修改，則 Selenium Core 預設的 <code>assertEditable/assertNotEditable</code> 將造成撰寫測試案例的困擾。可以透過修改或自定 <code>isEditable</code> 動作的方式，加入 <var>readonly</var> 屬性的判斷動作。
+</p>
+
+<h5>selenium-api.js</h5>
+<pre class="highlight"><code><span class="nx">Selenium</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">isEditable</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">locator</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/**
+   * Determines whether the specified input element is editable, ie hasn't been disabled.
+   * This method will fail if the specified element isn't an input element.
+   *
+   * @param locator an &lt;a href="#locators"&gt;element locator&lt;/a&gt;
+   * @return boolean true if the input element is editable, false otherwise
+   */</span>
+    <span class="kd">var</span> <span class="nx">element</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">browserbot</span><span class="p">.</span><span class="nx">findElement</span><span class="p">(</span><span class="nx">locator</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">element</span><span class="p">.</span><span class="nx">value</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">Assert</span><span class="p">.</span><span class="nx">fail</span><span class="p">(</span><span class="s2">"Element "</span> <span class="o">+</span> <span class="nx">locator</span> <span class="o">+</span> <span class="s2">" is not an input."</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="c1">//return !element.disabled;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="o">!</span><span class="nx">element</span><span class="p">.</span><span class="nx">disabled</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">element</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s1">'readonly'</span><span class="p">));</span>
+<span class="p">};</span>
+</code></pre>
+
+
+<p>
+Firefox 2.x 版不支援 <code>element.readonly</code> 的寫法，要用 W3C DOM 正式的寫法 <code>element.getAttribute('readonly')</code> 才可以。
+</p>
+<p>
+Selenium IDE 的使用者，可以用 "Option/Selenium Core extensions"，以自定測試動作的方式覆蓋掉原先的 isEditable 內容。或者，用 zip 解壓工具，打開 selenium-ide-0.8.7.xpi ，再打開其中的 "chrome/selenium-ide.jar"，修改 "/content/selenium/scripts/selenium-api.js" 的內容。改好後再用 zip 壓縮工具包回去。(.xpi/.jar 其實都是 zip 壓縮檔)
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5895631.html">http://blog.roodo.com/rocksaying/archives/5895631.html</a></div>

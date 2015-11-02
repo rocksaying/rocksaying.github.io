@@ -1,0 +1,278 @@
+---
+title: 擁抱變化，從函數指標到函數個體
+category: programming
+old-category: C/C++/C#/Java
+tags: [XP,擁抱變化, function,function object,依賴注射,agile method]
+---
+<p>
+我來說個關於函數指標(<span class="Onote">在 C 語言中，function 就是一個 function pointer</span>)與函數個體(function object)的小故事。這個故事還有一個 Java 版的，在本文的最後一節。只對 Java 語言有興趣的，可以先看後面的 Java 版，再回頭看前面。
+</p>
+
+<p>
+有一天，"偉大的"架構設計師交代甲和乙兩位程序員共同負責撰寫一個小程式。這個程式配置了兩個陣列，一個是傳統的整數陣列，一個是整數<code>vector</code>。這個程式要將這兩個陣列的內容傾印出來。
+</p>
+
+<!--more-->
+<h4>
+開始設計
+</h4>
+<p>
+甲、乙兩人將程式分成兩段分別撰寫。甲撰寫傾印動作；乙撰寫配置動作，再透過<code>for_each</code>調用甲撰寫的傾印行為輸出陣列內容。
+</p>
+
+<h5>
+傾印動作第一版
+</h5>
+<p>
+甲先用函數指標完成了他負責的程式碼: pv.h (revision.1)。
+</p>
+<pre class="highlight"><code><span class="cm">/**
+ * pv header
+ *
+ * revision: 1
+ */</span>
+
+<span class="kt">void</span> <span class="nf">pv_revision</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"revision: 1"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">pv</span><span class="p">(</span><span class="kt">int</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<h5>
+配置與輸出
+</h5>
+<p>
+乙所撰寫的部份，則是: fpv.cpp
+</p>
+<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+</span>
+<span class="cp">#include "pv.h"
+</span>
+<span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">a1</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">11</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">44</span> <span class="p">,</span><span class="mi">55</span><span class="p">};</span>
+
+    <span class="n">pv_revision</span><span class="p">();</span>
+
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">a2</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">a2</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">//for_each(a1, a1 + sizeof(*a1) + 1, pv); //fix bug. thank you, miki
+</span>    <span class="n">for_each</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a1</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span><span class="o">/</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">a1</span><span class="p">),</span> <span class="n">pv</span><span class="p">);</span>
+
+    <span class="n">for_each</span><span class="p">(</span><span class="n">a2</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">a2</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">pv</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+
+
+<div class="note">
+<p>
+<code>for_each</code> 是 STL 提供的演算法樣板。它的結構大致如下所示。
+</p>
+<pre class="highlight"><code><span class="n">template</span><span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="p">,</span> <span class="n">class</span> <span class="n">F</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">my_foreach</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">begin</span><span class="p">,</span> <span class="n">T</span><span class="o">*</span> <span class="n">end</span> <span class="p">,</span> <span class="n">F</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="n">T</span> <span class="n">v</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">i</span> <span class="o">=</span> <span class="n">begin</span><span class="p">;</span>
+
+    <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">f</span><span class="p">(</span> <span class="o">*</span><span class="n">i</span> <span class="p">);</span>
+        <span class="o">++</span><span class="n">i</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>
+這個 my_foreach 函數樣板只是用來說明 STL for_each 樣板的演算法，
+實際可套用的場所有限。底下還是會用 for_each 樣板。
+</p>
+</div>
+
+<p>
+編譯與輸出結果相當順利。
+</p>
+
+<pre class="language-term">
+$> g++ -o fpv fpv.cpp
+
+$> ./fpv
+revision: 1
+11
+22
+33
+44
+55
+0
+1
+2
+3
+4
+</pre>
+
+<h4>
+中途改變設計方式
+</h4>
+<p>
+"偉大的"架構設計師檢視兩人的工作結果後，說不要用函數指標，要將設計變更為函數個體(function object)。因為函數個體具有三個優點。
+</p>
+<blockquote>
+<ol>
+    <li>
+      A function object might be smarter because it may have a state.
+    </li>
+    <li>
+      Each function object has its own type. Thus, you can pass the type of a function object to a template to specify a certain behavior.
+    </li>
+    <li>
+      A function object is usually faster than a function pointer.
+    </li>
+</ol>
+<cite>
+The C++ Standard Library - A Tutorial and Reference, Nicolai M. Josuttis
+</cite>
+</blockquote>
+
+
+<p>
+「改變設計方式」真是每個程序員最討厭聽到的一句話。但是使用者的需求是會改變的，所以 <a href="http://en.wikipedia.org/wiki/Extreme_Programming">eXtreme Programming</a> 告訴我們要「擁抱變化」(Embrace Change)。所幸 C++ 的彈性為我們提供相當大的幫助。甲程序員只需要作一點小小的修改，就可以應付這項設計變更工作。
+</p>
+
+<h5>
+傾印動作第二版
+</h5>
+<p>
+甲定義一個類別 <code>PV</code>，並重載運算子<code>()</code> 以包裹函數 <var>pv</var> 原本的動作，實現函數個體的功能。最後，甲定義一個靜態的函數體 <var>pv</var> 替代原本的函數指標，供乙的程式調用。甲修改後的程式碼: pv.h (revision.2)。
+</p>
+<pre class="highlight"><code><span class="cm">/**
+ * pv header
+ *
+ * revision: 2
+ */</span>
+
+<span class="kt">void</span> <span class="nf">pv_revision</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"revision: 2"</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 重載 () 運算子，將原函數內容包裹為函數個體。
+</span><span class="n">class</span> <span class="n">PV</span> <span class="p">{</span>
+  <span class="n">public</span><span class="o">:</span>
+    <span class="c1">// 原函數
+</span>    <span class="c1">//void pv(int v) {
+</span>    <span class="kt">void</span> <span class="n">operator</span><span class="p">()</span> <span class="p">(</span><span class="kt">int</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="n">PV</span> <span class="n">pv</span> <span class="o">=</span> <span class="n">PV</span><span class="p">();</span>
+
+</code></pre>
+
+
+<p>
+那麼乙程序員需要修改什麼？答案是「什麼都不必改」。只需要重新編譯程式。
+</p>
+
+<pre class="language-term">
+$> g++ -o fpv fpv.cpp
+
+$> ./fpv
+revision: 2
+11
+22
+33
+44
+55
+0
+1
+2
+3
+4
+</pre>
+
+<p>
+當我們要改變設計方式，將函數指標包裹為函數個體時，我們會改變原本的函數名稱，另外定義一個靜態的同名函數體 (<span class="Onote">
+靜態的函數體雖然會喪失函數個體的第二項優點，無法保有獨立的狀態。但是卻可以相容既有的程式碼。而日後在撰寫新的程式碼時，程序員只要自己配置一個新的實例，仍然可以享有函數個體的完整優點。
+</span>)。 藉由同名函數體，可以不必修改已經寫好的程式碼(只需要重新編譯)，就可讓原有的程式碼透過函數體調用函數，而不是透過函數指標。整個轉移過程相當平滑，已經寫好的程式碼不必跟隨設計變更而修改。
+</p>
+
+<p>
+在當年(大約十五到十年前)，大量的 C 語言程式碼轉換到 C++ 語法時，許許多多的程序員就是透過這種運算子重載(overload)的技巧，將基本型別資料與參考型別資料的差異消弭於無形。
+</p>
+<p>
+就算是今天我們在撰寫全新的 C++ 程式碼時，這種彈性還是相當地重要，因為這代表了「擁抱變化」的彈性。假設有一天我們採用了不良的設計方式，使用基本型別而不是參考型別， C++ 仍然提供我們消耗最少成本彌補不良設計的途徑。
+</p>
+
+<a name="java_story"></a>
+<h3>
+Java 語言的故事
+</h3>
+<p>
+同樣的故事，如果發生在 Java 世界，會出現完全不同的情節...
+</p>
+<p>
+首先，Java 語言不支援函數指標或函數委派。所以甲程序員員必須先定義一個類別(PV)，具有一個方法 pv。再告訴乙程序員去配置一個PV的實例與調用方法 pv ，例如 <code>PV pv = new PV();  pv.pv(v); </code>。
+</p>
+<p>
+其次，"偉大的"架構設計師看完後，會要求採用 <code>interface</code> ，讓乙的程式碼相依於具有 pv 方法的介面，而不是相依於具有 pv 方法的類別 (<span class="Onote">在 Java 世界中，真的很常聽到「相依於介面，不要相依於類別」這句話，我熟知的其他程式語言倒是很少強調這個"重點"</span>)。
+</p>
+<p>
+於是甲要多定義一個 <code>interface</code> ，而乙也要修改配置 PV 實例的方式。例如:
+</p>
+
+<pre class="highlight"><code><span class="kn">import</span> <span class="nn">java.util.*</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span>
+    <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//PV pv = new PV();</span>
+        <span class="c1">// ERROR! PV 現在是interface，不能直接 new PV().</span>
+        
+        <span class="n">PVInterface</span> <span class="n">pv</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PV</span><span class="o">();</span> <span class="c1">//介面PVInterface，類別PV</span>
+
+        <span class="n">PV</span> <span class="n">pv</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PVImpl</span><span class="o">();</span> <span class="c1">//介面PV，類別PVImpl</span>
+
+        <span class="n">PV</span> <span class="n">pv</span> <span class="o">=</span> <span class="n">PVImpl</span><span class="o">.</span><span class="na">factory</span><span class="o">();</span> <span class="c1">//介面PV，類別PVImpl，Factory pattern</span>
+
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">a1</span> <span class="o">=</span> <span class="o">{</span><span class="mi">11</span><span class="o">,</span> <span class="mi">22</span><span class="o">,</span> <span class="mi">33</span><span class="o">,</span> <span class="mi">44</span><span class="o">,</span> <span class="mi">55</span><span class="o">};</span>
+
+        <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">a2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;();</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">a2</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">v</span> <span class="o">:</span> <span class="n">a1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">pv</span><span class="o">.</span><span class="na">pv</span><span class="o">(</span><span class="n">v</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">v</span> <span class="o">:</span> <span class="n">a2</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">pv</span><span class="o">.</span><span class="na">pv</span><span class="o">(</span><span class="n">v</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+
+<p>
+Anyway，現在一個簡單的設計變更，要兩個人都動手修改自己的程式碼。如果甲寫的 PV 類別已經被許多其他程序員使用在自己的程式碼中，其他人也要跟著修改。 Java 語言本身並沒有提供什麼方法降低我們彌補這個不良設計的成本。
+</p>
+<p>
+Java 語言嚴格控管程序員的行為，希望減少程序員犯錯的機會。但是程序員會犯的錯誤，又豈止在指標越界存取、記憶體未釋放這些呢？不要忘記，我們總是會犯錯的。
+</p>
+<p>
+Java 語言沒有實現讓普通的程序員表現更好的承諾，現在反而要一堆優秀的程序員與架構師，跳過一堆可笑的圈圈，<em>如神一般地</em>事先規劃好設計內容，才能讓大家用起來不那麼痛苦。
+</p>
+<p>
+例如"全知的"架構設計師一開始就規劃要用介面，"全知的"架構設計師一開始就設計出依賴注射的框架，那麼上面變更設計的故事就不會發生。俗話說「千金難買早知道」， Java 語言讓我們體會這個道理。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10700785.html">http://blog.roodo.com/rocksaying/archives/10700785.html</a></div>

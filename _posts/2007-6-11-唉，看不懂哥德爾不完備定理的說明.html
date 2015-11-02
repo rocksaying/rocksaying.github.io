@@ -1,0 +1,89 @@
+---
+title: 唉，看不懂哥德爾不完備定理的說明
+category: philosophy
+old-category: 老子與哲學
+tags: [哲學,數學,不完備定理]
+---
+<div class="tags" style="display:none">Tags: 哲學 數學 不完備定理</div>
+<p>
+最近在《不存在時間的世界》一書中，看到了哥德爾的<a href="http://zh.wikipedia.org/w/index.php?title=%E5%93%A5%E5%BE%B7%E5%B0%94%E4%B8%8D%E5%AE%8C%E5%A4%87%E5%AE%9A%E7%90%86&oldid=4082310">不完備定理</a>，其中也有提到不完備定理的的計算機形式，即圖靈的<a href="http://zh.wikipedia.org/w/index.php?title=%E5%81%9C%E6%9C%BA%E9%97%AE%E9%A2%98&oldid=4378573">停機問題(Halting problem)</a>。但不知是書籍翻譯還是哪裡的問題，我覺得我看不懂它的說明。
+</p>
+<p>
+看了書中的說明後，我的程式設計經驗直接告訴我兩件事: 一、程式不具可計算性。編譯器會明確告訴我變量未定義。二、這是無窮遞迴。程式實際執行時，會發生遞迴深度超出限制或堆疊滿溢的錯誤。我總覺得書中的說明怪怪的。
+</p>
+
+<!--more-->
+<p>
+在設計程式時，一個非常基本以致於我們常常忽略的事情就是：我們必須給定資料，程式才能計算。例如當我寫下:
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">T</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">&gt;</span> <span class="nx">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">T</span><span class="p">();</span>
+</code></pre>
+
+<p>
+這個程式不具可計算性。多數的編譯器會直接而明確地告訴你: a, b 未定義。我不諳數學的敘述方式，照我的理解，在數學中這表示未給定 a, b 兩集合。
+</p>
+
+<p>
+按照我的理解，經過一番修修改改之後，我寫下的程式形式如下列所示:
+</p>
+<h6>JavaScript</h6>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">T</span><span class="p">(</span><span class="nx">S</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="nx">S</span><span class="p">(</span><span class="nx">S</span><span class="p">)</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">test</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">print</span><span class="p">(</span> <span class="nx">T</span><span class="p">(</span><span class="nx">test</span><span class="p">)</span> <span class="p">);</span>
+<span class="nx">print</span><span class="p">(</span> <span class="nx">T</span><span class="p">(</span><span class="nx">T</span><span class="p">)</span> <span class="p">);</span>
+</code></pre>
+
+
+<h6>C++</h6>
+<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
+</span><span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="n">bool</span> <span class="nf">T</span><span class="p">(</span><span class="n">bool</span> <span class="p">(</span><span class="o">*</span><span class="n">S</span><span class="p">)(...))</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">S</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">bool</span> <span class="nf">test</span><span class="p">(...)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">T</span><span class="p">(</span><span class="n">test</span><span class="p">);</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">T</span><span class="p">((</span><span class="n">bool</span><span class="p">(</span><span class="o">*</span><span class="p">)(...))</span> <span class="n">T</span><span class="p">);</span> <span class="c1">// T(T)
+</span><span class="p">}</span>
+</code></pre>
+
+
+<p>
+我個人覺得怪怪的。留個紀錄，希望有人可以指點迷津。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/%E7%84%A1%E8%81%8A%E4%B9%8B%E4%B8%8B%E5%AF%AB%E7%9A%84%E7%A8%8B%E5%BC%8F%EF%BC%8C%E6%8A%8A%E7%A8%8B%E5%BC%8F%E7%A2%BC%E7%95%B6%E8%B3%87%E6%96%99....html">無聊之下寫的程式，把程式碼當資料...</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3451113.html">http://blog.roodo.com/rocksaying/archives/3451113.html</a></div>

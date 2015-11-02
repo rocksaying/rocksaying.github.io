@@ -1,0 +1,46 @@
+---
+title: TWPUG問答~ SQL 文字搜尋
+category: programming
+old-category: SQL/Database
+tags: [sql,like]
+---
+<div class="tags" style="display:none">Tags: sql like</div>
+<blockquote>
+I try to write a searching engine with php and mysql. Somehow I always get error messages. Here is my code:<br/>
+<code>$sql = "SELECT * FROM `General` WHERE `Item_Name` LIKE $Name";</code><br/>
+<cite><a href="http://twpug.net/modules/newbb/viewtopic.php?topic_id=2609&forum=33">TWPUG::資料庫討論區</a></cite>
+</blockquote>
+
+<p>
+SQL syntax error.
+</p>
+<ol>
+<li>The field-name should be put in double-quote. It means case-sensitive.</li>
+<li>The <code>LIKE</code> only applies for text-based type field, therefore you need to put content in single-quote. Besides, <code>LIKE</code> must be used with '%'.</li>
+</ol>
+
+<!--more-->
+<p>
+In your case:
+</p>
+<code>
+$sql = "SELECT * FROM "General" WHERE "Item_Name" LIKE '%{$Name}%'; ";
+</code>
+
+<p>
+SQL語法錯誤。
+</p>
+<ol>
+<li>表格及欄位名稱應該以雙引號括起。這表示區分大小寫。若不加雙引號，一律作大寫處理。</li>
+<li><code>LIKE</code> 只適用於文字型態的欄位，所以必須將查詢內容以單引號括起。此外，<code>LIKE</code>的查詢內容必須配合 % 使用。</li>
+</ol>
+
+<p>
+在 SQL 查詢中，任何非關鍵字且非純數字的文字都被視為資料庫項目(資料庫、表格或欄位)之名稱。而且 SQL 預設不理會大小寫，一律作大寫處理。例如: <code>SELECT * FROM myUsers;</code> 。在此查詢敘述中的 <code>myUsers</code> 將被視為表格名稱，而 SQL 會以大寫找尋 <var>MYUSERS</var> 表格。導致表格名稱不匹配而傳回空結果。如果你的資料庫項目名稱有使用大寫或非英文字母時，必須使用雙引號 (") 括起項目名稱，要求 SQL 引擎注意大小寫區別。
+</p>
+<p>
+至於要查詢的字串內容(即文字型態欄位的內容)，必須以單引號 (') 括起，才會被 SQL 引擎視為字串。否則將如上述所言，被 SQL 引擎視為資料庫項目名稱。例如: <code>SELECT * FROM myusers WHERE id = rock;</code>。在此例中的 <code>rock</code> 將被視為欄位名稱，而不是字串內容。
+</p>
+<p>
+在 SQL 語法規範(ANSI SQL)中，單引號和雙引號分別表示不同意義。以單引號括起者表示字串，雙引號括起者表示嚴格區分大小寫的資料庫項目(資料庫、表格或欄位等)之名稱。初學者常常疏忽這一點。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3284073.html">http://blog.roodo.com/rocksaying/archives/3284073.html</a></div>

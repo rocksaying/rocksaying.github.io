@@ -1,0 +1,292 @@
+---
+title: Photo163 相冊下載工具 (PHP + JavaScript 實作版本)
+category: programming
+old-category: JavaScript
+tags: []
+---
+<div name="tags" class="tags">非同步 thread ajax xmlhttprequest</div>
+<p>
+Photo163 相冊下載工具 (photo163v2.php)。 PHP + JavaScript 實作版本。
+</p>
+<p>
+發佈: 2006-09-04 
+最近更新: 2006-09-15 。修正 bug ，一個相冊中的相片，可能放在不同的 server 上，故修改 JavaScript 部份的程式，改從 gPhotosInfo[i][0] 取得 server 代號。
+</p>
+
+<!--more-->
+<p>
+此工具係改良自「<a href="{{ site.baseurl }}/archives/2006/PHP~~Photo163%E7%9B%B8%E5%86%8A%E5%9C%96%E6%AA%94%E7%B6%B2%E5%9D%80%E8%A8%88%E7%AE%97%E5%99%A8.html">Photo163相冊圖檔網址計算器</a>」。第一版的功能只是計算出圖檔網址，現在則具備下載功能。當初原本是打算要實作 JavaScript (AJAX) 版本，但 AJAX 基於安全性考量，不允許 XmlHttpRequest 讀取外部網址的資料，因此我乾脆改寫第一版的程式碼，利用 curl functions 設計一個 XmlHttpRequest 的 proxy ，解決了 XmlHttpRequest 讀取外部網址資料的限制。更進一步地，透過 curl functions 下載圖檔，而且利用 AJAX 的非同步性，實現多線程 (multi-threads) 下載工作的功能。
+</p>
+<p>
+在 PHP 方面，需要載入 curl extension 。並請修改 php.ini ，將 <code>max_execution_time</code> 設為 600 (秒) 或以上。因為預設的執行時間太短，在網路塞車時， curl 將無法在限定時間內完成圖檔下載動作。在 JavaScript 方面，需要安裝 Yahoo UI Library (See also: <a href="{{ site.baseurl }}/archives/2006/JavaScript~~ECMAScript_JavaScript%20toolkit.html">ECMAScript/JavaScript toolkit</a>)。這只是一個很簡單的小工具，程式碼集中在一個檔案中 (photo163v2.php) ，由於程式碼包含了 PHP 和 JavaScript ，為了方便說明，在本文中拆成不同區塊，請自行複製貼在一起。
+</p>
+<p>
+對我來說，這個工具非常實用，而且很簡單，前後只花了我大約 6 小時的時間就完成了全部的實作工作，包括測試及再修改。但是，我想很少人會像我這樣在自己的 Windows 2k/xp 桌面環境電腦安裝 Apache 和 PHP ，所以對其他人來說，或許這個工具的示範意義大於實用性。
+</p>
+
+<h4>Part 1: PHP 以 curl 實作 proxy 及下載功能</h4>
+<p>
+此處列出如何利用 curl functions 擷取其他網址的資料。打個比方來說， curl 就像是 JavaScript 中的 XmlHttpRequest 。 PHP 可以利用 curl 讀取網路上的資料，也可以送出資料給網頁 Form 。 curl 隱藏了許多 HTTP protocol 的實作細節 (包括資料傳送編碼、 cookie 、 SSL 等等) ，使得 programmer 可以用擬似瀏覽器的形式，存取網頁內容。<strong>注意，我是在防火牆內運行這個工具，不可以將此工具放在公開網域上，否則此工具的 proxy 功能會成為 hacker 的跳板。</strong>
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$download_path</span> <span class="o">=</span> <span class="s1">'D:/downloads/photo163'</span><span class="p">;</span>
+<span class="c1">//相冊下載儲存主目錄。註: 自動依相冊ID建立子目錄。
+</span>
+<span class="nv">$local_charset</span> <span class="o">=</span> <span class="s1">'big5'</span><span class="p">;</span>
+
+<span class="k">function</span> <span class="nf">GetCurlPage</span> <span class="p">(</span><span class="nv">$url</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_SSL_VERIFYPEER</span><span class="p">,</span> <span class="k">FALSE</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FOLLOWLOCATION</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEJAR</span><span class="p">,</span> <span class="s2">"curl_cookie"</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEFILE</span><span class="p">,</span> <span class="s2">"curl_cookie"</span><span class="p">);</span>
+	<span class="nv">$tmp</span> <span class="o">=</span> <span class="nb">curl_exec</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span> <span class="k">if</span><span class="p">(</span><span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">))</span> <span class="nv">$tmp</span><span class="o">=</span><span class="nb">curl_error</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span> <span class="nb">curl_close</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span> <span class="k">return</span> <span class="nv">$tmp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">SaveCurlPage</span> <span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$save_file</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_SSL_VERIFYPEER</span><span class="p">,</span> <span class="k">FALSE</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_BINARYTRANSFER</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FOLLOWLOCATION</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEJAR</span><span class="p">,</span> <span class="s2">"curl_cookie"</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEFILE</span><span class="p">,</span> <span class="s2">"curl_cookie"</span><span class="p">);</span>
+	<span class="nv">$tmp</span> <span class="o">=</span> <span class="nb">curl_exec</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">file_put_contents</span><span class="p">(</span><span class="nv">$save_file</span><span class="p">,</span> <span class="nv">$tmp</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="nb">curl_close</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">PostCurlPage</span> <span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$data</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_SSL_VERIFYPEER</span><span class="p">,</span> <span class="k">FALSE</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FOLLOWLOCATION</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEJAR</span><span class="p">,</span> <span class="s2">"curl_cookie"</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEFILE</span><span class="p">,</span> <span class="s2">"curl_cookie"</span><span class="p">);</span>
+	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_POST</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span> <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_POSTFIELDS</span><span class="p">,</span> <span class="nv">$data</span><span class="p">);</span>
+	<span class="nv">$tmp</span> <span class="o">=</span> <span class="nb">curl_exec</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+	<span class="k">if</span><span class="p">(</span><span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">))</span> <span class="nv">$tmp</span><span class="o">=</span><span class="nb">curl_error</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span> <span class="nb">curl_close</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span> <span class="k">return</span> <span class="nv">$tmp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">if</span><span class="p">(</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'save'</span><span class="p">])</span> <span class="k">and</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">])</span> <span class="k">and</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'photoid'</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$local_path</span> <span class="o">=</span> <span class="nv">$download_path</span> <span class="o">.</span> <span class="s1">'/'</span> <span class="o">.</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'photoid'</span><span class="p">];</span>
+    <span class="nv">$log</span> <span class="o">=</span> <span class="nv">$local_path</span><span class="o">.</span><span class="s1">'/log.txt'</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nb">file_exists</span><span class="p">(</span><span class="nv">$local_path</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="nb">mkdir</span><span class="p">(</span><span class="nv">$local_path</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/photo\.163\.com\/(\w+)\//'</span><span class="p">,</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">],</span> <span class="nv">$matches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$username</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">.</span> <span class="s1">'/'</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nv">$username</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="nb">file_put_contents</span><span class="p">(</span><span class="nv">$log</span><span class="p">,</span> <span class="s2">"http://photo.163.com/photos/</span><span class="si">{</span><span class="nv">$username</span><span class="si">}{</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'photoid'</span><span class="p">]}</span><span class="o">/</span><span class="nx">\n</span><span class="s2">");
+    }
+
+    </span><span class="nv">$savename</span><span class="s2"> = iconv('utf-8',</span><span class="nv">$local_charset</span><span class="s2">.'//IGNORE',urldecode(</span><span class="nv">$_GET['save']</span><span class="s2">));
+    SaveCurlPage(</span><span class="nv">$_GET['url']</span><span class="s2">, </span><span class="nv">$local_path</span><span class="s2">.'/'.</span><span class="nv">$savename</span><span class="s2">);
+    file_put_contents(</span><span class="nv">$log</span><span class="s2">, "</span><span class="p">{</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">]}</span> <span class="o">=&gt;</span> <span class="p">{</span><span class="nv">$savename</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="nx">FILE_APPEND</span><span class="p">);</span>
+    <span class="k">exit</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h4>Part 2: HTML Form</h4>
+<p>
+此處列出 HTML 的部份，主要是使用者輸入資料的表單介面。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"&gt;</span>
+<span class="nt">&lt;html</span> <span class="na">xmlns=</span><span class="s">"http://www.w3.org/1999/xhtml"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;head&gt;</span> <span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"Content-Type"</span> <span class="na">content=</span><span class="s">"text/html; charset=utf-8"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;title&gt;</span>Photo163圖檔下載工具 (PHP + JavaScript)<span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">'text/javascript'</span> <span class="na">src=</span><span class="s">'yui/yahoo/yahoo-min.js'</span><span class="nt">/&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">'text/javascript'</span> <span class="na">src=</span><span class="s">'yui/event/event-min.js'</span><span class="nt">/&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">'text/javascript'</span> <span class="na">src=</span><span class="s">'yui/connection/connection-min.js'</span><span class="nt">/&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">'text/javascript'</span><span class="nt">&gt;</span>
+    <span class="kd">var</span> <span class="nx">pool</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span> <span class="c1">// download-pool</span>
+<span class="nt">&lt;/script&gt;</span>
+<span class="cp">&lt;?php
+$jobs_limit = (isset($_POST['jobs_limit']) ? $_POST['jobs_limit'] : 3);
+//同時下載工作上限值。 3 ~ 5 是適合的下載工作數，更高的值未必會縮短時間。
+?&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"urlForm"</span><span class="nt">&gt;</span>
+	<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"args"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+	<span class="nt">&lt;fieldset&gt;</span>
+		<span class="nt">&lt;label&gt;</span>Photo163 相冊縮圖的圖片網址，可輸入多個不同相冊的縮圖網址:<span class="nt">&lt;br/&gt;</span>
+		<span class="nt">&lt; textarea</span> <span class="na">rows=</span><span class="s">"5"</span> <span class="na">cols=</span><span class="s">"80"</span> <span class="na">name=</span><span class="s">"photo163url"</span> <span class="na">id=</span><span class="s">"photo163url"</span><span class="nt">&gt;&lt; /textarea&gt;</span>
+		<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
+		<span class="nt">&lt;label&gt;</span>
+        同時下載工作上限值:
+		<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">id=</span><span class="s">"jobs_limit"</span> <span class="na">name=</span><span class="s">"jobs_limit"</span> <span class="na">size=</span><span class="s">"3"</span> <span class="na">maxlength=</span><span class="s">"3"</span> <span class="na">value=</span><span class="s">"&lt;?=$jobs_limit?&gt;"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/label&gt;</span>
+		<span class="c">&lt;!--label&gt;密碼 (可不填):
+            &lt;input name="password" type="text" id="password" size="40" maxlength="256" /&gt;
+		&lt;/label--&gt;</span>
+		<span class="nt">&lt;p&gt;</span>
+		<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">name=</span><span class="s">"submit"</span> <span class="na">value=</span><span class="s">"submit"</span> <span class="nt">/&gt;</span>
+		<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"reset"</span> <span class="na">name=</span><span class="s">"reset"</span> <span class="na">id=</span><span class="s">"reset"</span> <span class="na">value=</span><span class="s">"reset"</span> <span class="nt">/&gt;</span>
+		<span class="nt">&lt;/p&gt;</span>
+	<span class="nt">&lt;/fieldset&gt;</span>
+	<span class="nt">&lt;/div&gt;</span>
+	<span class="nt">&lt;/form&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">'poolState'</span> <span class="na">style=</span><span class="s">'font-size:large;color: #ff0000;'</span><span class="nt">&gt;&lt;/div&gt;</span>
+    <span class="nt">&lt;ul</span> <span class="na">id=</span><span class="s">'saveList'</span><span class="nt">&gt;&lt;/ul&gt;</span>
+</code></pre>
+
+
+<h4>Part 3: PHP photo163 data parser</h4>
+<p>
+此處列出 PHP 解析自 Photo163 取回的相冊資料的程式碼。並請留意第123-124行、第140行及第145-149行。我習慣上將這視為一種行程間通訊 (IPC) 方法，概念是由 server-side 的 PHP 將要交代 client-side 的 JavaScript 執行的工作資料，以 JavaScript 的語法 (如 <a href="{{ site.baseurl }}/archives/2006/JSON%20%E9%80%9F%E5%AF%AB.html">JSON</a> ) 輸出在頁面中，亦即 serializing 於頁面。當瀏覽器讀取頁面時，即可喚起與調用。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'password'</span><span class="p">]))</span> <span class="p">{</span>
+	<span class="c1">//echo "not yeat&lt;br/&gt;"; //$photo163_page = PostCurlPage("http://photo163.com", "");
+</span><span class="p">}</span>
+
+<span class="c1">//print_r($_POST);
+</span><span class="k">if</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'photo163url'</span><span class="p">]))</span> <span class="p">{</span>
+	<span class="nv">$url_set</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="nb">trim</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'photo163url'</span><span class="p">]));</span>
+	<span class="k">foreach</span><span class="p">(</span><span class="nv">$url_set</span> <span class="k">as</span> <span class="nv">$url</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nv">$url</span> <span class="o">=</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s2">"/\s|,/"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="nv">$url</span><span class="p">);</span>
+		<span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/^http:\/\/([^\/]+)\/([^\/]+)\/(\d+)\/.+\.jpg$/i"</span><span class="p">,</span> <span class="nv">$url</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">);</span>
+		<span class="c1">//print_r($matches);
+</span>		<span class="nv">$userid</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+		<span class="nv">$photoid</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+		<span class="nv">$img_base_url</span> <span class="o">=</span> <span class="s2">"http://</span><span class="si">{</span><span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span><span class="o">/</span><span class="s2">";
+		unset(</span><span class="nv">$matches</span><span class="s2">);
+		</span><span class="nv">$photosinfo_url</span><span class="s2"> = "</span><span class="nx">http</span><span class="o">://</span><span class="nx">photo</span><span class="o">.</span><span class="mf">163.</span><span class="nx">com</span><span class="o">/</span><span class="nx">js</span><span class="o">/</span><span class="nx">photosinfo</span><span class="o">.</span><span class="nx">php</span><span class="o">?</span><span class="nx">user</span><span class="o">=</span><span class="p">{</span><span class="nv">$userid</span><span class="si">}</span><span class="s2">&amp;aid=</span><span class="si">{</span><span class="nv">$photoid</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span>
+		<span class="nv">$page</span> <span class="o">=</span> <span class="nb">iconv</span><span class="p">(</span><span class="s1">'gb2312'</span><span class="p">,</span> <span class="s1">'utf-8//IGNORE'</span><span class="p">,</span> <span class="nx">GetCurlPage</span><span class="p">(</span><span class="nv">$photosinfo_url</span><span class="p">));</span>
+
+		<span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/gPhotosIds = \[([\d|,]+)\]/"</span><span class="p">,</span> <span class="nv">$page</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">);</span>
+		<span class="c1">//print_r($matches);
+</span>		<span class="nv">$photo_set</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+		<span class="nb">unset</span><span class="p">(</span><span class="nv">$matches</span><span class="p">);</span>
+		<span class="k">echo</span> <span class="s2">"&lt;hr/&gt;&lt;p&gt;The images of </span><span class="si">{</span><span class="nv">$userid</span><span class="si">}</span><span class="s2">'s photo(</span><span class="si">{</span><span class="nv">$photoid</span><span class="si">}</span><span class="s2">):&lt;/p&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+		<span class="nv">$n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+		<span class="k">foreach</span><span class="p">(</span><span class="nv">$photo_set</span> <span class="k">as</span> <span class="nv">$photoname</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$img_base_url</span><span class="si">}{</span><span class="nv">$userid</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nv">$photoid</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nv">$photoname</span><span class="si">}</span><span class="s2">.jpg&lt;br/&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+			<span class="nv">$n</span><span class="o">++</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="k">echo</span> <span class="s2">"&lt;p&gt;Total </span><span class="si">{</span><span class="nv">$n</span><span class="si">}</span><span class="s2"> of images&lt;/p&gt;</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="cp">?&gt;</span>
+        <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">'text/javascript'</span><span class="nt">&gt;</span><span class="err">
+        (function photo</span><span class="cp">&lt;?=</span><span class="nv">$photoid</span><span class="cp">?&gt;</span><span class="err">() {
+            </span><span class="cp">&lt;?=</span><span class="nv">$page</span><span class="cp">?&gt;</span><span class="err">;
+
+            for(var i in gPhotosInfo) {
+                // url_name = i
+                // src_name = gPhotosInfo[i][3]
+                pool.push({
+                    'photoid': '</span><span class="cp">&lt;?=</span><span class="nv">$photoid</span><span class="cp">?&gt;</span><span class="err">',
+                    'src': 'http://img' + gPhotosInfo[i][0] + '.photo.163.com/</span><span class="cp">&lt;?=</span><span class="nv">$userid</span><span class="cp">?&gt;</span><span class="err">/</span><span class="cp">&lt;?=</span><span class="nv">$photoid</span><span class="cp">?&gt;</span><span class="o">/</span><span class="s1">' + i + '</span><span class="p">.</span><span class="nx">jpg</span><span class="s1">',
+                    // the image may put in difference server.
+                    '</span><span class="nx">dst</span><span class="err">':</span><span class="nx">gPhotosInfo</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
+        <span class="p">})();</span>
+        <span class="nt">&lt;/script&gt;</span>
+        <span class="cp">&lt;?php</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<h4>Part 4: AJAX 多線程下載工作管理者</h4>
+<p>
+此處列出 JavaScript 管理非同步性下載工作的程式碼。 JavaScript 雖可取回圖檔，但受到安全性限制而無法儲存。因此此處只是由 JavaScript 透過 XmlHttpRequest 發出下載需求，喚起 server-side 的 PHP proxy ，由 proxy 取得資料並儲取之。由於 XmlHttpRequest 可以同一時間喚起多個工作進行非同步作業，因此需要規劃工作管理程序。此處將工作推入名為 pool 的陣列中，利用這個陣列管理工作。由於是在非同步模式下，所以只能用 push, pop methods 而不可以索引子存取陣列。
+</p>
+<pre class="highlight"><code><span class="o">&lt;</span><span class="p">?</span><span class="nx">php</span>
+<span class="k">if</span><span class="p">(</span> <span class="nx">isset</span><span class="p">(</span><span class="nx">$_POST</span><span class="p">[</span><span class="s1">'photo163url'</span><span class="p">])</span> <span class="p">):</span>
+<span class="p">?</span><span class="o">&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text/javascript'</span><span class="o">&gt;</span>
+
+<span class="kd">function</span> <span class="nx">refreshPoolState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">state</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'poolState'</span><span class="p">);</span>
+    <span class="nx">state</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'Total '</span>
+        <span class="o">+</span> <span class="nx">pool</span><span class="p">.</span><span class="nx">length</span>
+        <span class="o">+</span> <span class="s1">' images in the download-pool; Total '</span>
+        <span class="o">+</span> <span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">jobs</span>
+        <span class="o">+</span> <span class="s1">' jobs are downloading.'</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">downloadGo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="nx">pool</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
+    <span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">jobs</span><span class="o">++</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">uri</span> <span class="o">=</span> <span class="s1">'http://localhost/photo163v2.php?url='</span>
+        <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">src</span>
+        <span class="o">+</span> <span class="s1">'&amp;save='</span><span class="o">+</span><span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">dst</span><span class="p">)</span>
+        <span class="o">+</span> <span class="s1">'&amp;photoid='</span><span class="o">+</span><span class="nx">task</span><span class="p">.</span><span class="nx">photoid</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">saveList</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'saveList'</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
+    <span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="s1">'Save '</span><span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">src</span> <span class="o">+</span> <span class="s1">' as '</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">dst</span><span class="p">));</span>
+    <span class="nx">saveList</span><span class="p">.</span><span class="nx">insertBefore</span><span class="p">(</span><span class="nx">item</span><span class="p">,</span> <span class="nx">saveList</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">);</span>
+
+    <span class="nx">YAHOO</span><span class="p">.</span><span class="nx">util</span><span class="p">.</span><span class="nx">Connect</span><span class="p">.</span><span class="nx">asyncRequest</span><span class="p">(</span>
+        <span class="s1">'GET'</span><span class="p">,</span>
+        <span class="nx">uri</span><span class="p">,</span>
+        <span class="nx">callback</span><span class="p">,</span>
+        <span class="kc">null</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">urlFormDisplay</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'urlForm'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="nx">s</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">callback</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'success'</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ro</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">jobs</span><span class="o">--</span><span class="p">;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">pool</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">downloadGo</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span> <span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">jobs</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Download complished!'</span><span class="p">);</span>
+                <span class="nx">urlFormDisplay</span><span class="p">(</span><span class="s1">'block'</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="nx">refreshPoolState</span><span class="p">();</span>
+    <span class="p">},</span>
+    <span class="s1">'failure'</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ro</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">},</span>
+    <span class="s1">'argument'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'jobs'</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">if</span><span class="p">(</span><span class="nx">pool</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">urlFormDisplay</span><span class="p">(</span><span class="s1">'none'</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="o">&lt;</span><span class="p">?</span><span class="o">=</span><span class="nx">$jobs_limit</span><span class="p">?</span><span class="o">&gt;</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">downloadGo</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="nx">refreshPoolState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
+</span>
+<span class="o">&lt;</span><span class="p">?</span><span class="nx">php</span>
+<span class="nx">endif</span><span class="p">;</span> <span class="c1">//isset($_POST['photo163url'])</span>
+<span class="p">?</span><span class="o">&gt;</span>
+
+<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
+</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
+</span></code></pre>
+
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2006/%E6%88%91%E7%9A%84%20Photo163%20%E7%9B%B8%E5%86%8A%E4%B8%8B%E8%BC%89%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E7%AF%84%E4%BE%8B.html">我的 Photo163 相冊下載工具使用範例</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/Photo163%20%E7%9B%B8%E5%86%8A%E4%B8%8B%E8%BC%89%E5%B7%A5%E5%85%B7%E7%AC%AC%E4%B8%89%E7%89%88%20%28PHP%20%2B%20JavaScript%20%E5%AF%A6%E4%BD%9C%E7%89%88%E6%9C%AC%29.html">Photo163 相冊下載工具第三版 (PHP   JavaScript 實作版本)</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2102451.html">http://blog.roodo.com/rocksaying/archives/2102451.html</a></div>

@@ -1,0 +1,105 @@
+---
+title: D-Bus 用途說明
+category: programming
+old-category: Programming
+tags: [cli,D-Bus,ipc]
+---
+<p>D-Bus 是一種與 CORBA, Microsoft COM/DCOM 處於相同抽象層級的行程間通訊(IPC)機制。它們將 IPC 方式抽象化到 API 的形式。一方面簡化了 IPC 需求的設計內容；另一方面，也為不同程式語言之間互相調用方法的作法提供了更易用的途徑。
+</p>
+
+<!--more-->
+<h4>
+D-Bus 用於 IPC 需求
+</h4>
+<p>透過 D-Bus 完成兩行程間的通訊工作，這是 D-Bus 最基本的使用需求。
+</p>
+
+<p>舉例而言，當我正在使用 Rhythmbox (Linux桌面常見的音樂播放軟體) 播放音樂時，我的另一個程式 what-listen 想要查詢 Rhythmbox 目前正在播放的曲目，並希望 Rhythmbox 換曲時能通知它，以便它即時反應。what-listen 行程向 Rhythmbox 行程查詢它在播放的曲目；Rhythmbox 行程換曲時通知 what-listen 行程。這就是典型的行程間通訊需求。由於 Rhythmbox 提供了 D-Bus 服務，使得這項行程間通訊工作得以輕鬆實現。
+</p>
+
+<p>下列所示即為 what-listen 的範例程式碼。我使用 Ruby 撰寫它。
+</p>
+
+<pre class="highlight"><code><span class="c1">#!/usr/bin/ruby</span>
+<span class="c1"># coding: utf-8</span>
+<span class="nb">require</span> <span class="s1">'dbus'</span>
+
+<span class="n">bus</span> <span class="o">=</span> <span class="no">DBus</span><span class="p">.</span><span class="nf">session_bus</span>
+
+<span class="n">rhythmbox_service_name</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox'</span>
+<span class="n">rhythmbox_player_object_path</span> <span class="o">=</span> <span class="s1">'/org/gnome/Rhythmbox/Player'</span>
+<span class="n">rhythmbox_player_interface_name</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox.Player'</span>
+
+<span class="n">rhythmbox</span> <span class="o">=</span> <span class="n">bus</span><span class="p">.</span><span class="nf">service</span><span class="p">(</span><span class="n">rhythmbox_service_name</span><span class="p">).</span><span class="nf">object</span><span class="p">(</span><span class="n">rhythmbox_player_object_path</span><span class="p">)</span>
+<span class="n">rhythmbox</span><span class="p">.</span><span class="nf">introspect</span> 
+<span class="n">rhythmbox</span><span class="p">.</span><span class="nf">default_iface</span> <span class="o">=</span> <span class="n">rhythmbox_player_interface_name</span>
+
+<span class="n">rhythmbox</span><span class="p">.</span><span class="nf">on_signal</span><span class="p">(</span><span class="s1">'playingUriChanged'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">uri</span><span class="o">|</span>
+    <span class="nb">puts</span> <span class="s2">"Rhythmbox changes to play </span><span class="si">#{</span><span class="n">uri</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+
+<span class="n">uri</span> <span class="o">=</span> <span class="n">rhythmbox</span><span class="p">.</span><span class="nf">getPlayingUri</span>
+<span class="nb">puts</span> <span class="s2">"Rhythmbox is playing </span><span class="si">#{</span><span class="n">uri</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="n">main</span> <span class="o">=</span> <span class="no">DBus</span><span class="o">::</span><span class="no">Main</span><span class="p">.</span><span class="nf">new</span>
+<span class="n">main</span> <span class="o">&lt;&lt;</span> <span class="n">bus</span>
+<span class="n">main</span><span class="p">.</span><span class="nf">run</span>
+
+</code></pre>
+
+
+<p>關於 Rhythmbox 提供的 D-Bus 服務內容，請自行進往其官方網站查詢。我的另兩篇文章: <a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">Write a PHP DBus client</a> 用 PHP 實作 what-listen 程式；<a href="{{ site.baseurl }}/archives/2010/Write%20a%20D-Bus%20service%20by%20Ruby.html">Write a D-Bus service by Ruby</a> 說明 Ruby 如何使用 D-Bus 。
+</p>
+
+
+<h4>
+D-Bus 作為 API 架構
+</h4>
+
+<p>舉個簡單的例子來說，若我以 Python 設計了一個 Hello 類別，具有一個 say() 方法。如下列所示(程式碼有所刪減):
+</p>
+
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">dbus</span>
+
+<span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
+    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'blog.rock.Hello'</span><span class="p">,</span> <span class="n">in_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">say</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">"I say </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">message</span>
+
+<span class="c">#hello.say("hello world")</span>
+
+</code></pre>
+
+
+
+<p>當我用 Ruby 設計一個程式，需要呼叫上述 Hello 類別的 say() 方法時，透過 D-Bus ，我可以像是在呼叫純 Ruby 方法般地使用它。如下列所示(程式碼有所刪減)。
+</p>
+
+<pre class="highlight"><code><span class="c1">#!/usr/bin/ruby</span>
+<span class="c1"># coding: utf-8</span>
+<span class="nb">require</span> <span class="s1">'dbus'</span>
+
+<span class="n">hello</span> <span class="o">=</span> <span class="n">bus</span><span class="p">.</span><span class="nf">service</span><span class="p">(</span><span class="n">hello_service</span><span class="p">).</span><span class="nf">object</span><span class="p">(</span><span class="n">hello_path</span><span class="p">)</span>
+<span class="n">hello</span><span class="p">.</span><span class="nf">introspect</span> 
+<span class="n">hello</span><span class="p">.</span><span class="nf">default_iface</span> <span class="o">=</span> <span class="n">hello_interface</span>
+
+<span class="n">what_say</span> <span class="o">=</span> <span class="n">hello</span><span class="p">.</span><span class="nf">say</span><span class="p">(</span><span class="s2">"hello world"</span><span class="p">)</span>
+<span class="nb">puts</span> <span class="n">what_say</span>
+
+</code></pre>
+
+
+<p>
+由於 D-Bus 之本質上是一種行程間通訊機制，其方法的提供者與呼叫者是不同的行程，從而消除了方法提供者與呼叫者在程式語言上的耦合。所以實現本例之需求時，我不必了解任何編譯連結內容，也不必了解 Python 或 Ruby 解譯器的內部細節。
+</p>
+<p>
+透過 D-Bus ，API 開發者可以將以 A 語言開發的 API library 包裝成 D-Bus 服務；而其他程式語言的使用者透過 D-Bus 就可以輕鬆地呼叫它，完全不必考慮這個 API library 是用什麼語言開發的。API library 開發者不必再寫不同語言版本的 library，就能拓展 API library 的可用性，大幅減輕 API library 開發者的工作量。
+</p>
+
+<p>
+話說回來，儘管 D-Bus 作為 API 實現架構是一種相當不錯的選擇，對大部份程序員而言，從 shared library (so/dll) 到 service (D-Bus/COM) 更是相當大的技術跨幅。但在 D-Bus 出現之際，更高層次的 API 實現架構已經開始發展了。現在 API 的實現架構已經從 service 發展到 platform (<a href="http://en.wikipedia.org/wiki/Common_Language_Infrastructure">Common Language Infrastructure</a>) 層次，代表性的產品則是 .Net framework 與 Mono。Microsoft 的技術發展路線圖可以明顯地看出這種抽象化層級的演進: DLL -&gt; DCOM -&gt; .Net framework。所以在我眼中的 D-Bus 也就不那麼地令人驚艷。
+</p>
+<p>
+儘管 D-Bus 在技術上並不那麼令人感到新奇與驚艷，但在實用性上，在 POSIX 平台中，D-Bus 仍然是物美價廉的選擇。對 API 的使用者而言，運行 D-Bus 機制所需的資源，遠低於 Common Language Infrastructure 機制。而 D-Bus 能做到的事，也沒差上多少。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12988053.html">http://blog.roodo.com/rocksaying/archives/12988053.html</a></div>

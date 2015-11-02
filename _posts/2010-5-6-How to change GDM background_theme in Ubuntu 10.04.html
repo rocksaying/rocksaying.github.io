@@ -1,0 +1,107 @@
+---
+title: How to change GDM background/theme in Ubuntu 10.04
+category: computer
+old-category: 電腦技術
+tags: [ubuntu,gdm,background]
+---
+<p>GDM 2.20 版之前，登入畫面的 UI 程式是 greeter ；GDM 2.24 版本之後，登入畫面的程式改成 gdm-simple-greeter。兩者的主題設定方式完全不同。由於 Ubuntu 9.10 之後採用的 GDM 版本已經升級到 2.28 以上，故 Ubuntu 9.10 之後無法使用 GDM greeter 的主題套件。
+</p>
+
+<p>不幸的是，目前絕大部份的 GDM 主題套件，都是 GDM greeter 適用的。例如 <a href="http://art.gnome.org/themes/gdm_greeter">GNOME ART Themes / Login Screen</a> 提供的主題套件，就是提供給 GDM greeter 用的。所以在那裡取得的 GDM 主題套件，不能用在 Ubuntu 10.04 上。
+</p>
+
+<!--more-->
+<p>嚴格說來，gdm-simple-greeter 的主題設定彈性比 GDM greeter 差。它本身幾乎不做任何 UI 外觀的調整，只會設定 Logo 圖像。其 UI 外觀樣式設定工作完全仰賴系統的 GTK 主題設定。然而它的 UI 配置太簡單，以至於我們就算從 GTK 主題動手調整，也只能改變視窗的外觀顏色而已。
+</p>
+
+<p>GDM 2.28 (gdm-simple-greeter) 以上版本的主題調整方式，可參考下列兩篇文章。
+</p>
+
+<ul>
+  <li>
+    <a href="http://wiki.archlinux.org/index.php/Gnome_2.28_Changes#Configuring_gdm_2.28">Configuring GDM 2.28</a> 
+  </li>
+  <li>
+    <a href="http://library.gnome.org/admin/gdm/2.30/configuration.html.en#greeterconfiguration">Simple Greeter Configuration</a> 
+  </li>
+</ul>
+
+<h4>
+改變 GDM 主題與背景
+</h4>
+
+<p>改變 gdm-simple-greeter 主題最簡單的方式，就是以 gdm 使用者的身份，使用它的外觀設定功能，就可以改變 gdm 使用者的整個外觀主題，包含背景畫面。先登入桌面環境後，打開終端機執行下列指令:
+</p>
+
+<pre class="language-term">
+$ gksudo -u gdm dbus-launch gnome-appearance-properties
+</pre>
+
+<p>上面的指令，將會以 gdm 使用者的身份，啟動外觀設定功能。所以在此處設定的外觀，不會影響目前使用者的桌面外觀。
+</p>
+
+<p>我們也可以使用 <dfn>gconftool</dfn> 逐一去修改 GDM 的主題內容。
+</p>
+
+<h5>
+改變 GDM 背景畫面
+</h5>
+
+<p>GDM 背景畫面的組態關鍵字是 <var>/desktop/gnome/background/picture_filename</var>。你可以指定完整的圖檔路徑。
+</p>
+
+<pre class="language-term">
+$ sudo -u gdm gconftool-2 --set --type string /desktop/gnome/background/picture_filename <var>your background image</var>
+</pre>
+
+<h5>
+改變 GDM Logo icon
+</h5>
+
+<p>外觀設定無法改變 GDM 畫面的 Logo 圖像，我們目前只能使用 <dfn>gconftool</dfn> 去設定。gdm-simple-greeter Logo 圖像的組態關鍵字是 <var>/apps/gdm/simple-greeter/logo_icon_name
+</var>。而且只能指定 Logo 圖像的名稱，不能直接指定圖像的路徑檔名。所以要事先將你想要用的 Logo 圖檔複製過去。
+</p>
+
+<p>例如你在外觀設定時選擇 <dfn>LoginIcons</dfn> 作為 GDM 的圖示主題，那麼你必須參考 <dfn>/usr/share/icons/LoginIcons/index.theme</dfn> 的 <var>Directories</var> 內容，將你想用的 Logo 圖檔複製到 <var>Directories</var> 所指示的子目錄內。
+</p>
+
+<p>整個操作細節有些複雜，還是用最簡單的複製替換法吧。外觀設定時，不要改變圖示主題，仍舊用預設的 <dfn>LoginIcons</dfn> 。最後，將你的 Logo 圖檔，取名為 computer.png (PNG格式) 或 computer.svg (SVG格式) ，複製到 <dfn>/usr/share/icons/LoginIcons/apps/64</dfn>。如果你的 Logo 圖檔是 PNG 格式，而不是 SVG 格式，請再刪掉原本的 /usr/share/icons/LoginIcons/apps/64/computer.svg 。
+</p>
+
+<h4>
+降級使用 GDM 2.20
+</h4>
+
+<p>嚴格說來，gdm-simple-greeter 的主題設定彈性比 GDM greeter 差。按照上面的步驟修改後，你可能還是不滿意它的外觀，開始懷念以前有一堆 GDM 主題套件可以用的感覺。如果你真的很不滿意新版 GDM 的主題外觀，那麼最後的解決方式，就是降級使用 GDM 2.20 。
+</p>
+
+<p>參考此文: <a href="http://www.ubuntugeek.com/how-to-downgrade-gnome-display-manager-2-28-to-2-20-in-ubuntu-9-10-karmic.html">How to downgrade GDM 2.28 to 2.20</a> 。<em>老話一句，風險自負。</em>
+</p>
+
+<p>Ubuntu 10.04 完全沒收錄 gdm-2.20。但我們還是可以下載 Ubuntu 9.10 的 gdm-2.20.deb 用。但要再額外安裝一個相依的套件: libdmx1.
+</p>
+
+<ul>
+    <li><a href="http://packages.ubuntu.com/karmic/amd64/gdm-2.20/download">x86 64bit: gdm-2.20_2.20.10-0ubuntu3_amd64.deb</a>
+    </li>
+    <li><a href="http://packages.ubuntu.com/karmic/i386/gdm-2.20/download">x86 32bit: gdm-2.20_2.20.10-0ubuntu3_i386.deb</a>
+    </li>
+</ul>
+
+<p>接著，編輯你的 /etc/gdm/gdm.conf ，將所有的 usr/bin/X11R6/X 替換成 usr/bin/X 。
+最後最重要的一步，是刪除 /etc/init.d/gdm.conf ，這是 Ubuntu 10.04 配合 GDM 2.30 使用的啟動程序。務必刪除，才不會與 GDM 2.20 的啟動程序衝突。
+</p>
+
+<pre class="language-term">
+$ sudo apt-get remove gdm
+$ sudo apt-get install libdmx1
+$ sudo dpkg -i gdm-2.20_2.20.10-0ubuntu3_amd64.deb
+$ sudo sed -i ’s/X11R6\///’ /etc/gdm/gdm.conf
+$ sudo rm /etc/init.d/gdm.conf
+</pre>
+
+<p>重開機後，就會看到 GDM 2.20 的主題畫面。第一次啟動時，GDM 會抱怨找不到 Human.xml 主題。這是正常的，因為 Ubuntu 10.04 的 GDM 主題不適用於 GDM 2.20 ，我們還要按照 Ubuntu 9.04 以前的方式，下去 GDM 主題套件安裝，再修改 <dfn>/etc/gdm/gdm.conf</dfn> 使用指定的主題。
+</p>
+
+<p>可以在 <a href="http://art.gnome.org/themes/gdm_greeter">GNOME ART Themes / Login Screen</a> 取得許多 GDM 2.20 適用的主題套件。下載後，解開放到 <dfn>/usr/share/gdm/themes</dfn> 內。編輯 <dfn>/etc/gdm/gdm.conf</dfn>，找到 <var>GraphicalTheme</var> ，指定你要用的主題名稱 (放置主題內容的目錄名稱)。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12316205.html">http://blog.roodo.com/rocksaying/archives/12316205.html</a></div>

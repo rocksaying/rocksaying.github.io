@@ -1,0 +1,291 @@
+---
+title: 魔獸世界UI - AuraNotify, 觸發式技能光環提示
+category: programming
+old-category: Programming
+tags: [wow,lua]
+---
+<p>
+AuraNotify，這是我從其他插件改過來的。因為我玩法師和戰士，所以只登記了法師和戰士的觸發技能光環，其他職業的請自己加上。觸發時的提示音效也請自己找或自己錄，但我的經驗是音效檔的大小最好不要超過16kb。請將音效檔複製到插件安裝資料夾的 Sounds 資料夾內，並將檔名改成登記表中的名字。例如觸發猛擊(<var>Slam</var>)時的音效，請取名為 <var>Slam.wav</var>。按預設狀況，音效檔放置的資料夾是: <var>C:\Program Files\World of Warcraft\Interface\AddOns\AuraNotify\Sounds</var>。
+</p>
+<p>
+我個人喜歡用Windows作業系統內提供的 C:\WINDOWS\Media\ringout.wav 。簡潔清楚。
+</p>
+
+<!--more-->
+<p><strong>
+本人不提供壓縮檔。軟體授權憑證採 GNU GPL 發佈。符合 Blizarrd 所規範的 UI 發行政策。
+</strong></p>
+
+<h4>
+AuraNotify.toc
+</h4>
+<pre class="highlight"><code><span class="c1">## Interface: 30100</span>
+<span class="c1">## Title: AuraNotify</span>
+<span class="c1">## Notes: 觸發式光環提示</span>
+<span class="c1">## Author: rock</span>
+<span class="c1">## SavedVariables: AuraNotifyDB</span>
+<span class="no">AuraNotify</span><span class="p">.</span><span class="nf">xml</span>
+</code></pre>
+
+<p>
+因為目前 WOW 版本為 3.1.x ，故 Interface 之值為 30100 。
+</p>
+
+
+<h4>
+AuraNotify.xml
+</h4>
+<pre class="highlight"><code><span class="nt">&lt;Ui</span> <span class="na">xmlns=</span><span class="s">"http://www.blizzard.com/wow/ui/"</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xsi:schemaLocation=</span><span class="s">"http://www.blizzard.com/wow/ui/"</span><span class="nt">&gt;</span>
+
+	<span class="nt">&lt;Script</span> <span class="na">file=</span><span class="s">"AuraNotify.lua"</span><span class="nt">/&gt;</span>
+
+	<span class="nt">&lt;Frame</span> <span class="na">name=</span><span class="s">"Buah_Red"</span> <span class="na">toplevel=</span><span class="s">"true"</span> <span class="na">hidden=</span><span class="s">"true"</span> <span class="na">parent=</span><span class="s">"UIParent"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;Size&gt;</span>
+			<span class="nt">&lt;AbsDimension</span> <span class="na">x=</span><span class="s">"2000"</span> <span class="na">y=</span><span class="s">"2000"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Size&gt;</span>
+		<span class="nt">&lt;Anchors&gt;</span>
+			<span class="nt">&lt;Anchor</span> <span class="na">point=</span><span class="s">"CENTER"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Anchors&gt;</span>
+		<span class="nt">&lt;Layers&gt;</span>
+			<span class="nt">&lt;Layer</span> <span class="na">level=</span><span class="s">"BACKGROUND"</span><span class="nt">&gt;</span>
+				<span class="nt">&lt;Texture</span> <span class="na">name=</span><span class="s">"$parentBackground"</span> <span class="na">setAllPoints=</span><span class="s">"true"</span><span class="nt">&gt;</span>
+					<span class="nt">&lt;Color</span> <span class="na">r=</span><span class="s">"1"</span> <span class="na">g=</span><span class="s">"0"</span> <span class="na">b=</span><span class="s">"0"</span> <span class="na">a=</span><span class="s">"0.4"</span><span class="nt">/&gt;</span>
+				<span class="nt">&lt;/Texture&gt;</span>
+			<span class="nt">&lt;/Layer&gt;</span>
+		<span class="nt">&lt;/Layers&gt;</span>
+	<span class="nt">&lt;/Frame&gt;</span>
+
+	<span class="nt">&lt;Frame</span> <span class="na">name=</span><span class="s">"Buah_Blue"</span> <span class="na">toplevel=</span><span class="s">"true"</span> <span class="na">hidden=</span><span class="s">"true"</span> <span class="na">parent=</span><span class="s">"UIParent"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;Size&gt;</span>
+			<span class="nt">&lt;AbsDimension</span> <span class="na">x=</span><span class="s">"2000"</span> <span class="na">y=</span><span class="s">"2000"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Size&gt;</span>
+		<span class="nt">&lt;Anchors&gt;</span>
+			<span class="nt">&lt;Anchor</span> <span class="na">point=</span><span class="s">"CENTER"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Anchors&gt;</span>
+		<span class="nt">&lt;Layers&gt;</span>
+			<span class="nt">&lt;Layer</span> <span class="na">level=</span><span class="s">"BACKGROUND"</span><span class="nt">&gt;</span>
+				<span class="nt">&lt;Texture</span> <span class="na">name=</span><span class="s">"$parentBackground"</span> <span class="na">setAllPoints=</span><span class="s">"true"</span><span class="nt">&gt;</span>
+					<span class="nt">&lt;Color</span> <span class="na">r=</span><span class="s">"0"</span> <span class="na">g=</span><span class="s">"0"</span> <span class="na">b=</span><span class="s">"1"</span> <span class="na">a=</span><span class="s">"0.4"</span><span class="nt">/&gt;</span>
+				<span class="nt">&lt;/Texture&gt;</span>
+			<span class="nt">&lt;/Layer&gt;</span>
+		<span class="nt">&lt;/Layers&gt;</span>
+	<span class="nt">&lt;/Frame&gt;</span>
+
+	<span class="nt">&lt;Frame</span> <span class="na">name=</span><span class="s">"Buah_Orange"</span> <span class="na">toplevel=</span><span class="s">"true"</span> <span class="na">hidden=</span><span class="s">"true"</span> <span class="na">parent=</span><span class="s">"UIParent"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;Size&gt;</span>
+			<span class="nt">&lt;AbsDimension</span> <span class="na">x=</span><span class="s">"2000"</span> <span class="na">y=</span><span class="s">"2000"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Size&gt;</span>
+		<span class="nt">&lt;Anchors&gt;</span>
+			<span class="nt">&lt;Anchor</span> <span class="na">point=</span><span class="s">"CENTER"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Anchors&gt;</span>
+		<span class="nt">&lt;Layers&gt;</span>
+			<span class="nt">&lt;Layer</span> <span class="na">level=</span><span class="s">"BACKGROUND"</span><span class="nt">&gt;</span>
+				<span class="nt">&lt;Texture</span> <span class="na">name=</span><span class="s">"$parentBackground"</span> <span class="na">setAllPoints=</span><span class="s">"true"</span><span class="nt">&gt;</span>
+					<span class="nt">&lt;Color</span> <span class="na">r=</span><span class="s">"1"</span> <span class="na">g=</span><span class="s">"1"</span> <span class="na">b=</span><span class="s">"0"</span> <span class="na">a=</span><span class="s">"0.4"</span><span class="nt">/&gt;</span>
+				<span class="nt">&lt;/Texture&gt;</span>
+			<span class="nt">&lt;/Layer&gt;</span>
+		<span class="nt">&lt;/Layers&gt;</span>
+	<span class="nt">&lt;/Frame&gt;</span>
+
+    <span class="nt">&lt;Frame</span> <span class="na">name=</span><span class="s">"Buah_Purple"</span> <span class="na">toplevel=</span><span class="s">"true"</span> <span class="na">hidden=</span><span class="s">"true"</span> <span class="na">parent=</span><span class="s">"UIParent"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;Size&gt;</span>
+			<span class="nt">&lt;AbsDimension</span> <span class="na">x=</span><span class="s">"2000"</span> <span class="na">y=</span><span class="s">"2000"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Size&gt;</span>
+		<span class="nt">&lt;Anchors&gt;</span>
+			<span class="nt">&lt;Anchor</span> <span class="na">point=</span><span class="s">"CENTER"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Anchors&gt;</span>
+		<span class="nt">&lt;Layers&gt;</span>
+			<span class="nt">&lt;Layer</span> <span class="na">level=</span><span class="s">"BACKGROUND"</span><span class="nt">&gt;</span>
+				<span class="nt">&lt;Texture</span> <span class="na">name=</span><span class="s">"$parentBackground"</span> <span class="na">setAllPoints=</span><span class="s">"true"</span><span class="nt">&gt;</span>
+					<span class="nt">&lt;Color</span> <span class="na">r=</span><span class="s">"1"</span> <span class="na">g=</span><span class="s">""</span> <span class="na">b=</span><span class="s">"1"</span> <span class="na">a=</span><span class="s">"0.4"</span><span class="nt">/&gt;</span>
+				<span class="nt">&lt;/Texture&gt;</span>
+			<span class="nt">&lt;/Layer&gt;</span>
+		<span class="nt">&lt;/Layers&gt;</span>
+	<span class="nt">&lt;/Frame&gt;</span>
+
+	<span class="nt">&lt;Frame</span> <span class="na">name=</span><span class="s">"Main"</span> <span class="na">toplevel=</span><span class="s">"true"</span> <span class="na">hidden=</span><span class="s">"false"</span> <span class="na">parent=</span><span class="s">"UIParent"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;Size&gt;</span>
+			<span class="nt">&lt;AbsDimension</span> <span class="na">x=</span><span class="s">"1"</span> <span class="na">y=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Size&gt;</span>
+		<span class="nt">&lt;Anchors&gt;</span>
+			<span class="nt">&lt;Anchor</span> <span class="na">point=</span><span class="s">"CENTER"</span><span class="nt">/&gt;</span>
+		<span class="nt">&lt;/Anchors&gt;</span>
+		<span class="nt">&lt;Layers&gt;</span>
+			<span class="nt">&lt;Layer</span> <span class="na">level=</span><span class="s">"BACKGROUND"</span><span class="nt">&gt;</span>
+				<span class="nt">&lt;Texture</span> <span class="na">name=</span><span class="s">"$parentBackground"</span> <span class="na">setAllPoints=</span><span class="s">"true"</span><span class="nt">&gt;</span>
+					<span class="nt">&lt;Color</span> <span class="na">r=</span><span class="s">"0"</span> <span class="na">g=</span><span class="s">"0"</span> <span class="na">b=</span><span class="s">"0"</span> <span class="na">a=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+				<span class="nt">&lt;/Texture&gt;</span>
+			<span class="nt">&lt;/Layer&gt;</span>
+		<span class="nt">&lt;/Layers&gt;</span>
+		<span class="nt">&lt;Scripts&gt;</span>
+			<span class="nt">&lt;OnLoad&gt;</span>
+				self.TimeSinceLastUpdate = 0
+				AuraNotifyStart()
+			<span class="nt">&lt;/OnLoad&gt;</span>
+			<span class="nt">&lt;OnUpdate&gt;</span>
+				AuraNotifyLala()
+				AuraNotifyChecker(self, elapsed)
+			<span class="nt">&lt;/OnUpdate&gt;</span>
+			<span class="nt">&lt;OnEvent&gt;</span>
+                AuraNotifyEvent()
+			<span class="nt">&lt;/OnEvent&gt;</span>
+		<span class="nt">&lt;/Scripts&gt;</span>
+	<span class="nt">&lt;/Frame&gt;</span>
+
+<span class="nt">&lt;/Ui&gt;</span>
+
+</code></pre>
+
+
+
+<h4>
+AuraNotify.lua
+</h4>
+<p>
+在 <var>SpeelAura</var> 的表中登記你的技能光環。前面的代號自己查，後面的名稱隨你取，這是音效檔的檔名。不要忘了最後的逗號(,)。
+</p>
+<pre class="highlight"><code><span class="o">--</span> <span class="no">Licensed</span> <span class="n">by</span> <span class="no">GNU</span> <span class="no">GPL</span> <span class="n">v3</span>
+
+<span class="n">local</span> <span class="no">SpellAura</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">[</span><span class="mi">46916</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Slam"</span><span class="p">,</span> <span class="o">--</span> <span class="err">猛擊</span>
+    <span class="p">[</span><span class="mi">44544</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"FingerOfFrost"</span><span class="p">,</span> <span class="o">--</span> <span class="err">冰霜之指</span>
+    <span class="p">[</span><span class="mi">57761</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"BrainFreeze"</span><span class="p">,</span> <span class="o">--</span> <span class="err">腦部凍結</span>
+    <span class="p">[</span><span class="mi">48108</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"HotStreak"</span><span class="p">,</span> <span class="o">--</span> <span class="err">焦炎之痕</span>
+    <span class="p">[</span><span class="mi">44401</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"MissileBarrage"</span> <span class="o">--</span> <span class="err">飛彈彈幕</span>
+<span class="p">};</span>
+
+<span class="n">local</span> <span class="no">Sealinc</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">local</span> <span class="no">Red</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">local</span> <span class="n">falpha</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">local</span> <span class="n">falphainc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">local</span> <span class="n">maxalpha</span> <span class="o">=</span> <span class="mi">0</span><span class="o">.</span><span class="mi">3</span><span class="p">;</span>
+
+<span class="n">function</span> <span class="no">AuraNotifyChecker</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">)</span>
+  <span class="k">if</span> <span class="p">(</span><span class="no">Red</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+	<span class="k">if</span> <span class="n">falphainc</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">then</span>
+		<span class="n">falpha</span> <span class="o">=</span> <span class="n">falpha</span> <span class="o">+</span> <span class="n">elapsed</span>
+		<span class="k">if</span> <span class="n">falpha</span><span class="o">&gt;</span><span class="n">maxalpha</span> <span class="k">then</span>
+			<span class="n">falpha</span> <span class="o">=</span> <span class="n">maxalpha</span>
+			<span class="n">falphainc</span> <span class="o">=</span> <span class="mi">2</span>
+		<span class="k">end</span>
+	<span class="k">end</span>
+	<span class="k">if</span> <span class="n">falphainc</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">then</span>
+		<span class="n">falphainc</span> <span class="o">=</span> <span class="n">falphainc</span> <span class="o">+</span> <span class="n">elapsed</span>
+		<span class="k">if</span> <span class="n">falphainc</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">.</span><span class="mi">3</span> <span class="k">then</span>
+			<span class="n">falphainc</span> <span class="o">=</span> <span class="mi">1</span>
+		<span class="k">end</span>
+	<span class="k">end</span>
+	<span class="k">if</span> <span class="n">falphainc</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">then</span>
+		<span class="n">falpha</span> <span class="o">=</span> <span class="n">falpha</span> <span class="o">-</span> <span class="n">elapsed</span>
+		<span class="k">if</span> <span class="n">falpha</span><span class="o">&lt;</span><span class="mi">0</span> <span class="k">then</span>
+			<span class="n">falpha</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="no">Red</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="n">falphainc</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="no">Buah_Red</span><span class="ss">:Hide</span><span class="p">(</span> <span class="p">)</span>
+			<span class="no">Buah_Orange</span><span class="ss">:Hide</span><span class="p">(</span> <span class="p">)</span>
+			<span class="no">Buah_Purple</span><span class="ss">:Hide</span><span class="p">(</span> <span class="p">)</span>
+			<span class="no">Buah_Blue</span><span class="ss">:Hide</span><span class="p">(</span> <span class="p">)</span>
+		<span class="k">end</span>
+	<span class="k">end</span>
+	<span class="no">Buah_Red</span><span class="ss">:SetAlpha</span><span class="p">(</span> <span class="n">falpha</span> <span class="p">)</span>
+	<span class="no">Buah_Orange</span><span class="ss">:SetAlpha</span><span class="p">(</span> <span class="n">falpha</span> <span class="p">)</span>
+	<span class="no">Buah_Purple</span><span class="ss">:SetAlpha</span><span class="p">(</span> <span class="n">falpha</span> <span class="p">)</span>
+	<span class="no">Buah_Blue</span><span class="ss">:SetAlpha</span><span class="p">(</span> <span class="n">falpha</span> <span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+
+<span class="n">function</span> <span class="no">AuraNotifyStart</span><span class="p">()</span>
+	<span class="o">--</span> <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"AuraNotify Addon loaded!"</span><span class="p">)</span>
+	<span class="o">--</span> <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"/auranotify or /aura for help"</span><span class="p">)</span>
+	<span class="no">SLASH_AURANOTIFY1</span> <span class="o">=</span> <span class="s2">"/auranotify"</span>
+	<span class="no">SLASH_AURANOTIFY2</span> <span class="o">=</span> <span class="s2">"/aura"</span>
+	<span class="no">SlashCmdList</span><span class="p">[</span><span class="s2">"AURANOTIFY"</span><span class="p">]</span> <span class="o">=</span> <span class="no">AuraNotifyHelp</span>
+
+	<span class="n">this</span><span class="ss">:RegisterEvent</span><span class="p">(</span><span class="s2">"ADDON_LOADED"</span><span class="p">);</span> <span class="o">--</span> <span class="k">for</span> <span class="no">SavedVariables</span>
+	<span class="n">this</span><span class="ss">:RegisterEvent</span><span class="p">(</span><span class="s2">"COMBAT_LOG_EVENT_UNFILTERED"</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">AuraNotifyEvent</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">arg1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">event</span> <span class="o">==</span> <span class="s2">"ADDON_LOADED"</span> <span class="n">and</span> <span class="n">arg1</span> <span class="o">==</span> <span class="s2">"AuraNotify"</span> <span class="p">)</span> <span class="k">then</span>
+        <span class="k">if</span> <span class="no">AuraNotifyDB</span> <span class="o">==</span> <span class="kp">nil</span> <span class="k">then</span>
+            <span class="no">AuraNotifyDB</span> <span class="o">=</span> <span class="p">{</span>
+            	<span class="no">Sound</span> <span class="o">=</span> <span class="kp">true</span><span class="p">,</span>
+            	<span class="no">Flash</span> <span class="o">=</span> <span class="kp">false</span><span class="p">,</span>
+            	<span class="no">Msg</span> <span class="o">=</span> <span class="kp">true</span>
+            <span class="p">};</span>
+        <span class="k">end</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">AuraNotifyHelp</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"AuraNotify Addon!"</span><span class="p">)</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">msg</span><span class="o">==</span><span class="s2">"msg on"</span><span class="p">)</span> <span class="k">then</span>
+		<span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Msg</span> <span class="o">=</span> <span class="kp">true</span><span class="p">;</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01AuraNotify|cffffffff Addon! Config set to: On screen message = |cff33ff99 on"</span><span class="p">)</span>
+    <span class="n">elseif</span> <span class="p">(</span><span class="n">msg</span><span class="o">==</span><span class="s2">"msg off"</span><span class="p">)</span> <span class="k">then</span>
+		<span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Msg</span> <span class="o">=</span> <span class="kp">false</span><span class="p">;</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01AuraNotify|cffffffff Addon! Config set to: On screen message = |cffffff78 off"</span><span class="p">)</span>
+	<span class="n">elseif</span> <span class="p">(</span><span class="n">msg</span><span class="o">==</span><span class="s2">"sound on"</span><span class="p">)</span> <span class="k">then</span>
+		<span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Sound</span> <span class="o">=</span> <span class="kp">true</span><span class="p">;</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01AuraNotify|cffffffff Addon! Config set to: Sound = |cff33ff99 on"</span><span class="p">)</span>
+	<span class="n">elseif</span> <span class="p">(</span><span class="n">msg</span><span class="o">==</span><span class="s2">"sound off"</span><span class="p">)</span> <span class="k">then</span>
+		<span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Sound</span> <span class="o">=</span> <span class="kp">false</span><span class="p">;</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01AuraNotify|cffffffff Addon! Config set to: Sound = |cffffff78 off"</span><span class="p">)</span>
+	<span class="n">elseif</span> <span class="p">(</span><span class="n">msg</span><span class="o">==</span><span class="s2">"flash on"</span><span class="p">)</span> <span class="k">then</span>
+		<span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Flash</span> <span class="o">=</span> <span class="kp">true</span><span class="p">;</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01AuraNotify|cffffffff Addon! Config set to: Flash = |cff33ff99 on"</span><span class="p">)</span>
+	<span class="n">elseif</span> <span class="p">(</span><span class="n">msg</span><span class="o">==</span><span class="s2">"flash off"</span><span class="p">)</span> <span class="k">then</span>
+		<span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Flash</span> <span class="o">=</span> <span class="kp">false</span><span class="p">;</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01AuraNotify|cffffffff Addon! Config set to: Flash = |cffffff78 off"</span><span class="p">)</span>
+	<span class="k">else</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"To enable/disable the sound, type: /aura sound on/off"</span><span class="p">)</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"To enable/disable the flash, type: /aura flash on/off"</span><span class="p">)</span>
+		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"To enable/disable the on screen message, type: /aura msg on/off"</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="p">(</span><span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Sound</span> <span class="o">==</span> <span class="kp">true</span><span class="p">)</span> <span class="k">then</span>
+    		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Sound:|cff33ff99 On"</span><span class="p">)</span>
+        <span class="k">else</span>
+    		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Sound:|cffffff78 Off"</span><span class="p">)</span>
+        <span class="k">end</span>
+		<span class="k">if</span> <span class="p">(</span><span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Flash</span> <span class="o">==</span> <span class="kp">true</span><span class="p">)</span> <span class="k">then</span>
+    		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Flash:|cff33ff99 On"</span><span class="p">)</span>
+        <span class="k">else</span>
+    		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Flash:|cffffff78 Off"</span><span class="p">)</span>
+        <span class="k">end</span>
+        <span class="k">if</span> <span class="p">(</span><span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Msg</span> <span class="o">==</span> <span class="kp">true</span><span class="p">)</span> <span class="k">then</span>
+    		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Message:|cff33ff99 On"</span><span class="p">)</span>
+        <span class="k">else</span>
+    		<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Message:|cffffff78 Off"</span><span class="p">)</span>
+        <span class="k">end</span>
+	<span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">AuraNotifyLala</span><span class="p">()</span>
+	<span class="n">this</span><span class="ss">:SetScript</span><span class="p">(</span><span class="s2">"OnEvent"</span><span class="p">,</span> <span class="n">function</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="p">.</span><span class="nf">.</span><span class="o">.</span><span class="p">)</span>
+		<span class="n">local</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">eventType</span><span class="p">,</span> <span class="n">srcGUID</span><span class="p">,</span> <span class="n">srcName</span><span class="p">,</span> <span class="n">srcFlags</span><span class="p">,</span> <span class="n">dstGUID</span><span class="p">,</span> <span class="n">dstName</span><span class="p">,</span> <span class="n">dstFlags</span> <span class="o">=</span> <span class="nb">select</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">.</span><span class="nf">.</span><span class="o">.</span><span class="p">)</span>
+		<span class="n">local</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">arg3</span><span class="p">,</span> <span class="n">arg4</span><span class="p">,</span> <span class="n">arg5</span><span class="p">,</span> <span class="n">arg6</span><span class="p">,</span> <span class="n">arg7</span><span class="p">,</span> <span class="n">arg8</span><span class="p">,</span> <span class="n">arg9</span><span class="p">,</span> <span class="n">arg10</span><span class="p">,</span> <span class="n">arg11</span> <span class="o">=</span> <span class="nb">select</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="p">.</span><span class="nf">.</span><span class="o">.</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">eventType</span> <span class="o">==</span> <span class="s2">"SPELL_AURA_APPLIED"</span> <span class="n">and</span> <span class="n">srcName</span> <span class="o">==</span> <span class="no">UnitName</span><span class="p">(</span><span class="s2">"player"</span><span class="p">)</span> <span class="k">then</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="no">SpellAura</span><span class="p">[</span><span class="n">arg1</span><span class="p">]</span> <span class="p">)</span> <span class="k">then</span>
+				<span class="k">if</span> <span class="p">(</span><span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Sound</span> <span class="o">==</span> <span class="kp">true</span><span class="p">)</span> <span class="k">then</span>
+					<span class="o">--</span> <span class="no">PlaySoundFile</span><span class="p">(</span><span class="s2">"Interface</span><span class="se">\\</span><span class="s2">AddOns</span><span class="se">\\</span><span class="s2">b-thirst</span><span class="se">\\</span><span class="s2">slam.mp3"</span><span class="p">)</span>
+					<span class="no">PlaySoundFile</span><span class="p">(</span><span class="s2">"Interface</span><span class="se">\\</span><span class="s2">AddOns</span><span class="se">\\</span><span class="s2">AuraNotify</span><span class="se">\\</span><span class="s2">sounds"</span> <span class="p">.</span><span class="nf">.</span> <span class="no">SpellAura</span><span class="p">[</span><span class="n">arg1</span><span class="p">]</span> <span class="p">.</span><span class="nf">.</span> <span class="s2">".wav"</span><span class="p">)</span>
+					<span class="o">--</span> <span class="err">播放同樣名稱的音效檔。</span>
+					<span class="o">--</span> <span class="err">例如觸發了飛彈彈幕</span><span class="p">(</span><span class="no">MissileBarrage</span><span class="p">)</span><span class="err">，就播放</span> <span class="no">MissileBarrage</span><span class="p">.</span><span class="nf">wav</span>
+                <span class="k">end</span>
+				<span class="k">if</span> <span class="p">(</span><span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Flash</span> <span class="o">==</span> <span class="kp">true</span><span class="p">)</span> <span class="k">then</span>
+					<span class="no">Buah_Red</span><span class="ss">:Show</span><span class="p">()</span>
+					<span class="no">Red</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">end</span>
+				<span class="k">if</span> <span class="p">(</span><span class="no">AuraNotifyDB</span><span class="o">.</span><span class="no">Msg</span> <span class="o">==</span> <span class="kp">true</span><span class="p">)</span> <span class="k">then</span>
+					<span class="no">UIErrorsFrame</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="n">arg2</span><span class="p">,</span> <span class="mi">1</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kp">nil</span><span class="p">,</span> <span class="kp">true</span><span class="p">)</span>
+    		        <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="n">arg2</span><span class="p">,</span> <span class="mi">1</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+				<span class="k">end</span>
+            <span class="k">end</span>
+		<span class="k">end</span>
+	<span class="k">end</span><span class="p">)</span>
+<span class="k">end</span>
+
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/9032505.html">http://blog.roodo.com/rocksaying/archives/9032505.html</a></div>

@@ -1,0 +1,281 @@
+---
+title: Autoconf 檢查額外函數庫
+category: programming
+old-category: Programming
+tags: [gnu,autoconf,make]
+---
+<p>
+日前處理一件工作，用 C 語言引用另一家廠商提供的 SDK 開發一套小工具。身為一個專業人員，按照 GNU 軟體開發指南，我們的 C 程式碼，應該要透過 Autoconf/Automake 完成建置前的組態工作。於是我進一步地使用 Autoconf 工具完成完成軟體建置環境的檢測與生產的組態文件。
+</p>
+<p>
+然而我在將第三方廠商的 SDK 檢測動作加入 Autoconf 流程時，碰到了麻煩。為了處理這件事，花了我一整個工作天解決。令我不禁抱怨 <a href="http://www.gnu.org/software/autoconf/manual/">GNU Autoconf manual</a> 的內容編排內容實在很糟糕。本文記錄了在 Autoconf 中，如何檢查建置軟體時所需的額外標頭檔與函數庫。
+</p>
+
+<!--more-->
+<h4>
+檢測核心與機器規格
+</h4>
+
+<ul>
+<li>
+Macro: AS_IF (test1, [run-if-true1], ..., [run-if-false])
+<br/>
+
+See: <a href="http://www.gnu.org/software/autoconf/manual/autoconf-2.62/html_node/Programming-in-M4sh.html">Programming in M4sh</a>;
+
+<dfn>AS_IF</dfn> 是 M4 shell 的 if 語法。
+</li>
+
+<li>
+Macro: AC_SUBST (variable, [value])
+<br/>
+
+See: <a href="http://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Setting-Output-Variables.html">Setting Output Variables</a>
+</li>
+</ul>
+
+<p>Autoconf 以 <dfn>AC_OUTPUT</dfn> 定義輸出文件。若我們需要在那些輸出文件中使用變數，則可以用 <dfn>AC_SUBST</dfn> 建立輸出變數，那些輸出變數可以在 Autoconf 的輸出文件中，透過 <var>@輸出變數名稱@</var> 的寫法引用變數內容。<dfn>AC_SUBST</dfn> 的第二個參數若省略，表示以內部變數之現值作為輸出變數之值。
+</p>
+
+<p>下列定義 <var>KERNEL</var>, <var>MACHINE</var> 與 <var>ARCHITECTURE</var>。我先利用 <code>uname</code> 取得核心與 CPU 硬體規格，指派為 <var>KERNEL</var>, <var>MACHINE</var> 之值。再以 <dfn>AS_IF</dfn> 判斷 <var>MACHINE</var> 的結果，指派 <var>ARCHITECTURE</var> 之值。因為這三個變數要持續延用於 Makefile.am 中，故再以 <dfn>AC_SUBST</dfn> 建立對應的輸出變數。
+</p>
+
+<pre class="highlight"><code><span class="nv">KERNEL</span><span class="o">=</span><span class="sb">`</span>uname -s<span class="sb">`</span>
+
+<span class="nv">MACHINE</span><span class="o">=</span><span class="sb">`</span>uname -m<span class="sb">`</span>
+
+AS_IF<span class="o">([</span><span class="nb">test</span> <span class="s2">"x</span><span class="nv">$MACHINE</span><span class="s2">"</span> <span class="o">=</span> xi686], <span class="o">[</span><span class="nv">MACHINE</span><span class="o">=</span><span class="s2">"x86"</span><span class="o">])</span>
+AS_IF<span class="o">([</span><span class="nb">test</span> <span class="s2">"x</span><span class="nv">$MACHINE</span><span class="s2">"</span> <span class="o">=</span> x86_64], <span class="o">[</span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">"amd64"</span><span class="o">]</span>, <span class="o">[</span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">"i386"</span><span class="o">])</span>
+
+<span class="c"># create output variables.</span>
+AC_SUBST<span class="o">(</span>KERNEL<span class="o">)</span>
+AC_SUBST<span class="o">(</span>MACHINE<span class="o">)</span>
+AC_SUBST<span class="o">(</span>ARCHITECTURE<span class="o">)</span>
+</code></pre>
+
+
+<h4>
+以 AC_ARG_WITH 指定額外的軟體項目
+</h4>
+
+
+<p>經常下載 C 程式碼並使用 Autoconf 流程編譯程式碼的人，應該知道有許多案子的 configure 允許我們透過 <dfn>--with-<i>xxx</i></dfn> 的參數，指定額外的項目。當我們編寫 Autoconf 文件時，需用 <dfn>AC_ARG_WITH</dfn> 實現這個工作。
+</p>
+
+<ul>
+<li>
+Macro: AC_ARG_WITH (package, help-string, [action-if-given], [action-if-not-given])
+<br/>
+
+See: <a href="http://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/External-Software.html">Working With External Software</a>
+</li>
+</ul>
+
+<p>假設第三方廠商提供的SDK名稱為 mylib ，我們想要在 configure 中增加一個 <var>--with-mylib</var> 的參數項目，以便他人指定 mylib 的安裝路徑。當我們增加 <var>--with-mylib</var> 選用參數時，Autoconf 會自動在內部定義一個 <var>with_mylib</var> 變數代表它。所以當你下達 <code>configure --with-mylib=/opt/local/mylib</code> 時，在 Autoconf 內部便定義 <var>with_mylib</var> 之值為 /opt/local/mylib 。
+</p>
+
+<pre class="highlight"><code>AC_ARG_WITH<span class="o">([</span>mylib], 
+    <span class="o">[</span>AS_HELP_STRING<span class="o">([</span>--with-mylib], <span class="o">[</span>location of the MyLib installed path, defaults to /usr/local/mylib]<span class="o">)]</span>,
+    <span class="o">[]</span>,
+    <span class="o">[</span><span class="nv">with_mylib</span><span class="o">=</span>/usr/local/mylib]<span class="o">)</span>
+
+<span class="c"># according --with-mylib to define MYLIB_xxx variables.</span>
+<span class="nv">MYLIB_CFLAGS</span><span class="o">=</span><span class="s2">"-I</span><span class="nv">$with_mylib</span><span class="s2">/include/</span><span class="nv">$KERNEL</span><span class="s2">"</span>
+<span class="nv">MYLIB_LDFLAGS</span><span class="o">=</span><span class="s2">"-L</span><span class="nv">$with_mylib</span><span class="s2">/lib/</span><span class="k">${</span><span class="nv">KERNEL</span><span class="k">}</span><span class="s2">_</span><span class="k">${</span><span class="nv">MACHINE</span><span class="k">}</span><span class="s2">"</span>
+<span class="nv">MYLIB_LIBS</span><span class="o">=</span><span class="s2">"-lMyCcore -lMyService -lMyTemplate"</span>
+
+AC_SUBST<span class="o">(</span>MYLIB_CFLAGS<span class="o">)</span>
+AC_SUBST<span class="o">(</span>MYLIB_LDFLAGS<span class="o">)</span>
+AC_SUBST<span class="o">(</span>MYLIB_LIBS<span class="o">)</span>
+
+<span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$CFLAGS</span><span class="s2"> </span><span class="nv">$MYLIB_CFLAGS</span><span class="s2">"</span>
+<span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$LDFLAGS</span><span class="s2"> </span><span class="nv">$MYLIB_LDFLAGS</span><span class="s2">"</span>
+<span class="nv">LIBS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$LIBS</span><span class="s2"> </span><span class="nv">$MYLIB_LIBS</span><span class="s2">"</span>
+</code></pre>
+
+
+<p><dfn>AC_CHECK_HEADERS</dfn> 可以幫我們檢查標頭檔是否可在系統 INCLUDE 路徑中尋獲(預設為 /include:/usr/include)。<dfn>AC_CHECK_LIB</dfn> 則幫我們檢查函數庫檔案是否可在系統 LIBRARY 路徑中尋獲(預設為 /lib:/usr/lib)。但當我們的檔案並未被安裝在系統預設路徑時，那兩個巨集就幫不了我們。在此例中，我將 MyLib 安裝在 /usr/local/mylib 。此時我們就必須使用其他較複雜的方式，實現檢查動作。
+</p>
+
+<ul>
+<li>
+Macro: AC_COMPILE_IFELSE (input, [action-if-true], [action-if-false])
+<br/>
+
+See: <a href="http://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Running-the-Compiler.html#Running-the-Compiler">Running the Compiler</a>
+</li>
+
+<li>
+Macro: AC_LINK_IFELSE (input, [action-if-true], [action-if-false])
+<br/>
+See: <a href="http://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Running-the-Linker.html#Running-the-Linker">Running the Linker</a> 
+</li>
+
+<li>
+Macro: AC_MSG_RESULT
+<br/>
+AC_MSG_RESULT 僅輸出訊息，通常用於成功事件。
+</li>
+
+<li>
+Macro: AC_MSG_ERROR
+<br/>
+AC_MSG_ERROR 在輸出訊息後，會中止 configure 流程，通常用於失敗事件
+</li>
+
+</ul>
+
+<p>檢查標頭檔的動作，我使用 <dfn>AC_COMPILE_IFELSE</dfn> 即時產生一段引用指定標頭檔的 C 程式碼，交由 Autoconf 調用 C 編譯器編譯。此處的編譯動作會套用我先前定義的 <var>CFLAGS</var> 之值作為編譯時的參數。我在 <var>CFLAGS</var> 中指示了 MyLib 標頭檔的路徑位置，若路徑錯誤，則編譯動作也會失敗，進入失敗處理流程。<dfn>AC_CHECK_HEADERS</dfn> 的問題在於它不會套用 <var>CFLAGS</var> 的內容，因此我們才要自行處理。
+</p>
+
+<pre class="highlight"><code><span class="c">#AC_CHECK_HEADERS([my-core.h my-template.h],,</span>
+<span class="c">#    [AC_MSG_ERROR([MyLib header files were not found. </span>
+<span class="c">#        Install MyLib and use --with-mylib to specify path.])])</span>
+AC_MSG_CHECKING<span class="o">([</span><span class="k">for </span>MyLib header files]<span class="o">)</span>
+AC_COMPILE_IFELSE<span class="o">(</span>
+    <span class="o">[[</span>
+    <span class="c">#include &lt;my-core.h&gt;</span>
+    <span class="c">#include &lt;my-template.h&gt;</span>
+    <span class="o">]]</span>,
+    <span class="o">[</span>AC_MSG_RESULT<span class="o">([</span>yes]<span class="o">)]</span>,
+    <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span>MyLib header files were not found. 
+Install MyLib and use --with-mylib to specify path.]<span class="o">)]</span>
+    <span class="o">)</span>
+</code></pre>
+
+
+<p>檢查函數庫檔的動作，我使用 <dfn>AC_LINK_IFELSE</dfn> 即時產生一段調用指定函數的 C 程式碼，交由 Autoconf 調用編譯器與連結器。此處的建置動作會套用我先前定義的 <var>CFLAGS</var>, <var>LDFLAGS</var> 與 <var>LIBS</var> 之值作為建置時的參數。若路徑錯誤，則建置動作也會失敗，進而觸入失敗處理流程。
+</p>
+
+<pre class="highlight"><code><span class="c">#AC_CHECK_LIB([MyCore MyService MyTemplate],,,</span>
+<span class="c">#    [AC_MSG_ERROR([MyLib libraries were not found. </span>
+<span class="c">#        Install MyLib and use --with-mylib to specify path.])])</span>
+AC_MSG_CHECKING<span class="o">([</span><span class="k">for </span>MyLib libraries]<span class="o">)</span>
+AC_LINK_IFELSE<span class="o">(</span>
+    <span class="o">[</span>AC_LANG_PROGRAM<span class="o">([[</span>
+    <span class="c">#include &lt;my-core.h&gt;</span>
+    <span class="c">#include &lt;my-template.h&gt;</span>
+    <span class="o">]]</span>,
+    <span class="o">[[</span>
+    MyCoreInitialize<span class="o">()</span>;
+    TemplateCreate<span class="o">(</span>NULL<span class="o">)</span>;
+    <span class="o">]])]</span>,
+    <span class="o">[</span>AC_MSG_RESULT<span class="o">([</span>yes]<span class="o">)]</span>,
+    <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span>MyLib libraries were not found. 
+Install MyLib and use --with-mylib to specify path.]<span class="o">)]</span>
+    <span class="o">)</span>
+</code></pre>
+
+
+
+<h5>
+configuer.ac 完整內容
+</h5>
+
+<pre class="highlight"><code>AC_PREREQ<span class="o">(</span>2.59<span class="o">)</span>
+AC_INIT<span class="o">([</span>hello],[0.0.1],[xxx@xxx]<span class="o">)</span>
+AC_CONFIG_SRCDIR<span class="o">([</span>src/hello.c]<span class="o">)</span>
+AM_INIT_AUTOMAKE<span class="o">([</span>dist-bzip2]<span class="o">)</span>
+
+<span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$CFLAGS</span><span class="s2">"</span>
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+<span class="nv">KERNEL</span><span class="o">=</span><span class="sb">`</span>uname -s<span class="sb">`</span>
+<span class="nv">MACHINE</span><span class="o">=</span><span class="sb">`</span>uname -m<span class="sb">`</span>
+AS_IF<span class="o">([</span><span class="nb">test</span> <span class="s2">"x</span><span class="nv">$MACHINE</span><span class="s2">"</span> <span class="o">=</span> xi686], <span class="o">[</span><span class="nv">MACHINE</span><span class="o">=</span><span class="s2">"x86"</span><span class="o">])</span>
+AS_IF<span class="o">([</span><span class="nb">test</span> <span class="s2">"x</span><span class="nv">$MACHINE</span><span class="s2">"</span> <span class="o">=</span> x86_64], <span class="o">[</span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">"amd64"</span><span class="o">]</span>, <span class="o">[</span><span class="nv">ARCHITECTURE</span><span class="o">=</span><span class="s2">"i386"</span><span class="o">])</span>
+
+<span class="c"># create output variables.</span>
+AC_SUBST<span class="o">(</span>KERNEL<span class="o">)</span>
+AC_SUBST<span class="o">(</span>MACHINE<span class="o">)</span>
+AC_SUBST<span class="o">(</span>ARCHITECTURE<span class="o">)</span>
+
+
+AC_ARG_WITH<span class="o">([</span>mylib], 
+    <span class="o">[</span>AS_HELP_STRING<span class="o">([</span>--with-mylib], <span class="o">[</span>location of the MyLib installed path, defaults to /usr/local/mylib]<span class="o">)]</span>,
+    <span class="o">[]</span>,
+    <span class="o">[</span><span class="nv">with_mylib</span><span class="o">=</span>/usr/local/mylib]<span class="o">)</span>
+
+<span class="c"># according --with-mylib to define MYLIB_xxx variables.</span>
+<span class="nv">MYLIB_CFLAGS</span><span class="o">=</span><span class="s2">"-I</span><span class="nv">$with_mylib</span><span class="s2">/include/</span><span class="nv">$KERNEL</span><span class="s2">"</span>
+<span class="nv">MYLIB_LDFLAGS</span><span class="o">=</span><span class="s2">"-L</span><span class="nv">$with_mylib</span><span class="s2">/lib/</span><span class="k">${</span><span class="nv">KERNEL</span><span class="k">}</span><span class="s2">_</span><span class="k">${</span><span class="nv">MACHINE</span><span class="k">}</span><span class="s2">"</span>
+<span class="nv">MYLIB_LIBS</span><span class="o">=</span><span class="s2">"-lMyCcore -lMyService -lMyTemplate"</span>
+
+AC_SUBST<span class="o">(</span>MYLIB_CFLAGS<span class="o">)</span>
+AC_SUBST<span class="o">(</span>MYLIB_LDFLAGS<span class="o">)</span>
+AC_SUBST<span class="o">(</span>MYLIB_LIBS<span class="o">)</span>
+
+<span class="nv">CFLAGS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$CFLAGS</span><span class="s2"> </span><span class="nv">$MYLIB_CFLAGS</span><span class="s2">"</span>
+<span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$LDFLAGS</span><span class="s2"> </span><span class="nv">$MYLIB_LDFLAGS</span><span class="s2">"</span>
+<span class="nv">LIBS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$LIBS</span><span class="s2"> </span><span class="nv">$MYLIB_LIBS</span><span class="s2">"</span>
+
+
+<span class="c">#AC_CHECK_HEADERS([my-core.h my-template.h],,</span>
+<span class="c">#    [AC_MSG_ERROR([MyLib header files were not found. </span>
+<span class="c">#        Install MyLib and use --with-mylib to specify path.])])</span>
+AC_MSG_CHECKING<span class="o">([</span><span class="k">for </span>MyLib header files]<span class="o">)</span>
+AC_COMPILE_IFELSE<span class="o">(</span>
+    <span class="o">[[</span>
+    <span class="c">#include &lt;my-core.h&gt;</span>
+    <span class="c">#include &lt;my-template.h&gt;</span>
+    <span class="o">]]</span>,
+    <span class="o">[</span>AC_MSG_RESULT<span class="o">([</span>yes]<span class="o">)]</span>,
+    <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span>MyLib header files were not found. 
+Install MyLib and use --with-mylib to specify path.]<span class="o">)]</span>
+    <span class="o">)</span>
+
+<span class="c">#AC_CHECK_LIB([MyCore MyService MyTemplate],,,</span>
+<span class="c">#    [AC_MSG_ERROR([MyLib libraries were not found. </span>
+<span class="c">#        Install MyLib and use --with-mylib to specify path.])])</span>
+AC_MSG_CHECKING<span class="o">([</span><span class="k">for </span>MyLib libraries]<span class="o">)</span>
+AC_LINK_IFELSE<span class="o">(</span>
+    <span class="o">[</span>AC_LANG_PROGRAM<span class="o">([[</span>
+    <span class="c">#include &lt;my-core.h&gt;</span>
+    <span class="c">#include &lt;my-template.h&gt;</span>
+    <span class="o">]]</span>,
+    <span class="o">[[</span>
+    MyCoreInitialize<span class="o">()</span>;
+    TemplateCreate<span class="o">(</span>NULL<span class="o">)</span>;
+    <span class="o">]])]</span>,
+    <span class="o">[</span>AC_MSG_RESULT<span class="o">([</span>yes]<span class="o">)]</span>,
+    <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span>MyLib libraries were not found. 
+Install MyLib and use --with-mylib to specify path.]<span class="o">)]</span>
+    <span class="o">)</span>
+
+AC_OUTPUT<span class="o">([</span>
+Makefile
+data/Makefile
+src/Makefile
+<span class="o">])</span>
+
+</code></pre>
+
+
+<h4>
+參考文件
+</h4>
+
+<ul>
+  <li>
+    <a href="http://www.gnu.org/software/autoconf/manual/">GNU Autoconf manual</a>
+  </li>
+  <li>
+    <a href="http://www.bioinf.uni-freiburg.de/~mmann/HowTo/automake.html">HowTo Autotools - Distributing source code with autoconf and automake</a> 
+  </li>
+  <li>
+    <a href="http://www.openismus.com/documents/linux/automake/automake.shtml">Using Automake and Autoconf with C++</a> 
+  </li>
+  <li>
+    <a href="http://mi.eng.cam.ac.uk/~er258/code/autoconf/">A brief introduction to Autoconf</a> 
+  </li>
+  <li>
+    <a href="http://www.seul.org/docs/autotut/">autotut: Using GNU auto{conf,make,header}</a> 
+  </li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/Hello%20Autoconf%2C%20the%20GNU%20Build%20System.html">Hello Autoconf, the GNU Build System</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12452111.html">http://blog.roodo.com/rocksaying/archives/12452111.html</a></div>

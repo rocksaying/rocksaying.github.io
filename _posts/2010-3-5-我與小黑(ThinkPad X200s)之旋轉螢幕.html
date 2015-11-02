@@ -1,0 +1,290 @@
+---
+title: 我與小黑(ThinkPad X200s)之旋轉螢幕
+category: computer
+old-category: 電腦技術
+tags: [ubuntu, ThinkPad]
+---
+<p>
+ThinkPad X200s 是12吋寬螢幕 (1280x800)，以正常方向看電子書時，略顯狹窄。如果旋轉90度的話，就可以直立閱讀電子書，剛好可以全頁顯示16開到32開(A5~A6)的書籍頁面。
+</p>
+<p>
+基本上，螢幕旋轉是顯示器本身就有的功能，不成問題。但是旋轉後的鍵盤方向鍵與小紅點方向並不會跟著轉向，在操作上就會礙手礙腳了。 X200s 的螢幕和鍵盤是一體的，旋轉螢幕後，鍵盤與小紅點的配置方向也會跟著旋轉。但是它們的操作軸線卻沒變，所以我們在操作時就會碰到手眼不協調的狀況。除非我們像金庸筆下的周伯通，可以一心二用、雙手互搏，心中想著游標要向上時，左手可以向右或向左推小紅點。
+</p>
+
+<!--more-->
+<p>
+在 ThinkPad X200s 上實現一個完善的螢幕旋轉動作，應包含三個人機介面的調整: 
+</p>
+<ul>
+    <li>
+    螢幕調整
+    </li>
+    <li>
+    鍵盤方向鍵調整:<br/>
+    螢幕旋轉後，方向鍵的上下鍵與左右鍵應對調。例如螢幕向左旋轉90度後，鍵盤的向左鍵應調整為向上。
+    </li>
+    <li>
+    小紅點軸線調整:<br/>
+    螢幕旋轉後，小紅點的移動軸線應對調。例如螢幕向左旋轉90度後，小紅點的上移軸線要從向GH鍵延伸，改為向GB鍵延伸。
+    </li>
+</ul>
+
+<h4>
+螢幕旋轉
+</h4>
+<p>
+指令 <dfn>xrandr</dfn> 。
+</p>
+<ul>
+    <li>正常方向: <code>xrandr -o normal</code></li>
+    <li>向左旋轉90度: <code>xrandr -o left</code></li>
+    <li>向右旋轉90度: <code>xrandr -o right</code></li>
+</ul>
+<p>
+你可以從桌面選單「系統」->「偏好設定」->「顯示」調整螢幕方向，但不能調整鍵盤與小紅點。此外，我還會寫成命令稿(shell script)，整合到鍵盤快速鍵上操作，所以以指令說明為主。
+</p>
+
+<h4>
+小紅點軸線調整
+</h4>
+<p>
+指令 <dfn>xinput</dfn>。xinput 的參數於各 Linux 散佈套件之間並不相同，本文係根據 Ubuntu xinput manpage 之說明操作。
+</p>
+
+<p>
+首先執行 <kbd>xinput list</kbd> 查看 TrackPoint 的設備名稱。在目前的 Linux 版本中，它的完整設備名稱是 <dfn>TPPS/2 IBM TrackPoint</dfn>。
+</p>
+<pre class="language-term">
+laptop$ xinput list
+...
+	Min_keycode is 8
+	Max_keycode is 255
+"TPPS/2 IBM TrackPoint"	id=7	[XExtensionPointer]
+	Type is MOUSE
+	Num_buttons is 5
+	Num_axes is 2
+	Mode is Relative
+	Motion_buffer is 256
+	Axis 0 :
+		Min_value is -1
+		Max_value is -1
+		Resolution is 1
+	Axis 1 :
+		Min_value is -1
+		Max_value is -1
+		Resolution is 1
+"Macintosh mouse button emulation"	id=8	[XExtensionPointer]
+	Type is MOUSE
+...
+</pre>
+
+<p>
+接著執行 <kbd>xinput list-props "TPPS/2 IBM TrackPoint"</kbd>(請輸入上列指令查到的完整設備名稱) 查看有哪些屬性可以調整。
+</p>
+
+<pre class="language-term">
+laptop$ xinput list-props "TPPS/2 IBM TrackPoint"
+Device 'TPPS/2 IBM TrackPoint':
+	Device Enabled (97):	1
+	Evdev Reopen Attempts (230):	10
+	Evdev Axis Inversion (231):	0, 0
+	Evdev Axis Calibration (232):	
+	Evdev Axes Swap (233):	0
+	Evdev Middle Button Emulation (234):	1
+	Evdev Middle Button Timeout (235):	50
+	Evdev Wheel Emulation (236):	1
+	Evdev Wheel Emulation Axes (237):	6, 7, 4, 5
+	Evdev Wheel Emulation Inertia (238):	10
+	Evdev Wheel Emulation Timeout (239):	200
+	Evdev Wheel Emulation Button (240):	2
+	Evdev Drag Lock Buttons (241):	0
+
+</pre>
+<p>
+與螢幕旋轉有關者，是:
+</p>
+<ul>
+    <li>Evdev Axes Swap: 水平軸與垂直軸是否交換。預設為 0 (不交換)</li>
+    <li>Evdev Axis Inversion: 是否反轉軸線兩端，第一個是左右端反轉，第二個是上下端反轉。</li>
+</ul>
+
+<h5>
+小紅點正常軸線
+</h5>
+<pre class="language-term">
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 0
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 0 0
+</pre>
+
+<h5>
+小紅點左轉90度軸線
+</h5>
+<pre class="language-term">
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 1
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 1 0
+</pre>
+
+<h5>
+小紅點右轉90度軸線
+</h5>
+<pre class="language-term">
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 1
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 0 1
+</pre>
+
+<h4>
+鍵盤方向鍵配置調整
+</h4>
+<p>
+我們需要利用指令 <dfn>showkey</dfn> 觀察按鍵的掃描碼(scan code)與鍵位代碼(key code)。再藉由指令 <dfn>setkeycodes</dfn> 改變配置。
+</p>
+<p>
+執行 <kbd>showkey</kbd> 可以觀察鍵位代碼(key code)；執行 <kbd>showkey -s</kbd> 可以觀察掃描碼(scan code)。注意， showkey, setkeycodes 必須以 root 身份執行，請記得配合 sudo 。
+</p>
+<p>
+「掃描碼」指的是實體鍵盤對作業系統的鍵盤驅動程式送出的硬體訊號。「鍵位代碼」則是作業系統與應用軟體間溝通的按鍵代號。例如標準鍵盤上的 Enter 鍵之掃描碼為 0x1c9c 。另一方面，作業系統定義 Enter 的鍵位代碼是 28 。在作業系統的正常鍵盤配置表中，掃描碼 0x1c9c 關聯到 鍵位代碼 28。因此，當使用者按下鍵盤的 Enter 後，鍵盤先對作業系統送出掃描碼 0x1c9c ，作業系統再根據掃描碼查詢鍵盤配置表，找到它對應鍵位代碼 28，最後作業系統就會對應用軟體送出Enter 的鍵位代碼 28 。而這個鍵盤配置表，就是我們在螢幕旋轉後，要調整的目標之一。不過我們僅需要調整 X200s 鍵盤右下角那6顆按鍵的鍵盤配置。
+</p>
+<p>
+在我的 X200s ，我所得到的鍵盤方向鍵對咉如下列: (Back, Forward 是鍵盤右下角方向鍵區的那兩顆，不是右上角的 PageUp,PageDown)
+</p>
+<pre class="language-text">
+Scan code:
+Up: e048  (0xe0 0x48)
+Down: e050
+Left: e04b
+Right: e04d
+PageUp: e049
+PageDown: e051
+Back: e06a
+Forward: e069
+
+Key code:
+Up: 103
+Down: 108
+Left: 105
+Right: 106
+PageUp: 104
+PageDown: 109
+Back: 158
+Forward: 159
+</pre>
+
+<h5>
+方向鍵正常配置
+</h5>
+<pre class="language-term">
+#           Up       Down     Left     Right
+setkeycodes e048 103 e050 108 e04b 105 e04d 106 e06a 158 e069 159
+</pre>
+
+<h5>
+方向鍵左轉90度配置
+</h5>
+<p>
+我將 Back, Forword 配置為 PageUp、PageDown 按鍵。
+</p>
+<pre class="language-term">
+setkeycodes e048 106 e050 105 e04b 103 e04d 108 e06a 104 e069 109
+</pre>
+
+<h5>
+方向鍵右轉90度配置
+</h5>
+<p>
+我將 Back, Forword 配置為 PageDown、PageUp 按鍵。
+</p>
+<pre class="language-term">
+setkeycodes e048 105 e050 106 e04b 108 e04d 103 e06a 109 e069 104
+</pre>
+
+<h4>
+All in one
+</h4>
+<p>
+我將上述三種動作整合在一個指令稿中，名稱為 <dfn>rotate</dfn>。執行 <kbd>rotate left</kbd> 即可向左旋轉90度，執行 <kbd>rotate normal</kbd> 回復正常。由於 <dfn>setkeycodes</dfn> 指令需要以 root 身份執行，所以需要配合 sudo 。或者，可以設定  <dfn>setkeycodes</dfn> 的 <dfn>SetUID</dfn> 屬性，令它自動切換為 root 身份。
+</p>
+
+<script type="syntaxhighlighter" class="brush: bash;"><![CDATA[
+#!/bin/sh
+
+# WARNING!!!
+# enable setuid to root with /usr/bin/setkeycodes
+# sudo chmod u+s /usr/bin/setkeycodes
+#
+#UID=`id -u`
+#if [ $UID -ne 0 ]; then
+#	echo "You must become root to run this script."
+#	exit 1
+#fi
+
+STAT_FILE=/tmp/rotate.stat
+
+log_stat() {
+    echo $1 > $STAT_FILE
+}
+
+rotate_normal() {
+	xrandr -o normal
+    xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 0
+    xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 0 0
+	# use 'showkey' command to get key code.
+	# use 'showkey -s' command to get scan code.
+	#           Up       Down     Left     Right
+	setkeycodes e048 103 e050 108 e04b 105 e04d 106 e06a 158 e069 159
+	
+	log_stat "normal"
+}
+
+rotate_left() {
+	xrandr -o left
+    xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 1
+    xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 1 0
+	setkeycodes e048 106 e050 105 e04b 103 e04d 108 e06a 104 e069 109
+
+	log_stat "left"
+}
+
+rotate_right() {
+	xrandr -o right
+    xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 1
+    xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 0 1
+	setkeycodes e048 105 e050 106 e04b 108 e04d 103 e06a 109 e069 104
+
+	log_stat "right"
+}
+
+case "$1" in
+	normal)
+	    rotate_normal
+		;;
+	left)
+	    rotate_left
+		;;
+	right)
+	    rotate_right
+		;;
+	auto)
+	    STAT=`cat $STAT_FILE`
+	    if [ "normal" = "$STAT" ]; then
+	        rotate_left
+	    else
+	        rotate_normal
+	    fi
+	    echo $STAT
+	    ;;
+	*)
+		echo "Usage: rotate [normal|left|right]"
+		;;
+esac
+
+]]></script>
+
+<p>
+因為我將要透過鍵盤捷徑鍵來執行旋轉動作，所以我設定了 <dfn>setkeycodes</dfn> 的 SetUID 屬性 (<kbd>sudo chmod u+s /usr/bin/setkeycodes</kbd>)，略過密碼詢問動作。最後，使用桌面工具「系統」->「偏好設定」->「鍵盤捷徑鍵」，加入 自訂的捷徑鍵，命令列輸入 <code>rotate auto</code>，按鍵設定 <code>Fn + F9</code>。如此一來，我只需要按下 <code>Fn + F9</code> 就可以切換螢幕的方向了。此鍵盤捷徑鍵的設定方式，只適用於 GNOME 桌面環境。
+</p>
+<p>
+如果你是使用其他桌面環境，例如 OpenBox, LXDE ，那麼你需要利用 xbindkeys 這個套件設定捷徑鍵，並根據桌面環境的啟動方式，將 xbindkeys 加入該桌面環境的啟動指令稿中。例如 ~/.xinitrc, ~/.xsession, 或是 ~/.Xclients 。
+</p>
+<p>
+最後一提的是，在 X window 的傳統上，我們習慣將自定的指令內容加入 ~/.xinitrc (from startx) 或是 ~/.xsession (from GDM)。但是在 Ubuntu 9.10 桌面版中，當使用預設的 GNOME 桌面環境時，這些動作被略過了。我原本使用 xbindkeys 設定捷徑鍵，但是卻發現我的 ~/.xinitrc, ~/.xsession 等檔案全都沒有執行。嘗試多次後，只有寫在 ~/.profile 內的指令會被執行。最後，我透過桌面工具「系統」->「偏好設定」->「啟動應用程式」，將 xbindkeys 加入為自動啟動的程序。似乎 Ubuntu 桌面版未來傾向於透過桌面工具設定這些自定動作，而不鼓勵我們自己編寫 X 啟動內容。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11859745.html">http://blog.roodo.com/rocksaying/archives/11859745.html</a></div>

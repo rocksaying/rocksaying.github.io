@@ -1,0 +1,325 @@
+---
+title: 利用 X 字體別名，讓 Linux 桌面環境顯示文件中的標楷體、細明體與黑體
+category: computer
+old-category: 電腦技術
+tags: [字型,ubuntu,font,cjk]
+---
+<p>
+假設我今天在微軟 Windows 系統內，用 OpenOffice 編輯了一份文件，其中的字體設定為標楷體。當我把這份文件拿到 Linux 桌面環境上開啟時，我將發現文件中的字體，全部都無法以楷體顯示。這是因為在 Linux 桌面環境上，並沒有安裝標楷體這套字型。
+</p>
+
+<p>
+絕大多數人的解決方式是，將 Windows 系統中的標楷體字型檔案，複製到 Linux 桌面使用。但是就法律層面上來看，此一行為係著作權的侵權行為。微軟並未授權使用者於 Windows 系統之外單獨使用標楷體的權限。
+</p>
+
+<p>
+然而，我們是真的非要標楷體不可嗎？未必。設定字體的動作，我們可以用抽象些的方式描述:「這些字要用楷書字體顯示」。重點是楷書，不一定要哪一家。而 X Window 的字型系統有一個非常有彈性的別名功能，可以讓我們指定哪些字體可以使用什麼字體顯示。例如，我們可以告訴 X Window: 「當你碰到一份文字要顯示標楷體時，你可以用全字庫正楷體顯示它們」。如此一來，我們就不需要為了顯示文件中的字體，而買一大堆相似的字型檔案。
+</p>
+
+<!--more-->
+<h4>
+字體別名的設定文件
+</h4>
+<p>
+在 Ubuntu 9.04 以後的版本，字體別名的設置功能是放置於 <dfn>/etc/fonts/conf.avail/30-cjk-aliases.conf</dfn>。我們需要將這份文件連結到 <dfn>/etc/fonts/conf.d</dfn> 目錄中，才能正式啟動字體別名功能。
+</p>
+
+<p>
+Debian 使用者，請參考「<a href="http://blog.roodo.com/rocksaying/archives/31556973.html">Debian 8 (jessie) 安裝筆記 中文環境篇</a>」取得一份完整的別名設置文件。
+</p>
+
+<p>
+請確認有 <dfn>/etc/fonts/conf.d/30-cjk-aliases.conf</dfn> 這份文件。如果沒有，執行下列指令建立之。
+</p>
+
+<pre class="language-term">
+sudo ln -s /etc/fonts/conf.avail/30-cjk-aliases.conf \
+  /etc/fonts/conf.d/30-cjk-aliases.conf
+</pre>
+
+
+<h4>
+黑體
+</h4>
+
+<p>
+目前 Ubuntu 與大多數的 Linux 桌面環境，皆使用文泉驛正黑體，作為預設字體。文泉驛網站: <a href="http://wenq.org/">文泉驛 開源中文計劃</a>。
+它可以作為微軟 Windows 系統的正黑体(SimHei), 微軟正黑體與微軟雅黑體的替代字體。
+</p>
+
+
+<p>
+SimHei 是微軟向中易公司購買的黑體字型，支援 Unicode ，所以同時提供簡、繁兩種字體。SimHei 是 Windows XP 簡體中文版的默認字體之一。但是 Windows XP 繁體中文版的使用者也會有這個字型，只是名稱叫 SimHei。
+SimHei 的中文名稱是正黑体。只有簡體中文 Windows XP 認「正黑体」這個名稱，其他語系的 Windows 認的是 SimHei 這個名稱。
+</p>
+<p>
+微軟雅黑體是微軟 Windows Vista 簡體中文版的默認字體。微軟正黑體是微軟 Windows Vista 繁體中文版的預設字體。
+</p>
+
+<p>
+編輯 /etc/fonts/conf.avail/30-cjk-aliases.conf ，找到簡體中文 Windows 的設定段落。
+</p>
+
+<pre class="highlight"><code><span class="c">&lt;!-- Aliases for Simplified Chinese Windows fonts --&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>SimSun<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>NSimSun<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>SimSun-18030<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>NSimSun-18030<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>宋体<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>AR MingtiM GB<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL UMing CN<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ShanHeiSun Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!--
+增加一段 alias，指定文泉驛正黑(WenQuanYi Zen Hei)作為 SimHei 的替代字體
+--&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>SimHei<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>WenQuanYi Zen Hei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+<span class="c">&lt;!--
+微軟雅黑體 (Ununtu 10.04已加上此設置)
+--&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>Microsoft YaHei<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>微软雅黑<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>WenQuanYi Zen Hei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+<span class="c">&lt;!--
+微軟正黑體 (Ununtu 10.04已加上此設置)
+--&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>Microsoft JhengHei<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>微軟正黑體<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>WenQuanYi Zen Hei<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+</code></pre>
+
+
+<h4>
+楷書
+</h4>
+
+<p>
+設定全字庫正楷體或 AR PL UKai TW 作為標楷體(DFKai-sb)的替代字型。
+</p>
+
+<p>
+Ubuntu 內建提供一套 AR PL UKai TW 楷體，它是文鼎公司捐贈出來的楷書字體。然而，它的字體不符合中華民國教育部頒標準字體，嚴格說來，不適合作為「標楷體」的替代。所以我也不想用，我選擇使用全字庫正楷體作為標楷體的替代字體。
+</p>
+
+<p>
+標楷體的英文名稱是 DFKai-sb ，為 Windows XP 繁體中文版的預設字體之一。
+只有 Windows XP 繁體中文版認「標楷體」這個名稱，其他語系的 Windows 認的是 DFKai-sb 這個名稱。標楷體是微軟向華康公司購買的楷書字型，支援 Unicode ，同時提供簡、繁兩種字體。此外，其繁體字體符合中華民國教育部頒標準字體，故名為「標楷體」。
+</p>
+
+<p>
+<a href="http://www.cns11643.gov.tw/">CNS11643全字庫</a>之全字庫正楷體，係由中華民國行政院主計處(令人意外的負責單位...)，彙編我國政府機關用字所製作的字體。公開下載版內含38,676字，字體符合中華民國教育部頒標準字體，足以作為標楷體的替代字體。
+</p>
+<blockquote>
+本全字庫網站所提供之程式、資料及技術，可由各界廣為使用與加值運用，絕不得將其單獨出租、出售、轉讓或其他商業之用途；此外，加值使用於自製產品時，該產品之製作成本亦絕不涵括本版權所描述之標的，且須於產品中註明其取得方式。
+<br/>
+<cite>全字庫版權說明</cite>
+</blockquote>
+<p>
+法人組織可以向主計處申請無償使用授權(免費)。點擊全字庫網站下方的「版權聲明」，即可看到「申請全字庫授權」的連結。
+</p>
+
+
+<p>
+編輯 /etc/fonts/conf.avail/30-cjk-aliases.conf ，找到繁體中文 Windows 的設定段落。
+</p>
+
+<pre class="highlight"><code><span class="c">&lt;!-- Aliases for Traditional Chinese Windows fonts --&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>MingLiU<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>細明體<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>PMingLiU<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>新細明體<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>AR MingtiM BIG-5<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL UMing TW<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ShanHeiSun Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+
+<span class="c">&lt;!--
+增加一段 alias，指定標楷體的替代字體。
+
+Ubuntu 10.04 已加上標楷體的設置。
+
+Ubuntu 9.10 已經設定文鼎楷書字型作為標楷體的替代字型，但是它漏了英文名稱 DFKai-sb 的部份。
+--&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>DFKai-SB<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>標楷體<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+            <span class="nt">&lt;family&gt;</span>TW-Kai<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>全字庫正楷體<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL UKai TW<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ZenKai Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+</code></pre>
+
+
+<h4>
+明體與宋體
+</h4>
+
+<p>
+明體與宋體相近。可設定全字庫正宋體作為細明體的替代字型。
+</p>
+
+<p>
+Ubuntu 內建提供一套 AR PL UMing 宋體，它是文鼎公司捐贈出來的字體。然而，它的字體不符合中華民國教育部頒標準字體。我個人同樣選擇全字庫正宋體作為細明體的替代字體。
+</p>
+
+<p>
+細明體的英文名稱是 MingLiu ，為 Windows XP 繁體中文版的預設字體之一。
+只有 Windows XP 繁體中文版認「細明體」這個名稱，其他語系的 Windows 認的是 MingLiu 這個名稱。細明體是微軟向華康公司購買的字體，支援 Unicode ，同時提供簡、繁兩種字體。
+</p>
+
+<p>
+<a href="http://www.cns11643.gov.tw/">CNS11643全字庫</a>之全字庫正宋體，公開下載版內含38,850字，字體符合中華民國教育部頒標準字體。
+</p>
+<blockquote>
+本全字庫網站所提供之程式、資料及技術，可由各界廣為使用與加值運用，絕不得將其單獨出租、出售、轉讓或其他商業之用途；此外，加值使用於自製產品時，該產品之製作成本亦絕不涵括本版權所描述之標的，且須於產品中註明其取得方式。
+<br/>
+<cite>全字庫版權說明</cite>
+</blockquote>
+<p>
+法人組織可以向主計處申請無償使用授權(免費)。點擊全字庫網站下方的「版權聲明」，即可看到「申請全字庫授權」的連結。
+</p>
+
+
+<p>
+編輯 /etc/fonts/conf.avail/30-cjk-aliases.conf ，找到繁體中文 Windows 的設定段落。
+</p>
+
+<pre class="highlight"><code><span class="c">&lt;!-- Aliases for Traditional Chinese Windows fonts --&gt;</span>
+	<span class="nt">&lt;alias&gt;</span>
+		<span class="nt">&lt;family&gt;</span>MingLiU<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>細明體<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>PMingLiU<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>新細明體<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;family&gt;</span>AR MingtiM BIG-5<span class="nt">&lt;/family&gt;</span>
+		<span class="nt">&lt;accept&gt;</span>
+<span class="c">&lt;!--
+增加一段 alias，指定以全字庫正宋體作為細明體的替代字體。
+--&gt;</span>
+            <span class="nt">&lt;family&gt;</span>TW-Sung<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>全字庫正宋體<span class="nt">&lt;/family&gt;</span>
+
+            <span class="nt">&lt;family&gt;</span>AR PL UMing TW<span class="nt">&lt;/family&gt;</span>
+            <span class="nt">&lt;family&gt;</span>AR PL ShanHeiSun Uni<span class="nt">&lt;/family&gt;</span>
+        <span class="nt">&lt;/accept&gt;</span>
+	<span class="nt">&lt;/alias&gt;</span>
+
+</code></pre>
+
+
+<p>
+重新登入桌面後，就會發現那些指定字體的文件內容，都會正常顯示了。
+</p>
+
+
+<h4>
+整理內容
+</h4>
+
+<ul>
+    <li>
+<a href="{{ site.baseurl }}/archives/2007/%E6%AD%A3%E9%AB%94%E4%B8%AD%E6%96%87%E8%88%87%E7%B0%A1%E9%AB%94%E4%B8%AD%E6%96%87%E4%B9%8B%E7%B6%B2%E9%A0%81%E6%B3%9B%E7%94%A8%E5%AD%97%E5%9E%8B%E8%A8%AD%E5%AE%9A.html">正體中文與簡體中文之網頁泛用字型設定</a>
+    </li>
+</ul>
+
+<table border="1" cellspacing="0" cellpadding="2">
+<thead>
+    <tr>
+        <th>字型中文名稱</th><th>Fontname</th><th>適用項目</th>
+    </tr>
+</thead>
+
+<tbody>
+    <tr>
+        <td>全字庫正楷體</td>
+        <td>TW-Kai</td>
+        <td>襯線字(serif)</td>
+    </tr>
+    <tr>
+        <td>標楷體</td>
+        <td>DFKai-sb</td>
+        <td>襯線字(serif)</td>
+    </tr>
+    <tr>
+        <td>华文楷体</td>
+        <td>STKaiti</td>
+        <td>襯線字(serif)</td>
+    </tr>
+
+    <tr>
+        <td>全字庫正宋體</td>
+        <td>TW-Sung</td>
+        <td>襯線字(serif)</td>
+    </tr>
+    <tr>
+        <td>新細明體</td>
+        <td>PMingLiu</td>
+        <td>襯線字(serif)</td>
+    </tr>
+    <tr>
+        <td>細明體</td>
+        <td>MingLiu</td>
+        <td>襯線字(serif)</td>
+    </tr>
+    <tr>
+        <td>宋体</td>
+        <td>SimSun</td>
+        <td>襯線字(serif)</td>
+    </tr>
+
+    <tr>
+        <td>文泉驛正黑</td>
+        <td>WenQuanYi Zen Hei</td>
+        <td>無襯線字(sans-serif)</td>
+    </tr>
+
+    <tr>
+        <td>黑体</td>
+        <td>SimHei</td>
+        <td>無襯線字(sans-serif)</td>
+    </tr>
+
+    <tr>
+        <td>微软雅黑</td>
+        <td>Microsoft YaHei</td>
+        <td>無襯線字(sans-serif)</td>
+    </tr>
+
+    <tr>
+        <td>微軟正黑體</td>
+        <td>Microsoft JhengHei</td>
+        <td>無襯線字(sans-serif)</td>
+    </tr>
+
+</tbody>
+</table>
+<p>
+
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="http://blog.roodo.com/rocksaying/archives/31556973.html">Debian 8 (jessie) 安裝筆記 中文環境篇</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12397861.html">http://blog.roodo.com/rocksaying/archives/12397861.html</a></div>

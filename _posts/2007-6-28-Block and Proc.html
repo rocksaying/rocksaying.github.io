@@ -1,0 +1,168 @@
+---
+title: Block and Proc
+category: programming
+old-category: Ruby
+tags: [block,proc,closure,function]
+---
+<div class="tags" style="display:none">Tags: block proc closure function</div>
+<p>
+Ruby 可以將程式碼參數化，Ruby 稱被參數化的程式碼為 block 。Ruby 語法以 <code>{||}</code> 表示一個 block ，其中的 <code>||</code> 為參數列宣告，若無參數則可省略。
+</p>
+<p>
+Ruby 的 <code>Proc</code> 類似 ECMAScript 的 <code>Function</code>。在 ECMAScript 中使用關鍵字 <code>function</code> 即可配置一個 <code>Function</code> 實例。 Ruby 則使用 <a href="http://www.ruby-doc.org/core/classes/Kernel.html#M005948">Kernel::proc</a>、<a href="http://www.ruby-doc.org/core/classes/Kernel.html#M005949">Kernel::lambda</a> 方法 (兩者相同) 或是直接建構一個 <code>Proc</code> 實例(<code>Proc.new</code>)，需提供一個 block 作為引數。
+</p>
+<pre class="language-text">
+Ruby: proc { |arguments| codes }
+ECMAScript: function(arguments) { codes }
+</pre>
+
+<!--more-->
+<h5>Block and Proc</h5>
+<p>
+Block 無法單獨存在，只能作為 Ruby 指令或呼叫方法時的引數。Ruby 會主動將 block 參數化，程序員僅需利用流程指令 <code>yield</code> 即可將流程轉移到被參數化的 block 中運行。
+</p>
+<p>
+Block way. 這種用法較常見。
+</p>
+<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">block_given?</span>
+        <span class="k">yield</span> <span class="n">n</span>    <span class="c1"># yield to black</span>
+    <span class="k">else</span>
+        <span class="nb">puts</span> <span class="s1">'no block'</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+
+<p>
+<code>Proc</code> way. 細節後述。
+</p>
+<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">block_given?</span>
+        <span class="nb">p</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>    <span class="c1"># call proc p</span>
+    <span class="k">else</span>
+        <span class="nb">puts</span> <span class="s1">'no block'</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+
+<p>
+用例:
+</p>
+<pre class="highlight"><code><span class="n">nP</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="nb">puts</span> <span class="n">n</span><span class="p">}</span>
+<span class="n">nP</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
+    <span class="n">n</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
+        <span class="nb">puts</span> <span class="s1">'a'</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>
+不論是用 block 或是 Proc ，都可以用 <a href="http://www.ruby-doc.org/core/classes/Kernel.html#M005928">Kernel::block_given?</a> 方法判斷使用方有無傳遞 block 。
+</p>
+<p>
+<a href="http://www.ruby-doc.org/core/classes/Proc.html#M001576">Proc::call</a> 方法也可以運算子 <code>[ ]</code> 形式調用。上例之 <code>p.call n</code> 亦可寫成 <code>p[n]</code>。
+</p>
+
+<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP1</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">block_given?</span>
+        <span class="k">yield</span> <span class="n">n</span>    <span class="c1"># yield to black</span>
+    <span class="k">else</span>
+        <span class="nb">puts</span> <span class="s1">'no block'</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">nP2</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">block_given?</span>
+        <span class="nb">p</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>    <span class="c1"># call proc p</span>
+    <span class="k">else</span>
+        <span class="nb">puts</span> <span class="s1">'no block'</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+
+<p>
+ECMAScript 只有 <code>Function</code> 類，沒有 block 與 proc 的區分。上述的 Ruby 程式，以 ECMAScript 表達如下列所示:
+</p>
+<pre class="highlight"><code><span class="kd">function</span> <span class="nx">nP</span><span class="p">(</span><span class="nx">n</span><span class="p">,</span> <span class="nx">p</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">p</span><span class="p">(</span><span class="nx">n</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">nP</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">n</span><span class="p">){</span><span class="nx">print</span><span class="p">(</span><span class="nx">n</span><span class="p">)});</span>
+<span class="nx">nP</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span>
+  <span class="kd">function</span><span class="p">(</span><span class="nx">n</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">n</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span>
+      <span class="nx">print</span><span class="p">(</span><span class="s1">'a'</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">);</span>
+</code></pre>
+
+
+<h5>Block and Method</h5>
+<p>
+定義方法時，若參數名稱前冠上 <code>&amp;</code> 符號， Ruby 將自動轉換 block 為 Proc 實例(隱性調用 Proc.new)，令其成為具名參數。
+</p>
+
+<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
+    <span class="nb">p</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">mP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">p</span><span class="p">)</span>
+    <span class="nb">p</span><span class="p">.</span><span class="nf">call</span> <span class="n">m</span>
+<span class="k">end</span>
+
+<span class="n">nP</span><span class="p">(</span><span class="s1">'john'</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="nb">name</span><span class="p">}</span>
+
+<span class="n">mP</span><span class="p">(</span><span class="s1">'bob'</span><span class="p">,</span> <span class="no">Proc</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="nb">name</span><span class="p">}</span> <span class="p">)</span>
+<span class="n">mP</span><span class="p">(</span><span class="s1">'bob'</span><span class="p">,</span> <span class="nb">proc</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="nb">name</span><span class="p">}</span> <span class="p">)</span>  <span class="c1"># Kernel::proc</span>
+</code></pre>
+
+
+<p>
+大多數情形，我們只需要傳遞一段程式 (一個block) ，所以 Ruby 提供了自動轉換 block 為 Proc 實例的機制。作為待轉換為具名參數的程式碼區塊引數，必須位於方法定義之參數列的最後一個。
+</p>
+<p>
+如果要傳遞多段程式，則不適用上述轉換機制。程序員必須明確指示處理動作。
+</p>
+<pre class="highlight"><code><span class="k">def</span> <span class="nf">xP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p2</span><span class="p">)</span>  <span class="c1"># ERROR!</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">xP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+    <span class="n">p1</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
+    <span class="n">p2</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
+<span class="k">end</span>
+
+<span class="n">xP</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span>
+    <span class="nb">proc</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="nb">puts</span> <span class="n">n</span> <span class="p">},</span>
+    <span class="nb">proc</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="n">n</span><span class="p">.</span><span class="nf">times</span> <span class="p">{</span><span class="nb">puts</span> <span class="s1">'a'</span><span class="p">}</span> <span class="p">}</span>
+<span class="p">)</span>
+</code></pre>
+
+
+<p>
+自動轉換 block 為 Proc 實例的機制通常應用於動態繫結的場合。
+</p>
+<pre class="highlight"><code><span class="k">class</span> <span class="nc">DP</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
+        <span class="vi">@do</span> <span class="o">=</span> <span class="nb">p</span>
+    <span class="k">end</span>
+    <span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="vi">@do</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="no">DP</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="nb">puts</span> <span class="n">n</span><span class="p">}</span>
+<span class="n">d</span><span class="p">.</span><span class="nf">do</span> <span class="mi">5</span>
+</code></pre>
+
+
+<p>
+Block 與 Closure 的應用可參考 Martin 《<a href="http://martinfowler.com/bliki/Closure.html">Closure</a>》。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/%E9%80%8F%E9%81%8E%20JavaScript%2CRuby%2CPHP%2CC%23%20%E8%AA%9E%E8%A8%80%EF%BC%8C%E7%90%86%E8%A7%A3%20Java%20%E7%9A%84%20Lambda%20%E8%AA%9E%E6%B3%95.html">透過 JavaScript,Ruby,PHP,C# 語言，理解 Java 的 Lambda 語法</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3547373.html">http://blog.roodo.com/rocksaying/archives/3547373.html</a></div>

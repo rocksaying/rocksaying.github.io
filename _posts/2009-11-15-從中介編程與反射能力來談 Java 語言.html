@@ -1,0 +1,224 @@
+---
+title: 從中介編程與反射能力來談 Java 語言
+category: programming
+old-category: C/C++/C#/Java
+tags: [reflection,metaprogramming,中介編程,.Net]
+---
+<p>
+公司這個月開始一件專案，我分配到用 Java 開發 web service 那一塊。
+於是我親身體驗到一本書說的故事。
+</p>
+
+<blockquote>
+<p>
+找一個很聰明，但是沒有 Java 經驗的開發者，讓他去學學 Java web 企業應用的那一堆技術，然後再問問他的想法。問題是兩方面的，首先，它很難；再者，失敗的後果很悲慘。
+</p>
+<p>
+對我來說，或許這意味者程式碼應該在較高等級的抽象中，而我們無法在 Java 中做到這一點。
+</p>
+<cite>
+《超越 Java》(Beyond Java)，Bruce Tate，O'Reilly出版
+</cite>
+</blockquote>
+<p>
+我不算聰明的開發者，但十幾年基本功練下來，功底還算紥實。OOP, ORM, Design pattern 這些概念都懂。Web 架構更是熟悉。儘管如此，當我試圖使用 Spring, Hibernate 等框架時，我完全無法理解為什麼 Java 語言可以把一件簡單的事搞成這麼複雜。這件事促成我寫出《不同程式語言的中介編程與反射能力系列文章》。
+</p>
+
+<!--more-->
+<h5>
+系列文章列表:
+</h5>
+<ul>
+    <li>
+      <a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">
+      JavaScript的中介編程與反射能力示範</a>
+    </li>
+    
+    <li>
+      <a href="{{ site.baseurl }}/archives/2009/%E5%86%8D%E6%8E%A2%20JavaScript%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%20foreach.html">
+      再探 JavaScript的中介編程 foreach</a>
+    </li>
+
+    <li>
+      <a href="{{ site.baseurl }}/archives/2009/PHP%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">
+      PHP的中介編程與反射能力示範</a>
+    </li>
+
+    <li>
+      <a href="{{ site.baseurl }}/archives/2009/JavaScript%E7%9A%84%E9%A1%9E%E5%88%A5%E5%AE%9A%E7%BE%A9%E6%93%B4%E5%85%85%E8%83%BD%E5%8A%9B.html">
+      JavaScript的類別定義擴充能力</a>
+    </li>
+    
+    <li>
+      <a href="{{ site.baseurl }}/archives/2009/Ruby%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html">
+      Ruby的中介編程與反射能力示範</a>
+    </li>
+</ul>
+
+
+<h4>
+Java 神教權威
+</h4>
+<p>
+按計劃，我應該要照前幾篇文章所做的事，寫一份 Java 語言版的範例程式。不幸的是，我寫到中途就發現我的設計觸犯到 Java 神教的權威性。我不發表我寫的 Java 語言版內容，但是它大致上會像<a href="{{ site.baseurl }}/archives/2009/PHP%E7%9A%84%E4%B8%AD%E4%BB%8B%E7%B7%A8%E7%A8%8B%E8%88%87%E5%8F%8D%E5%B0%84%E8%83%BD%E5%8A%9B%E7%A4%BA%E7%AF%84.html" class="bookname_notation">PHP的中介編程與反射能力示範</a>中的設計。第一個版本簡直跟 PHP 版的第二個程式一樣。但是要做到接下來的設計內容，我就必須觸犯神教的權威。
+</p>
+
+<blockquote>
+<p>
+要寫出像 Car 這樣的流暢介面，你得殺掉 Java 的一頭聖牛: Car 類別不再是 JavaBean 類別。 Java 多數基礎架構都堅守此規範。
+</p>
+<p>
+JavaBeans 規範堅持每個物件都要有預設建構方法，但是，物件若沒狀態就無效。JeavaBeans 規範也規定 Java 之中醜陋的內容屬性語法，存取方法是 getXXX() ，而變更方法是 setXXX()。
+</p>
+<cite>
+《程式設計師提昇生產力秘笈》，Neal Ford，O'Reilly出版
+</cite>
+</blockquote>
+
+<p>
+按我的設計，我應該要根據建構時所賦予的資料內容決定欄位數與對應的方法。
+但是 Java 語言並不提供動態增加方法的功能，也不學 PHP 的 magic methods 。
+要實現我的設計，我只能用顯式命名的 <code>void setter(String name, &lt;?&gt; value)</code> 與 <code>Object getter(String name)</code> 實現 (<span class="Onote">從函數外觀來看，各位應該也留意到 Java 虛弱的分型能力無法處理這種泛型化設計</span>)。
+這就觸犯 JavaBean 要求我們用 getXXX(),setXXX() 為屬性存取方法命令的規範。
+</p>
+<p>
+其次，資料個體建構時必須要有一個參數，這個參數決定了它可接受的欄位與初值。這也扺觸 JavaBean 要求預設建構方法(無參數)的規範。而且還進一步衝撞神教的一座聖殿，那座聖殿叫 <dfn>ORM</dfn> 。
+</p>
+
+<p>
+為了滿足我在類別定義中不限制資料欄位的設計，我並不是直接讓個體的屬性對應資料欄位，而是透過一個容器資料成員儲放資料欄位與內容。再者，我又是讓建構方法的參數資料來決定資料實體的欄位內容，而不是由類別決定。這種設計不符合 ORM 聖殿宣揚的宇宙觀，更別提 Java 的容器無法滿足我的儲存需求。
+</p>
+
+<p>
+我可以用其他語言寫很多程式碼，說 Java 語言寫起來不漂亮。 Java 教士只會把我當成未開化的土人。但若我用 Java 語言寫出不符合神教規範的程式碼時，我難免會遭受到 Java 教士的攻擊。我無意碰觸神教的逆鱗，所以就不寫了。
+</p>
+
+
+<h4>
+服用抗憂鬱劑的 C++
+</h4>
+<p>
+這個標題的靈感，來自 Doug Cutting 對 Java 語言的比喻。見<span class="bookname_notation">超越 Java (Beyond Java)</span> 。
+</p>
+
+<p>
+在公司的專案工作中，我一邊寫一邊[自主規制] Java 語言，沒有動態型別、沒有中介編程、發臭的(充斥重複程式碼)迭代與反射語法。
+同一世代程式語言所廣泛實作的能力， Java 語言不是沒有就是表現貧弱， Java 的表現活像是它上一世代的程式語言。
+喔，我要列張例外清單，上一世代的程式語言中，Smalltalk, Lisp 就表現的非常<em>modern</em>。
+</p>
+<p>
+不幸的是，Java 學習的對象不是 Smalltalk 。
+嚴格來說，Java 也不是學 C++ 。它一開始就沒有函數指標、運算子多載與樣板。割掉 C++ 具有生產力的優良部份，形成了最初的 Java 語言。
+</p>
+<p>
+C/C++ 的函數指標、運算子重載與樣板等功能，因為它們帶來的抽象性而提高了生產力，但也是初學者最容易犯錯的地方。就以函數指標為例，這是看起來最不具抽象性的功能，實際上卻要求初學者破除「資料 - 程式」二分法的常識，要求程序員將函數當成資料傳遞。精通電腦病毒的設計者也告訴我們，他們可以把資料變成程式碼侵入我們的系統。一個老練的 C/C++ 程序員必然要學會使用函數指標簡化迭代工作，所以當我看到 Ruby, JavaScript 的程式碼區塊與迭代應用時，我覺得這種做法非常自然。
+</p>
+<p>
+運算子重載也具有相當的抽象性，它告訴我們可以把基本型別和參考型別的內容，放在一起用抽象的運算符號處理。當年我們 C/C++ 程序員學會類別後做的第一件事，就是寫一個 String 類別，而且可以用 <em>+</em> 把字串「加起來」(<span class="Onote">當年 STL 還在草案階段。那時的 String 類別是 C++ 程序員彼此展現功力的場所</span>)。
+</p>
+<p>
+我在撰寫本文前，先寫了一篇<a href="{{ site.baseurl }}/archives/2009/%E6%93%81%E6%8A%B1%E8%AE%8A%E5%8C%96%EF%BC%8C%E5%BE%9E%E5%87%BD%E6%95%B8%E6%8C%87%E6%A8%99%E5%88%B0%E5%87%BD%E6%95%B8%E5%80%8B%E9%AB%94.html" class="bookname_notation">擁抱變化，從函數指標到函數個體</a>。那篇談的也是函數指標與運算子重載等功能，它們的抽象性降低了中途改變設計的邊際效應。
+</p>
+
+<blockquote>
+<p>
+Java 的哲學觀主要是讓權力從開發人員手中釋放出來。但是，有趣的事情發生了：對語言建立限制，並沒有讓差的開發人員變得更好，反而對最佳開發人員做了控管，讓他們得跳過可笑的圈圈，才能把事情做好。
+</p>
+<p>
+Java 在適當時間和適當地點出現，並不表示 Java 就是完美方案。Java 有些有趣的包袱，但所有更有趣的看法都認為，作為全新之語言，Java 沒必要有任何包袱。
+</p>
+<p>
+Java 一直碰到可以做得不錯但是很花工夫的事，所以跑出了軟體框架。然後又是軟體框架。然後又是軟體框架。各方面都有所增加。軟體框架愈來愈多。
+</p>
+<cite>
+《程式設計師提昇生產力秘笈》，Neal Ford，O'Reilly出版
+</cite>
+</blockquote>
+
+<p>
+當年我學 Java 1.0 時，我沒有感受到 Java 語言所承諾的任何生產力。於是我留在 C/C++ 之中，稍後轉向另一個解決問題的途徑，我找到其他語言解決了我當時差點要用 C/C++ 做的事。當時我差點要用 C/C++ 做的事， Java 至今仍樂此不疲。
+</p>
+
+<h4>
+少年老成的 Java 語言
+</h4>
+
+<p>
+話說到此，我突然驚覺 Java 語言的歷史其實還的很年輕啊。它跟 PHP, JavaScript, Ruby 算同級生。各位可以查查 Wiki ，它會告訴你 PHP 第一版是1995年釋出，Java也是1995發佈，Ruby 跟 JavaScript 稍晚幾個月。我可以證明此事，因為我親自用過它們的第一版。
+</p>
+<p>
+我大致查了一下約十年歷史，常用於一般應用程式開發的十年世代程式語言。得到以下列表。
+</p>
+<h5>
+常用於一般應用程式開發的十年世代程式語言表:
+</h5>
+<ul>
+    <li>
+      Perl - 1987. 目前最常用的 Perl5 於 1995年發表。所以我還列在十年世代中。
+    </li>
+    <li>
+      Python - 1991
+    </li>
+    <li>
+      Java - 1994
+    </li>
+    <li>
+      PHP - 1995
+    </li>
+    <li>
+      Ruby - 1995
+    </li>
+    <li>
+      JavaScript - 1996
+    </li>
+</ul>
+
+<p>
+各位有沒有發現在上面這張表中，有一個非常不協調的語言？那就是 Java 。它的主要特性都和它的同級生不符。
+</p>
+<p>
+儘管 Java 語言的歷史才十餘年，但是卻具備許多其他程式語言欠缺的「百年傳統」，例如上述提到的神教權威。這麼多百年傳統，將 Java 打造的莊嚴凜然，神聖不可侵犯。文成武德，一統江湖。
+</p>
+
+<blockquote>
+<p>
+對於我們這些活在 Java 曾是一座印尼島嶼或者飲料時代的人而言，看在眼裡，一直覺得 Java 令人驚訝。
+</p>
+<cite>
+《程式設計師提昇生產力秘笈》，Neal Ford，O'Reilly出版
+</cite>
+</blockquote>
+
+
+<h4>
+馬丁路德(Martin Luther)來了
+</h4>
+
+<blockquote>
+<p>
+真正的天主教徒不會覺得有義務要透過工作來改變世界與社會的面貌，因為他是社會的一份子，而這社會是完美神聖不可改變的。
+</p>
+<cite>
+《血、汗與淚水》，理查•丹普，時報出版
+</cite>
+</blockquote>
+
+<p>
+儘管 Java 主導著近幾年來主要的商業應用開發，這個社會看起來是如此完美。但是 <a href="http://en.wikipedia.org/wiki/Martin_Luther">Martin Luther</a> 還是出現了。當年意圖分割 Java 三位一體神聖性的 Microsoft ，如今捲土重來。 Microsoft 這次帶來的聖經叫 <a href="http://en.wikipedia.org/wiki/Common_Language_Runtime">Common Language Runtime</a>，另一個大眾化的稱呼是 .Net Framework (<span class="Onote">CLR 是規範，.Net Framework 是實作品，還有如 Mono 之類的實作品，但是 .Net 的名聲太響</span>)。
+</p>
+<p>
+我不知道 Java 世界原本的居民們如何看待 C#/.Net Framework ，但是我看到 C#/.Net Framework 如何打破三位一體的神聖性，它們帶來一個鮮活又富有生產力的實例，告訴我們在一個共同平台上可以擁有不同的語言，而且帶來更高的生產力。
+我如今總是用 C#/.Net Framework 為對照組去剖析 Java 。並藉此說明為何 Java6 要引入 scripting 能力 (<span class="Onote"><a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Scripting for the Java Platform</a></span>)。
+</p>
+
+<p>
+Java平台還是很不錯的... 但是 Java 語言這座山略嫌矮小，看不到更高更遠的世界。看，C#/.Net framework 好像發生造山運動了，轉眼間就高過 Java 了。嘖嘖。
+</p>
+<blockquote>
+<p>
+藉由學習一個語言，可以讓你打開眼界，擴展心智到更有威力、更動態的境界。透過函數式編程或延續，你的視線會截然不同。超越 Java 的地平線，外面還有更廣的宇宙。
+</p>
+<cite>
+《超越 Java》(Beyond Java)，Bruce Tate，O'Reilly出版
+</cite>
+</blockquote><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10717609.html">http://blog.roodo.com/rocksaying/archives/10717609.html</a></div>

@@ -1,0 +1,250 @@
+---
+title: 魔獸世界UI - RaidWarningMessages, 團隊警告訊息循序放送
+category: programming
+old-category: Programming
+tags: [wow,lua]
+---
+<p>
+RaidWarningMessages，我自製的插件。基本功能是每次都按順序送出不同的訊息。因為我的戰士是坦克，在開怪前習慣用團隊警告提醒隊友。久而久之，就想在台詞上做些變化。原本是用巨集，不過巨集有限制字數不太方便，就改用 UI 來寫。
+</p>
+
+<p><strong>
+本人不提供壓縮檔。軟體授權憑證採 GNU GPL 發佈。符合 Blizarrd 所規範的 UI 發行政策。
+</strong></p>
+
+<!--more-->
+<h4>
+Usage:
+</h4>
+<ul>
+    <li>
+    /rwm <br />
+    Show help and current configuration.
+    </li>
+
+    <li>
+    /rwm add <var>message</var><br />
+    Append message.
+    </li>
+
+    <li>
+    /rwm clean<br />
+    Clean messages.
+    </li>
+
+    <li>
+    /rwm list<br />
+    List all messages.
+    </li>
+
+    <li>
+    /rwm channel<br />
+    Set chat channel. You can set: SAY, EMOTE, PARTY, BATTLEGROUND, GUILD, OFFICER, YELL, RAID, RAID_WARNING.
+    </li>
+
+    <li>
+    /rwm output<br />
+    Send next message to members.
+    </li>
+</ul>
+
+<pre class="language-text">
+/rwm
+/rwm channel RAID_WARNING
+/rwm add Target %t, FIRE!!!
+/rwm add To arms, guys. Kill %t!
+/rwm list
+/rwm output
+</pre>
+
+<h4>
+String Interpolation:
+</h4>
+<ul>
+    <li>
+    %t <br/>
+    Name of target.
+    </li>
+
+    <li>
+    %f <br/>
+    Name of focus.
+    </li>
+
+    <li>
+    %np <br/>
+    Number of members in your party/raid.
+    </li>
+</ul>
+<p>
+Example: 來吧%t, 我們可有%np個人呢!
+</p>
+
+<h4>
+RaidWarningMessages.toc
+</h4>
+<pre class="highlight"><code><span class="c1">## Interface: 30100</span>
+<span class="c1">## Title: 團隊警告訊息順序放送</span>
+<span class="c1">## Notes: 團隊警告訊息順序放送</span>
+<span class="c1">## Author: 遊手好閒的石頭成</span>
+<span class="c1">## SavedVariablesPerCharacter: RaidWarningMessagesDB</span>
+<span class="c1">## LoadOnDemand: 0</span>
+
+<span class="no">RaidWarningMessages</span><span class="p">.</span><span class="nf">xml</span>
+</code></pre>
+
+<p>
+因為目前 WOW 版本為 3.1.x ，故 Interface 之值為 30100 。
+</p>
+
+
+<h4>
+RaidWarningMessages.xml
+</h4>
+<pre class="highlight"><code><span class="nt">&lt;Ui</span> <span class="na">xmlns=</span><span class="s">"http://www.blizzard.com/wow/ui/"</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xsi:schemaLocation=</span><span class="s">"http://www.blizzard.com/wow/ui/"</span><span class="nt">&gt;</span>
+	<span class="nt">&lt;Script</span> <span class="na">file=</span><span class="s">"RaidWarningMessages.lua"</span><span class="nt">/&gt;</span>
+	<span class="nt">&lt;Frame</span> <span class="na">name=</span><span class="s">"RaidWarningMessages"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;Scripts&gt;</span>
+			<span class="nt">&lt;OnLoad&gt;</span>
+				RwmStart();
+			<span class="nt">&lt;/OnLoad&gt;</span>
+			<span class="nt">&lt;OnEvent&gt;</span>
+                RwmEvent(event, arg1);
+			<span class="nt">&lt;/OnEvent&gt;</span>
+		<span class="nt">&lt;/Scripts&gt;</span>
+	<span class="nt">&lt;/Frame&gt;</span>
+
+<span class="nt">&lt;/Ui&gt;</span>
+
+</code></pre>
+
+
+
+<h4>
+RaidWarningMessages.lua
+</h4>
+<pre class="highlight"><code><span class="o">--</span> <span class="no">Licensed</span> <span class="n">by</span> <span class="no">GNU</span> <span class="no">GPL</span> <span class="n">v3</span>
+
+<span class="n">local</span> <span class="no">RwmCounter</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">function</span> <span class="no">RwmStart</span><span class="p">()</span>
+	<span class="o">--</span> <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"RaidWarningMessages Addon loaded!"</span><span class="p">)</span>
+	<span class="o">--</span> <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"/rwm for help"</span><span class="p">)</span>
+	<span class="no">SLASH_RAIDWARNINGMESSAGES1</span> <span class="o">=</span> <span class="s2">"/rwm"</span>
+	<span class="no">SlashCmdList</span><span class="p">[</span><span class="s2">"RAIDWARNINGMESSAGES"</span><span class="p">]</span> <span class="o">=</span> <span class="no">RwmCommandDispatcher</span>
+
+	<span class="n">this</span><span class="ss">:RegisterEvent</span><span class="p">(</span><span class="s2">"ADDON_LOADED"</span><span class="p">);</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">RwmEvent</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">arg1</span><span class="p">)</span>
+   	<span class="o">--</span> <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"loaded "</span> <span class="p">.</span><span class="nf">.</span> <span class="n">event</span> <span class="p">.</span><span class="nf">.</span> <span class="n">arg1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">event</span> <span class="o">==</span> <span class="s2">"ADDON_LOADED"</span> <span class="n">and</span> <span class="n">arg1</span> <span class="o">==</span> <span class="s2">"RaidWarningMessages"</span> <span class="p">)</span> <span class="k">then</span>
+        <span class="k">if</span> <span class="no">RaidWarningMessagesDB</span> <span class="o">==</span> <span class="kp">nil</span> <span class="k">then</span>
+            <span class="no">RaidWarningMessagesDB</span> <span class="o">=</span> <span class="p">{</span>
+            	<span class="n">channel</span> <span class="o">=</span> <span class="s2">"RAID_WARNING"</span><span class="p">,</span>
+            	<span class="n">messages</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="p">};</span>
+        <span class="k">end</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">RwmCommandDispatcher</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+    <span class="n">local</span> <span class="n">opt</span> <span class="o">=</span> <span class="n">string</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="s2">"%S+"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">opt</span> <span class="o">==</span> <span class="s2">"output"</span> <span class="k">then</span>
+        <span class="no">RwmOutput</span><span class="p">()</span>
+
+    <span class="n">elseif</span> <span class="n">opt</span> <span class="o">==</span> <span class="s2">"channel"</span> <span class="k">then</span>
+        <span class="n">local</span> <span class="n">arg</span> <span class="o">=</span> <span class="n">string</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="s2">"%S+"</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="o">--</span> <span class="no">RwmSetChannel</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arg</span> <span class="o">~=</span> <span class="kp">nil</span> <span class="k">then</span>
+            <span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">channel</span> <span class="o">=</span> <span class="n">arg</span>
+        	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"RaidWarningMessages: Set channel to |cff99cc01"</span> <span class="p">.</span><span class="nf">.</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="k">end</span>
+
+    <span class="n">elseif</span> <span class="n">opt</span> <span class="o">==</span> <span class="s2">"add"</span> <span class="k">then</span>
+        <span class="n">local</span> <span class="n">arg</span> <span class="o">=</span> <span class="n">string</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="s2">".+"</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="o">--</span> <span class="no">RWM_AddMessage</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arg</span> <span class="o">~=</span> <span class="kp">nil</span> <span class="k">then</span>
+            <span class="n">table</span><span class="p">.</span><span class="nf">insert</span><span class="p">(</span><span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+        	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"RaidWarningMessages: Append message |cff99cc01"</span> <span class="p">.</span><span class="nf">.</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="k">end</span>
+
+    <span class="n">elseif</span> <span class="n">opt</span> <span class="o">==</span> <span class="s2">"clean"</span> <span class="k">then</span>
+        <span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span> <span class="o">=</span> <span class="p">{}</span>
+       	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"RaidWarningMessages: Clean messages"</span><span class="p">)</span>
+
+    <span class="n">elseif</span> <span class="n">opt</span> <span class="o">==</span> <span class="s2">"list"</span> <span class="k">then</span>
+       	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"RaidWarningMessages: Total "</span> <span class="p">.</span><span class="nf">.</span> <span class="c1">#RaidWarningMessagesDB.messages .. " messages.")</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="c1">#RaidWarningMessagesDB.messages do</span>
+            <span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"|cff99cc01"</span> <span class="p">.</span><span class="nf">.</span> <span class="n">i</span> <span class="p">.</span><span class="nf">.</span> <span class="s2">":|cffffffff "</span> <span class="p">.</span><span class="nf">.</span> <span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">end</span>
+
+    <span class="k">else</span>
+        <span class="no">RwmHelp</span><span class="p">()</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">RwmHelp</span><span class="p">()</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Send message to members: /rwm output"</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Append message: /rwm add |cff99cc01your message|cffffffff"</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"List all messages: /rwm list"</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Clean messages: /rwm clean"</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"Set chat channel: /rwm channel |cff99cc01chat channel|cffffffff"</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"  You can set: SAY, EMOTE, PARTY, BATTLEGROUND, GUILD, OFFICER, YELL, RAID, RAID_WARNING"</span><span class="p">)</span>
+	<span class="no">DEFAULT_CHAT_FRAME</span><span class="ss">:AddMessage</span><span class="p">(</span><span class="s2">"  Current set is |cff99cc01"</span> <span class="p">.</span><span class="nf">.</span> <span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">channel</span><span class="p">)</span>
+
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">RwmSubMessage</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">local</span> <span class="n">numMembers</span> <span class="o">=</span> <span class="no">GetNumRaidMembers</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">numMembers</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">then</span>
+        <span class="n">numMembers</span> <span class="o">=</span> <span class="no">GetNumPartyMembers</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">end</span>
+
+    <span class="n">local</span> <span class="n">codeTable</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="no">UnitName</span><span class="p">(</span><span class="s2">"target"</span><span class="p">),</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="no">UnitName</span><span class="p">(</span><span class="s2">"focus"</span><span class="p">),</span>
+        <span class="n">np</span> <span class="o">=</span> <span class="n">numMembers</span>
+    <span class="p">};</span>
+
+    <span class="o">--</span> <span class="n">local</span> <span class="n">s</span> <span class="o">=</span> <span class="n">string</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span><span class="p">[</span><span class="no">RwmCounter</span><span class="p">],</span> <span class="no">UnitName</span><span class="p">(</span><span class="s2">"target"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">string</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="s2">"%%(%w+)"</span><span class="p">,</span> <span class="n">codeTable</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="o">--</span> <span class="err">循序</span>
+<span class="n">function</span> <span class="no">RwmOutput</span><span class="p">()</span>
+    <span class="k">if</span> <span class="no">UnitName</span><span class="p">(</span><span class="s2">"target"</span><span class="p">)</span> <span class="o">==</span> <span class="kp">nil</span> <span class="k">then</span>
+        <span class="k">return</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="no">RwmCounter</span> <span class="o">&gt;</span> <span class="c1">#RaidWarningMessagesDB.messages then</span>
+        <span class="no">RwmCounter</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">end</span>
+
+    <span class="no">SendChatMessage</span><span class="p">(</span><span class="no">RwmSubMessage</span><span class="p">(</span><span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span><span class="p">[</span><span class="no">RwmCounter</span><span class="p">]),</span> <span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">channel</span><span class="p">)</span>
+    <span class="no">RwmCounter</span> <span class="o">=</span> <span class="no">RwmCounter</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="k">end</span>
+
+<span class="o">--</span> <span class="err">亂數</span>
+<span class="n">function</span> <span class="no">RwmRandomOutput</span><span class="p">()</span>
+    <span class="k">if</span> <span class="no">UnitName</span><span class="p">(</span><span class="s2">"target"</span><span class="p">)</span> <span class="o">==</span> <span class="kp">nil</span> <span class="k">then</span>
+        <span class="k">return</span>
+    <span class="k">end</span>
+
+    <span class="o">--</span> <span class="n">local</span> <span class="n">s</span> <span class="o">=</span> <span class="n">string</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span><span class="p">[</span><span class="n">random</span><span class="p">(</span><span class="c1">#RaidWarningMessagesDB.messages)], UnitName("target"))</span>
+    <span class="no">SendChatMessage</span><span class="p">(</span><span class="no">RwmSubMessage</span><span class="p">(</span><span class="no">RaidWarningMessagesDB</span><span class="p">.</span><span class="nf">messages</span><span class="p">[</span><span class="n">random</span><span class="p">(</span><span class="c1">#RaidWarningMessagesDB.messages)]), RaidWarningMessagesDB.channel)</span>
+<span class="k">end</span>
+
+<span class="n">function</span> <span class="no">RwmSetMessages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+    <span class="o">--</span> <span class="sr">/script RwmSetMessages({"我是跟鄉民進來看熱鬧的!只是往前面多站了一點","%t,你叫破喉嚨也不會有人來救你的","我們可有%np個人呢!"});
+    RaidWarningMessagesDB.messages = messages
+end
+
+</span></code></pre>
+
+
+<p><strong>
+本人不提供壓縮檔。軟體授權憑證採 GNU GPL 發佈。符合 Blizarrd 所規範的 UI 發行政策。
+</strong></p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/9060531.html">http://blog.roodo.com/rocksaying/archives/9060531.html</a></div>

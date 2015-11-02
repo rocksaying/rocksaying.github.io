@@ -1,0 +1,265 @@
+---
+title: Write a PHP DBus client
+category: programming
+old-category: PHP
+tags: [php, D-Bus]
+---
+<p>
+前兩天，我在觀看 PHP Manual 中新增的 Gearman 和 mqseries 兩個擴充元件的內容。我一邊想著 PHP 連 IBM WebSphere MQ Series 這種 Message bus 都支援了，真是不錯；另一邊又想起好一陣子沒留意 PHP 的 D-Bus 相關消息了。於是搜尋了一下，這次找到了兩個 php-dbus 擴充元件，版本都還在 0.1.x ，文件也非常匱乏。不過我還是看了它們的源碼文件，安裝並撰寫一些 D-Bus 應用。就結果而言，現在已經可以使用 PHP 撰寫基本的 D-Bus 客戶端應用工具了。
+</p>
+<p>
+目前有兩套 php-dbus 擴充元件:
+</p>
+<ol>
+    <li><a href="http://labs.gree.jp/Top/OpenSource/DBus-en.html">GREE Labs's php-dbus</a><br/>
+    GREE 這套的實作內容有限，你無法用它補捉 D-Bus signal 。也無法用它撰寫 D-Bus 服務。
+    </li>
+    
+    <li><a href="http://pecl.php.net/package/DBus">Derick's php-dbus</a><br/>
+    Derick 這套已經被列入 PECL 之中，而且大部分的 D-Bus 內容皆已實作，可用度最高。但是文件相當匱乏，我實際上是看著它的源碼中的<a href="http://svn.php.net/viewvc/pecl/dbus/trunk/examples/">範例程式碼</a>摸索它的使用方式。
+    </li>
+</ol>
+<p>
+這兩套我都測試過了，以 Derick's php-dbus 完成度較高。儘管 Derick's php-dbus 目前版本 (ver 0.1.0) 在撰寫 D-Bus 服務與客戶端程式時，仍然要避開某些情況才不會觸發記憶體錯誤。但它功能齊全，假以時日，等它修正錯誤後，相信它就會是 PHP 官方的 php-dbus 擴充元件。
+</p>
+
+<!--more-->
+<p>
+本文接下來就會採用 Derick's php-dbus 示範如何用 PHP 撰寫一個簡單的 D-Bus 客戶端工具。
+</p>
+
+<h4>
+Install Derick's php-dbus
+</h4>
+<p>
+因為 Windows 平台基本上沒有 D-Bus 服務，所以以下內容，都假設你是在 Linux/FreeBSD 平台下操作。
+</p>
+
+<p>
+首先前往 PECL 的 <a href="http://pecl.php.net/package/DBus">DBus</a> 網頁下載源碼壓縮檔。因為這是源碼文件，必須經過編譯才能安裝。所以接著準備 D-Bus library, header files ，以及 PHP header files, phpize (PECL tool)。
+</p>
+
+<div class="note">
+Ubuntu requied packages: libdbus-1-dev, libxml2-dev, php5-dev (include phpize)
+</div>
+
+<p>
+你下載回來的 php-dbus 是一套符合 PHP 標準擴充元件撰寫規範的源碼，故而解開壓縮檔後，僅需要執行四個標準動作，就可以完成編譯與安裝動作。假設我將 php-dbus 源碼壓縮檔的內容解開於 php-dbus 的目錄內，我只需要執行下列動作即可完成安裝。
+</p>
+<pre class="language-term">
+ $ cd php-dbus
+ $ phpize                   #PHP標準擴充元件源碼組態工具
+ $ ./configure
+ $ make                     #執行成功後就會得到 dbus.so
+ $ sudo make install
+</pre>
+
+<p>
+最後的 make install 只是將 dbus.so 複製到 PHP 搜尋擴充元件的目錄內。我們仍然要編輯 php.ini 的 <dfn>extensions</dfn> 區段，加入 <code>extension=dbus.so</code> 的設定，才能啟用 php-dbus 擴充元件。
+</p>
+
+<h4>
+DBus class
+</h4>
+<p>
+Derick's php-dbus 目前缺乏說明文件，我是參考源碼中的 <a href="http://svn.php.net/viewvc/pecl/dbus/trunk/examples/">Examples</a> 了解它的用法。
+</p>
+<p>
+php-dbus 實作了一個 <dfn>DBus</dfn> 類別。我們通常用到以下幾個方法:
+</p>
+<ul>
+    <li>new DBus($type)<br/>
+        type: <dfn>BUS_SESSION</dfn>, <dfn>BUS_SYSTEM</dfn>
+    </li>
+    <li>DBus::createProxy($service, $object, $interface)<br/>
+        配置一個 proxy 個體指向我們想要使用的 D-Bus 服務實體。
+    </li>
+    <li>DBus::addWatch($interface)<br/>
+        傾聽指定介面的 D-Bus signal (訊號)。屬於這個介面的訊號(signal) 都會回報給我們的 PHP 程式。我們要自己過濾目前的訊號事件是哪一個訊號。
+    </li>
+    <li>DBus::waitLoop($timeout)<br/>
+        配合 <code>DBus::addWatch()</code> ，用於等待訊號事件。若有訊號事件發生，則它會回傳一個 DBusSignal 實體，否則回傳 NULL。
+    </li>
+    <li>DBusSignal::matches($interface, $signal)<br/>
+        配合 <code>DBus::waitLoop()</code> 使用。用於過濾目前的訊號事件為何？
+    </li>
+    <li>DBusSignal::getData()<br/>
+        取得此訊號事件的回應資料。
+    </li>
+</ul>
+
+<h4>
+顯示 Rhythmbox 目前播放曲目
+</h4>
+<p>
+我將以 Rhythmbox 這套 Ubuntu 預設安裝的媒體播放工具為例，以 PHP 透過 D-Bus 服務取得 Rhythmbox 目前播放的音樂檔名。
+</p>
+
+<h6>
+watch_rhythmbox_playing.php
+</h6>
+<p>
+我只用 Rhythmbox D-Bus 服務的 org.gnome.Rhythmbox.Player.getPlayingUri() 方法，以及傾聽 org.gnome.Rhythmbox.Player.playingUriChanged() 訊號。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="cm">/*
+There are two php-dbus bindings.
+1. GREE Labs's
+http://labs.gree.jp/Top/OpenSource/DBus-en.html
+
+GREE's php-dbus binding could not handle D-Bus signal.
+Also you could not write a D-Bus service by GREE's binding.
+
+2. Derick's
+http://pecl.php.net/package/DBus
+
+required: dbus library and header files, phpize (PECL tools).
+Ubuntu packages: libdbus-1-dev, php5-dev
+
+Derick's is most useful, but lacks of documents.
+You need to see it's examples.
+http://svn.php.net/viewvc/pecl/dbus/trunk/examples/
+*/</span>
+
+<span class="nv">$rhythmboxService</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox'</span><span class="p">;</span>
+<span class="nv">$rhythmboxPlayer</span> <span class="o">=</span> <span class="s1">'/org/gnome/Rhythmbox/Player'</span><span class="p">;</span>
+<span class="nv">$rhythmboxPlayerInterface</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox.Player'</span><span class="p">;</span>
+<span class="cm">/*
+dbus-send --session --print-reply \
+    --dest=org.gnome.Rhythmbox \
+    /org/gnome/Rhythmbox/Player \
+    org.freedesktop.DBus.Introspectable.Introspect
+*/</span>
+
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SESSION</span><span class="p">);</span>
+
+<span class="nv">$playerProxy</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
+    <span class="nv">$rhythmboxService</span><span class="p">,</span> <span class="nv">$rhythmboxPlayer</span><span class="p">,</span> <span class="nv">$rhythmboxPlayerInterface</span><span class="p">);</span>
+
+<span class="nv">$uri</span> <span class="o">=</span> <span class="nv">$playerProxy</span><span class="o">-&gt;</span><span class="na">getPlayingUri</span><span class="p">();</span>
+<span class="c1">//透過 proxy 實體，呼叫 RhythmboxPlayer-&gt;getPlayingUri()。
+//取得它目前正在播放的音樂檔名。
+</span>
+<span class="k">echo</span> <span class="s2">"Rhythmbox is playing: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">addWatch</span><span class="p">(</span><span class="nv">$rhythmboxPlayerInterface</span><span class="p">);</span>
+<span class="c1">//傾聽 RhythmboxPlayer 介面的訊號。
+</span>
+<span class="k">while</span> <span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">waitLoop</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span> <span class="p">)</span>
+        <span class="k">continue</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">matches</span><span class="p">(</span><span class="nv">$rhythmboxPlayerInterface</span><span class="p">,</span> <span class="s1">'playingUriChanged'</span><span class="p">))</span> <span class="p">{</span>
+        <span class="c1">//過濾傾聽 Rhythmbox 改變曲目的訊號。
+</span>        <span class="nv">$uri</span> <span class="o">=</span> <span class="nv">$s</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span>
+        <span class="k">echo</span> <span class="s2">"Rhythmbox changes to play: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h5>
+DBus2 class
+</h5>
+<p>
+我覺得目前 php-dbus 過濾訊號的模式很難看，所以我參考了 Python dbus 模組，另外定義了一個 DBus2 類別，它實作了一個新方法 <code>addSignalReceiver()</code> ，以及內含迴圈的 <code>mainLoop()</code>。<del>並覆寫了 <code>waitLoop()</code> 的行為方式</del>
+</p>
+
+<h6>
+new_watch_rhythmbox_playing.php
+</h6>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="sd">/**
+ * DBus2 class
+ *
+ * @license: LGPL
+ * @author: rock
+ */</span>
+<span class="k">class</span> <span class="nc">Dbus2</span> <span class="k">extends</span> <span class="nx">Dbus</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$type</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">(</span><span class="nv">$type</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="c1">//self.bus.add_signal_receiver(self.handler, dbus_interface=Hello.interface, signal_name = "SignalSay")
+</span>    <span class="k">function</span> <span class="nf">addSignalReceiver</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$interface</span><span class="p">,</span> <span class="nv">$signal</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span><span class="p">[</span><span class="nv">$interface</span><span class="p">]))</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span><span class="p">[</span><span class="nv">$interface</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span><span class="p">[</span><span class="nv">$interface</span><span class="p">][</span><span class="nv">$signal</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$callback</span><span class="p">;</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">addWatch</span><span class="p">(</span><span class="nv">$interface</span><span class="p">);</span>
+        <span class="c1">//var_dump($this-&gt;signalReceivers);
+</span>    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="nf">mainLoop</span><span class="p">(</span><span class="nv">$time</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$s</span> <span class="o">=</span> <span class="k">parent</span><span class="o">::</span><span class="na">waitLoop</span><span class="p">(</span><span class="nv">$time</span><span class="p">);</span>
+            <span class="nv">$called</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span> <span class="k">as</span> <span class="nv">$interface</span> <span class="o">=&gt;</span> <span class="nv">$members</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$members</span> <span class="k">as</span> <span class="nv">$signal</span> <span class="o">=&gt;</span> <span class="nv">$callback</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">matches</span><span class="p">(</span><span class="nv">$interface</span><span class="p">,</span> <span class="nv">$signal</span><span class="p">))</span> <span class="p">{</span>
+                            <span class="c1">//echo "matches\n";
+</span>                            <span class="nv">$reply</span> <span class="o">=</span> <span class="nv">$s</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span>
+                            <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$reply</span><span class="p">))</span>
+                                <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$reply</span><span class="p">);</span>
+                            <span class="k">else</span>
+                                <span class="nb">call_user_func</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$reply</span><span class="p">);</span>
+                            <span class="nv">$called</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+                            <span class="k">break</span><span class="p">;</span> <span class="c1">//foreach members
+</span>                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nv">$called</span><span class="p">)</span>
+                        <span class="k">break</span><span class="p">;</span> <span class="c1">//foreach receivers
+</span>                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="nv">$rhythmboxService</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox'</span><span class="p">;</span>
+<span class="nv">$rhythmboxPlayer</span> <span class="o">=</span> <span class="s1">'/org/gnome/Rhythmbox/Player'</span><span class="p">;</span>
+<span class="nv">$rhythmboxPlayerInterface</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox.Player'</span><span class="p">;</span>
+
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus2</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SESSION</span><span class="p">);</span> <span class="c1">// use DBus2, not DBus
+</span>
+<span class="nv">$playerProxy</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
+    <span class="nv">$rhythmboxService</span><span class="p">,</span> <span class="nv">$rhythmboxPlayer</span><span class="p">,</span> <span class="nv">$rhythmboxPlayerInterface</span><span class="p">);</span>
+
+<span class="nv">$uri</span> <span class="o">=</span> <span class="nv">$playerProxy</span><span class="o">-&gt;</span><span class="na">getPlayingUri</span><span class="p">();</span>
+
+<span class="k">echo</span> <span class="s2">"Rhythmbox is playing: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+
+<span class="k">function</span> <span class="nf">my_callback</span><span class="p">(</span><span class="nv">$uri</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">"Rhythmbox changes to play: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">addSignalReceiver</span><span class="p">(</span><span class="s1">'my_callback'</span><span class="p">,</span> <span class="nv">$rhythmboxPlayerInterface</span><span class="p">,</span> <span class="s1">'playingUriChanged'</span><span class="p">);</span>
+
+<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">mainLoop</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+我看過 php-dbus 的源碼後，發覺它目前實作的方法有點少，所以我們才需要特別處理 <code>waitLoop()</code> 的模式。如果我們使用 dbus library 中的 <code>dbus_message_get_interface()</code> 和 <code>dbus_message_get_member()</code> 方法，就可以提高過濾訊號的效率。
+</p>
+<p>
+等我改天找個空閒時間，跟作者聯絡一下，把我這 DBus2 class 的內容，用 C 語言寫進 php-dbus。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2010/D-Bus%20%E7%94%A8%E9%80%94%E8%AA%AA%E6%98%8E.html">D-Bus 用途說明</a></li>
+<li><a href="{{ site.baseurl }}/archives/2010/PHP%20D-Bus%20%E8%88%87%20Gearman%20%E4%B9%8B%E6%AF%94%E8%BC%83.html">PHP D-Bus 與 Gearman 之比較</a></li>
+<li><a href="{{ site.baseurl }}/archives/2010/php-dbus%200.1.0%20%E6%92%B0%E5%AF%AB%20DBus%20service%20%E7%9A%84%E4%BD%BF%E7%94%A8%E7%B6%93%E9%A9%97.html">php-dbus 0.1.0 撰寫 DBus service 的使用經驗</a></li>
+<li><a href="{{ site.baseurl }}/archives/2011/php-dbus%20unboxing.html">php-dbus unboxing</a></li>
+<li><a href="{{ site.baseurl }}/archives/2013/Php-dbus%20extension%20with%20ByteArray%20support.html">Php-dbus extension with ByteArray support</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/12193781.html">http://blog.roodo.com/rocksaying/archives/12193781.html</a></div>

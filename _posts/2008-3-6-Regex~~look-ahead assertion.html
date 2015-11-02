@@ -1,0 +1,63 @@
+---
+title: Regex~~look-ahead assertion
+category: programming
+old-category: Programming
+tags: [regex,regexp]
+---
+<div class="tags" style="display:none">Tags: regex regexp</div>
+<p>
+有一字串，其格式為以逗號 (,) 分隔的記錄，例如 <code>"a","b","c"</code>。當某些欄位之值為空白時，會有逗號相連的情形，例如 <code>"a",,"c"</code>。
+</p>
+<p>
+現在要用字樣規則式(Regular Expression, Regex)修改空白欄位的表達方式，改成一個空字串 (<code>""</code>)，一般我們會寫成 <code>s/,,/,"",/g</code> (by Perl)。不過這種寫法碰到連續多個空白欄位時，例如 <code>"a",,,"c"</code>，會變成 <code>"a","",,"c"</code>，得不到我們要的結果。因為 Regex 解析器在找到第一組 <code>,,</code> 後，會把處理指標放在第3個逗號的位置上。當 Regex 解析器進行下一個比對動作時，它將從第3個逗號開始尋找，此時它看到的只有一個逗號，故判定不符合樣式，也就不會進行替換動作。
+</p>
+<p>
+碰到這種情形，我們要用 look-ahead assertion (前瞻斷言) 處理。 Look-ahead assertion 的語法為 <code>(?=<var>pattern</var>)</code>。See also <a href="http://perldoc.perl.org/perlre.html#Extended-Patterns">perlre::Look-Around Assertions</a>。
+</p>
+
+<!--more-->
+<p>
+前瞻斷言 (look-ahead assertion) 的意義為: 我的樣式要接著一個前瞻斷言樣式，但不包含那個前瞻斷言樣式。因為它的意義是"不包含"，所以，Regex 解析器不會把處理指標放在前瞻斷言樣式之後。
+</p>
+<p>
+例如: <code>a,,,b,,c</code>
+</p>
+<pre class="language-text">
+字串:a,,,b,,c
+指標:01234567
+</pre>
+
+<p>
+若以 <code>s/,,/,"",/g</code> 進行替換。當 Regex 找到第一組逗號時，它會把處理指標放在 3 的位置。下一個比對動作將從指標 3 的位置開始找。這就得不到我們要的結果。
+</p>
+<p>
+若要改成我們要的結果，則以前瞻斷言改寫成 <code>s/,(?=,)/,""/g</code> (注意替換字串是 <code>,""</code>)。 這時的意義是: 尋找有一個逗號且接著另一個逗號的樣式，但不包含另一個逗號。因為我們說"不包含"另一個逗號，所以 Regex 找到第一組逗號時，它將會把指標放在 2 的位置。下一個比對動作將從指標 2 的位置開始找。如此就能得到我們要的結果。
+</p>
+
+<h5>Perl</h5>
+<pre class="highlight"><code>$s = 'a,,,b,,c';
+$s =~ s/,(?=,)/,""/g;
+print "$s\n";
+</code></pre>
+
+
+<h5>PHP</h5>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$s</span> <span class="o">=</span> <span class="s2">"a,,,b,,c"</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s1">'/,(?=,)/'</span><span class="p">,</span> <span class="s1">',""'</span><span class="p">,</span> <span class="nv">$s</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<h5>JavaScript</h5>
+<pre class="highlight"><code><span class="nx">s</span> <span class="o">=</span> <span class="s1">'a,,,b,,c'</span><span class="p">;</span>
+<span class="nx">print</span><span class="p">(</span> <span class="nx">s</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/,</span><span class="se">(?=</span><span class="sr">,</span><span class="se">)</span><span class="sr">/g</span><span class="p">,</span> <span class="s1">',""'</span><span class="p">)</span> <span class="p">);</span>
+</code></pre>
+
+<p>See also: <a href="{{ site.baseurl }}/archives/2007/Regular%20Expression%20%28RegExp%29%20in%20JavaScript.html">Regular Expression (RegExp) in JavaScript</a></p>
+
+<h5>Ruby</h5>
+<pre class="highlight"><code><span class="n">s</span> <span class="o">=</span> <span class="s1">'a,,,b,,c'</span>
+<span class="nb">print</span> <span class="n">s</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="sr">/,(?=,)/</span> <span class="p">,</span> <span class="s1">',""'</span><span class="p">)</span>
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/5645437.html">http://blog.roodo.com/rocksaying/archives/5645437.html</a></div>

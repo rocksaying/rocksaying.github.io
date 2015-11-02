@@ -1,0 +1,264 @@
+---
+title: Web programming (in 1999)
+category: programming
+old-category: Programming
+tags: []
+---
+<p>
+這是我在 1999 年時為社團活動所編寫的一份技術課程講義，課程主題是「Web programming」 (<a href="http://home.educities.edu.tw/shirock/paper/web_programming.htm">原始版本</a>)。在當時， WWW 剛走進人們的生活中不久，資訊人員還在談著 CGI ，而 Web programming 還是一個模糊的概念。
+</p>
+<p>
+現在回頭看這份講義，像是一份歷史文件，記錄著當時人們所使用的用詞和工具。然而，工具一時的，觀念是長久的。當時所談的觀念仍然支撐著現在的 Web 環境。有時候拋開那些被高度包裝的種種 Web 開發工具與名詞，回去看看那原初的名詞與意義，反而能夠讓後進者學到純淨的知識，從零思考 web programming 的內涵。
+</p>
+
+<!--more-->
+<h3 style="font-family:Times">Web programming</h3>
+<p class="authinfo">1999.12.14 于義守大學網路策進會講課用講義，遊手好閒的石頭成</p>
+<h4><a name="目錄">目錄</a></h4>
+<ul>
+  <li><a href="#WWW簡介"> WWW 簡介</a></li>
+  <li><a href="#CGI簡介"> CGI 簡介</a></li>
+  <li><a href="#Three-tier架構簡介"> Three-tier 架構簡介</a></li>
+  <li><a href="#開發工具簡介">開發工具簡介</a></li>
+  <li><a href="#程式範例">程式範例</a></li>
+  <li><a href="#參考文件">參考文件</a></li>
+</ul>
+<hr>
+<h4><a href="#目錄" name="WWW簡介"> WWW 簡介</a></h2>
+<p>WWW 最早是由歐洲量子物理實驗室的 Tim Berners-Lee 所創造，他的目的在建立一個可描述的多媒體系統。 利用簡單的文字描述文件的內容，透過網路連結分散在各處的文件，最後藉由特定的通訊協定將資料傳送到使用者的面前。</p>
+<p>描述文件內容的語言是 HTML ，表達文件位置的是 URL ，而傳遞文件的協定則是 HTTP ，在傳遞文件時則用了 MIME 說明文件的型態資訊。</p>
+<p>我們將提供文件及 HTTP 服務的主機稱為 Web server ，而使用者用來瀏覽文件的工具，稱為瀏覽器。</p>
+<p>由於可提供豐富的文件內容以及強大的擴充彈性，使 WWW 愈來愈流行。</p>
+<h4><a href="#目錄" name="CGI簡介"> CGI 簡介</a></h2>
+<p>原先，文件提供者利用 HTML 描述文件的內容，並將此描述內容存為檔案(一般稱為 html 文件或網頁)，再將這些文件放到 Web server 上等待使用者透過瀏覽器取得這些資料，因此這是一個被動且靜態的環境。</p>
+<p>為了讓使用者能夠主動提供資料給 Web server ，並讓 Web server 依情況自動產生 html 文件給使用者，因此提出了 CGI 這個介面規格，使 WWW 成為互動且動態的環境。</p>
+<p>CGI 是讓同在 Web server 上的 HTTP 伺服程式及文件產生者間互相溝通的介面規格。規格中說明了 HTTP 伺服器如何傳遞使用者的資料及使用狀態的資訊給文件產生者；也說明了文件產生者如何傳遞文件給 HTTP 伺服器。</p>
+<p>通常，一個文件產生者所產生的文件，是一個 HTML 文件，但也可以是其他型態的文件。 例如一個圖形計數器，其產生的文件，即為圖形文件，通常是 GIF 或 JPEG 圖檔。</p>
+<img src="http://blog.roodo.com/rocksaying/6028aaa3.gif" width="400" height="200" alt="CGI 運作方式"/>
+
+<h4><a href="#目錄" name="Three-tier架構簡介"> Three-tier 架構簡介</a></h2>
+<p>在 CGI 運作方式中，瀏覽器是 HTTP 的 Client 端， HTTP server 是 HTTP 的 Server 端，程式架構是所謂的 Client/Server 架構。但由於 CGI 的加入，使得情況產生了變化。</p>
+<p>文件產生者其實就是一個應用程式。 由於將文件產生者及資料，都儲存在 Web server 上，因此主機在服務一個使用者的需求時，要同時進行應用程式的執行及資料的存取工作，當需求量及資料量大時，造成主機莫大的負擔。為了減輕 Web server 的負擔，就把資料給移到另一台主機上。文件產生者再透過網路連向該主機存取資料。 如此一來，便可將應用程式的執行及資料的存取工作，分散在兩台主機上，有效地減輕單一主機的負擔。</p>
+<p>後來，又有 Java 及 ActiveX 等技術的出現，以 Java 為例，其運作方式是先以 Java 撰寫應用程式，再將應用程式製作為 Applet 或 Servlet 放在 Web server 上，瀏覽器將 Applet 下載回來執行或者是將 Servlet 在 Web server 上執行，由 Applet 或 Servlet 向特定的主機存取資料。</p>
+<p>隨著情況的發展，這種情形愈來愈普遍後，就形成了所謂的 Three-tier 架構，此架構分成下述三個階層:</p>
+<ol>
+  <li>Client<br>
+    通常這個 Client 就是指一般人用的瀏覽器，當然，也有人專門設計一個。</li>
+  <li>Application Server<br>
+    儲存及執行應用程式的主機，通常是 Web server 。</li>
+  <li>Database Server<br>
+    資料庫所在的主機。</li>
+</ol>
+<img src="http://blog.roodo.com/rocksaying/d736ad7a.gif" width="400" height="200" alt="分散式架構圖"/>
+<p>在 Three-tier 架構中，通常使用瀏覽器作為 Client ，所以不用設計。 為了方便維護資料以及簡化應用程式向 Database Server 存取資料的設計工作，一般採用支援網路環境的資料庫系統，這些資料庫系統要能提供 ODBC 、 JDBC 或其獨有的網路連接方式，以供應用程式連結，同時最好可以使用 SQL 存取資料庫。很幸運的是，符合上述需求的資料庫系統非常的多，因此也沒有自行設計的必要。</p>
+<p>既然 Client 跟 Database Server 都不用著手，那剩下的就是要放在 Web server 上的那些應用程式的設計工作了，這個設計工作，故且稱之 <strong>Web programming</strong> 。</p>
+<p>Three-tier 架構還可再擴充到所謂的 N-tier 架構，較正式的說法，稱為「分散式架構」。 此外，以傳統工具所打造的應用程式，還是屬於傳統的手工製品，不符合軟體設計元件化的潮流，因此，更進一步地引入了 CORBA 或 Microsoft 的 DCOM ，使用分散式元件塑造應用程式。在此情形下，更明確地區分出 Web Server 與 Application Server ，亦即，在以 CORBA 或 DCOM 所架構的分散式環境中， Web Server 不等於 Application Server 。</p>
+<p>在一般的應用上，我們將應用程式及分散式元件放在專門的 Application Server 之上， 通常此 Server 位於企業防火牆內，企業員工則使用專門設計的 Client 連結此 Application Server； 而 Web Server 則進一步地成為防火牆間的內外通道，外部人員以瀏覽器連結 Web Server 執行其上的 CGI 程式， 而 CGI 程式再呼叫 Application Server 上的元件連結資料庫 (或直接連結資料庫)。 此為 Intranet 及 Extranet 的概念。</p>
+<p>不過，這已經超出了 Web 的範圍，不在本篇所欲探討的 Web programming 之範疇。 </p>
+
+<h4><a href="#目錄" name="開發工具簡介">開發工具簡介</a></h2>
+<p>CGI 規格並沒有規定使用的工具，因此，只要你使用的工具，能夠進行 CGI 所規範的運作方式，就可以用來做 Web programming 。 一個有趣的情形是，一個符合 CGI 運作方式的程式，都是傳統的文字介面程式，但使用者在使用時，卻是以視窗模式在操作。文字介面程式好寫，卻不好用；視窗介面程式好用，卻不好寫。 現在，有個方式可以讓程式人員好寫，又讓使用者好用，何樂而不為？</p>
+<p>舉例來說，下面是一個簡單的 C語言程式: hello.c</p>
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;;
+</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Hello world."</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>現在，我們只要按 CGI 的規範，加上一行程式，修改後如下: hello_cgi.c</p>
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;
+</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Content-type: text/html</span><span class="se">\n\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Hello world."</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>當我們將其編譯放到 Web server 上，使用者透過瀏覽器執行後，看到的就是一個視窗，視窗中顯示著 Hello world.</p>
+<p>話說回來，上面的程式怎麼看都不像一份 HTML 文件，最好是有種工具可以讓我們既方便寫程式，又方便設計 HTML 文件的外觀，於是，HTML-embdded Script 就出現了。 請看看下面的兩個例子，一切盡在不言中。</p>
+
+<pre class="highlight"><code><span class="cp">#include &lt;stdlib.h&gt;
+</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Content-type: text/html</span><span class="se">\n\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"&lt;html&gt;&lt;head&gt;&lt;title&gt;測試&lt;/title&gt;&lt;/head&gt;"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"&lt;body&gt;"</span><span class="p">);</span>
+  <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="p">)</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"&lt;p&gt;Hello world.&lt;/p&gt;"</span><span class="p">);</span>
+  <span class="k">else</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"&lt;p&gt;Hello %s.&lt;/p&gt;"</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"&lt;/body&gt;&lt;/html&gt;"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+
+<br/>
+<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+<span class="nt">&lt;title&gt;</span>測試<span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>Hello
+<span class="nt">&lt;script</span> <span class="na">language=</span><span class="s">javascript</span><span class="nt">&gt;</span>
+document.write(location.search.substring(1, location.search.length);
+<span class="nt">&lt;/script&gt;</span>.<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;</span>Hello <span class="cp">&lt;?php echo $Query_String; ?&gt;</span>.<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+<p>目前有哪些 HTML-embedded script 了呢？我所知如下:</p>
+<ul>
+  <li>JavaScript (ECMA Script)</li>
+  <li>VBScript</li>
+  <li>ASP (Active Server Page)</li>
+  <li>PHP</li>
+  <li>JSP (Java Server Page)</li>
+  <li>embedded perl</li>
+</ul>
+
+<h4><a href="#目錄" name="程式範例">程式範例</a></h2>
+<p>在此，僅以幾個程式範例來說明如何以 PHP 來實作一個 Web application ，其實只是幾隻小程式而已。</p>
+<p>
+<fieldset>
+<legend>login.phtml</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="nv">$db</span> <span class="o">=</span> <span class="nx">dbmopen</span><span class="p">(</span><span class="s2">"/tmp/mypass"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">or</span> <span class="k">die</span><span class="p">(</span><span class="s2">"Can not open file"</span><span class="p">);</span>
+
+<span class="nv">$reg_password</span> <span class="o">=</span> <span class="nx">dbmfetch</span><span class="p">(</span><span class="nv">$db</span><span class="p">,</span> <span class="nv">$user</span><span class="p">);</span>
+
+<span class="nx">dbmclose</span><span class="p">(</span><span class="nv">$db</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span> <span class="nv">$reg_password</span> <span class="k">and</span> <span class="o">!</span><span class="nb">strcmp</span><span class="p">(</span><span class="nv">$reg_password</span><span class="p">,</span> <span class="nb">md5</span><span class="p">(</span><span class="nv">$password</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span> <span class="o">:</span>
+	<span class="nb">setcookie</span><span class="p">(</span><span class="s2">"LGUSER"</span><span class="p">,</span> <span class="nv">$user</span><span class="p">,</span> <span class="nb">time</span><span class="p">()</span><span class="o">+</span><span class="mi">3600</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">,</span> <span class="nv">$SERVER_NAME</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+	<span class="nb">header</span><span class="p">(</span><span class="s2">"Locatin: view.phtml"</span><span class="p">);</span>
+<span class="k">else</span> <span class="o">:</span>
+<span class="cp">?&gt;</span>
+
+<span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">post</span><span class="nt">&gt;</span>
+Login: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">text</span> <span class="na">name=</span><span class="s">user</span><span class="nt">&gt;&lt;BR&gt;</span>
+Password: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">password</span> <span class="na">name=</span><span class="s">password</span><span class="nt">&gt;&lt;br&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">submit</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+
+<span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span>
+</code></pre>
+
+</fieldset>
+<p> 為了簡單起見，我只用了 DBM 資料庫而已，而沒有用 SQL 資料庫系統，因為若在PHP語言中， 再加入 SQL 的話，看不懂的人可能會更多。 DBM 資料庫的使用，請看我寫的「<a href="http://home.educities.edu.tw/shirock/comp/gdbm-intro.txt"> GDBM/NDBM 介紹</a>」。</p>
+<p>首先，按照 SGML 規格的表示法， <code>'&lt;?' / '?&gt;'</code> 表示在文件中插入一段指令，而 <code>'&lt;?'</code> 後緊跟著解析這段指令的解析器的識別字。因此，<code>'&lt;?php' / '?&gt;'</code> 表示在文件中插入一段由 PHP 負責解析的指令，雖然PHP允許在標籤中省略掉 php 這個識別字， 但為了擴允性，例如跟 XML 合用，最好還是按規距來。</p>
+<p>我們先開啟 '/tmp/mypasss' 這個 PASSWORD 檔，取得帳號及密碼後，加以比對是否相符。 若符合，則簡單地以 <code>setcookie()</code> 設定一個 cookie:LGUSER ，以表示使用者身份檢查過了，接著以 <code>header()</code> 送出一個 HTTP header:'Location: '，自動轉向到指定的文件。 若不符合，則顯示一個資料輸入表格，供使用者輸入。 由於 PHP 可以自動將 httpd server 送過來的環境變數、 Cookie 、 Query string 、 Form data 的內容，定義為 PHP 中的變數， 為了配合這個功能，我們為資料輸入表格中的元件 (<code>&lt;input&gt;</code>) ，指定一個適當的 name 屬性值，讓 PHP 將其轉成名稱對應的變數。 對了，必須將包含 <code>header()</code> 及 <code>setcookie()</code> 指令的 PHP 標籤，放在文件的第一行，前面不能有任何空行或空白， 否則就會使那兩個函數失效。</p>
+<p>
+<fieldset>
+<legend>view.phtml</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span><span class="p">(</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$LGUSER</span><span class="p">)</span> <span class="p">)</span>
+	<span class="nb">header</span><span class="p">(</span><span class="s2">"Location: login.phtml"</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>Welcome <span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$LGUSER</span> <span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>
+<span class="nt">&lt;table</span> <span class="na">border=</span><span class="s">1</span><span class="nt">&gt;</span>
+<span class="nt">&lt;tr&gt;</span>
+<span class="nt">&lt;th&gt;</span>Name
+<span class="nt">&lt;th&gt;</span>Full name
+<span class="nt">&lt;th&gt;</span>E-mail address
+<span class="nt">&lt;th&gt;</span>Register date
+<span class="cp">&lt;?php</span>
+<span class="nv">$db</span> <span class="o">=</span> <span class="nx">dbmopen</span><span class="p">(</span><span class="s2">"/tmp/mydata"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">);</span>
+
+<span class="nv">$key</span> <span class="o">=</span> <span class="nx">dbmfirstkey</span><span class="p">(</span><span class="nv">$db</span><span class="p">);</span>
+<span class="k">while</span><span class="p">(</span><span class="nv">$key</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nv">$data</span> <span class="o">=</span> <span class="nx">dbmfetch</span><span class="p">(</span><span class="nv">$db</span><span class="p">,</span> <span class="nv">$key</span><span class="p">);</span>
+	<span class="nb">parse_str</span><span class="p">(</span><span class="nv">$data</span><span class="p">);</span>
+	<span class="k">echo</span> <span class="s2">"&lt;tr&gt;&lt;td&gt;"</span> <span class="o">.</span> <span class="nv">$key</span><span class="p">;</span>
+	<span class="k">echo</span> <span class="s2">"&lt;td&gt;"</span> <span class="o">.</span> <span class="nb">rawurldecode</span><span class="p">(</span><span class="nv">$fullname</span><span class="p">);</span>
+	<span class="k">echo</span> <span class="s2">"&lt;td&gt;"</span> <span class="o">.</span> <span class="nb">rawurldecode</span><span class="p">(</span><span class="nv">$email</span><span class="p">);</span>
+	<span class="k">echo</span> <span class="s2">"&lt;td&gt;"</span> <span class="o">.</span> <span class="nv">$regdate</span><span class="p">;</span>
+	<span class="nv">$key</span> <span class="o">=</span> <span class="nx">dbmnextkey</span><span class="p">(</span><span class="nv">$db</span><span class="p">,</span> <span class="nv">$key</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">dbmclose</span><span class="p">(</span><span class="nv">$db</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;a</span> <span class="na">href=</span><span class="s">add.phtml</span><span class="nt">&gt;</span>Add entry<span class="nt">&lt;/a&gt;&lt;/p&gt;</span>
+
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>程式一開始，就先檢查 <var>LGUSER</var> 此變數是否有設定，按照正常操作，我們預期這個變數應該是透過 Cookie 傳來的，但事實上， 就算是直接加在 URL 後的 Query string 中也是可以的，但這就不是我們預期的方式，因此下面的程式用的又是另一個方式。</p>
+<p>接著走訪 '/tmp/mydata' 資料庫，一一列出資料庫中的內容。 為了配合 <code>parse_str()</code> ，記錄的 data 是用 URL-encoding 的方式編碼過的，因此在輸出時需要先以 <code>rawurldecode()</code> 解碼。</p>
+<p>
+<fieldset>
+<legend>add.phtml</legend>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">if</span><span class="p">(</span> <span class="o">!</span> <span class="nv">$HTTP_COOKIE_VARS</span><span class="p">[</span><span class="s2">"LGUSER"</span><span class="p">]</span> <span class="p">)</span>
+	<span class="nb">header</span><span class="p">(</span><span class="s2">"Location: login.phtml"</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>Welcome <span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$LGUSER</span> <span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>
+<span class="cp">&lt;?php</span>
+<span class="k">if</span><span class="p">(</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$auser</span><span class="p">)</span> <span class="k">or</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$afullname</span><span class="p">)</span> <span class="k">or</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$aemail</span><span class="p">)</span> <span class="p">)</span> <span class="o">:</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">post</span><span class="nt">&gt;</span>
+User: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">text</span> <span class="na">name=</span><span class="s">auser</span><span class="nt">&gt;&lt;BR&gt;</span>
+Full name: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">text</span> <span class="na">name=</span><span class="s">afullname</span><span class="nt">&gt;&lt;br&gt;</span>
+E-Mail: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">text</span> <span class="na">name=</span><span class="s">aemail</span><span class="nt">&gt;&lt;br&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">submit</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+<span class="cp">&lt;?php</span>
+<span class="k">else</span> <span class="o">:</span>
+
+<span class="nv">$db</span> <span class="o">=</span> <span class="nx">dbmopen</span><span class="p">(</span><span class="s2">"/tmp/mydata"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">);</span>
+
+<span class="nv">$data</span> <span class="o">=</span> <span class="s2">"fullname="</span> <span class="o">.</span> <span class="nb">rawurlencode</span><span class="p">(</span><span class="nv">$afullname</span><span class="p">)</span> <span class="o">.</span> <span class="s2">"&amp;"</span> <span class="o">.</span>
+	<span class="s2">"email="</span> <span class="o">.</span> <span class="nb">rawurlencode</span><span class="p">(</span><span class="nv">$aemail</span><span class="p">)</span> <span class="o">.</span><span class="s2">"&amp;regdate="</span> <span class="o">.</span> <span class="nb">time</span><span class="p">();</span>
+<span class="k">if</span><span class="p">(</span> <span class="nx">dbminsert</span><span class="p">(</span><span class="nv">$db</span><span class="p">,</span> <span class="nv">$auser</span><span class="p">,</span> <span class="nv">$data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">echo</span> <span class="s2">"Exists."</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+	<span class="k">echo</span> <span class="s2">"Insert."</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">dbmclose</span><span class="p">(</span><span class="nv">$db</span><span class="p">);</span>
+<span class="k">endif</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;a</span> <span class="na">href=</span><span class="s">view.phtml</span><span class="nt">&gt;</span>View entries<span class="nt">&lt;/a&gt;&lt;/p&gt;</span>
+
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+
+</fieldset>
+<p>為了保證 <var>LGUSER</var> 是來自 cookie 的設定，這裡改成了從 <var>HTTP_COOKIE_VARS</var> 中抓取。 接著檢查記錄中，三個必要的內容是否已經輸入了，若尚未輸入，則顯示資料輸入表格，否則，加入資料庫中。而為了配合 <code>parse_str()</code> ，這裡事先將記錄的 data 利用 <code>rawurlencode()</code> 加以URL-encoding編碼了。</p>
+
+<h4><a href="#目錄" name="參考文件">參考文件</a></h4>
+<p> 很抱歉，參考文件以英文資料為主，因為國內這方面的資料，大多很分散，訊息也不夠即時， 若真想看中文資料，利用搜尋引擎找找吧。 不過最好是及早習慣閱讀原文資料，因為如果某天老闆不知從何處看來「XXX將帶來新商機」的資訊後，  老闆才不管有沒有中文資料，一張 memo 丟下來，可憐的技術人員就要去達成，不然就回家吃自已。</p>
+<ul>
+  <li><a href=http://developer.netscape.com/docs/manuals/communicator/jsguide4/index.htm target=_blank><del>
+    JavaScript Reference</del></a></li>
+  <li><a href=http://hoohoo.ncsa.uiuc.edu/cgi/ target=_blank> The Common Gateway
+    Interface</a></li>
+  <li><a href=http://thccx11.cc.nthu.edu.tw/wjchou/docs/www-cgi.html target=_blank><del>
+    如何在WWW下建立雙向溝通之應用環境</del></a></li>
+  <li><a href=http://www.php.net/ target=_blank> PHP</a></li>
+  <li><a href=http://www.apache.org/ target=_blank> Apache Software Foundation</a></li>
+  <li><a href=http://msdn.microsoft.com/workshop/default.asp target=_blank> MSDN
+    Online Web Workshop</a></li>
+  <li><a href=http://www.ibm.com/developer/web/index.html target=_blank> IBM developerWorks:
+    Web architecture zone</a></li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2007/Markup%20language%20%E5%B0%8D%E6%87%89%E7%94%A8%E8%BB%9F%E9%AB%94%E8%A8%AD%E8%A8%88%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BD%B1%E5%9A%AE%EF%BC%8C%E4%BB%A5%E5%8F%8A%E5%BE%AE%E8%BB%9F%E7%9A%84%20WPF_XAML%20%E7%AD%96%E7%95%A5.html">Markup language 對應用軟體設計工作的影嚮，以及微軟的 WPF/XAML 策略</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2628393.html">http://blog.roodo.com/rocksaying/archives/2628393.html</a></div>

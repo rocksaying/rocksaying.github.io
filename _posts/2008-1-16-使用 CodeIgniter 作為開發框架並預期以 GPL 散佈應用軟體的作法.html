@@ -1,0 +1,136 @@
+---
+title: 使用 CodeIgniter 作為開發框架並預期以 GPL 散佈應用軟體的作法
+category: programming
+old-category: PHP
+tags: [php,codeigniter,gpl]
+---
+<div class="tags" style="display:none">Tags: php CodeIgniter gpl</div>
+<p>
+CodeIgniter 使用自定的授權書, <a href="http://codeigniter.com/user_guide/license.html">CodeIgniter License Agreement</a>。基於授權內容， CodeIgniter 不能被 GPL 傳染 copyleft 特性。(因為 GPL 的授權方式使其他使用 GPL 源碼的軟體也必須採 GPL 散佈，故人們戲稱這是一種病毒傳染行為)。基於此種限制，我個人認為不能將 CodeIgniter 包裝為我們應用軟體的一部份。CodeIgniter 和我們的應用軟體應該分開散佈。亦即，使用者必須另外下載取得 CodeIgniter 源碼。
+</p>
+<p>
+故我寫下這份記錄，以說明如何將採用 GPL 授權書的源碼與 CodeIgniter 的源碼隔離散佈。
+</p>
+<p>
+有些人認為不必如此做。 CodeIgniter 的作者就認為沒有問題。不過我還是傾向於將兩者分開散佈，不將 CodeIgniter 包裝在一起。
+</p>
+
+<!--more-->
+<h4>
+在此情形下，如何使用 CodeIgniter 作為開發框架？
+</h4>
+
+<p>
+首先了解 CodeIgniter 框架的載入流程。(觀察 CodeIgniter 源碼)
+</p>
+
+<p>
+應用軟體首頁程式碼(通常是 index.php)應定義下列變數:
+</p>
+
+<dl>
+<dt>
+define('BASEPATH', $system_folder.'/');
+</dt>
+<dd>
+應用軟體開發框架所在目錄，也就是 CodeIgniter 的目錄。直述:<br/>
+<code>
+define('BASEPATH', 'core/');
+</code>
+</dd>
+
+<dt>
+define('APPPATH', BASEPATH.$application_folder.'/');
+</dt>
+<dd>
+應用軟體程式所在目錄。直述:<br/>
+<code>
+define('APPPATH', 'application/');
+</code>
+<br/>
+依 CodeIgniter 之架構，應用軟體程式碼之目錄樹結構如下:
+<br/>
+<ul><li>
+<var>APPPATH</var>
+    <ul>
+        <li>config</li>
+        <li>controllers</li>
+        <li>errors</li>
+        <li>hooks</li>
+        <li>libraries</li>
+        <li>models</li>
+        <li>views</li>
+    </ul>
+</li>
+</ul>
+
+<p>
+依 <a href="http://codeigniter.com/user_guide/general/errors.html">CodeIgniter User Guide - Error Handling</a> 所述，與實際觀察 CodeIgniter 包裝之結果，在 errors 目錄中可自定 error_general.php, error_404.php, error_db.php, error_php.php 四種錯誤訊息樣板。可使用的變數是 <var>$heading</var> 和 <var>$message</var>
+</p>
+</dd>
+
+<dt>
+define('EXT', '.'.pathinfo(__FILE__, PATHINFO_EXTENSION));
+</dt>
+<dd>
+PHP程式副檔名。直述: <br/>
+<code>
+define('EXT', '.php');
+</code>
+</dd>
+
+<dt>
+define('FCPATH', __FILE__);
+</dt>
+<dd>
+應用軟體首頁實際路徑名稱，例如 '/www/htdocs/blog/index.php'。直述: <br/>
+<code>
+define('FCPATH', '/www/htdocs/blog/index.php');
+</code>
+</dd>
+
+<dt>
+define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
+</dt>
+<dd>
+應用軟體首頁檔名，例如 index.php。直述:<br/>
+<code>
+define('SELF', 'index.php');
+</code>
+</dd>
+
+</dl>
+
+<p>
+最後載入 CodeIgniter core: ./codeigniter/CodeIgniter.php<br/>
+<code>
+require_once BASEPATH.'codeigniter/CodeIgniter'.EXT;
+</code>
+</p>
+
+<p>
+上述內容亦可參考 CodeIgniter 包裝之根目錄下的 index.php 。
+由於該文件內容為組建設定，且檔頭並未加上 CodeIgniter License 之授權聲明，故應可視為不受著作權保障之文件。應可直接加以修改使用。
+</p>
+
+<h4>
+應用軟體組建設定
+</h4>
+<p>
+在應用軟體程式所在目錄之子目錄 config 中，應放置 CodeIgniter 框架所需的應用軟體組建設定。這一方面的內容，可參考 CodeIgniter 包裝內附範例之組建內容建置。
+</p>
+<p>
+由於該範例之文件內容為組建設定，且檔頭並未加上 CodeIgniter License 之授權聲明，故應可視為不受著作權保障之文件。應可直接加以修改使用。
+</p>
+
+<h4>
+應用軟體開發工作
+</h4>
+<p>
+透過上述方式，我將 CodeIgniter 源碼與應用軟體源碼隔離在不同的目錄中。所以，我可以簡單地說: 在應用軟體源碼目錄下的內容，是用 GPL 的。當要我包裝並散佈應用軟體時，也僅僅只包裝應用軟體碼目錄的內容即可。兩邊的源碼基本上不會混雜在一起。
+</p>
+
+<h4>後記</h4>
+<p>
+看完整篇後，是否覺得我在自找麻煩。是的，我承認確實如此。一個更簡單的方式是，我的應用軟體直接使用 BSD license 等等 non-copyleft 的開放源碼授權書。在此種授權書下，我可以將 CodeIgniter 包裝在我的應用軟體中。 
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4991789.html">http://blog.roodo.com/rocksaying/archives/4991789.html</a></div>

@@ -1,0 +1,169 @@
+---
+title: 自動備份 postgresql 資料庫到遠端主機
+category: programming
+old-category: SQL/Database
+tags: [backup,postgresql,ssh]
+---
+<p>
+今有 A, B 兩台主機。 A 主機的服務功能，使用 PostgreSQL 儲存資料。 B 主機平時負責另一項工作，但是它也有啟動 PostgreSQL 。現在我希望每日定期將 A 主機的 PostgreSQL 資料同步備份到 B 主機的 PostgreSQL 中，以便 A 主機故障時，可以立刻將服務工作轉移 B 主機上。
+</p>
+<p>
+我將使用 ssh 搭配 PostgreSQL 的 pg_dump/pg_restore/psql 工具實現這項需求。
+</p>
+<p>
+Using ssh to backup PostgreSQL database to remote host and restore in remote host.
+</p>
+
+<!--more-->
+<ul>
+    <li>A 主機: a.mydomain</li>
+    <li>B 主機: b.mydomain</li>
+    <li>系統登入帳號: admin</li>
+    <li>PostgreSQL 系統帳號: postgres</li>
+    <li>PostgreSQL 資料庫系統管理角色(role): postgres</li>
+    <li>PostgreSQL 資料庫系統使用角色(role): admin</li>
+    <li>應用軟體使用的資料庫名稱: services</li>
+</ul>
+
+<p>
+系統帳號是指作業系統的帳號；PostgreSQL 角色(role)是指 PostgreSQL 本身之權限機制的角色。
+</p>
+<p>
+以 Debian/Ubuntu 為例，會建立一個系統帳號 <dfn>postgres</dfn> 專門負責持有 PostgreSQL 資料庫的檔案； PostgreSQL 則有一個同名的角色維護整個資料庫系統。另一方面，我們的軟體不會直接以 postgres 這個角色操作資料庫，通常建立另一個角色去操作。在本例中，應用軟體是以 <dfn>admin</dfn> 這個角色操作它擁有的資料庫 <dfn>services</dfn>。
+</p>
+
+
+<h3>
+利用公鑰以 postgres 帳號登入遠端主機
+</h3>
+
+<p>
+基於安全原則，系統帳號 postgres 會設為「不可登入」，只能透過 su 指令轉換身份。在 Debian/Ubuntu 中，預設要用 <kbd>sudo su postgres</kbd> (先轉為 root ，再從 root 轉為 postgres)。
+在這種設置之下，我們若試圖用 ssh 以 postgres 帳號登入遠端主機(<kbd>$ ssh postgres@b.domain</kbd>)，只會得到失敗結果。另一方面，就算我們設定了 postgres 帳號為可登入狀態，使用 ssh 登入時也會向我們詢問密碼。這就不能達成系統自動執行的目標。
+</p>
+<p>
+關於這一點，我們可以用 ssh 公鑰機制得到一個完美的解決方案。我們仍然令系統帳號 postgres 維持「不可登入」的狀態，亦即不可用密碼登入。而用 ssh-keygen 產生公鑰，發給備援主機上的 postgres 帳號，就可實現自動執行 postgresql 資料庫備份到備援主機的動作。
+</p>
+
+<p>
+首先產生公鑰。輸出的檔案名稱用預設值即可，'Enter passphrase' 按 enter 即可。
+</p>
+<pre class="language-term">
+ admin@a.mydomain$ ssh-keygen -t rsa
+</pre>
+<div class="note">
+為了方便區別操作指令的目標，本文的指令提示列會顯示目前帳號名稱與所在主機名稱。
+</div>
+
+<p>
+會在家目錄的 <dfn>.ssh</dfn> 目錄內產生兩個檔案: id_rsa ，這是私鑰； id_rsa.pub ，這是公鑰。
+</p>
+
+<p>
+第二步，我們要將公鑰發給備援主機(b.mydomain)，將它加入備援主機的 postgres 帳號之已認證公鑰列表 (authorized_keys) 。
+</p>
+
+<p>
+因為我們目前還不能直接把這個公鑰複製到遠端主機 postgres 帳號的家目錄，所以我先複製到遠端主機 admin 帳號的家目錄。
+</p>
+<pre class="language-term">
+ admin@a.mydomain$ scp .ssh/id_rsa.pub b.mydomain:~
+</pre>
+
+<p>
+第三步，登入遠端主機，切換使用者為 postgres 。將剛剛複製過來的公鑰加入已認證公鑰列表(authorized_keys) 。
+</p>
+<pre class="language-term">
+ admin@a.mydomain$ ssh b.mydomain
+ 
+ admin@b.mydomain$ sudo su postgres
+ 
+ postgres@b.mydomain$ cd ~
+ postgres@b.mydomain$ mkdir .ssh
+ postgres@b.mydomain$ chmod 700 .ssh
+ postgres@b.mydomain$ cat /home/admin/id_rsa.pub >> .ssh/authorized_keys
+
+ postgres@b.mydomain$ exit
+
+ admin@b.mydomain$ rm id_rsa.pub    # 可以刪除這個檔案了。
+ admin@b.mydomain$ exit             # 登入 b.mydomain
+ 
+ admin@a.mydomain$
+</pre>
+
+<p>
+到此完成公鑰發佈的工作。我們再試著 postgres 帳號登入遠端主機。設置成功的話， ssh 不會向我們詢問密碼。
+</p>
+<pre class="language-term">
+ admin@a.mydomain$ ssh postgres@b.mydomain
+</pre>
+
+
+<h3>
+備份資料庫到遠端主機
+</h3>
+
+<p>
+備份資料庫到遠端主機的動作，首先請參考 <a href="http://www.postgresql.org/docs/8.4/static/backup.html">PostgreSQL Documentation::Backup and Restore</a>。
+</p>
+<p>
+文件中列出了三種備份方法。我們要考量我們的備份需求為何，決定備份方案。本文需求在不停止 PostgreSQL 的狀態下進行備份。另一方面，本文的資料庫內容異動少，且不做資料庫的查詢分流動作。所以我選擇採用 SQL Dump 的方式。這種方式適用不需要即時性的同步，而是每日定期備份的操作。
+</p>
+<p>
+如果你需要多台資料庫並行運作，共用負擔資料的操作動作，而且資料內容異動頻繁。那麼你需要採用 WAL 的方式。另一種採用 WAL 的場合在大型資料庫系統。當你的資料庫空間成長到數百MB或GB的單位時，你也需要考慮改用 WAL 。因為 WAL 採用 log 同步機制，每次備份時只需要傳輸上次備份時間到目前時間的異動資訊，而不會傳輸整個資料庫的內容。關於 WAL 的操作，不在本文的說明中。
+</p>
+
+<p>
+我將透過管道作業(pipe) ，將 ssh, gzip, pg_dump, pg_restore 等工具串連起來，一次性地完成備份與匯入動作。我們可以選擇在主要主機上執行指令，也可以選擇在備援主機上執行指令。資料流都是從主要主機流向備援主機。
+</p>
+
+<h4>
+第一種方法，在備援主機上操作指令
+</h4>
+<p>
+在 b.mydomain 上執行，從 a.mydomain 吐出資料庫內容回來匯入 (dump -&gt; restore)。
+
+<pre class="language-term">
+ admin@b.mydomain$ ssh postgres@a.mydomain "pg_dump -F tar services | gzip " \
+     | gunzip | pg_restore -c -d services
+
+# or
+
+ admin@b.mydomain$ ssh postgres@a.mydomain "pg_dump -c services | gzip " \
+     | gunzip | psql services
+</pre>
+
+<h4>
+第二種方法，在主要主機上操作指令
+</h4>
+<p>
+在 a.mydomain 上執行，將資料庫內容吐給 b.mydomain。
+</p>
+<pre class="language-term">
+ admin@a.mydomain$ pg_dump -c services | gzip | \
+     ssh postgres@b.mydomain "gunzip | psql services"
+
+# or
+
+ admin@a.mydomain$ pg_dump -F tar services | gzip | \
+     ssh postgres@b.mydomain "gunzip | pg_restore -c -d services"
+</pre>
+
+<div class="note">
+如果你只想要把資料庫內容備份在遠端主機的 tar.gz 檔案，可以這麼做:
+
+<pre class="language-term">
+ admin@a.mydomain$ pg_dump -F tar services | gzip | \
+     ssh b.mydomain "cat > ~/database_services.tar.gz"
+
+# or simple way:
+ admin@a.mydomain$ pg_dump -F tar services | gzip ~/database_services.tar.gz
+ admin@a.mydomain$ scp ~/database_services.tar.gz b.mydomain:~
+
+</pre>
+
+</div>
+
+<p>
+如果上述的操作動作都沒有錯誤發生，也不會向你詢問密碼。接著我們可以把這個備份動作放入 crontab 定期自動執行了。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11241135.html">http://blog.roodo.com/rocksaying/archives/11241135.html</a></div>

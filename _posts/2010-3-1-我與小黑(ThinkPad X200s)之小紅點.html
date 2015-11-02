@@ -1,0 +1,191 @@
+---
+title: 我與小黑(ThinkPad X200s)之小紅點
+category: computer
+old-category: 電腦技術
+tags: [linux,ubuntu,ThinkPad,小紅點,trackpoint]
+---
+<p>
+ThinkPad 系列筆記型電腦最大的特色就是鍵盤上的中原一點紅，俗稱小紅點的 TrackPoint 指標裝置。除了不能做到多點觸控之外，其他方面它能做得比觸控板更好。例如拍一下小紅點等於滑鼠鍵點擊一次、模擬中鍵捲動。只是在 Ubuntu 上需要做一些校調，才能使用這些功能。
+</p>
+<p>
+關於小紅點的操作方式，可以參考《<a href="http://www.cnblogs.com/oomusou/archive/2008/01/09/1032424.html">(原創) 如何使用ThinkPad的TrackPoint(小紅點)?</a>》。只是該篇文章講的是 Windows 下如何啟用拍擊小紅點與中鍵捲動功能。
+</p>
+<p class="note">
+2010-09-03: 更新 Ubuntu 10.04 相關內容。
+</p>
+
+<!--more-->
+<h5>
+拍擊小紅點 (Press to select)
+</h5>
+<p>
+拍一下小紅點等於滑鼠鍵點擊一次，拍兩下小紅點等於點擊滑鼠鍵兩次。
+</p>
+
+<ul>
+    <li>適用環境: Ubuntu Desktop 8.x, 9.x, 10.x
+    </li>
+    <li>適用機種: IBM/Lenovo ThinkPad 全系列機種
+    </li>
+</ul>
+
+<p>
+在 <var>/sys/devices/platform/i8042</var> 目錄下搜尋檔案 <var>press_to_select</var> ，取得這個檔案的完整路徑。不同機種與作業系統可能會有些微的差異。有的放在 <var>/sys/devices/platform/i8042/serio1/serio2/press_to_select</var> ，有的放在 <var>/sys/devices/platform/i8042/serio1/press_to_select</var> ，所以還是請以自行搜尋的方式取得 <var>press_to_select</var> 在你的環境下的完整路徑。
+</p>
+<p>
+在終端機下，利用 <dfn>find</dfn> 指令，可以很快地找到檔案。
+</p>
+
+<pre class="language-term">
+rock-laptop:~$  find /sys/devices/platform/i8042 -name press_to_select
+/sys/devices/platform/i8042/serio1/press_to_select
+
+</pre>
+<p>
+如上所示，<var>press_to_select</var> 在我的 X200s 上的位置是在 <var>/sys/devices/platform/i8042/serio1/press_to_select</var>。
+</p>
+
+<p>
+我們只需要把該檔案的內容，設為 1 即可。因為那個檔案的內容每次重新開機後都會重置為 0 ，所以我們最好是把設定動作寫到 <dfn>/etc/rc.local</dfn> 之中，這樣每次重開機後，就會自動啟用拍擊小紅點(Press to select)功能。
+</p>
+<p>
+請用 sudo 開啟你的文字編輯器，編輯 <dfn>/etc/rc.local</dfn>，<em>在 <code>exit 0</code> 之前</em>加入下列指令。再度提醒，請把下列的 <var>press_to_select</var> 所在路徑替換為你依照上列步驟實際搜尋得到的完整路徑。
+</p>
+
+<pre class="language-term">
+# TrackPoint: Enable Press to select
+echo -n 1 > <var>/sys/devices/platform/i8042/serio1/press_to_select</var>
+</pre>
+
+
+<h5>
+中鍵捲動 (Scrolling)
+</h5>
+<ul>
+<li>垂直捲動: 按住中鍵，再往上推小紅點，就會向上垂直捲動。往下推小紅點則向下垂直捲動。</li>
+<li>水平捲動: 按住中鍵，再往左推小紅點，向左捲動。往右推小紅點則向右捲動。</li>
+<li>檢視內容放大縮小: 適用於瀏覽器, OpenOffice, PDF reader, GIMP, 圖片瀏覽程式等支援頁面內容放大與縮小的軟體。按住鍵盤 Ctrl 鍵，再按住中鍵，往上推小紅點會放大內容；往下推會縮小內容。</li>
+<li>上一頁、下一頁: 適用於瀏覽器。按住鍵盤 Shift 鍵，再按住中鍵，往上推小紅點會到下一頁(Foward page)；往下推會到上一頁(Back page)。再重複一次，往上推是下一頁、往下推是上一頁，很容易弄反。</li>
+</ul>
+<p>
+小紅點的捲動功能真是省時省力的神器，不用像滑鼠滾輪那般一直伸屈手指推滾輪，符合人體工學喔。
+</p>
+
+<h6>
+gpointing-device-settings 設定方式
+</h6>
+<ul>
+    <li>適用環境: Ubuntu Desktop 9.10, 10.x 與更新的版本
+    </li>
+    <li>適用機種: IBM/Lenovo ThinkPad 全系列機種
+    </li>
+</ul>
+
+<p>
+在 Ubuntu 9.10/10.04 或更新的版本中，你只需要安裝 <dfn>gpointing-device-settings</dfn> 這個套件，再於終端機下執行 <dfn>gpointing-device-settings</dfn> 指令，或是從「系統／偏好設定／Pointing devices」選單啟動，即可設定相關動作。
+</p>
+
+<pre class="language-term">
+rock-laptop:~$ sudo apt-get install gpointing-device-settings
+rock-laptop:~$ gpointing-device-settings
+</pre>
+
+<p>
+請勾選下列4項，而 Use wheel emulation 的子項目 button ，請設為 2 。
+</p>
+
+<ul>
+    <li>Use middle button emulation
+    </li>
+    <li>Use wheel emulation: button: 2
+    </li>
+    <li>Enable vertical scroll
+    </li>
+    <li>Enable horizontal scroll
+    </li>
+</ul>
+
+<img src="http://blog.roodo.com/rocksaying/a4cb60b2.png" alt="GPointing Device Settings" />
+
+<p class="note">
+Ubuntu 9.10 安裝的 gpointing-device-settings 版本為 1.3.2，此版本有 bug ，水平捲動功能不會作用。此 bug 已在 1.5 版修正。 Ubuntu 10.04 版本已經修正此 bug。
+</p>
+
+<h6>
+xinput 設定方式
+</h6>
+<ul>
+    <li>適用環境: Ubuntu Desktop 9.04, 或更舊的版本
+    </li>
+    <li>適用機種: IBM/Lenovo ThinkPad 全系列機種
+    </li>
+</ul>
+
+<p>
+如果你不想安裝 gpointing-device-settings 或是套件版本太舊，你也可以用命令列工具 <dfn>xinput</dfn> 設定。請參考設定 Press to Select 的動作，將下列指令加入 <dfn>/etc/rc.local</dfn> 或是 <dfn>/etc/gdm/PreSession/Default</dfn> 中。
+</p>
+<pre class="language-term">
+# 啟用中鍵模擬功能
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Middle Button Emulation" 8 1
+# 啟用滾輪模擬功能
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation" 8 1
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation Axes" 8 6 7 4 5
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation Button" 8 2
+
+# 靈敏度
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Middle Button Timeout" 8 50
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation Inertia" 8 10
+xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation Timeout" 8 200
+
+</pre>
+<p>
+建議先執行 <code>xinput list</code> 查詢小紅點的設備名稱。通常是<dfn>TPPS/2 IBM TrackPoint</dfn>。
+</p>
+
+
+<h6>
+xorg.conf.d 設定方式
+</h6>
+<ul>
+    <li>適用環境: Ubuntu Desktop 10.04 或更新的版本
+    </li>
+    <li>適用機種: IBM/Lenovo ThinkPad 全系列機種
+    </li>
+</ul>
+<p>
+這是 Ubuntu 10.04 才開始加入的設定機制。複製下列內容，儲存在 <dfn>/usr/lib/X11/xorg.conf.d/20-thinkpad.conf</dfn>，然後重新啟動 X 即可生效。
+</p>
+
+<pre class="language-text">
+Section "InputClass"
+	Identifier	"Trackpoint Wheel Emulation"
+	MatchProduct	"TPPS/2 IBM TrackPoint|DualPoint Stick|Synaptics Inc. Composite TouchPad / TrackPoint|ThinkPad USB Keyboard with TrackPoint|USB Trackpoint pointing device|Composite TouchPad / TrackPoint"
+	MatchDevicePath	"/dev/input/event*"
+	Option		"EmulateWheel"		"true"
+	Option		"EmulateWheelButton"	"2"
+	Option		"Emulate3Buttons"	"false"
+	Option		"XAxisMapping"		"6 7"
+	Option		"YAxisMapping"		"4 5"
+EndSection
+</pre>
+<p>
+很明顯地，此方法影響所有使用者的 X 環境 (gpointing-device-settings 的設定內容僅影響其所處session)。我經常在 Ubuntu 上登入兩個帳號，進入各自的 X 環境 (一個透過 GDM 啟動在 display :0 ，另一個則是自行呼叫 xinit 顯示在  display :1)。像我這種情形，就可以這種設定方式一次解決兩個 X 環境的小紅點設置。
+</p>
+
+
+<h5>
+詳細參考文件
+</h5>
+<p>
+隨著 Debain/Ubuntu 版本內建工具與 X window 設定本身的演進，上述的設定方式也可能改變，或者不適用於你的環境。此時可參考下列連結的說明文件。
+</p>
+<ul>
+    <li><a href="http://www.thinkwiki.org/wiki/How_to_configure_the_TrackPoint">How to configure the TrackPoing</a>
+    </li>
+    <li><a href="http://www.ubuntu-tw.org/modules/planet/view.article.php?2108/b20">hoamon 關於小紅點USB鍵盤的設定文章</a></li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2011/%E5%85%A5%E6%89%8B%E5%B0%8F%E7%B4%85%E9%BB%9E%E9%8D%B5%E7%9B%A4%2C%20IBM%20Space%20Saver%20II.html">入手小紅點鍵盤, IBM Space Saver II</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/11828697.html">http://blog.roodo.com/rocksaying/archives/11828697.html</a></div>

@@ -1,0 +1,110 @@
+---
+title: Java Enum 範例 - enum HttpStatusCode
+category: programming
+old-category: C/C++/C#/Java
+tags: [enum]
+---
+<p>
+HTTP 協定規範了 <a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes">HTTP Status Code</a>，這個狀態碼本身就包含了兩種表達形式，即三位數字的狀態碼，與文字訊息的狀態訊息。
+</p>
+<p>
+加上 Enum 的定義後，在 Java 語言內就可以用三種表達形式，例如: 200, "Ok", HttpStatusCode.Ok。這實在是用來展示 Enum 用法的絕佳範例。
+</p>
+
+<!--more-->
+<p>
+我習慣用斷言(Assert)代替方法說明。程式內容嘛... 自個看 Java Language Specification 或 Java 技術手冊吧。
+</p>
+
+<script type="syntaxhighlighter" class="brush: java; highlight: [18,19,20,44];"><![CDATA[
+import java.util.EnumMap;
+import java.util.HashMap;
+
+/**
+ * HttpStatusCode Enum and methods.
+ * @author rock
+ * @see {{ site.baseurl }}/archives/2009/Java%20Enum%20%E7%AF%84%E4%BE%8B%20-%20enum%20HttpStatusCode.html
+ * @license GNU LGPL
+ */
+public enum HttpStatusCode {
+    Ok(200),
+    Not_Found(404),
+    Error(500)
+    ; // don't forget this.
+
+    private int numeric;
+
+    HttpStatusCode(int numeric) {
+        this.numeric = numeric;
+    }
+
+    /**
+     * numeric getter.
+     * notice: you can not override ordinal()
+     * assertEqual(200, HttpStatusCode.numeric("Ok"));
+     */
+    public int numeric() {
+        return numeric;
+    }
+
+    /**
+     * message getter.
+     * assertEqual("Ok", HttpStatusCode.Ok.message());
+     */
+    public String message() {
+        return toString();
+    }
+
+    private static EnumMap<HttpStatusCode, Integer> forward =
+            new EnumMap<HttpStatusCode, Integer>(HttpStatusCode.class);
+    private static HashMap<Integer, HttpStatusCode> reverse =
+            new HashMap<Integer, HttpStatusCode>();
+
+    static {
+        HttpStatusCode[] values = HttpStatusCode.values();
+        for (HttpStatusCode value : values) {
+            forward.put(value, value.numeric());
+            reverse.put(value.numeric(), value);
+        }
+    }
+
+    /**
+     * assertEqual(200, HttpStatusCode.Ok.numeric());
+     */
+    public static HttpStatusCode code(int numeric) {
+        return reverse.get(numeric);
+    }
+    /**
+     * assertEqual(HttpStatusCode.Ok, HttpStatusCode.code("Ok"));
+     */
+    public static HttpStatusCode code(String message) {
+        return HttpStatusCode.valueOf(message);
+    }
+    /**
+     * assertEqual(HttpStatusCode.Ok, HttpStatusCode.code(200));
+     */
+    public static int numeric(String message) {
+        return forward.get( HttpStatusCode.valueOf(message) );
+    }
+    /**
+     * 
+     * assertEqual(200, HttpStatusCode.numeric(HttpStatusCode.Ok));
+     */
+    public static int numeric(HttpStatusCode code) {
+        return code.numeric();
+    }
+    /**
+     * assertEqual("Ok", HttpStatusCode.message(200));
+     */
+    public static String message(int numeric) {
+        return code(numeric).message();
+    }
+    /**
+     * assertEqual("Ok", HttpStatusCode.message(HttpStatusCode.Ok));
+     */
+    public static String message(HttpStatusCode code) {
+        return code.message();
+    }
+
+}
+]]></script><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10973291.html">http://blog.roodo.com/rocksaying/archives/10973291.html</a></div>

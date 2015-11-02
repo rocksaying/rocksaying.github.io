@@ -1,0 +1,75 @@
+---
+title: TWPUG - cakephp換頁效能與架構
+category: programming
+old-category: PHP
+tags: []
+---
+<p>
+本文起於 FIEND 於 TWPUG 上發表之《<a href="http://twpug.net/modules/newbb/viewtopic.php?viewmode=flat&type=&topic_id=3094&forum=35">小弟寫的 cakephp 換頁 排序 功能</a>》。
+</p>
+<blockquote>
+FIEND 寫道：
+
+而 CAKEPHP 的架構 是很漂亮的 畢竟也是抄 ruby 的架構 .
+雖然只做到三層式架構 將 : 
+資料邏輯層 和 頁面邏輯層 清礎的切開運用 .
+</blockquote>
+<p>
+這說法挺奇怪的，基本上 "三層式" 只是概念性的說法，以有別於主從式架構明顯的二層結構，並不是 "只有三層"。所以後來更常見的說法是 n-Tier 或 "分散式架構"。"層數"並不是愈多愈好，因此它"雖然"只有三層，並不表示它做的比較差。
+</p>
+<p>
+還有一點，三層式並不等於 MVC ，雖然同樣是分三塊。
+</p>
+
+<!--more-->
+<p>
+n-Tier的意義是將運算工作，分散交給不同的伺服器處理，以有效配置伺服器的處理效能。而最常見的分配策略，就是 Database, Application, Client 。
+</p>
+<p>
+再說到 MVC ，則是基於"程式碼功能"的隔離策略。根據程式碼的功能分成 Model, View, Control 三個功能性區塊，以降低程式碼之間的耦合度，便於程式開發之分工與維護。
+</p>
+<p>
+至於 n-Tier 和 MVC 之間出現扯不清的關聯，則是因為 n-Tier 在系統架構上就限制了程序員必須將不同功能的程式碼分開撰寫。在此結構性限制下，成熟的 MVC 策略顯然是程序員的上上之選。
+</p>
+<p>
+事實上，就 web 應用開發工作內容來看，我們其實只在 n-Tier 架構中的 Application 和一部份的 Client 內容中打轉。MVC只被我們應用在其中的2層而已。如何在這2者之間劃上等號？
+</p>
+
+<blockquote>
+FIEND 寫道：
+
+final 元件的人 觀念不足 寫出來東西 看不清 問題所在 .
+導致  維護上的彈性不易.
+
+再則 架構面雖然很漂亮 但是 許多元件在效能上並不理想 .
+是效能和有效率的開發的取捨.
+<br/>
+就 1.2 而言 , 老實說 它有不少原件 放在 大型 website 上.
+會造成蠻大的 loding 
+<br/>
+
+例如 : 
+1.2 換頁那個 元件 ,  query 做了二次才能做到 換頁效果 .
+在過萬人的 site 上一定會被打槍的 .
+<br/>
+
+原則上 這篇文章的換頁功能我寫的也這樣設計 ^^!! 
+</blockquote>
+<p>
+我不是 CakePHP 的重度使用者，當 FIEND 說 query 做了二次才達到換頁效果後，我才仔細地看了一下 FIEND 寫的程式碼和 CakePHP 的 API manual 。我猜想 FIEND 所謂的 query 了二次是指 findAll() 和 findCount() 吧？
+</p>
+<p>
+基本上，FIEND 誤用 findCount() 的使用場合了 (也許CakePHP官方的那個也是誤用了)。既然 findAll() 已經以 array 型態傳回了資料結果，何不直接用 PHP 的陣列函數 count() 取得資料結果陣列的筆數？我自己的系統是這樣做的(不是用CakePHP)。
+</p>
+
+<pre class="language-text">
+//$num = $CALL->findCount() ; 
+$num = count($ecstart["record"]);
+</pre>
+
+<p>
+而 findCount() 的使用時機，則應該是用在我們"僅僅要"資料筆數，而不要資料內容的場合。這時我們使用 findCount() ，將資料查詢和筆數計算的動作在 Database 端處理後，僅僅只將資料筆數傳回 Application 端，以減少資料內容在 Application 端的暫時性地儲存動作。
+</p>
+<p>
+CakePHP 基底元件的 method 設計是正確的。但是衍生元件的開發者在使用這些 method 時，還需要多下點功夫了解這些 method 的使用時機與場合。
+</p><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/4784725.html">http://blog.roodo.com/rocksaying/archives/4784725.html</a></div>

@@ -1,0 +1,150 @@
+---
+title: 在 C 程式中使用 MD5 library 及其應用
+category: programming
+old-category: C/C++/C#/Java
+tags: [c,md5,bbslib]
+lastupdated: 2007-08-06
+---
+
+<p>
+簡單地說， MD5 是一種單向雜湊(hashing)演算法，可將你所給予的任何長度字串，藉由 MD5 雜湊演算得出一個長度為 128 位元 (術語稱之為 "digest code")的計算結果。後述以鍵值稱呼 digest code。MD5 演算法，是由 RSA Data Security, Inc 公司所提出的。演算原理參閱 <a href="http://en.wikipedia.org/wiki/MD5">MD5 - Wikipedia</a>。
+</p>
+
+<!--more-->
+<p>
+舉例而言，將 "ROCK" 這個字串使用 MD5 演算，就會得到一個 128 位元的鍵值。用字串表示時，是把 128 位元的計算結果轉成十六進位碼形式的字串，故此字串需要32個字元空間 (即256位元)。以字串型式表示如下:
+</p>
+<pre class="language-text">
+MD5 ("ROCK") = afeb717aa2a101f7f64840e0be38c171
+</pre>
+<p>
+MD5 的其他說明條列於下:
+</p>
+<ol>
+  <li>固定的字串內容必定會得出一個固定的鍵值，而非每次都算出不同的。</li>
+  <li>這是一個單向的雜湊演算，意味著，它雖可每次都將同樣的字串內容，算 出同樣的鍵值，但它無法從鍵值反推算出原本的字串內容。</li>
+  <li>不同字串內容所演算出來的鍵值，有可能相同(此稱"碰撞)。但根據統計，重覆的機率小於百萬分之一。以重覆率來說，是相當好的演算法。</li>
+  <li>演算速度快，對硬體的要求很低。</li>
+  <li>它可以演算任意長度的字串內容，而且能得出固定長度的鍵值。</li>
+  <li>就算字串內容只相差一個字，它也能算出完全不同的鍵值。</li>
+  <li>鍵值長達 128 位元，而且可接受任何長度的字串，就密碼的安全性來講，比過去常用的 DES 編碼法還好。DES 編碼法只能接受 8 個字元長度的字串，產生的鍵值只有56位元。</li>
+</ol>
+<p>
+就最後兩項，舉個例子來驗證:
+</p>
+<pre class="language-text">
+MD5 ("ROCK") = afeb717aa2a101f7f64840e0be38c171
+MD5 ("RACK") = 1ece4bad0efe8b897c6e7f8bd101759f
+MD5 ("ROCKY") = 6cd910740cbbbbd0f55238a93fba157d
+MD5 ("Rock'S saying") = 7dca0df0dfa7f76b652e53daa4852640
+</pre>
+
+<h4>Make MD5 library</h4>
+<p>
+目前的 Linux/FreeBSD 系統中，大多已安裝 MD5 library 。若是在 Windows 平台上使用 MinGW32 的使用者，可以下載此版本: <a href="http://home.educities.edu.tw/fbtip/dl_software.html#otherwise">md5.tar.gz</a> 並安裝。此版本屬於 Public Domain (公眾軟體)。解壓後得源碼， make 後可得 libmd5.a 之靜態函數庫(Archive) 。將 md5.h 複製到 MinGW\include 目錄中， libmd5.a 複製到 MinGW\lib 目錄中，即完成安裝動作。
+</p>
+<pre class="language-text">
+C:\User\fbtip\others\md5&gt; make
+gcc -O2 -c md5.c
+ar ruv libmd5.a md5.o
+ar: creating libmd5.a
+a - md5.o
+gcc -O2 -o md5sum md5sum.c md5.o
+md5sum.c: In function `main':
+md5sum.c:42: warning: return type of 'main' is not `int'
+gcc -O2 -o md5digest md5digest.c md5.o
+
+</pre>
+<p>
+除了 libmd5.a 此函數庫文件，還會產生兩個工具: md5sum, md5digest 。md5sum 可以計算指定的檔案內容之鍵值；md5digest 可計算指定字串之鍵值。如果你是要計算檔案內容的鍵值，只要在指令 md5sum 後直接加上檔案名稱做為參數即可。你可以用它檢查兩個同名檔案是否相同。有些 FTP 站台會提供每個檔案的 md5 檢核文件，供使用者在下載後檢查下載檔的內容是否正確。
+</p>
+<p>
+指令 md5digest 後緊跟著字串內容，可得鍵值。本文上述所舉的幾個例子，都是用這個工具算的。
+</p>
+
+<h4>在程式中呼叫 MD5</h4>
+<p>
+你可以閱讀上述 md5sum 和 md5digest 工具的源碼。此外，我以前維護學校的 Firebird BBS 系統時，寫了一套 library ，其中亦包含了 MD5 library 的使用函數。源碼可於此下載: <a href="http://home.educities.edu.tw/fbtip/">bbslib2 sources tarball</a>。其中的 strexp/md5ap.c 包含了一組 MD5 處理函數，將原本 MD5 library 中的演算函數包裝在一起，以便使用。源碼不另行列出。
+</p>
+<p>
+基本上只要引入 md5.h 即可。在編譯程式時，則須告知 linker 將 libmd5 連結進來， 通常是為 cc 或 gcc 加上參數 -lmd5 。
+</p>
+
+<h4>應用一：儲存密碼</h4>
+<p>
+這是 MD5 最常被使用的用途。首先，我們將新使用者所輸入的密碼字串內容 (術語稱為明碼，也就是編碼前的密碼) ，傳給 MD5 演算函數算出暗碼 (編碼後的密碼) 。暗碼的產生，可以使用前述 md5ap.c 中的 <code>md5()</code>。之後我們將該暗碼，連同使用者 ID 及其他資料一併存入資料庫中。例如使用者帳號為 rock ，密碼為 iloverock ，儲存在資料庫中的帳號資料格式及內容如下列，第二個欄位儲存的就是暗碼。
+</p>
+<pre class="language-text">
+rock:85782f5e159d638811a7a8a7fa318754:Shih Yuncheng
+</pre>
+<p>
+稍後，當使用者欲再簽入時，先以使用者 ID 為鍵值，自資料庫中讀取帳號資料。再將使用者輸入的明碼，同樣地傳給 MD5 演算函數得出一結果。將此結果與帳號資料中的暗碼比對是否完全相符。
+</p>
+
+<h4>應用二：資料查核</h4>
+<p>
+這是 MD5 另一種常見的應用，一般用在網路檔案傳輸上或資料備份。當使用者下傳回檔案後，可用 md5sum (前述所說的那個 md5sum 工具) 去算出一個鍵值 (一般稱為 "check sum" 或 md5sum)。將此鍵值與檔案來源站台所提供的鍵值比對。如果相同，就可以證明使用者下傳的檔案和原始檔案是相同的，沒有在傳輸過程中遭修改。資料備份的檢核亦為同理。檔案在傳輸過程中遭修改的可能性有:
+</p>
+<ol>
+  <li>網路異常或雜訊干擾</li>
+  <li>病毒感染或遭植入木馬程式</li>
+</ol>
+<p>
+使用這個方法就可以證明檔案沒有問題，遠比安裝網路防毒軟體方便。因為防毒軟體可能誤判，而且只能檢查檔案是否遭感染，卻無法檢查檔案內容是否正確無誤。而在電子郵件愈來愈普及之後，又沿生了一種 MD5 的應用，使用它來阻擋垃圾信件。大致做法是:
+</p>
+
+<ol>
+  <li>接收信件的同時，將信件的本文部份 (body) ，透過 MD5 去計算，例如使用 md5ap.c 中的 md5_filter() ，得到一個鍵值。不需要包含信件的標頭部份 (header)。</li>
+  <li>從信件鍵值資料庫中，搜尋此鍵值。找不到就跳到第三步，找到則跳到第四步。</li>
+  <li>未找到此鍵值，表示這信件的內容，是第一次接收到，將鍵值及計數值 (初值 1) 存入信件鍵值資料庫。再跳到第七步。</li>
+  <li>若找到了，表示這信件的內容，以前已經收過了。</li>
+  <li>接著檢查計數值是否超過上限 (這上限自定) ，如果超過了，我們就中止接收這封信，結束。</li>
+  <li>如果未超過上限，將計數值加一後，再存回信件鍵值資料庫。</li>
+  <li>將所接收到的信件內容，儲存起來，完成收信動作。</li>
+</ol>
+<p>以虛擬碼表示如下:</p>
+<pre class="language-text">
+open connect as fh
+
+do {
+  read line
+  save mail header
+} while end of mail header
+
+do {
+  read line
+  md5 filter &amp; save mail body
+} while end of mail
+
+final md5 filter and get a key
+
+select key from mail-key database
+
+if not found then
+  store key and count value
+else
+  if the count not up then limit then
+    inc count
+    store key and count
+  else
+    deny this mail
+    close connect
+  end if
+end if
+
+store thie mail
+close connect
+</pre>
+
+<p>
+由於透過網路傳遞的文件及檔案愈來愈多，我們也可以將上述方法用在文件的管理上，減少那些來自四面八方的重複檔案。
+</p>
+
+<h4>MD5的安全性</h4>
+<p>
+到目前為止，仍然是以碰撞法或稱暴力猜測法破解 MD5 加密的密碼。即隨意產生一組字串計算鍵值，賭鍵值相同的機率。
+</p>
+<p>
+近年來，還有人預先將字典中的字彙先行計算出鍵值後建檔儲存，又謂 "<a href="http://en.wikipedia.org/wiki/Rainbow_table">Rainbow table</a>"。俟取得對方系統中的密碼檔內容後，再反過來以鍵值查詢密碼。例如 <a href="http://www.md5encryption.com/?mod=decrypt">md5encryption</a> 網站所提供的線上工具，即為一例。各位可以本文中出現的例子試試。輸入 "rock" 的鍵值時，可成功反查出 "rock"；輸入 "iloverock" 的鍵值時，則無法反查。此因 "rock" 是字典中的字彙，"iloverock" 則是隨意組合字彙。雖然不同的字串可能具有相同的鍵值 (此稱"碰撞")，但 "iloverock" 之鍵值找不到碰撞的其他字串內容，顯示 Rainbow table 尚未將 128位元所能涵蓋的全部鍵值來源建檔。
+</p>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3873017.html">http://blog.roodo.com/rocksaying/archives/3873017.html</a></div>

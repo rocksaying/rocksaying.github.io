@@ -1,0 +1,53 @@
+---
+title: TWPUG問答 - 查詢結果附上其他資訊？
+category: programming
+old-category: SQL/Database
+tags: [sql,case]
+---
+<div class="tags" style="display:none">Tags: SQL CASE</div>
+<p>
+原問題: <a href="http://twpug.net/modules/newbb/viewtopic.php?topic_id=2659&forum=13">查詢結果附上條件?</a>。需求是有一個來自使用者輸入的對照表，由於其內容每次輸入都不同，故並未建立在資料庫中。現在需要在查詢結果中加入此一對照資訊。
+</p>
+<p>
+純 SQL 的方式可配合 <code>CASE</code> 關鍵字，但受限於查詢句子的長度及複雜度，僅適用於少量資訊。
+</p>
+
+<!--more-->
+<h4>SQL way, 少量的對照</h4>
+<p>用 CASE 關鍵字。See also: <a href="{{ site.baseurl }}/archives/2006/SQL~~%20%E4%BD%BF%E7%94%A8%20CASE%20%E4%BF%AE%E9%A3%BE%E8%B3%87%E6%96%99%E5%85%A7%E5%AE%B9%EF%BC%8C%E4%BB%A5%E4%BE%BF%E9%80%B2%E8%A1%8C%20group%20%E6%93%8D%E4%BD%9C.html">使用 CASE 修飾資料內容</a>。</p>
+
+<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+    <span class="k">CASE</span> <span class="n">name</span>
+        <span class="k">WHEN</span> <span class="s1">'乙'</span> <span class="k">THEN</span> <span class="mi">1</span>
+        <span class="k">WHEN</span> <span class="s1">'丙'</span> <span class="k">THEN</span> <span class="mi">2</span>
+        <span class="k">WHEN</span> <span class="s1">'甲'</span> <span class="k">THEN</span> <span class="mi">3</span>
+    <span class="k">END</span> <span class="k">AS</span> <span class="n">input_seq</span>
+<span class="k">FROM</span> <span class="n">mytable</span><span class="p">;</span>
+</code></pre>
+
+
+<h4>Programming way, 大量的對照</h4>
+<p>
+用關聯陣列建立對照表，再將查詢結果轉入另一個結果陣列後，完成對照關係。
+</p>
+
+<pre class="highlight"><code>$input_seq = array(
+    '乙' =&gt; 1,
+    '丙' =&gt; 2,
+    '甲' =&gt; 3
+);
+
+$query = "SELECT id, name FROM mytable;";
+$results = array();
+$indexOfRow = 0;
+foreach ($pdo-&gt;query($query) as $row) {
+    foreach ($row as $k =&gt; <span class="err">&amp;</span>$v) {
+        $results[$indexOfRow][$k] = $v;
+    }
+    $results[$indexOfRow]['input_seq'] = $input_seq[$row['name']];
+    ++$indexOfRow;
+}
+
+print_r($results);
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3459603.html">http://blog.roodo.com/rocksaying/archives/3459603.html</a></div>

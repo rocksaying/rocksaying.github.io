@@ -1,0 +1,47 @@
+---
+title: TWPUG問答 - 如何清除SESSION資料
+category: programming
+old-category: PHP
+tags: [php,session,reference]
+---
+<div class="tags" style="display:none">Tags: php session reference</div>
+<p>
+原問題見: <a href="http://twpug.net/modules/newbb/viewtopic.php?topic_id=2641&forum=13">SESSION怎麼釋放不掉</a>。在 PHP 中使用 Session 前，請務必閱讀: PHP Manual::<a href="http://tw.php.net/manual/en/ref.session.php">Session Handling Functions</a>。
+</p>
+
+<h5>1. Session and global variable</h5>
+<p>
+PHP Manual::<a href="http://tw.php.net/manual/en/function.session-register.php">session_register</a>: <q>
+If you are using $_SESSION (or $HTTP_SESSION_VARS), do not use session_register(), session_is_registered(), and session_unregister()</q>.
+</p>
+<p>
+<var>$_SESSION</var> 已經是一個 superglobal variable (全系統域變數)，使用  <var>$_SESSION['yourKey']</var> 的寫法就可以了。
+</p>
+
+<!--more-->
+<h5>2. Use reference with session data</h5>
+<p>
+嫌 <var>$_SESSION</var> 打起來太長，用參照也成，效果一樣。例:
+</p>
+<pre class="highlight"><code>$_SESSION['xyz'] = 'xyz';
+$xyz =<span class="err">&amp;</span> $_SESSION['xyz'];
+$xyz = '123';
+echo $_SESSION['xyz'];
+</code></pre>
+
+<p>
+但不能用 <var>$_SESSION</var> 儲存參照。<q>You can't use references in session variables as there is no feasible way to restore a reference to another variable</q>. 下例是錯誤示範:
+</p>
+<pre class="highlight"><code>$xyz = '123';
+$_SESSION['xyz'] =<span class="err">&amp;</span> $xyz; // WARNING!
+</code></pre>
+
+
+<h5>3. Clean session data</h5>
+<p>
+要清除一個 SESSION 狀態，直接 <a href="http://tw.php.net/manual/en/function.unset.php">unset()</a> 指定項目即可。若要清部全部資料，調用 <a href="http://tw.php.net/manual/en/function.session-destroy.php">session_destroy()</a>。例:
+</p>
+<pre class="highlight"><code>unset($_SESSION['xyz']); //清除單一項目
+session_destroy(); //全部清除
+</code></pre>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/3387201.html">http://blog.roodo.com/rocksaying/archives/3387201.html</a></div>

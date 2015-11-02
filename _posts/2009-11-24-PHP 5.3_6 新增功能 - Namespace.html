@@ -1,0 +1,224 @@
+---
+title: PHP 5.3/6 新增功能 - Namespace
+category: programming
+old-category: PHP
+tags: [PHP5.3,namespace]
+---
+<p>
+Namespace 是 PHP5.3 面向大型專案開發所新增的一項重要功能。並不是說有了 Namespace 就萬事大吉，但至少在結合來自各路好漢的函數庫與功能框架時，不必太擔心名稱衝突的問題了。
+</p>
+<p>
+PHP 以 <dfn>namespace</dfn> 關鍵字指示名稱空間，此指令兼具定義與切換空間的意義。名稱空間的命令方式與一般符號相同，並以 <code>\</code> (斜線) 作為<a href="http://www.php.net/manual/en/language.namespaces.php">名稱空間(namespace)</a>的分節符號。它借用檔案系統的目錄樹觀念劃分常數(const)、函數(function)與類別(class)等定義的存在空間 (<span class="Onote">注意，名稱空間並不支援變數。所有的變數都存在於同一個空間</span>)。
+</p>
+
+<!--more-->
+<p>
+所以我們在使用常數、函數與類別內容時，可以使用絕對路徑或相對路徑指示內容所在空間。我們以限定名稱(Qualified name)稱呼包含名稱空間的符號名。以絕對路徑表示的限定名稱又稱為完整限定名稱(Fully qualified name)。而單一的 <code>\</code> 路徑，就表示 <em>global namespace (全體共用名稱空間)</em>。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">namespace</span> <span class="nx">blog\rock</span><span class="p">;</span> <span class="c1">//名稱空間 blog\rock
+</span><span class="k">const</span> <span class="no">FOO</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nx">blog</span><span class="p">;</span> <span class="c1">//名稱空間 blog, 位於前面名稱空間的上一層。
+</span>
+<span class="nx">rock\FOO</span><span class="p">;</span> <span class="c1">// 以相對路徑表示的限定名稱(qualified name).
+</span>
+<span class="nx">\blog\rock\FOO</span> <span class="c1">// 絕對路徑表示，完整限定名稱(fully qualifid name).
+</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+如果你要使用名稱空間，那麼除了 <code>declare</code> 指令以外，<code>namespace</code> 指令必須是這個 PHP 文件的第一個 PHP 敘述。至於空行、註解則不是PHP敘述。
+</p>
+
+<h4>
+Simple combination syntax
+</h4>
+
+<p>
+PHP 提供了兩種名稱空間的使用語法，下例所示為簡單結合語法(simple combination)syntax)。
+</p>
+<p>
+此例中有三個不同的 <code>strlen()</code>，它們分別位於不同的名稱空間之下，即 <code>\, \blog\rock, \blog\rock\negative</code> ，所以視為不同的函數，不會衝突。在簡單結合語法中，當你使用 <code>namespace</code> 指示名稱空間之後，隨之而來的 PHP 敘述都預設使用該名稱空間，直到你再次使用 namespace 切換名稱空間。
+</p>
+<p>
+透過預設符號 <dfn>__NAMESPACE__</dfn> 可以取得目前所在的空間名稱。
+</p>
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">//除了 declare 指令以外，namespace 指令必須是這個 PHP 文件的第一個 PHP 敘述。
+//至於空行、註解則不是PHP敘述。
+</span>
+<span class="k">namespace</span> <span class="nx">blog</span><span class="p">;</span>
+    <span class="k">const</span> <span class="no">HELLO</span> <span class="o">=</span> <span class="s1">'Hello blog'</span><span class="p">;</span>  <span class="c1">// Fully qualified name is \blog\HELLO
+</span>
+<span class="k">namespace</span> <span class="nx">blog\rock</span><span class="p">;</span> <span class="c1">//定義並切換到 blog\rock 名稱空間
+</span>    <span class="k">const</span> <span class="no">HELLO</span> <span class="o">=</span> <span class="s1">'Hello rock'</span><span class="p">;</span>
+
+    <span class="k">function</span> <span class="nf">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s2">"invoke strlen() at "</span> <span class="o">.</span> <span class="nx">__NAMESPACE__</span> <span class="o">.</span> <span class="s1">', argument ('</span> <span class="o">.</span> <span class="nv">$s</span> <span class="o">.</span> <span class="s1">')'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">echo</span> <span class="s2">"-- access HELLO --</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">strlen</span><span class="p">(</span> <span class="nx">\blog\HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//使用完整限定名稱取得 blog 空間的 HELLO 常數
+</span>
+<span class="k">namespace</span> <span class="nx">blog\rock\negative</span><span class="p">;</span> <span class="c1">//定義並切換到 blog\rock\negative 名稱空間
+</span>    <span class="k">function</span> <span class="nf">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//在 blog\rock\negative 空間的 strlen() 會將字串長度以負值傳回。
+</span>        <span class="k">return</span> <span class="o">-</span><span class="p">(</span> <span class="nx">\strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">);</span>
+    <span class="p">}</span>
+
+<span class="k">namespace</span> <span class="nx">blog\rock</span><span class="p">;</span> <span class="c1">//切換到 blog\rock 名稱空間
+</span>    <span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="s2">"-- invoke strlen() --</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nx">negative\strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//使用相對路徑
+</span>    <span class="k">echo</span> <span class="nx">\blog\rock\negative\strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//使用絕對路徑
+</span>    <span class="k">echo</span> <span class="nx">\strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+
+<span class="cp">?&gt;</span>
+</code></pre>
+
+<p>
+執行結果。
+</p>
+<pre class="language-text">
+-- access HELLO --
+invoke strlen() at blog\rock, argument (Hello rock)
+invoke strlen() at blog\rock, argument (Hello blog)
+
+-- invoke strlen() --
+invoke strlen() at blog\rock, argument (Hello rock)
+-10
+-10
+10
+</pre>
+
+<h4>
+Bracketed syntax
+</h4>
+<p>
+當你需要在同一份文件中多次切換名稱空間時， PHP 官方建議使用括弧語法(bracketed syntax)。因為配合段落縮排後，會讓你比較容易看清楚目前的 PHP 敘述處於哪個名稱空間之下。在同一份文件中，不能混用名稱空間的括弧語法與簡單結合語法。在同一份文件中，你只能用一種。
+</p>
+<p>
+沿用簡單結合語法的範例，改成括弧語法，結果如下:
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="c1">// Namespace, 括弧語法 (bracketed syntax)
+</span>
+<span class="k">namespace</span> <span class="nx">blog</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="no">HELLO</span> <span class="o">=</span> <span class="s1">'Hello blog'</span><span class="p">;</span>  <span class="c1">// Fully qualified name is \blog\HELLO
+</span><span class="p">}</span>
+
+<span class="k">namespace</span> <span class="nx">blog\rock</span> <span class="p">{</span> <span class="c1">//定義並切換到 blog\rock 名稱空間
+</span>    <span class="k">const</span> <span class="no">HELLO</span> <span class="o">=</span> <span class="s1">'Hello rock'</span><span class="p">;</span>
+
+    <span class="k">function</span> <span class="nf">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s2">"invoke strlen() at "</span> <span class="o">.</span> <span class="nx">__NAMESPACE__</span> <span class="o">.</span> <span class="s1">', argument ('</span> <span class="o">.</span> <span class="nv">$s</span> <span class="o">.</span> <span class="s1">')'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">echo</span> <span class="s2">"-- access HELLO --</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">strlen</span><span class="p">(</span> <span class="nx">\blog\HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//使用完整限定名稱取得 blog 空間的 HELLO 常數
+</span><span class="p">}</span>
+
+<span class="k">namespace</span> <span class="nx">blog\rock\negative</span> <span class="p">{</span> <span class="c1">//定義並切換到 blog\rock\negative 名稱空間
+</span>    <span class="k">function</span> <span class="nf">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//在 blog\rock\negative 空間的 strlen() 會將字串長度以負值傳回。
+</span>        <span class="k">return</span> <span class="o">-</span><span class="p">(</span> <span class="nx">\strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">namespace</span> <span class="nx">blog\rock</span> <span class="p">{</span> <span class="c1">//切換到 blog\rock 名稱空間
+</span>    <span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="s2">"-- invoke strlen() --</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nx">negative\strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//使用相對路徑
+</span>    <span class="k">echo</span> <span class="nx">\blog\rock\negative\strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//使用絕對路徑
+</span>    <span class="k">echo</span> <span class="nx">\strlen</span><span class="p">(</span> <span class="nx">HELLO</span> <span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+
+</code></pre>
+
+<p>
+當我們在同一份文件中多次切換名稱空間時，配合縮排的括弧語法較易閱讀。當然，你也可以用簡單結合語法，再引用 Pythan 撰寫習慣，直接用空格縮排來區分名稱空間。但是只有使用括弧語法，我們才能切換到全體共用名稱空間(global namespace)。
+</p>
+
+<h4>
+匯入與別名功能
+</h4>
+<p>
+如果我們只是想使用別的名稱空間的內容，並不想切換名稱空間，則可用 <dfn>use</dfn> 匯入其他空間的內容。我們同時可以指定匯入空間的別名。如果你單獨匯入其他空間的一個類別定義 (<span class="Onote">不能單獨匯入名稱空間內的函數或常數</span>)，你也可以指定那個類別的別名。
+</p>
+
+<h5>
+動態地存取元素
+</h5>
+<p>
+如同 <a href="http://www.php.net/manual/en/functions.variable-functions.php">Variable functions</a> 允許我們所做的事一般，PHP 也允許我們透過變數去使用其他空間的內容。
+但要注意 <code>\</code> 字元的跳脫處理，如果你用雙引號括起名稱空間的內容，那麼字串中的 <code>\</code> 要寫成 <code>\\</code>。
+</p>
+
+<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">namespace</span> <span class="nx">blog\rock</span> <span class="p">{</span>
+    <span class="k">function</span> <span class="nf">bar</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"BAR</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Ccllaass</span> <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">bar</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">echo</span> <span class="s2">"cc</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">namespace</span> <span class="p">{</span> <span class="c1">// namespace without name means global namespace
+</span>    <span class="k">function</span> <span class="nf">bar</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">"bar</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">use</span> <span class="nx">\blog\rock</span> <span class="k">as</span> <span class="nx">rock</span><span class="p">;</span> <span class="c1">// 匯入名稱空間並取別名為 rock
+</span>    <span class="k">use</span> <span class="nx">\blog\rock\Ccllaass</span> <span class="k">as</span> <span class="nx">Cc</span><span class="p">;</span> <span class="c1">// 匯入名稱空間下的類別並取別名為 Cc
+</span>
+    <span class="nv">$rock_bar</span> <span class="o">=</span> <span class="s1">'\blog\rock\bar'</span><span class="p">;</span> <span class="c1">//動態存取空間內的元素
+</span>
+    <span class="nv">$cc</span> <span class="o">=</span> <span class="s1">'\blog\rock\Ccllaass'</span><span class="p">;</span>
+
+    <span class="nv">$clz</span> <span class="o">=</span> <span class="s1">'Ccllaass'</span><span class="p">;</span>
+    <span class="nv">$cc2</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">blog</span><span class="se">\\</span><span class="s2">rock</span><span class="se">\\</span><span class="nv">$clz</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//注意 \ 的跳脫處理
+</span>
+    <span class="nx">bar</span><span class="p">();</span>
+    <span class="nx">rock\bar</span><span class="p">();</span>
+    <span class="nv">$rock_bar</span><span class="p">();</span>
+    <span class="nx">Cc</span><span class="o">::</span><span class="na">bar</span><span class="p">();</span>
+    <span class="nv">$cc</span><span class="o">::</span><span class="na">bar</span><span class="p">();</span>
+    <span class="nv">$cc2</span><span class="o">::</span><span class="na">bar</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+
+
+<p>
+執行結果:
+</p>
+<pre class="language-text">
+bar
+BAR
+BAR
+cc
+cc
+cc
+
+</pre>
+<p>
+Namespace 是 PHP5.3 面向大型專案開發所新增的一項重要功能。並不是說有了 Namespace 就萬事大吉，但至少在結合來自各路好漢的函數庫與功能框架時，不必太擔心名稱衝突的問題了。
+</p>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/2009/PHP%205.3_6%20%E6%96%B0%E5%A2%9E%E5%8A%9F%E8%83%BD%20-%20Closures%2C%20const%2C%20and%20others.html">PHP 5.3/6 新增功能 - Closures, const, and others</a></li>
+</ul>
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/10814499.html">http://blog.roodo.com/rocksaying/archives/10814499.html</a></div>
