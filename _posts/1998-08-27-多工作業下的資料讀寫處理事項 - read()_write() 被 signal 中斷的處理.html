@@ -2,7 +2,8 @@
 title: 多工作業下的資料讀寫處理事項 - read()/write() 被 signal 中斷的處理
 category: programming
 old-category: C/C++/C#/Java
-tags: []
+tags: [linux,signal]
+lastupdated: 2006-10-19
 ---
 <p>
 當 read() 或 write() 在處理資料時，若剛好產生了一個 signal ，系統為了要處理這個 signal ，便會中斷 read() 或 write() ，將程序狀態切換到 signal 的處理動作中。
@@ -158,7 +159,7 @@ errno set to EINTR, or it shall return the number of bytes read."
 <blockquote>
 The U.S. Government (in FIPS 151-1) requires that read() return the
 number of bytes read. Since the Federal Government is the world's
-largest buyer of POSIX systems, it is a good bet that most POSIX 
+largest buyer of POSIX systems, it is a good bet that most POSIX
 systems will return the number of bytes read.
 <br/>
 <cite>FIPS of the U.S. Government</cite>
@@ -167,15 +168,10 @@ systems will return the number of bytes read.
 我的看法是，這種處理方式比較合理，可以明確知道有多少資料已被處理了，減少資料遺失的情形。
 如果是採回傳 EINTR 的方式，那我們無法知道有多少資料已經處理了，如果要再進行一次，就勢必整個資料重送一次。這時已經處理過的資料，我們卻無法得知系統將如何處理 (除非作業系統的手冊白紙黑字說明其實作方式，或是從作業系統的 source 中確認) ，問題就比較多了，這也是為何有的文件會建議將 EINTR 也視為致命錯誤。
 </p>
-<address>
-作者: rock (遊手好閒的石頭成)<br/>
-E-mail: shirock@educities.edu.tw<br/>
-First edition: 1998-08-27 [<a href="http://home.educities.edu.tw/shirock/comp/ReadWrite_Singal.txt">read() 及 write() 被 signal 中斷的處理</a>]<br/>
-Last modify: 2006-10-19
-</address>
+
 <h6>相關文章</h6>
 <ul>
-<li><a href="{{ site.baseurl }}/archives/2006/select%28%29%20-%20I_O%20Multiplexer.html">select() - I/O Multiplexer</a></li>
+<li><a href="{{ site.baseurl }}/archives/2006/select%20-%20I_O%20Multiplexer.html">select() - I/O Multiplexer</a></li>
 <li><a href="{{ site.baseurl }}/archives/2010/Python%20-%20Pipe%20%E5%9C%A8%20Signal%20%E7%99%BC%E7%94%9F%E6%99%82%E7%9A%84%E8%99%95%E7%90%86%E4%BA%8B%E9%A0%85.html">Python - Pipe 在 Signal 發生時的處理事項</a></li>
 </ul>
 <div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2159383.html">http://blog.roodo.com/rocksaying/archives/2159383.html</a></div>

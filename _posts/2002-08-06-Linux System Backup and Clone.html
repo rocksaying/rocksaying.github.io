@@ -2,22 +2,14 @@
 title: Linux System Backup and Clone
 category: computer
 old-category: 電腦技術
-tags: []
+tags: [linux,clone]
+lastupdated: 2005-07-18
 ---
 <p>
 主要用於系統持續服務的狀態下 (不關機狀態) ，進行系統備份工作，將運作中系統的內容，複製到遠端系統上儲存。都是可利用此備份技巧，進行系統的複製。重點在於不中斷系統服務的狀態 (不需要關機與重開機) 下完成此工作。
 </p>
 
 <!--more-->
-<address>
-作者: 遊手好閒的石頭成 (shirock@educities.edu.tw)<br />
-Homepage: http://blog.roodo.com/rocksaying/, http://home.educities.edu.tw/shirock/<br />
-Date: 2002/08/06<br />
-Last Modified: 2005/07/18
-</address>
-
-<h1>Linux 系統備份與複製 </h1>
-
 <p>
 窮人版的備援系統建置方法，於系統持續服務的狀態下 (不關機狀態) ，進行系統備份工作，將運作中系統的內容，複製到遠端系統上儲存。作法為設置至少二台主機同時運作，並互相將自身的資料內容複製到另一台主機上，互為備援。主機平時可以各自負責不同的服務，但當任一主機故障停擺時，則其他主機便可先接下故障主機的服務工作。企業有企業的作法。企業級的作法，是購置具有系統鏡射及自動負載平衡的設備，直接將任何更動鏡射到所有主機上。再者，這是針對檔案系統的完整複製動作，對於系統上運作的資料庫，還是建議另外再用資料庫本身提供的備份方式，備份資料庫內容。
 </p>
@@ -35,8 +27,8 @@ Last Modified: 2005/07/18
 <p>
 先把 slave 的系統更新到 slackware 8.1 ，安裝需要的軟體並完成設定，確定服務可以正常運作。在我的設定上，有 apache2 with ssl + php4 + postgresql, named, dhcpd, sendmail這幾個主要服務，以及 openssh 這個必要的網路工具。測試完成後，將這兩個機器的 ip 互換，等 master 也更新完成後再換回來。(因為我的 slave 機器設備比 master 差一級) 用 ifconfig ，如:
 </p>
-<pre class="language-text"><samp>master# shutdown -h now 
-slave# ifconfig eth0 192.168.1.1 netmask 255.255.255.0 
+<pre class="language-text"><samp>master# shutdown -h now
+slave# ifconfig eth0 192.168.1.1 netmask 255.255.255.0
 </samp></pre>
 <p>
 由 slave 上線接替 master 維持網路服務後。接下來要更新 master 機器的系統了，但不用像更新 slave 那麼麻煩，只要安裝最基本的套件就好了 (A, N serials)， A 系列套件是一定要裝的，而 N 系列只要裝 openssl 跟 openssh 就夠了。安裝 master 的系統時， ip 先設為 192.168.1.2 ，等 master 安裝好重開後，就要開始利用 ssh 進行系統完全複製了。現在 slave 跟 master 都跟網路連接了，但 master 只有最基本的軟體，在進行系統複製前，先確認在 master 上，可以用 ssh 以 root 帳號登入 slave ，因為要用 root 才能完全複製檔案。
@@ -47,20 +39,20 @@ slave# ifconfig eth0 192.168.1.1 netmask 255.255.255.0
 <pre class="language-text"><code>ssh userid@remote_host [remote_command]
 </code></pre>
 <p>
-userid 是登入 remote host 時的帳號，而 remote_command 可用可無，如果有指定，就會直接在遠端主機上執行該指令，並將該指令的輸出結果，輸出到本地的 stdout (標準輸出設備，如終端機上)。 
+userid 是登入 remote host 時的帳號，而 remote_command 可用可無，如果有指定，就會直接在遠端主機上執行該指令，並將該指令的輸出結果，輸出到本地的 stdout (標準輸出設備，如終端機上)。
 </p>
 <p>
 我就是利用 ssh 在遠端執行 tar ，把遠端的檔案系統直接複製過來。而為了完整複製所有檔案，所以需要用 root 登入遠端。做法如下： (此時的 192.168.1.1 是指派給 slave 這台主機)
 </p>
-<pre class="language-text"><samp>master# cd / 
-master# ssh root@192.168.1.1 &quot;tar czf - /var&quot; | tar xzf - 
-master# ssh root@192.168.1.1 &quot;tar czf - /home&quot; | tar xzf - 
-master# ssh root@192.168.1.1 &quot;tar czf - /usr&quot; | tar xzf - 
-master# ssh root@192.168.1.1 &quot;tar czf - /etc&quot; | tar xzf - 
-   ... 
+<pre class="language-text"><samp>master# cd /
+master# ssh root@192.168.1.1 &quot;tar czf - /var&quot; | tar xzf -
+master# ssh root@192.168.1.1 &quot;tar czf - /home&quot; | tar xzf -
+master# ssh root@192.168.1.1 &quot;tar czf - /usr&quot; | tar xzf -
+master# ssh root@192.168.1.1 &quot;tar czf - /etc&quot; | tar xzf -
+   ...
 </samp></pre>
 <p>
-在遠端執行 <samp>tar czf - /path </samp>(注意中間那個 - 是有特別用意的)，就會把 /path 下的檔案系統，完整 (連uid, 
+在遠端執行 <samp>tar czf - /path </samp>(注意中間那個 - 是有特別用意的)，就會把 /path 下的檔案系統，完整 (連uid,
   gid, mode) 地讀取出來，並輸出到遠端的 stdout 。 而 ssh 會把輸出到遠端 stdout 的內容，傳送到本地端的 stdout ，故以<strong>   | tar xzf - </strong>(再次注意後面那個 - ) 讀取資料並寫入到本地的檔案系統中。依序把重要的檔案目錄給複製過來。但像 /dev, /proc, /tmp 倒不用複製。複製完成後，兩台主機的內容就一致了。最後把 ip 再換回來就大功告成。
 </p>
 <p>
@@ -77,9 +69,5 @@ master# ssh root@192.168.1.1 &quot;tar czf - /etc&quot; | tar xzf -
 <p>
 甚至於也不用先儲存到檔案，直接用燒錄工具的指令，把資料燒進光碟也行 (或是操作磁帶，但我只聽過沒用過磁帶機 :p) 。
 </p>
-  
-<div class="CopyleftDeclaration" title="Copyleft 權利宣告">
-Copyleft &copy; Shih Yuncheng (shirock@educities.edu.tw).<br /><br />
-Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.1 or any later version published by the Free Software Foundation; with the Invariant Sections being all the text of every section, with no Style-Sheets, with no Scripts, with no Front-Cover Texts, and with no Back-Cover Texts.<br /><br />
-A copy of the license is included in the section entitled "GNU Free Documentation License". (http://www.fsf.org/licensing/licenses/fdl.html)
-</div><div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/280052.html">http://blog.roodo.com/rocksaying/archives/280052.html</a></div>
+
+<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/280052.html">http://blog.roodo.com/rocksaying/archives/280052.html</a></div>
