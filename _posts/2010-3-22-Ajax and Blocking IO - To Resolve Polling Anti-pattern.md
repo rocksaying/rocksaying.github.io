@@ -87,7 +87,7 @@ nonblocking_get();
 
 客戶端使用 <dfn>XMLHttpRequest</dfn> 以非同步方式向伺服端輪詢資料。這種做法的最大問題就在於它絕大多數時候索取到的內容是空資料，於是它不停地產生新的 XMLHttpRequest 探詢資料，又繼續得到空資料。整個行程的執行週期都浪費在產生 XMLHttpRequest 與探詢資料上了。我們可以監看 CPU 的使用率觀察這點。如下圖所示，儘管什麼資料都沒拿到，瀏覽器仍然佔用了 70% 的 CPU 使用率。它全用在輪詢動作。
 
-<img src="http://blog.roodo.com/rocksaying/91b9b054.png" alt="輪迴模式下的 CPU 使用狀態" />
+<img src="{{ site.baseurl }}/images/91b9b054.png" alt="輪迴模式下的 CPU 使用狀態" />
 
 在這個反模式下，稍微聰明的做法是設定時間間隔，例如用 <code>setTimeout()</code> ，令程式每隔一段時間才執行下一次探詢動作。但它仍然沒有徹底地消除不必要的輪詢行為與其資源耗費。
 
@@ -174,7 +174,7 @@ blocking_get();
 </html>
 {% endhighlight %}
 
-<img src="http://blog.roodo.com/rocksaying/f9a14ea4.png" alt="blocking_io_get.html 的執行過程畫面" />
+<img src="{{ site.baseurl }}/images/f9a14ea4.png" alt="blocking_io_get.html 的執行過程畫面" />
 
 ### Working with Pipe
 
@@ -320,7 +320,7 @@ if ( !file_exists(PIPE)) {
 ?>
 {% endhighlight %}
 
-<img src="http://blog.roodo.com/rocksaying/d4b46c19.png" alt="模擬聊天室的執行畫面" />
+<img src="{{ site.baseurl }}/images/d4b46c19.png" alt="模擬聊天室的執行畫面" />
 
 ###### 結語
 

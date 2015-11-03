@@ -194,11 +194,11 @@ firefox -app ~/hello_xulrunner/application.ini
 
 Linux平台執行畫面如下:
 
-<img src="http://blog.roodo.com/rocksaying/8ffbd788.png" alt="Hello XULRunner on Linux"/>
+<img src="{{ site.baseurl }}/images/8ffbd788.png" alt="Hello XULRunner on Linux"/>
 
 Windows平台執行畫面如下:
 
-<img src="http://blog.roodo.com/rocksaying/f894b535.png" alt="Hello XULRunner on Windows"/>
+<img src="{{ site.baseurl }}/images/f894b535.png" alt="Hello XULRunner on Windows"/>
 
 #### 參考文件
 
