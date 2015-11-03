@@ -40,7 +40,7 @@ $primary_alt_lightest_color: #e1f3f8;
 $focus_color: #3e94cf;
 $visited_color: #4c2c92;
 
-$code_bg_color: #fafbfc;
+$code_bg_color: rgba(250,251,252,0.8);
 $code_border_color: #558abb;
 $code_border: 1px solid $code_border_color;
 $tag_bg_color: #f4f7f8;
@@ -48,7 +48,10 @@ $tag_border_color: #cee9f9;
 $icon_color_1: $gold_dark_color;
 $twitter_blue: #55acee;
 
-$header_line_color: $gray_light_color;
+$header_line_color: $gold_color;
+$header_line_shadow: 0 3px 0 $gold_lightest_color;
+
+$note_text_color: $blue_dark_color;
 
 @font-face {
     font-family: "FontAwesome";
@@ -208,7 +211,7 @@ figcaption {
 
 
 nav {
-    .item {
+    .nav_item {
         display: inline-block;
         padding: 2px;
         font-size: 14px;
@@ -321,6 +324,11 @@ address {
     }
 }
 
+section.posts,
+section.post {
+    background:url(/assets/images/background.png) no-repeat fixed right bottom transparent;
+}
+
 .index_article {
     padding: 1em 2em;
     margin: 0;
@@ -329,7 +337,12 @@ address {
     h1 {
         margin: 6px 6px 6px 70px;
         font-size: 110%;
-        border-bottom: 1px solid $header_line_color;
+        border-bottom: 1px solid $gray_light_color;
+        box-shadow: 0 3px 0 $gray_lightest_color;
+    }
+
+    h1 a:hover {
+        text-decoration: none;
     }
 
     .excerpt {
@@ -469,7 +482,7 @@ address {
         padding: 2px;
     }
     &_list:nth-child(even) {
-        background-color: #e1f3f8;
+        background-color: rgba(225,243,248,0.7);
     }
     &_list_date {
         border-right: 1px solid $gray_lightest_color;
@@ -486,18 +499,18 @@ article {
     h1 {
         font-size: 150%;
         border-bottom: 3px double $header_line_color;
-        box-shadow: 0 3px 0 $gray_lightest_color;
+        box-shadow: $header_line_shadow;
     }
     h2 {
         font-size: 140%;
-        border-bottom: 1px solid $header_line_color;
-        box-shadow: 0 3px 0 $gray_lightest_color;
+        border-bottom: 3px double $header_line_color;
     }
     h3 {
         font-size: 130%;
         margin-top: 1.5em;
         margin-bottom: 1em;
         border-bottom: 1px solid $header_line_color;
+        box-shadow: $header_line_shadow;
     }
     h4 {
         font-size: 120%;
@@ -507,12 +520,12 @@ article {
     }
     h5 {
         font-size: 110%;
+        text-decoration: underline;
         margin-top: 0.5em;
         margin-bottom: 0.5em;
     }
     h6 {
         font-size: 105%;
-        text-decoration: underline;
         margin-top: 0.5em;
         margin-bottom: 0.5em;
     }
@@ -555,13 +568,30 @@ article {
 
     .note {
         @extend .small;
-        color: $blue_dark_color;
+        color: $note_text_color;
         margin-left: 4em;
         margin-right: 4em;
         padding: 5px;
-        border: 1px dashed $blue_light_color;
+        border: 1px dashed $gold_light_color;
         border-left: 0;
         border-right: 0;
+    }
+
+    .Onote {
+        @extend .small;
+        float: right;
+        clear: right;
+        max-width: 15%;
+        border-left: 3px solid $gold_light_color;
+        text-indent: 0;
+        padding: 0 2px;
+        margin: 0 0 0 0.5em;
+        color: $note_text_color;
+
+        &_no {
+            @extend .small;
+            color: $note_text_color;
+        }
     }
 
     del {
@@ -607,7 +637,6 @@ article {
     border-collapse: collapse;
     border-spacing: 0;
     border: $code_border;
-    background-color: $code_bg_color;
     width: 100%;
 
     .linenos {
@@ -623,20 +652,23 @@ article {
 
     .highlight {
         border: 0;
+        background: transparent;
     }
     .code {
         padding: 0;
+        background: $code_bg_color;
     }
 }
 
 .highlight, .language-text {
     border: $code_border;
     border-left: 5px solid $code_border_color;
-    background-color: $code_bg_color;
+    background: $code_bg_color;
     padding: 0 2px;
 
     code {
         border: 0;
+        background: transparent;
     }
 }
 
@@ -668,7 +700,7 @@ code[class*="language-"] {
 blockquote {
     color: rgb(50,55,110);
     line-height:150%;
-    background-color: rgba(250,251,252,0.8);
+    background-color: $code_bg_color;
 
     &:before {
         @extend .iconfont;
@@ -700,7 +732,6 @@ q {
 
 cite {
     text-decoration: underline;
-    -moz-text-decoration-style: wavy;
     text-decoration-style: wavy;
 }
 
@@ -708,3 +739,13 @@ cite {
     text-decoration: underline;
 }
 /**** end blockquote ****/
+
+@media print {
+    nav,
+    #site_search,
+    .post_footer {
+        display:none;
+        visibility:hidden;
+        height:0;
+    }
+}

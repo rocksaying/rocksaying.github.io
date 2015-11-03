@@ -50,32 +50,38 @@ for (i=0;i<imgs.length;++i) {
   img.title='圖'.concat(i+1,': ',(img.title?img.title:img.alt));
   img.addEventListener('click',toggleResizeImage,false);
   if (img.complete) {
-    console.log('complete'); // Firefox, Chrome
+    //console.log('complete'); // Firefox, Chrome
     setImageWithTitle.call(img);
   }
   else {
-    console.log('wait load'); // IE
+    //console.log('wait load'); // IE
     img.addEventListener('load',setImageWithTitle,false);
   }
 }
 //**** end adjust image
 
-var categories = [
-{'name':'<span class="iconfont">&#xf015;</span>', 'url':'/'},
-{'name':'Programming', 'url':'/categories/programming.html'},
-{'name':'電腦技術', 'url':'/categories/computer.html'},
-{'name':'經濟學/奧地利經濟學派', 'url':'/categories/economics.html'},
-{'name':'哲學/老子', 'url':'/categories/philosophy.html'},
-{'name':'閱讀隨筆', 'url':'/categories/reading.html'},
-{'name':'休閒生活', 'url':'/categories/life.html'},
-{'name':'快報記事', 'url':'/categories/events.html'}
-];
+// var categories = [
+// {'name':'<span class="iconfont">&#xf015;</span>', 'url':'/'},
+// {'name':'Programming', 'url':'/categories/programming.html'},
+// {'name':'電腦技術', 'url':'/categories/computer.html'},
+// {'name':'經濟學/奧地利經濟學派', 'url':'/categories/economics.html'},
+// {'name':'哲學/老子', 'url':'/categories/philosophy.html'},
+// {'name':'閱讀隨筆', 'url':'/categories/reading.html'},
+// {'name':'休閒生活', 'url':'/categories/life.html'},
+// {'name':'快報記事', 'url':'/categories/events.html'}
+// ];
+//
+// var cl=[];
+// categories.forEach(function(c, i){
+// cl.push('<div class="item"><a href="',
+//   c.url,'">', c.name,'</a></div>');
+// });
+// document.getElementById('site_categories').innerHTML=cl.join('');
 
-var cl=[];
-categories.forEach(function(c, i){
-cl.push('<div class="item"><a href="',
-  c.url,'">', c.name,'</a></div>');
-});
-document.getElementById('site_categories').innerHTML=cl.join('');
+var inotes = document.querySelectorAll('section.post .Onote');
+for (i = 0; i < inotes.length; ++i) {
+    inotes[i].insertAdjacentHTML('beforebegin', '<span class="Onote_no">*'+(i+1)+'</span>');
+    inotes[i].insertAdjacentHTML('afterbegin', '*'+(i+1)+' ');
+}
 
 }, false);
