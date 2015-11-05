@@ -2,7 +2,7 @@
 title: Debian 8 and Github Pages.
 category: computer
 tags: [github, jekyll]
-lastupdated: 2015-10-25
+lastupdated: 2015-11-05
 ---
 
 github pages required ruby version above 1.9. debian 8 default ruby version is 2.1.
