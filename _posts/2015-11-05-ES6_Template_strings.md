@@ -50,3 +50,4 @@ tag 允許設計者做更多的事。你可以自己解釋如何使用要插值�
 * 石頭閒語: [JavaScript print format]({% post_url 2013-11-6-JavaScript print format %})
 * [ES6 In Depth: Template strings](https://hacks.mozilla.org/2015/05/es6-in-depth-template-strings-2/)
 * 石頭閒語: [ECMAScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
+* 石頭閒語: [ECMAScript 6 - for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})
