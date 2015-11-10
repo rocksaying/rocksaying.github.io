@@ -1,13 +1,13 @@
 ---
-title: ECMAScript 6 ~ Template strings
+title: ECMAScript 6 - Template strings
 category: programming
 tags: [javascript,ecmascript,es6]
 lastupdated: 2015-11-09
 ---
 
-<dfn>Template strings</dfn> 之用法可參考 [ES6 In Depth: Template strings](https://hacks.mozilla.org/2015/05/es6-in-depth-template-strings-2/)。基本的 template string 用法是字串內容必須用反引號 (\`) ，而要插值的變數名稱則要包進 $\{\} 括號中。例如 <code>\`Hello $\{myName\}, template string.\`</code> 。
+<dfn>Template strings</dfn> 之用法可參考 <cite>[ES6 In Depth: Template strings](https://hacks.mozilla.org/2015/05/es6-in-depth-template-strings-2/)</cite>。基本的 template string 用法是字串內容必須用反引號 (\`) ，而要插值的變數名稱則要包進 <code>${}</code> 括號中。例如 <code>`Hello ${myName}, template string.`</code> 。
 
-此語法功能之基礎，和我在 [JavaScript print format]({% post_url 2013-11-6-JavaScript print format %}) 做的事大致相同。差別在於我實作的 `interpolate()` 和要插值的變數內容不在同一個作用域，故我必須將那些變數作為參數傳入。而 ES6 的 template strings 則是原地擴展，可直接取得要插值的變數。
+此語法功能之基礎，和我在 <cite>[JavaScript print format]({% post_url 2013-11-6-JavaScript print format %})</cite> 做的事大致相同。差別在於我實作的 `interpolate()` 和要插值的變數內容不在同一個作用域，故我必須將那些變數作為參數傳入。而 ES6 的 template strings 則是原地擴展，可直接取得要插值的變數。
 
 <!--more-->
 
@@ -47,5 +47,6 @@ tag 允許設計者做更多的事。你可以自己解釋如何使用要插值�
 
 ###### 相關文章
 
-* [JavaScript print format]({% post_url 2013-11-6-JavaScript print format %})
+* 石頭閒語: [JavaScript print format]({% post_url 2013-11-6-JavaScript print format %})
 * [ES6 In Depth: Template strings](https://hacks.mozilla.org/2015/05/es6-in-depth-template-strings-2/)
+* 石頭閒語: [ECMAScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})

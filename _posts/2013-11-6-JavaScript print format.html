@@ -3,10 +3,11 @@ title: JavaScript print format
 category: programming
 old-category: JavaScript
 tags: [javascript,console]
+lastupdated: 2015-11-10
 ---
 <p>
 在 C 語言中， <dfn>printf</dfn> 是一個很方便的輸出函數，在其他程式語言中，也或多或少提供了類似的格式化輸出或是格式化字串功能。
-不過 JavaScript 並沒有定義這種函數，那就自己寫吧。本文說明兩種格式化字串的實作方式。
+不過 JavaScript 並沒有定義這種函數 (直到 ECMAScript6 才提供 <a href="{% post_url 2015-11-05-ES6_Template_strings %}">template string</a>)，那就自己寫吧。本文說明兩種格式化字串的實作方式。
 </p>
 
 <!--more-->
@@ -27,8 +28,7 @@ by {0}, {1}, {2}, ... base from 0.
  */</span>
 <span class="nb">String</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">interpolate</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span>
 <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// do nothing
-</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// do nothing</span>
         <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
 
     <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
@@ -59,16 +59,14 @@ by $1, $2, ... base from 1.
     <span class="kd">var</span> <span class="nx">index_offset</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// index base from 1.
 </span>
     <span class="k">if</span> <span class="p">(</span><span class="k">this</span> <span class="k">instanceof</span> <span class="nb">String</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// nothing
-</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// nothing</span>
             <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
     <span class="p">}</span>
     <span class="k">else</span> <span class="p">{</span>
         <span class="nx">s</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="c1">// notice: arguments is not an array.
 </span>
         <span class="nx">index_offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="c1">/// nothing
-</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="c1">/// nothing</span>
             <span class="k">return</span> <span class="nx">s</span><span class="p">;</span>
     <span class="p">}</span>
 
@@ -87,12 +85,10 @@ by $1, $2, ... base from 1.
 
 <pre class="highlight"><code><span class="nx">alert</span><span class="p">(</span><span class="s2">"nothing"</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">());</span>
 
-<span class="c1">// 這是 C# 式的用法。基數從0開始。
-</span>
+<span class="c1">// 這是 C# 式的用法。基數從0開始。</span>
 <span class="nx">alert</span><span class="p">(</span><span class="s2">"hello {0}. {1} + {2} = {3}"</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="s2">"abc{2}"</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
 
-<span class="c1">// 這比較像 shell script 的用法，基數從1開始。
-</span>
+<span class="c1">// 這比較像 shell script 的用法，基數從1開始。</span>
 <span class="nx">alert</span><span class="p">(</span><span class="s2">"hello $1. $2 + $3 = $4"</span><span class="p">.</span><span class="nx">interpolate2</span><span class="p">(</span><span class="s2">"abc$2"</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
 
 </code></pre>
@@ -112,4 +108,4 @@ JavaScript 雖然沒有正式的格式化字串或輸出函數，但是非正式
 <ul>
 <li><a href="{% post_url 2015-11-05-ES6_Template_strings %}">ECMAScript 6 ~ Template strings</a></li>
 </ul>
-<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/25899028.html">http://blog.roodo.com/rocksaying/archives/25899028.html</a></div>
+<div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/25899028.html</div>
