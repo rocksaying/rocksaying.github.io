@@ -2,10 +2,20 @@
 title: 樂多部落格文章轉移到 github pages 完工
 category: events
 tags: [github pages]
-lastupdated: 2015-11-03
+lastupdated: 2015-11-11
 ---
 
 已將樂多部格落上的文章轉移到 github pages ，新網址 <a href="http://rocksaying.tw">rocksaying.tw</a> 。並開啟 disqus 留言系統。
+
+除了全站RSS訂閱，各分類頁的文章列表的上方，也有該分類的 RSS 訂閱連結。
+
+* RSS 訂閱全站: [石頭閒語新文](http://rocksaying.tw/feed.xml)
+* RSS 訂閱分類: [Programming](http://rocksaying.tw/categories/programming.xml)
+* RSS 訂閱分類: [電腦技術](http://rocksaying.tw/categories/computer.xml)
+* RSS 訂閱分類: [經濟學](http://rocksaying.tw/categories/economics.xml)
+* RSS 訂閱分類: [閱讀隨筆](http://rocksaying.tw/categories/reading.xml)
+* RSS 訂閱分類: [哲學／老子](http://rocksaying.tw/categories/philosophy.xml)
+* RSS 訂閱分類: [休閒生活](http://rocksaying.tw/categories/life.xml)
 
 <!--more-->
 
