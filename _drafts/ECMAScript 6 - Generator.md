@@ -94,3 +94,20 @@ for (var v of OG(o)) {
     console.log(v); // 1,2,3
 }
 {% endhighlight %}
+
+
+{% highlight c %}
+
+jmp_buf state;
+
+generator() {
+    for (i = 0; i < 3; ++i) {
+        if (setjmp(state) == 0)
+            return i;
+    }
+}
+
+longjmp(state);
+
+
+{% endhighlight %}
