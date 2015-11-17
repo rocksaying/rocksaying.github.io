@@ -18,6 +18,41 @@ Arrow functions
 ECMAScript 傳統的匿名函數定義語法只是把一般函數定義中的名稱部份去掉。 ES6 則從 C# 借來了新的匿名函數語法，讓設計者少打一些字。因為我本來就會 C# ，這個 ES6 的新語法在我眼中反而有著熟悉感。
 
 {% highlight javascript %}
+// ECMAScript 傳統函數定義語法
+function(parameter_list) {
+    return result;
+}
+
+// ES6 新語法
+(parameter_list)=>{
+    return result;
+}
+
+// 1. 有一個以上的參數時，表示參數清單的 () 可以省略。
+(x) => {}
+  // or
+x => {}
+
+(x,y) => {}
+  // or
+x,y => {}
+
+// 2. 但沒有參數時，必須寫出 () 。
+() => {}
+
+// 3. 函數本體只有一行時，表示函數區塊的 {} 可以省略。
+//    而且這時自動將該行執行結果作為函數回傳值，不能用 return 。
+x => {
+    return x+1;
+}
+  // or
+x => x+1
+
+{% endhighlight %}
+
+
+
+{% highlight javascript %}
 // ES3
 var f1 = function(x) {
     return x+1;
