@@ -16,24 +16,24 @@ tags: [javascript,html5,gjs,webkit,ime]
 首先，我準備了一個簡單的資料表格(form2.html)，當作桌面軟體中要讓使用者輸入資料的畫面。其內容如下:
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE html&gt;</span>
-<span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"Content-Type"</span> <span class="na">content=</span><span class="s">"text/html; charset=UTF-8"</span><span class="nt">/&gt;</span>
+{% highlight html %}
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
-<span class="nt">&lt;p&gt;</span>
+<p>
 這是一個要使用者填資料的表格。
-<span class="nt">&lt;/p&gt;</span>
-<span class="ni">&amp;lt;</span>textarea cols='40' rows='3' style="float:left;margin:5px;"<span class="ni">&amp;gt;</span>
-<span class="ni">&amp;lt;</span>/textarea<span class="ni">&amp;gt;</span>
-<span class="nt">&lt;div</span> <span class="na">style=</span><span class="s">"float:left;margin:5px;"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;labe&gt;</span>text: <span class="nt">&lt;/labe&gt;&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="nt">/&gt;&lt;br/&gt;</span>
-<span class="nt">&lt;labe&gt;</span>pass: <span class="nt">&lt;/labe&gt;&lt;input</span> <span class="na">type=</span><span class="s">"password"</span> <span class="nt">/&gt;&lt;br/&gt;</span>
-<span class="nt">&lt;labe&gt;</span>mail: <span class="nt">&lt;/labe&gt;&lt;input</span> <span class="na">type=</span><span class="s">"email"</span> <span class="nt">/&gt;&lt;br/&gt;</span>
-<span class="nt">&lt;/div&gt;</span>
+</p>
+&lt;textarea cols='40' rows='3' style="float:left;margin:5px;"&gt;
+&lt;/textarea&gt;
+<div style="float:left;margin:5px;">
+<labe>text: </labe><input type="text" /><br/>
+<labe>pass: </labe><input type="password" /><br/>
+<labe>mail: </labe><input type="email" /><br/>
+</div>
 
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
-
+</html>
+{% endhighlight %}
 
 <p>
 各位不難注意到，這裡面沒有半行跟 touch-ime 有關。這正是我的目的，因為我將示範如何無縫地將 touch-ime 置入使用。
@@ -43,232 +43,229 @@ tags: [javascript,html5,gjs,webkit,ime]
 接著， touch-ime 要求使用方提供它需要的輸入功能區(字根鍵區、功能鍵區、候選字區)，而 form2.html 並沒有這些區域。我必須無中生有地生一個出來，on-screen-keyboard.js 就是在做這件事。
 </p>
 
-<pre class="highlight"><code><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-<span class="c1">// 將 OnScreenKeyboard 函數綁在 window 事件上，除了用於配置軟鍵盤外，還可藉由</span>
-<span class="c1">// 被 window 參照的關係，使軟鍵盤個體不會被視為要回收的垃圾。</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'DOMContentLoaded'</span><span class="p">,</span> 
-<span class="kd">function</span><span class="cm">/*OnScreenKeyboard*/</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">TouchInputMethod</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'undefined'</span><span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
+{% highlight javascript %}
+(function(){
+// 將 OnScreenKeyboard 函數綁在 window 事件上，除了用於配置軟鍵盤外，還可藉由
+// 被 window 參照的關係，使軟鍵盤個體不會被視為要回收的垃圾。
+window.addEventListener('DOMContentLoaded',
+function/*OnScreenKeyboard*/() {
+    if (typeof(TouchInputMethod) == 'undefined')
+        return;
 
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'OnScreenKeyboard initial'</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">ctrl</span> <span class="o">=</span> <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">get_controls</span><span class="p">();</span>
+    console.log('OnScreenKeyboard initial');
+    var ctrl = TouchInputMethod.get_controls();
 
-    <span class="kd">var</span> <span class="nx">button_height</span> <span class="o">=</span> <span class="s1">'height:32px;'</span><span class="p">;</span>
+    var button_height = 'height:32px;';
 
-    <span class="kd">var</span> <span class="nx">kb</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'div'</span><span class="p">);</span>
-    <span class="nx">kb</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'\
-    &amp;lt;style type="text/css"&gt;\
-    #'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">show_input_keys_id</span><span class="o">+</span><span class="s1">' {\
+    var kb = document.createElement('div');
+    kb.innerHTML = '\
+    &lt;style type="text/css">\
+    #'+ctrl.show_input_keys_id+' {\
         min-width: 5em; max-width: 8em;\
         float: left; clear: left;\
     }\
-    #'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">show_input_keys_id</span><span class="o">+</span><span class="s1">'::after {\
+    #'+ctrl.show_input_keys_id+'::after {\
         content: "\1D104";\
     }\
-    #'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">candidate_id</span><span class="o">+</span><span class="s1">' {\
+    #'+ctrl.candidate_id+' {\
         clear: both;\
         height: 30px; max-width:320px;\
         overflow-x: hidden; overflow-y: auto;\
         margin-bottom: 5px;\
     }\
-    .'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">inputkey</span><span class="o">+</span><span class="s1">' {\
+    .'+ctrl.control_classes.inputkey+' {\
         width: 32px; height: 32px;\
         max-width: 32px; max-height: 32px;\
         font-size: 18px;\
         padding: 0px; margin: 0px;\
         border: 1px solid lightgrey;\
     }\
-    .'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">candidates</span><span class="o">+</span><span class="s1">' {\
+    .'+ctrl.control_classes.candidates+' {\
         height: 30px; min-width: 29px; max-width: 300px;\
         font-size: 16px;\
         padding: 0px; margin: 0px;\
         border: 1px solid lightgrey;\
     }\
-    .'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">capital_toggle_on</span><span class="o">+</span><span class="s1">' {\
+    .'+ctrl.control_classes.capital_toggle_on+' {\
         background-color: red;\
     }\
-    &amp;lt;/style&gt;\
-    &amp;lt;div&gt;\
-    &amp;lt;div id="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">candidate_id</span><span class="o">+</span><span class="s1">'"&gt;&amp;lt;!-- required --&gt;&amp;lt;/div&gt;\
-    &amp;lt;div&gt;\
-     &amp;lt;div id="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">show_input_keys_id</span><span class="o">+</span><span class="s1">'"&gt;&amp;lt;/div&gt;\
-     &amp;lt;button class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">back_input_key</span><span class="o">+</span><span class="s1">'" style="'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;↤&amp;lt;/button&gt;&amp;lt;!-- ↤ ⍅ ⍇ --&gt;\
-     &amp;lt;select class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">select_engine</span><span class="o">+</span><span class="s1">'" style="'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;&amp;lt;/select&gt;\
-     &amp;nbsp;\
-     &amp;lt;button class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">end_composition</span><span class="o">+</span><span class="s1">'" style="float:right;clear:right;'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;完成&amp;lt;/button&gt;\
-    &amp;lt;/div&gt;\
-    &amp;lt;div id="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">keyboard_id</span><span class="o">+</span><span class="s1">'"&gt;&amp;lt;!-- required --&gt;&amp;lt;/div&gt;\
-    &amp;lt;div style="text-align:center"&gt;\
-     &amp;lt;button class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">capital_toggle</span><span class="o">+</span><span class="s1">'" style="float:left;clear:left;'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;Caps&amp;lt;/button&gt;\
-     &amp;lt;button class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">add_space_output_texts</span><span class="o">+</span><span class="s1">'" style="width:30%;'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;&amp;nbsp;空格&amp;nbsp;&amp;lt;/button&gt;\
-     &amp;lt;span style="float:right;clear:right;"&gt;\
-     &amp;lt;button class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">backspace_output_texts</span><span class="o">+</span><span class="s1">'" style="'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;←&amp;lt;/button&gt;\
-     &amp;nbsp;\
-     &amp;lt;button class="'</span><span class="o">+</span><span class="nx">ctrl</span><span class="p">.</span><span class="nx">control_classes</span><span class="p">.</span><span class="nx">add_newline_output_texts</span><span class="o">+</span><span class="s1">'" style="'</span><span class="o">+</span><span class="nx">button_height</span><span class="o">+</span><span class="s1">'"&gt;⏎&amp;lt;/button&gt;\
-     &amp;lt;/span&gt;\
-    &amp;lt;/div&gt;\
-    &amp;lt;/div&gt;'</span><span class="p">;</span>
+    &lt;/style>\
+    &lt;div>\
+    &lt;div id="'+ctrl.candidate_id+'">&lt;!-- required -->&lt;/div>\
+    &lt;div>\
+     &lt;div id="'+ctrl.show_input_keys_id+'">&lt;/div>\
+     &lt;button class="'+ctrl.control_classes.back_input_key+'" style="'+button_height+'">↤&lt;/button>&lt;!-- ↤ ⍅ ⍇ -->\
+     &lt;select class="'+ctrl.control_classes.select_engine+'" style="'+button_height+'">&lt;/select>\
+     &nbsp;\
+     &lt;button class="'+ctrl.control_classes.end_composition+'" style="float:right;clear:right;'+button_height+'">完成&lt;/button>\
+    &lt;/div>\
+    &lt;div id="'+ctrl.keyboard_id+'">&lt;!-- required -->&lt;/div>\
+    &lt;div style="text-align:center">\
+     &lt;button class="'+ctrl.control_classes.capital_toggle+'" style="float:left;clear:left;'+button_height+'">Caps&lt;/button>\
+     &lt;button class="'+ctrl.control_classes.add_space_output_texts+'" style="width:30%;'+button_height+'">&nbsp;空格&nbsp;&lt;/button>\
+     &lt;span style="float:right;clear:right;">\
+     &lt;button class="'+ctrl.control_classes.backspace_output_texts+'" style="'+button_height+'">←&lt;/button>\
+     &nbsp;\
+     &lt;button class="'+ctrl.control_classes.add_newline_output_texts+'" style="'+button_height+'">⏎&lt;/button>\
+     &lt;/span>\
+    &lt;/div>\
+    &lt;/div>';
 
-    <span class="kd">with</span> <span class="p">(</span><span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">backgroundColor</span> <span class="o">=</span> <span class="s1">'rgba(220,220,220,0.7)'</span><span class="p">;</span>
-        <span class="nx">border</span> <span class="o">=</span> <span class="s1">'1px solid black'</span><span class="p">;</span>
-        <span class="nx">padding</span> <span class="o">=</span> <span class="s1">'0.2em'</span><span class="p">;</span>
-        <span class="nx">position</span> <span class="o">=</span> <span class="s1">'absolute'</span><span class="p">;</span>
-        <span class="nx">visibility</span> <span class="o">=</span> <span class="s1">'hidden'</span><span class="p">;</span>
-        <span class="nx">zIndex</span> <span class="o">=</span> <span class="s1">'99999'</span><span class="p">;</span>
-    <span class="p">}</span>
-    
-    <span class="kd">var</span> <span class="nx">inputs</span> <span class="o">=</span> <span class="nx">kb</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'button'</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span> <span class="nx">inputs</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span>
-        <span class="nx">inputs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">style</span><span class="p">.</span><span class="nx">fontSize</span> <span class="o">=</span> <span class="s1">'16px'</span><span class="p">;</span>
-    <span class="nx">kb</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'select'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">.</span><span class="nx">fontSize</span> <span class="o">=</span> <span class="s1">'16px'</span><span class="p">;</span>
-    
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'body'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">kb</span><span class="p">);</span>
+    with (kb.style) {
+        backgroundColor = 'rgba(220,220,220,0.7)';
+        border = '1px solid black';
+        padding = '0.2em';
+        position = 'absolute';
+        visibility = 'hidden';
+        zIndex = '99999';
+    }
 
-    <span class="kd">var</span> <span class="nx">kb_x</span><span class="p">,</span> <span class="nx">kb_y</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">being_dragged</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">old_oncomposition</span> <span class="o">=</span> <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">oncomposition</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">old_oncompositionend</span> <span class="o">=</span> <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">oncompositionend</span><span class="p">;</span>
+    var inputs = kb.getElementsByTagName('button');
+    for (var i = 0; i &lt; inputs.length; ++i)
+        inputs[i].style.fontSize = '16px';
+    kb.getElementsByTagName('select')[0].style.fontSize = '16px';
 
-    <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">oncomposition</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">target</span> <span class="o">=</span> <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">get_target</span><span class="p">();</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="p">(</span><span class="nx">target</span><span class="p">.</span><span class="nx">offsetTop</span> <span class="o">+</span> <span class="nx">target</span><span class="p">.</span><span class="nx">offsetHeight</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="p">(</span><span class="nx">target</span><span class="p">.</span><span class="nx">offsetLeft</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">old_oncomposition</span><span class="p">)</span>
-            <span class="nx">old_oncomposition</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">TouchInputMethod</span><span class="p">);</span>
-    <span class="p">}</span>
+    document.getElementsByTagName('body')[0].appendChild(kb);
 
-    <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">oncompositionend</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">old_oncompositionend</span><span class="p">)</span>
-            <span class="nx">old_oncompositionend</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">TouchInputMethod</span><span class="p">);</span>
-    <span class="p">}</span>
+    var kb_x, kb_y;
+    var being_dragged = false;
+    var old_oncomposition = TouchInputMethod.oncomposition;
+    var old_oncompositionend = TouchInputMethod.oncompositionend;
 
-    <span class="nx">kb</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'mousedown'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ev</span><span class="p">){</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">ev</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">nodeName</span> <span class="o">!=</span> <span class="s1">'DIV'</span> <span class="o">||</span> 
-            <span class="p">(</span><span class="nx">ev</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">ctrl</span><span class="p">.</span><span class="nx">candidate_id</span> <span class="o">&amp;&amp;</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">childElementCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> 
-        <span class="p">{</span>
-            <span class="k">return</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="c1">//ev.preventDefault();</span>
-        <span class="nx">ev</span><span class="p">.</span><span class="nx">stopPropagation</span><span class="p">();</span>
-        <span class="nx">being_dragged</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-        <span class="nx">kb_x</span> <span class="o">=</span> <span class="p">(</span><span class="nx">ev</span><span class="p">.</span><span class="nx">clientX</span> <span class="o">-</span> <span class="nx">kb</span><span class="p">.</span><span class="nx">offsetLeft</span><span class="p">);</span>
-        <span class="nx">kb_y</span> <span class="o">=</span> <span class="p">(</span><span class="nx">ev</span><span class="p">.</span><span class="nx">clientY</span> <span class="o">-</span> <span class="nx">kb</span><span class="p">.</span><span class="nx">offsetTop</span><span class="p">);</span>
-    <span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+    TouchInputMethod.oncomposition = function() {
+        var target = TouchInputMethod.get_target();
+        kb.style.top = (target.offsetTop + target.offsetHeight + 10) + 'px';
+        kb.style.left = (target.offsetLeft + 10) + 'px';
+        kb.style.visibility = "visible";
+        if (old_oncomposition)
+            old_oncomposition.call(TouchInputMethod);
+    }
 
-    <span class="nx">kb</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'mouseup'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ev</span><span class="p">){</span>
-        <span class="c1">//console.log('up', ev.target, ev.clientX, ev.clientY);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">being_dragged</span><span class="p">)</span>
-            <span class="k">return</span><span class="p">;</span>
-        <span class="nx">being_dragged</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">clientX</span> <span class="o">-</span> <span class="nx">kb_x</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">clientY</span> <span class="o">-</span> <span class="nx">kb_y</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-    <span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
+    TouchInputMethod.oncompositionend = function() {
+        kb.style.visibility = "hidden";
+        if (old_oncompositionend)
+            old_oncompositionend.call(TouchInputMethod);
+    }
 
-    <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'mousemove'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ev</span><span class="p">){</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">being_dragged</span><span class="p">)</span>
-            <span class="k">return</span><span class="p">;</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">clientX</span> <span class="o">-</span> <span class="nx">kb_x</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-        <span class="nx">kb</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">clientY</span> <span class="o">-</span> <span class="nx">kb_y</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-    <span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
-    
-    <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">init</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
+    kb.addEventListener('mousedown', function(ev){
+        if (ev.target.nodeName != 'DIV' ||
+            (ev.target.id == ctrl.candidate_id && ev.target.childElementCount > 0))
+        {
+            return;
+        }
+        //ev.preventDefault();
+        ev.stopPropagation();
+        being_dragged = true;
+        kb_x = (ev.clientX - kb.offsetLeft);
+        kb_y = (ev.clientY - kb.offsetTop);
+    }, false);
 
-<span class="p">})();</span>
+    kb.addEventListener('mouseup', function(ev){
+        //console.log('up', ev.target, ev.clientX, ev.clientY);
+        if (!being_dragged)
+            return;
+        being_dragged = false;
+        kb.style.left = ev.clientX - kb_x + 'px';
+        kb.style.top = ev.clientY - kb_y + 'px';
+    }, false);
 
-</code></pre>
+    window.addEventListener('mousemove', function(ev){
+        if (!being_dragged)
+            return;
+        kb.style.left = ev.clientX - kb_x + 'px';
+        kb.style.top = ev.clientY - kb_y + 'px';
+    }, false);
 
+    TouchInputMethod.init();
+}
+, false);
+
+})();
+{% endhighlight %}
 
 <p>
 最後，我用 gjs 撰寫了一個簡單的嵌入 WebKit 的桌面程式 (host-ime.js):
 </p>
 
-<pre class="highlight"><code>pan class="cp">
+{% highlight javascript %}
 #!/usr/bin/gjs
-</span><span class="cm">/*
+/*
 $ ./host-ime.js file:///home/rock/Public/rocksources/web_input_method/embed-webkit-demo/form2.html
 
  See JavaScript 與Desktop - Desktop and WebKit
- {{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20Desktop%20and%20WebKit.html
-*/</span>
-<span class="c1">// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4</span>
-<span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">Gtk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">WebKit</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">WebKit</span><span class="p">;</span>
-<span class="kr">const</span> <span class="nx">WebKitLoadStatus</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="na">WEBKIT_LOAD_PROVISIONAL</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="na">WEBKIT_LOAD_COMMITTED</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="na">WEBKIT_LOAD_FINISHED</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="na">WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="na">WEBKIT_LOAD_FAILED</span><span class="p">:</span> <span class="mi">4</span>
-<span class="p">};</span>
-<span class="cm">/* status order when load page:
-PROVISIONAL -&gt; COMMITTED 
--&gt; DOMContentLoaded (body.onload)
--&gt; FIRST_VISUALLY_NON_EMPTY_LAYOUT -&gt; FINISHED.
-*/</span>
+ http://blog.roodo.com/rocksaying/archives/14456843.html
+*/
+// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
+var GLib = imports.gi.GLib;
+var Gtk = imports.gi.Gtk;
+var WebKit = imports.gi.WebKit;
+const WebKitLoadStatus = {
+    WEBKIT_LOAD_PROVISIONAL: 0,
+    WEBKIT_LOAD_COMMITTED: 1,
+    WEBKIT_LOAD_FINISHED: 2,
+    WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT: 3,
+    WEBKIT_LOAD_FAILED: 4
+};
+/* status order when load page:
+PROVISIONAL -> COMMITTED
+-> DOMContentLoaded (body.onload)
+-> FIRST_VISUALLY_NON_EMPTY_LAYOUT -> FINISHED.
+*/
 
-<span class="kd">function</span> <span class="nx">_script</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
-    <span class="k">return</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
-<span class="p">}</span>
+function _script(f) {
+    var ctx = f.toString();
+    return ctx.slice(ctx.indexOf('{') + 1, ctx.lastIndexOf('}'));
+}
 
-<span class="kd">function</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
-<span class="k">if</span> <span class="p">(</span><span class="nx">ARGV</span><span class="p">.</span><span class="nx">length</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-  <span class="nx">print</span><span class="p">(</span><span class="s2">"you must give an URL"</span><span class="p">);</span>
-  <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+function main() {
+if (ARGV.length &lt; 1) {
+  print("you must give an URL");
+  return;
+}
 
-<span class="nx">GLib</span><span class="p">.</span><span class="nx">set_prgname</span><span class="p">(</span><span class="s1">'hello webkit'</span><span class="p">);</span>
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
-<span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">();</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"destroy"</span><span class="p">,</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span> 
+GLib.set_prgname('hello webkit');
+Gtk.init(0, null);
+var w = new Gtk.Window();
+w.connect("destroy", Gtk.main_quit);
 
-<span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebKit</span><span class="p">.</span><span class="nx">WebView</span><span class="p">();</span>
-<span class="nx">view</span><span class="p">.</span><span class="nx">set_size_request</span><span class="p">(</span><span class="mi">480</span><span class="p">,</span> <span class="mi">600</span><span class="p">);</span>
-<span class="nx">view</span><span class="p">.</span><span class="nx">get_settings</span><span class="p">().</span><span class="nx">set_property</span><span class="p">(</span><span class="s1">'enable-file-access-from-file-uris'</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+var view = new WebKit.WebView();
+view.set_size_request(480, 600);
+view.get_settings().set_property('enable-file-access-from-file-uris', true);
 
-<span class="nx">view</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"notify::load-status"</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">//if (view.loadStatus == WebKitLoadStatus.WEBKIT_LOAD_FINISHED) { </span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">view</span><span class="p">.</span><span class="nx">loadStatus</span> <span class="o">==</span> <span class="nx">WebKitLoadStatus</span><span class="p">.</span><span class="nx">WEBKIT_LOAD_COMMITTED</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">external_src</span><span class="p">;</span>
-        <span class="nx">external_src</span> <span class="o">=</span> <span class="nx">GLib</span><span class="p">.</span><span class="nx">file_get_contents</span><span class="p">(</span><span class="s1">'../touch-ime.js'</span><span class="p">);</span>
-        <span class="nx">view</span><span class="p">.</span><span class="nx">execute_script</span><span class="p">(</span><span class="nx">external_src</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-        <span class="cm">/*
+view.connect("notify::load-status", function() {
+    //if (view.loadStatus == WebKitLoadStatus.WEBKIT_LOAD_FINISHED) {
+    if (view.loadStatus == WebKitLoadStatus.WEBKIT_LOAD_COMMITTED) {
+        var external_src;
+        external_src = GLib.file_get_contents('../touch-ime.js');
+        view.execute_script(external_src[1]);
+        /*
          See 撰寫乾淨的 eval 程式碼的技巧
-         {{ site.baseurl }}/archives/2012/%E6%92%B0%E5%AF%AB%E4%B9%BE%E6%B7%A8%E7%9A%84%20eval%20%E7%A8%8B%E5%BC%8F%E7%A2%BC%E7%9A%84%E6%8A%80%E5%B7%A7.html‎
-        */</span>
-        <span class="nx">view</span><span class="p">.</span><span class="nx">execute_script</span><span class="p">(</span><span class="nx">_script</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">URL</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'file://'</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> 
-                <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">set_resources_path</span><span class="p">(</span><span class="s1">'file:///home/rock/Public/rocksources/web_input_method/'</span><span class="p">);</span>
-            <span class="k">else</span>
-                <span class="nx">TouchInputMethod</span><span class="p">.</span><span class="nx">set_resources_path</span><span class="p">(</span><span class="s1">'http://localhost/rock/rocksources/web_input_method/'</span><span class="p">);</span>
-        <span class="p">}));</span>
-        <span class="nx">external_src</span> <span class="o">=</span> <span class="nx">GLib</span><span class="p">.</span><span class="nx">file_get_contents</span><span class="p">(</span><span class="s1">'../on-screen-keyboard.js'</span><span class="p">);</span>
-        <span class="nx">view</span><span class="p">.</span><span class="nx">execute_script</span><span class="p">(</span><span class="nx">external_src</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">});</span>
+         http://blog.roodo.com/rocksaying/archives/18991164.html‎
+        */
+        view.execute_script(_script(function(){
+            if (document.URL.indexOf('file://') == 0)
+                TouchInputMethod.set_resources_path('file:///home/rock/Public/rocksources/web_input_method/');
+            else
+                TouchInputMethod.set_resources_path('http://localhost/rock/rocksources/web_input_method/');
+        }));
+        external_src = GLib.file_get_contents('../on-screen-keyboard.js');
+        view.execute_script(external_src[1]);
+    }
+});
 
-<span class="c1">// WebKit: for security reason, you should give absolute path.</span>
-<span class="c1">//view.load_uri("file:///home/rock/workspace/content/index.html");</span>
-<span class="c1">//view.load_uri("http://www.twitter.com/");</span>
-<span class="nx">view</span><span class="p">.</span><span class="nx">load_uri</span><span class="p">(</span><span class="nx">ARGV</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+// WebKit: for security reason, you should give absolute path.
+//view.load_uri("file:///home/rock/workspace/content/index.html");
+//view.load_uri("http://www.twitter.com/");
+view.load_uri(ARGV[0]);
 
-<span class="nx">w</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">view</span><span class="p">);</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">set_position</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">//GTK_WIN_POS_CENTER</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">show_all</span><span class="p">();</span>
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">main</span><span class="p">();</span> <span class="c1">// gtk loop, quit by main_quit().</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Goodbye"</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">main</span><span class="p">();</span>
-
-</code></pre>
-
+w.add(view);
+w.set_position(1); //GTK_WIN_POS_CENTER
+w.show_all();
+Gtk.main(); // gtk loop, quit by main_quit().
+print("Goodbye");
+}
+main();
+{% endhighlight %}
 
 <div class="note">
 2013-10-09 更新: 配合 on-screen-keyboard.js ，主要調整了載入時機，從 WEBKIT_LOAD_FINISHED 改為 WEBKIT_LOAD_COMMITTED 。並移除一些由 on-screen-keyboard.js 完成的初始化工作。
