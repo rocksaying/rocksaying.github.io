@@ -292,3 +292,35 @@ config-load.c 比較難理解的應該是下列這一段內容。
 而動態型別語言則不必如此麻煩，一個泛用的指派行為(=)就可以實現。
 這些都是動態型別語言的長處，程式人員應積極運用。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/20220500.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">reborn2266@gmail.com(小鄭) (#comment-22578054)</div>
+<div class="roodo-comment-date">Thu, 09 Aug 2012 09:00:11 +0800</div>
+<div class="roodo-comment-text">另一個常見的 switch case 場合是實作 nontrivial state machine 的機制，善用 state function 可以很漂亮的解決。<br/>FYI.<br/><a href='http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide' rel='nofollow'><a href='http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide' rel='nofollow'><a href='http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide' rel='nofollow'>http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide</a></a></a><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22578620)</div>
+<div class="roodo-comment-date">Thu, 09 Aug 2012 17:35:52 +0800</div>
+<div class="roodo-comment-text">In the same way, you can create a callback function table to finish different type assignment without if/else.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22579860)</div>
+<div class="roodo-comment-date">Fri, 10 Aug 2012 16:54:06 +0800</div>
+<div class="roodo-comment-text">Callback example:<br/>--------<br/>void str_set_value(char **var, char *v) {<br/>    *var = strcpy((char*)malloc(strlen(v)+1), v);<br/>}<br/><br/>void int_set_value(int *var, char *v) {<br/>    *var = atoi(v);<br/>}<br/> <br/>struct {<br/>    char *key;<br/>    void *var;<br/>    void (*set_value)(void*, char*);<br/>}<br/>config_table[] = {<br/>    {"server",      &Server,    (void(*)(void*,char*)) str_set_value},<br/>    {"timeout",     &Timeout,   (void(*)(void*,char*)) int_set_value},<br/>    {NULL,          NULL,       NULL} // end<br/>};<br/><br/>.<br/>.<br/>.<br/>            for (conf_item = config_table; <br/>                  conf_item->key;<br/>                  ++conf_item)<br/>            {<br/>                if (strcmp(conf_item->key, key) == 0) <br/>                    conf_item->set_value(conf_item->var, value);<br/>            }<br/>.<br/>.<br/>.<br/>--------<br/><br/>However 'void*' and explicit type casting are weak.<br/>To resolve those weak, I need to design more struct.<br/>I may do that in complex case.<br/>But in simple case, I just avoid them.<br/><br/>Using callback is good if the language supports dynamic and strong type system.<br/>Callback will be applied implicitly via assign operator.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22846748)</div>
+<div class="roodo-comment-date">Fri, 19 Apr 2013 20:10:24 +0800</div>
+<div class="roodo-comment-text">switch case 和 if else 在很多方面來講還是存在很大的差別; 另外我記得 switch case在編輯最佳化時會轉成 jump table, 所以不太需要自己實作table, 除非在switch不支援的型別或是特殊的比對情境下才需要實作table.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22853244)</div>
+<div class="roodo-comment-date">Mon, 22 Apr 2013 10:22:41 +0800</div>
+<div class="roodo-comment-text">正文範例要 switch 的對象是字串，但 C 語言的 switch case 不支持字串對象，所以我變形用 if elseif 去表示 switch case 。再者，所有用 swich case 寫出來的程式碼，都可以改成 if elseif 形式(只是程式碼重複更多)，沒錯吧。<br/><br/>用查表代替 switch 是一個通用的設計模式。它的其中目的是消除程式碼撰寫時的重複內容。重點是消除眾多 case 後面重複或相似的程式碼內容，不只是建一個 jump table 而已。<br/><br/>如果 case 後面的程式碼各不相同的話，那 switch case 的工作還真的就只是建立一個 jump table ，要不要自己轉成查表，或許見仁見智。<br/><br/>另外再就程式架構的角度來看，查表法比較容易改寫成執行時期判斷的動態架構，也就是說可透過組態設定等外部參數就改變程式行為，彈性較大。 switch case 通常就要改寫程式碼並重編譯，彈性小。<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22858882)</div>
+<div class="roodo-comment-date">Sun, 28 Apr 2013 04:33:15 +0800</div>
+<div class="roodo-comment-text">ok, 其實我的意思並沒有反對要用查表, 事實上在我使用多種語言的情況中查表用得比switch還多, 但我只是想說 switch case在編譯最佳化時會轉成 jump table. switch 最適合用到的時機是 case block 內的工作很不一致, 單一的switch rule 和 target, 我只是想補充說 在這些情況下直接使用switch即可. 當然我也有提到 在switch不支援的比對型別, 使用查表會比較適合, 這剛好也是你的情況. 再來想說 if elseif 和 switch 不一樣, 因為 switch 的比較對象只有一個, 而且比對 rule 很固定; 一般書上都會提到 switch 可以由多個elseif 做到, 但elseif不見得能由switch適當地完成; 再來以效能來看, 如果某工作能以switch和elseif完成, 我還是會用switch, 因為效能的原因. 最後, 程式架構的角度要依不同情況需求而定, 您說透過config來改變程式行為, 我想懂injection的人應該都清楚這點, 但在讀入字串後仍需要比對, 比對用查表或switch依情況, 我看不出哪裡彈性比較大？如果多了個表中沒有的字串, 不需要更新表嗎？ 另外, 查表也需要有建表的成本, 尤其是對一些OO的語言.<br/>	</div>
+</blockquote>
+</div>

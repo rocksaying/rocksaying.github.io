@@ -32,3 +32,50 @@ Oracle 在這方面完全遵循 SQL Standard 。也可以參考 Oracle reference
 
 <!--more-->
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/5935773.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16312789)</div>
+<div class="roodo-comment-date">Mon, 28 Apr 2008 18:54:34 +0800</div>
+<div class="roodo-comment-text">原來是這樣，受教了 :)<br/>我記得之前從MySQL轉到PGSQL的時候，欄位大小寫也以為踩到地雷，結果就自己乖乖的改成小寫(還是大寫，忘了)... :)<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16312953)</div>
+<div class="roodo-comment-date">Mon, 28 Apr 2008 19:41:24 +0800</div>
+<div class="roodo-comment-text">那個 Oracle SQL Developer 的 Migration 能幫我們加 double A...不對...doublequote 嗎？找半天找不到有關的設定...<br/><br/>我已經快抓狂了...在程式裡的欄位大寫真的很難看...Orz<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16335635)</div>
+<div class="roodo-comment-date">Fri, 02 May 2008 13:18:09 +0800</div>
+<div class="roodo-comment-text">我通常會把欄位的部份轉義出去，所以沒這困擾～<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16353951)</div>
+<div class="roodo-comment-date">Mon, 05 May 2008 16:06:26 +0800</div>
+<div class="roodo-comment-text">基本上，只有在你自己組成 SQL 敘述的地方才需要動手加上雙引號。其他地方並沒有什麼差別。<br/><br/>例如原本有一段程式是:<br/>$sql = 'SELECT id,name FROM user;';<br/>$db->query($sql);<br/><br/>按 SQL 標準加上雙引號，也不過就只是:<br/>$sql = 'SELECT "id","name" FROM "user";';<br/>$db->query($sql);<br/><br/>這樣就可以在 Oracle 中使用小寫的欄位名稱與表格名稱。這種作法是通式，適用各類支援 SQL 的 DBMS。<br/><br/>而你的程式碼 (如 PHP) 還是一樣不變，如:<br/>$results = $db->query($sql);<br/>$row = $db->fetch($results);<br/>echo $row->id, $row->name;<br/><br/>還有一點，ZendFramework 的 Zend_Db_Select 類可以幫助你處理一些自行組成 SQL 敘述的事。因為 Zend_Db_Select 組成的 SQL 敘述會替欄位名稱和表格名稱加上雙括號。<br/>(Zend_Db_Select 是一種 Active record pattern)<br/><br/>$db->select()->from('user');<br/>就會組成:<br/>SELECT * FROM "user";<br/><br/>如果你用那些 tool ，程式碼不需要改什麼。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16454485)</div>
+<div class="roodo-comment-date">Sun, 18 May 2008 15:57:31 +0800</div>
+<div class="roodo-comment-text">SQL 欄位加雙引號真的是標準嗎? MySQL 看起來不支援這個標準 XD<br/><br/>#1064 - You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"user" <br/>LIMIT 0, 30' at line 1<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16461157)</div>
+<div class="roodo-comment-date">Mon, 19 May 2008 18:14:47 +0800</div>
+<div class="roodo-comment-text">注意看我倒數第二段，我寫「我最不喜歡的 MySQL方言」，原因就在於 MySQL 的內定語法並不符合 SQL標準。<br/><br/>Ok, 言歸正傳，我猜你忘了啟用 ANSI_QUOTES 。<br/>參考 <a href="http://dev.mysql.com/doc/refman/5.1/en/identifiers.html"> MySQL 5.1 Reference Manual::Schema Object Names</a>: " The identifier quote character is the backtick (“`”). <br/>If the ANSI_QUOTES SQL mode is enabled, it is also allowable to quote identifiers within double quotes"。<br/><br/>注意，MySQL 方言自定的識別字括號是反引號(`)，要啟用 ANSI_QUOTES 後，才會支援 ANSI SQL 的雙引號。<br/><br/>MySQL 的文件自己都很明白地寫出它的內定語法其實不符合 ANSI SQL。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16543461)</div>
+<div class="roodo-comment-date">Thu, 29 May 2008 14:50:50 +0800</div>
+<div class="roodo-comment-text">大概只有SQLServer用[]，其他的DB都是用""<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16597579)</div>
+<div class="roodo-comment-date">Thu, 05 Jun 2008 17:05:51 +0800</div>
+<div class="roodo-comment-text">其實 SQLServer 也可以用 "" 。<br/><br/>我之前一直都是用 "" 在操作 SQL Server 的資料庫欄位。直到不久前，我查看一位公司同事的內儲程序時，看到一大堆 [] 括起來的名稱，我還真是傻眼。那時我才知道 SQL Server 的書都是教人用 [] 的... <br/><br/>唉唉，那些書籍作者真是誤人子弟。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-18208865)</div>
+<div class="roodo-comment-date">Mon, 22 Dec 2008 16:08:03 +0800</div>
+<div class="roodo-comment-text">如果MySQL可以用"["及"]"來括起名稱就好了。<br/>其實Open Database Connectivity也是用"`"來括起名稱。<br/>	</div>
+</blockquote>
+</div>

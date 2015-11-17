@@ -42,3 +42,25 @@ Unsupported charset "utf-X" - will be regarded as ascii in ...
 <p>
 但在實務上，有不少人是租用虛擬主機空間運行 PHP 程式。而那些虛擬主機供應商不可能允許用戶自行修改 php.ini 之內容。所以此處的解決方式不適合虛擬主機用戶，他們應採用 <a href="{{ site.baseurl }}/archives/2007/PHP%20mail%28%29%20and%20charset%20encoding%20question.html">part1</a> 的解決方式。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2998451.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">meluwu@xuite.net(melu) (#comment-16224163)</div>
+<div class="roodo-comment-date">Tue, 15 Apr 2008 09:59:10 +0800</div>
+<div class="roodo-comment-text">請問一下當我用像下面的程式去跑的時侯為什麼在信件的本文的部份常會莫名的跑出!或亂碼...本文部份是讀入utf8格式的中文字..是那個部份 下錯 了嗎 ??謝 謝 <br/>$subj='=?utf-8?B?' . base64_encode("中文測試").'?=';<br/>$to = 'melu@yahoo.com';<br/>$from = '英文';<br/>$mime = md5(uniqid(mt_rand(),TRUE));<br/><br/>$header = "From:=?utf-8?B?".base64_encode($from)."?=\r\n";<br/>$header .= "MIME-Version:1.0\r\n";<br/>$header .= "Content-Type: multipart/alternative;boundary=".$mime."\r\n";<br/>$header .= "Content-Transfer-Encoding: 8bit\r\n\r\n";<br/>$msg="";<br/>$msg .= "--".$mime."\r\n";<br/>$msg .= "Content-Type: text/plain; charset=UTF-8\n";<br/>$msg .= "Content-Transfer-Encoding: 8bit\n\n";<br/>$msg .= "--".$mime."\r\n";<br/>$msg .= "Content-Type: text/html; charset=UTF-8\n";<br/>$msg .= "Content-Transfer-Encoding: 8bit\n\n";///////////////////////////<br/>//--------------------------	<br/>$msgbody="";<br/>$msgbody.="";<br/>$msgbody.="";<br/>$msgbody.="";<br/>$msgbody.="";<br/>$msgbody.="";<br/>$msgbody.="              ";<br/>$msgbody.="                中文測試";<br/>$msgbody.="              ";<br/>$msgbody.="";<br/>$msgbody.="";<br/><br/>$data = $msgbody;<br/>$msg .= $data."\r\n";<br/>$msg .= "--".$mime."--\r\n";<br/>mb_internal_encoding("UTF-8"); <br/><br/>mb_send_mail($to, $subj, $msg, $header);<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16262449)</div>
+<div class="roodo-comment-date">Mon, 21 Apr 2008 14:01:41 +0800</div>
+<div class="roodo-comment-text">你應該先確認你想讀入的那些文件，其內容都是 utf-8 的。<br/><br/>此外，從程式碼來看，既然你已經完全處理掉了 charset 的編碼動作，那麼你應避免調用 mb_send_mail() ，多一個轉接多一隻鬼。你應該選擇用 <a href="http://blog.roodo.com/rocksaying/archives/2950655.html">PHP mail() and charset encoding question, part 1</a> 的方式送信。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">bovaho2000@yahoo.com.tw(我熊) (#comment-17799331)</div>
+<div class="roodo-comment-date">Fri, 24 Oct 2008 12:24:50 +0800</div>
+<div class="roodo-comment-text">只要不載入 mbstring extension 或是在 php.ini 中設定 mbstring.func_overload = 6(not overload mail())<br/>-----------------------------<br/>當我在php.ini下查看。<br/>發現這個本來就沒有載入了<br/>(;mbstring extension =0 )<br/>仍然呈現亂碼。<br/>似乎~並不是出自於這裡的問題<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-17888179)</div>
+<div class="roodo-comment-date">Thu, 06 Nov 2008 02:36:16 +0800</div>
+<div class="roodo-comment-text">你有試著用 php -m 列出 PHP 編入的 extension 有哪些嗎？如果你的 php 是將 mbstring 直接編譯在一起的話，就會作用。這時不理會 php.ini 中的設定。<br/>	</div>
+</blockquote>
+</div>

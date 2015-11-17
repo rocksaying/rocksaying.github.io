@@ -382,3 +382,20 @@ Example:
 <span class="cp">?&gt;</span>
 </code></pre>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3542135.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11086011)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 10:13:47 +0800</div>
+<div class="roodo-comment-text">呵~專案剛結案, 比較閒來和您以文會友~<br/>您這個 Stack 範例存在有 memory leak 的問題.<br/>而 Stack 範例剛好又在 Effective Java Programming Language Guide (Item 5: Eliminate obsolete object references) 有提到且很常發生.<br/>在 PHP 其實問題不會很嚴重, 因為 PHP 目前並沒有 Application Server, 也就是物件不會被永續存在, 在每一次的 request 結束後, 問題也就消失了. <br/><br/>不過還是來探討一下:<br/>如果這個 Stack 成長後縮小, 也就是假設 push 到 5 個, 而 pop 出 2 個, $this->table 依然還是暫有 5 個的記憶體, 因為被 popped off 的物件不會被回收, 即使它也將不會再被引用到<br/>改成即可解決此問題:<br/>public function pop() {  <br/>  if ($this->sp > 0)  <br/>     $result = $this->table[--$this->sp];<br/>     unset($this->table[$this->sp]);<br/>     return $result;<br/>  else  <br/>     throw new Exception('stack is empty');  <br/>}<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11086691)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 12:07:52 +0800</div>
+<div class="roodo-comment-text">喔，那不是 memory leak，而是我的設計。<br/><br/>其實按 PHP 的陣列用法，我大可不指定 size ，反正可以隨時增加或縮減。但我給了 size ，我的意思就是要一個固定大小的 stack。隱含的效率意義是: 我就是要這麼大的stack放在那裡，系統不用管理這塊記憶體。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11089547)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 15:44:44 +0800</div>
+<div class="roodo-comment-text">更正。剛剛回應太快，以為是指陣列大小的事。<br/><br/>我剛瞄了一下 pop() ，發現我還真的漏掉 unset 了。我明明記得我有寫...<br/>嗯，一定是我在改的時候，不小心改錯了 (遠目<br/><br/>ps.回傳 reference 比較快，免得 copy object 兩次。<br/>$r = $table[$sp] // copy 1<br/>return $r  // copy 2<br/>	</div>
+</blockquote>
+</div>

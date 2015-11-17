@@ -161,3 +161,45 @@ MyMailer 以靜態方法 <code>MyMailer::mail()</code> 實現郵件寄送行為�
 <li><a href="{{ site.baseurl }}/archives/2007/PHP%20mail%28%29%20and%20charset%20encoding%20question%2C%20part2%20-%20mbstring.html">PHP mail() and charset encoding question, part2 - mbstring</a></li>
 </ul>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2950655.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4369777)</div>
+<div class="roodo-comment-date">Sun, 08 Apr 2007 05:15:27 +0800</div>
+<div class="roodo-comment-text">我使用了你的方式但是出現<br/>Parse error: syntax error, unexpected T_STATIC, expecting T_OLD_FUNCTION or T_FUNCTION or T_VAR or '}' in /home/public_html/mail_test/MyMailer.php on line 8<br/><br/>因為PHPMailer之前我用的都沒問題,最近卻變成亂碼,我實在找不到解決方式,它的主旨跟標題是正常的 內容確是亂碼<br/>不知大大有辦法幫忙解決否?<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4371721)</div>
+<div class="roodo-comment-date">Sun, 08 Apr 2007 17:17:57 +0800</div>
+<div class="roodo-comment-text">PHP 版本不同，我忘了在哪個版本以前， static 關鍵字必須放在可見度宣告關鍵字的後面。所以你把 static 關鍵字放在 public/private 關鍵字之後即可。<br/><br/>PHPMailer 內定使用 PHP 內建的 mail() 。然而就像本文提到 PHP 內建的 mail() 改變了行為內容，所以信件內容的編碼不適合中文信件。<br/><br/>故你應該要像本文採用的方式一般，要求 PHPMailer 使用 SMTP 方式寄送信件，例如加上 <code>$mailer->IsSMTP();</code> 或 <code>$mailer->Mailer = "smtp";</code> 。<br/>在 PHPMailer 的 FAQ 中也是建議用 SMTP 方式 (See also: <a href="http://phpmailer.sourceforge.net/faq.html#faq4">What mailer gives me the best performance? </a>。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">capulet@ms25.hinet.net(小賴) (#comment-4417349)</div>
+<div class="roodo-comment-date">Thu, 12 Apr 2007 16:41:50 +0800</div>
+<div class="roodo-comment-text">我還是用mail()來寄，我用UTF-8編碼網頁<br/>內容部分ok，只是title會變成亂碼，只要加一句就正常了<br/>$title = "=?UTF-8?B?".base64_encode($title)."?=";<br/><br/>這樣寄出，主旨就不會亂碼了<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">vri2004@gmail.com(紫誘惑) (#comment-4417969)</div>
+<div class="roodo-comment-date">Thu, 12 Apr 2007 18:57:33 +0800</div>
+<div class="roodo-comment-text">在主旨和標題都還是big5碼沒有任何錯誤,但是內文就無法正常顯示,我後來發現我應該不是使用SMTP,因為我那個在PHP.INI內並沒有設定任何資料,而是由主機商那邊預設值,可是經過PHPMailer 送信後,信件還是亂碼,我已經找了一星期資料,徹底放棄了,雖然我還是很想解決,網路上找的相關亂碼問題好像都是針對某些論壇外掛,幾忽找不到非論壇發信的討論mail(),有也是一些舊資料已經不適用了,大大不知可否說明的詳細些<br/>我試了好多方式都失敗,最後,終於無奈放棄了<br/><br/>我想問題是出在<br/>$mail->Body    = "$d";<br/><br/>不知道版大可以幫我看看問題到底在那裡嗎?<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4418849)</div>
+<div class="roodo-comment-date">Thu, 12 Apr 2007 21:32:34 +0800</div>
+<div class="roodo-comment-text">我在上面的回應已經說了，你應改用 SMTP 方式寄信。<br/>你的程式<strong>並未要求 PHPMailer 採用 SMTP 方式</strong>。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">vri2004@gmail.com(紫誘惑) (#comment-4420879)</div>
+<div class="roodo-comment-date">Fri, 13 Apr 2007 01:51:09 +0800</div>
+<div class="roodo-comment-text">痾!!感謝大大!!我終於懂了!!<br/><br/>謝謝!!<br/>補充一點,我是放在虛擬主機上面,而之前一直出錯原因是SMTP沒架設成功,一直把 HOST這個東西設成自己網域<br/><br/>原來還有分 win32跟LINUX不同 >"<<br/>搞好久!!真是感謝大大回答!!真好!!<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15558189)</div>
+<div class="roodo-comment-date">Wed, 16 Jan 2008 15:41:50 +0800</div>
+<div class="roodo-comment-text">我也是使用虛擬主機，也遇到亂碼的問題，剛剛看到一篇文章，只用了簡單兩行(用mb_send_mail代替mail)，就解決了我的問題，提供大家參考。<br/><br/>mb_internal_encoding("UTF-8");<br/>$headers = 'From: <a href="mailto:nectar020@yahoo.com.cn\r\nReply-To:">nectar020@yahoo.com.cn\r\nReply-To:</a> <a href="mailto:me@budian.cn\r\nX-Mailer:">me@budian.cn\r\nX-Mailer:</a> PHP/' . phpversion();<br/>mb_send_mail("$To", "$Subject", "$Content", $headers);<br/><br/><br/>取自：http://www.wretch.cc/blog/Linpy&article_id=10919198<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15558831)</div>
+<div class="roodo-comment-date">Wed, 16 Jan 2008 17:39:39 +0800</div>
+<div class="roodo-comment-text">to Derek:<br/>關於使用 mb_send_mail() 可解決信件亂碼的原因，請參考<a href="http://blog.roodo.com/rocksaying/archives/2998451.html">本文 part2</a>。<br/><br/>mail() 會寄出亂碼信件的原因，其實也是 mb_send_mail()。成也蕭何，敗也蕭何。<br/>	</div>
+</blockquote>
+</div>

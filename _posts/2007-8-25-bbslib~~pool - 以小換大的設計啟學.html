@@ -71,3 +71,20 @@ content 指向 bbslib::pool 的真正內容(通常是一個字串)。length 表�
 <p>
 每次以 POOLBLKSIZ 為單位來配置一個記憶體區域，以 content 指向該區域， size 表示該區域的大小( n * POOLBLKSIZ ， POOLBLKSIZ的整數倍數)。將字串內容儲存在該區域中，但是因為字串不會一次剛好用完整個含量，故以 length 表示目前已使用的容量。當要儲存新的字串內容時，會自動判斷目前配置的容量，是否仍足夠儲存新的內容，如果不夠，會以 POOLBLKSIZ 為單位，再配置一塊足夠容納所有內容(原有及新增)的記憶體區域，將所有內容給儲存到該新的區域中後，才釋放掉舊的記憶體區域， content 會指向新的區域， size會指派新的容量大小。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/4014249.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-14309385)</div>
+<div class="roodo-comment-date">Sat, 25 Aug 2007 22:48:14 +0800</div>
+<div class="roodo-comment-text">在 i386 上, 因為 CPU 記憶體管理模型的關係, 所以 1page=4k, 不管是 windows, linux, freebsd, os/2,... 都會是 4k, 其它的 CPU 型態我沒取過不知道<br/><br/>至於 DOS 的話, 那算是 16bit 的, 再加上因為 real mode 神奇的記憶體模型 (Segment:Offset 對應到的真實記憶體位址為 (Segment &lt;&lt; 4) + Offset, Segment 和 offset 都是 16bit), 所以才會有 1para = 16bytes 這種數字產生, 而配置會不會搞個配個 1byte 也是要去個 16bytes 的情況, 在那種記憶體寸 byte 寸金的時代...<br/>--<br/>x86 上 windows, freebsd 取得的也都是 4096:<br/>Freebsd:<br/>~$ uname<br/>FreeBSD<br/>~$ cat a.c<br/>#include <br/><br/>int main() {<br/>  int sz = getpagesize();<br/>  printf("%d\n", sz);<br/>}<br/>~$ gcc a.c; ./a.out<br/>4096<br/><br/>windows (2k):<br/>C:\>type a.c<br/>#include <br/>#include <br/><br/>int main()<br/>{<br/>  SYSTEM_INFO sSysInfo;<br/><br/>  GetSystemInfo(&sSysInfo);<br/>  printf ("%d\n", sSysInfo.dwPageSize);<br/>}<br/><br/><br/>C:\>gcc a.c<br/><br/>C:\>a<br/>4096<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-14330037)</div>
+<div class="roodo-comment-date">Tue, 28 Aug 2007 18:01:12 +0800</div>
+<div class="roodo-comment-text">關於 page 的 size 。<br/><br/>我當時在 Linux, FreeBSD, Solaris 甚至 OS/2 上實測的數據都是 4096 bytes 。但我記得當時在 Win95/98 上，配合 MinGW32 以 sysconf(_SC_PAGESIZE) 抓出來的數據是 1024 bytes 。故我也不敢肯定地說是 1 page = 4096 bytes。<br/><br/>相容性: POSIX 中沒有相關規範。getpagesize() 是 BSD 規格，SYSV不支援。<br/><br/>《DOS 技術手冊二 徹底研究篇》：「DOS 是以 PARA (16BYTES) 為單位來配置(ALLOCATE)記憶區 (MEMORY BLOCK)的。」這本書是1993年出版，我當年學組合語言時買下的書。這一點我可以肯定地說：確實如此。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-14331061)</div>
+<div class="roodo-comment-date">Tue, 28 Aug 2007 21:09:18 +0800</div>
+<div class="roodo-comment-text">我也很肯定的說, 1990 年我就看過手冊二了. 出版時間應該更早.<br/><br/>另外, 286 或其他沒支援分頁的機器, 還是會一塊一塊配置記憶體, 跟 "分頁" 無關, 當然, para 不是 page.<br/><br/><a href='http://en.wikipedia.org/wiki/Page_size' rel='nofollow'>http://en.wikipedia.org/wiki/Page_size</a><br/>可以參考一下, x86 page 也不見得是固定 4k<br/>	</div>
+</blockquote>
+</div>

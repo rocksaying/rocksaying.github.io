@@ -303,3 +303,50 @@ ERR: myBar 並未混入類別
 <li><a href="{{ site.baseurl }}/archives/2012/PHP%205.4%20%E6%96%B0%E5%8A%9F%E8%83%BD.html">PHP 5.4 新功能</a></li>
 </ul>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2884871.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4229167)</div>
+<div class="roodo-comment-date">Tue, 20 Mar 2007 15:15:58 +0800</div>
+<div class="roodo-comment-text">石頭成老大，看了你的程式後，我又想到一個有趣的實作方式，有時間我再來試看看。<br/><br/>不過我個人覺得上面的 delegate 方法如果改以接受 <a href="http://blog.roodo.com/jaceju/archives/409709.html">callback 虛擬型態</a>的參數會不會比較 PHP 一點？類似 <a href="http://blog.roodo.com/jaceju/archives/2853761.html">我也來實作 PHP mix-in 的概念 - Part 2</a>裡的做法 (不過我倒是沒把一般函式考慮進去) 。<br/><br/>但是到現在還是沒想通 mix-in 在繼承以後能做些什麼事，只能感嘆自己實務經驗還不足，也許要再多看看 RoR 的設計概念了。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4229555)</div>
+<div class="roodo-comment-date">Tue, 20 Mar 2007 16:52:18 +0800</div>
+<div class="roodo-comment-text">這牽涉到 PHP 的動態能力限制。<br/>請看 MixableClass.php 的第31行，然後想想如何完成指派動作。<br/>PHP 有三種呼叫方式: 一般函數、類別靜態方法、實例方法。基本上把第21行的 function_exists($fn) 改成 is_callable($fn) 就可以判定這是可呼叫的。但到第31行就麻煩了，如何儲存？<br/><br/>如果這三種方式都要考慮，這程式要增加不少程式碼。<br/><br/>現在的方式可以應付我的需求了，所以我目前只寫到這裡。更多內容要等到我有這需求時才會再去改了。<br/><br/>事實上，上面的作法無法同時兼顧效能與彈性。我覺得要改用 <a href="http://tw.php.net/manual/en/ref.runkit.php">runkit</a> extension 實現較佳。但 runkit 仍是新近加入的實驗性功能，還不是很穩固。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4229805)</div>
+<div class="roodo-comment-date">Tue, 20 Mar 2007 17:44:11 +0800</div>
+<div class="roodo-comment-text">瞭解，如何儲存方法的確是 PHP 的弱項。沒有 closure 的支援， PHP 的動態性還是相當不足。這個問題有時間的話，我再來研究看看。<br/><br/>不過很我很有興趣的一點是，目前我所看過的 PHP 應用項目也很少使用這樣的方法；不曉得石頭成老大你所開發的項目是什麼，為什麼會有用到這種概念的想法？<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4229813)</div>
+<div class="roodo-comment-date">Tue, 20 Mar 2007 17:45:16 +0800</div>
+<div class="roodo-comment-text">抱歉，上面的 closure 本來要寫的是「核心語法」。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4229975)</div>
+<div class="roodo-comment-date">Tue, 20 Mar 2007 18:15:30 +0800</div>
+<div class="roodo-comment-text">哈哈， 我都叫 closure 「封絕」或「閉鎖空間」的。XD<br/><br/>我目前有些功能直接用 Variable function 的方式，我在想如果能用 MixableClass 應該更方便。<br/><br/>目前還沒動手應用 MixableClass 於工作上。讓我想想要怎麼弄個實用的例子說明。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4231255)</div>
+<div class="roodo-comment-date">Tue, 20 Mar 2007 22:07:50 +0800</div>
+<div class="roodo-comment-text">「封絕」...有點放武俠大絕的味道 XD<br/><br/>其實沒有實際用上也沒關係，我覺得這樣討論 PHP 可以做到什麼境界還滿有趣的。 :)<br/><br/>我已經想到一些可能的寫法了，這兩天有空來試試看。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4235025)</div>
+<div class="roodo-comment-date">Wed, 21 Mar 2007 11:54:59 +0800</div>
+<div class="roodo-comment-text">看了mix-in這兩篇，第二篇覺得明確很多，這篇前段寫了目標，真的很棒。目標寫的好以及具體化，甚至比詳細的技術解決方案還重要，不過這是以應用來看就是了。<br/><br/>剛看的時候，其實還蠻不懂到底在玩什麼飛機，後來兩篇看完外加看了jaceju的那一篇和Prototype-based programming的解釋，才進入狀況，我實在是太蠢了。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4241137)</div>
+<div class="roodo-comment-date">Thu, 22 Mar 2007 10:58:53 +0800</div>
+<div class="roodo-comment-text">「封絕」是一種自在式，可以實現一個與外部隔離的孤立空間，是紅世使徒... 停! 再講下去只有動漫狂聽得懂了。<br/><br/>其實像事件委派、序列化等動作都可以用混入的方式處理。例如，我要為一個類別加上可以將個體的公開內容序列化為 json 格式的方法時，就可以用混入而不是繼承方式處理。<br/><br/>例如:<br/>User::delegate('User', 'jsonEncode', 'jsonEncode');<br/>ProductOrder::delegate('ProductOrder', 'jsonEncode', 'jsonEncode');<br/>Report::delegate('Report', 'json', 'jsonEncode');<br/><br/>這三個類別沒有親近的類別關係，若以繼承方式加上 json 序列化方法，可能要繼承好幾代。但以混成方式，只要直接委派就可以了。<br/><br/>另一種應用是和 Configuration-Driven Development 結合，自組態檔中讀出類別的schema後，即可動態混成新的類別，而不需要手動撰寫或產生程式碼。參見: <a href="http://blog.roodo.com/rocksaying/archives/2644922.html">Example of Configuration Driven Development with PHP</a>、<a href="http://blog.roodo.com/rocksaying/archives/2186914.html">從 XML 產生 JSON 資料及方法的封裝</a>。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-4243489)</div>
+<div class="roodo-comment-date">Thu, 22 Mar 2007 18:14:15 +0800</div>
+<div class="roodo-comment-text">嗯，看來應用還滿多的。以往如果要這樣實現的話，可能要多出好幾個類別。<br/><br/>也許還可以用在我目前發想的專案裡，這種方式實在是讓我學到了很多新想法 :)<br/>	</div>
+</blockquote>
+</div>

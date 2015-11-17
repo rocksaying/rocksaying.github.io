@@ -86,3 +86,40 @@ Closure
 <p>
 我的例子是用匿名函數創造 Closure ，而 Fowler 的例子則是用具名函數 <var>paidMore()</var> 創造 Closure 。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3337623.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-10615677)</div>
+<div class="roodo-comment-date">Thu, 24 May 2007 15:28:47 +0800</div>
+<div class="roodo-comment-text">看到這行：<br/><br/>(function(i) {  <br/>    //closure.  <br/>    return function(){print(i);}  <br/>})<br/><br/>大概懂意思了，感謝石頭成老大的解說 :)<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-10615689)</div>
+<div class="roodo-comment-date">Thu, 24 May 2007 15:31:32 +0800</div>
+<div class="roodo-comment-text">之前是看這篇：<br/><br/><a href='http://www.javaworld.com.tw/roller/page/ingramchen?entry=2007_1_1_WhyAddClosureInJava7' rel='nofollow'>http://www.javaworld.com.tw/roller/page/ingramchen?entry=2007_1_1_WhyAddClosureInJava7</a><br/><br/>不過會有點迷迷糊糊...用 JavaScript 反而看得懂...真是怪了...<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-10616765)</div>
+<div class="roodo-comment-date">Thu, 24 May 2007 17:54:39 +0800</div>
+<div class="roodo-comment-text">Java陣營基於一種對語法的古怪堅持 (雖然我現在就覺得它的語法又臭又長) ，現在連 anonymous function 都不支持。要解說本例之前，還要先用 anonymous inner class 模擬 anonymous function 。接著再用模擬的 anonymous function 再去模擬 closure 。如此蹩腳的寫法如果還能像 JavaScript 一樣簡潔地表示本文要說明的內容，那也太不可思議了。<br/><br/>另外，我搜尋到 Martin Fowler 寫的 <a href="http://martinfowler.com/bliki/Closure.html">Closure</a> 。他也寫了一個 JavaScript 的例子，我補到正文去了。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-10617075)</div>
+<div class="roodo-comment-date">Thu, 24 May 2007 18:50:46 +0800</div>
+<div class="roodo-comment-text">我在看Paul Graham的Lisp介紹中提到Closure，他用Javascript寫了一個累加程式範例<br/><br/>function(n){<br/> return function(i){return n+=i;};}<br/><br/>讓我頓悟了0rz<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-10618303)</div>
+<div class="roodo-comment-date">Thu, 24 May 2007 21:12:23 +0800</div>
+<div class="roodo-comment-text">R@Ndy ，你提供的程式碼很有趣，但是不是省略了什麼？<br/>例如說，是不是像下面這樣用？<br/><code><br/>var f = function(n){<br/>    return function(i){return n+=i;};<br/>}<br/><br/>print( (f(2))(3) );<br/>//In this case, n = 2, i = 3<br/></code><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-14510601)</div>
+<div class="roodo-comment-date">Wed, 19 Sep 2007 18:08:39 +0800</div>
+<div class="roodo-comment-text">修正一下，方便說明：<br/>var i = 0;   <br/>var fs = [];   <br/>function run_fs() {   <br/>    for (var j = 0, f = fs[j]; f; f = fs[++j]) {   <br/>        f();   <br/>    }   <br/>}   <br/>  <br/>for (i = 0; i < 3; ++i) {   <br/>    fs[i] = function a(){print(i);}   <br/>}   <br/>run_fs();   <br/>  <br/>for (i = 0; i < 3; ++i) {   <br/>    fs[i] = (function b() {<br/>        var j = i * 3;<br/>        return function c(){print(j);}   <br/>    })();   <br/>}   <br/>run_fs();<br/><br/>function e() {<br/>        var j = i * 2;<br/>        return function f(){print(j);}   <br/>}<br/>for (i = 0; i < 3; ++i) {   <br/>    fs[i] = e();<br/>}   <br/>run_fs();<br/><br/>以 ECMAScript 3 Specification 的說法，<br/>每一個客製 function 都有一個叫 [[Scope]] 的內部屬性紀錄了那個 function 在定義或宣告時的 scope chain ，每當呼叫 function 進入 function code 時，會產生一個叫 activation object 的新物件作為 function scope ，並把這個物件放在由 [[Scope]] 得到的 scope chain 的前頭，形成一個新的 scope chain ，function code 就是用這個新 scope chain 進行識別子解析（identifier resolution）。<br/><br/>根據數學定義， scope chain 就是 closure，而每次離開 function code ，可能被GC回收的是 activation object 這個 function scope，亦即是因為每次進入 function code 時，function scope 都是不同的，因而有不同 closure 。<br/>函數 a 參照的 i 是在 a 的 [[Scope]] 中global object的變數 i ，因為雖然每次定義和呼叫的 a 是不同的 a ，但是是同一個 global object ，所以是參照到同一個 i 。<br/>而函數 f 參照的 j 是 f 的 [[Scope]] 中屬於函數 e 的 activation object 的變數 j ， 因為雖然每次呼叫的 e 是同一個 e ，但是是不同的 activation object ，所以是不同的 j 。<br/><br/>根據數學定義，其實很多東西都是 closure ，例如 propotype chain。<br/>所謂封閉是相對的，而這裡是相對於識別子解析或屬性提取（property get，根據EMCAScript v3 的規格書是物件的內部方法 [[Get]] ）。<br/>scope chain 中的物件不一定是 activation object 或 global object，也可以透過 with statement 加入其他物件。<br/><br/>如果這樣理解，class-based 的繼承關係形成的繼承鏈也是 closure （如果不理私有屬性的話），就如同 propotype chain。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-14511005)</div>
+<div class="roodo-comment-date">Wed, 19 Sep 2007 19:34:56 +0800</div>
+<div class="roodo-comment-text">串錯字，是 prototype ，不是 propotype 。<br/>	</div>
+</blockquote>
+</div>

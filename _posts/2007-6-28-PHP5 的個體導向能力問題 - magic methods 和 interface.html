@@ -145,3 +145,55 @@ Ruby 的做法是，我只關注有沒有我需要的方法。使用者也可以
 <p>
 當然，基於我個人主觀意識，並不希望看到這種情形繼續下去。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3547207.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11075627)</div>
+<div class="roodo-comment-date">Thu, 28 Jun 2007 18:07:55 +0800</div>
+<div class="roodo-comment-text">當 IBM / Oracle 也加入支援 PHP 的陣營後, PHP 未來發展方向會向更 OO 發展.讓 PHP5 / PHP6 成更為強型別更穩固的語言.<br/>如果您的專案不會在 PHP4 的環境上執行, 應該讓 "盡可能" 讓自己的 Method signature 少量限制型別.<br/>由 Zend Framework(暫且不論 ZF 是否成功) 的 Source Code , 由於它是官方發展, 所以可以觀察出 PHP5 OO 趨勢.<br/>以 ZF/Auth/Http/Adapter/Http.php(因為它 A 開頭, 我最先看到 :D ) 為例, 大部份的 Method signature 已強制型別.<br/>public function setBasicResolver(Zend_Auth_Adapter_Http_Resolver_Interface $resolver)<br/><br/>所以, 如果您的例子, 改成由介面來存取, 而非物件來存取, 您會發現其實限制沒有您想像的多及不便. <br/>function abc(ArrayAccess $obj) {  <br/>  echo $obj[0];<br/>}<br/>假設 abc 是用來把陣列列出(任何實作 ArrayAccess 型別的陣列).<br/>且我們僅已 Interface 來限制型別, 您會發現, 不論 ArrayObject, DbArray, <br/>包含您前一篇 Stack 例子的 instance object 都可被傳入及 list 出來.<br/>如果 function abc(Iterator $obj) 那就幾乎所有的陣列都可被 foreach 走訪列舉了.<br/><br/>還記得我說過的 Effective Java Programming Language Guide (Item 34: Refer to objects by their interfaces)<br/>說明了用 Interface 名稱來代替 ClassName 名稱, 在未來不幸要換掉類別實作品時帶來的彈性及好處.<br/>如: 有一天我發現您寫的 Stack 比我寫的 RackArrayObject 好多了, 在我的 XXXController.php 中, 只要放心換成 Stack <br/>來放資料, 依然可以呼叫 function abc 來把資料列舉出來, 而並不需一併把 function abc 叫出來修改. <br/>當有一天 function abc 是一個被團隊大量使用的工具 function 時, 您會發現這個習慣會救了許多人.<br/><br/>剛好這個章節可以試閱:<br/><a href='http://www.informit.com/isapi/product_id~%7B7DE69993-3EF5-4354-9E10-9F8A535909F1%7D/content/images/0201310058/samplechapter/blochch7.pdf' rel='nofollow'><a href='http://www.informit.com/isapi/product_id~%7B7DE69993-3EF5-4354-9E10-9F8A535909F1%7D/content/images/0201310058/samplechapter/blochch7.pdf' rel='nofollow'>http://www.informit.com/isapi/product_id~%7B7DE69993-3EF5-4354-9E10-9F8A535909F1%7D/content/images/0201310058/samplechapter/blochch7.pdf</a></a><br/><a href='http://www.zend.com/products/zend_core/zend_core_for_ibm' rel='nofollow'><a href='http://www.zend.com/products/zend_core/zend_core_for_ibm' rel='nofollow'>http://www.zend.com/products/zend_core/zend_core_for_ibm</a></a><br/><a href='http://www.zend.com/products/zend_core/zend_core_for_oracle' rel='nofollow'><a href='http://www.zend.com/products/zend_core/zend_core_for_oracle' rel='nofollow'>http://www.zend.com/products/zend_core/zend_core_for_oracle</a></a><br/><br/>所以 PHP 未來更像 Java / C# 雖然看起來不太像以前的 php 了, 但長遠來看. <br/>它把 php 推向了更商業化更大眾化的市場.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11075653)</div>
+<div class="roodo-comment-date">Thu, 28 Jun 2007 18:13:14 +0800</div>
+<div class="roodo-comment-text">呵呵, 我們二個還真有默契, 就在我文章貼出時畫面 reload 時, function abc 己經是 function abc (ArrayAccess $obj) ..<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11083359)</div>
+<div class="roodo-comment-date">Thu, 28 Jun 2007 23:00:29 +0800</div>
+<div class="roodo-comment-text">我正文有兩處特別標示為重點，正是 PHP 兩邊都扣分的缺點。<br/><br/>對靜態語言而言，使用函數簽名按理來說是好的。但 PHP 目前不支援同名異式的覆載。這表示我如果想限定型別，就要增加許多不必要的方法名稱。例如: abcByArray(), abcByArrayAccess()... PHP做為靜態語言，扣分。<br/>對優秀的動態語言而言，並不需要限制型別。<br/><br/>對動態語言而言， PHP 沒有把 primitive type 個體化，又沒有把 primitive type 的方法自動繫結到個體方法上，造成不順暢的敘述。例如，若 primitive array 個體化了，那麼正文最後一例中，只要一行 is_array() 即可；至少， is_array() 也要能同時判斷 ArrayAccess 吧。如此我們便不需要特地將 primitive array 轉成 ArrayObject 。於是 PHP 做為動態語言，也扣分。<br/><br/>此外，在 Ruby 或 C++ 等支援運算子覆載的語言之中， [] 等運算子或指令，都可繫結到對應的 method。但 PHP 在這方面也沒做到。<br/><br/>不論你要把我當成一個 C++ 使用者，或是 Ruby/JavaScript 使用者。我都不認為 Java 在 OOPL 中具有代表性。以運算子覆載為例，在 Ruby 或 C++ 中，這種繫結非常自然，而不必像 Java 用 interface 變通。 <br/><br/>你說「用 Interface 名稱來代替 ClassName 名稱, 在未來不幸要換掉類別實作品時帶來的彈性及好處.」。嗯，<br/>沒錯， interface 確實解決了你說的那些問題。但那也是 Java 自己造成的問題。 Java 只有單一繼承，若你用 ClassName ，則當你換掉類別實作品時就有問題。但 C++ 有多重繼承，所以這問題不嚴重。動態語言呢？它們只關注方法，可以隨時抽換個體的方法內容，又不改變程式碼，更沒有這問題。<br/><br/>在《超越Java》這本書中，有更多關於 Java 有，而 Ruby  等動態語言沒有的問題。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11085767)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 09:28:02 +0800</div>
+<div class="roodo-comment-text">上個回應的內容，一部份補回正文了。<br/><br/>另外，我增加了一個 Ruby 的例子，說明它們如何關注方法，又可以隨時抽換個體的方法內容而不改變程式碼。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11086169)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 10:42:51 +0800</div>
+<div class="roodo-comment-text">如何只關注方法，又可以隨時抽換個體的方法內容而不改變程式碼. 其實這個在 Java(PHP5) 也是可以的.<br/>我們當然可以將 function 宣告成:<br/>public void test(Object Obj) { }<br/>這時所有的物件都可以傳入, 除了 primitive type(這點 Ruby 大勝, any type in ruby is object).<br/>然後利用 Reflection 來關注我想要的方法, 然後執行它:<br/>Method methlist[] = obj.getClass().getDeclaredMethods();<br/>// then find each is exists ? run it.<br/><br/>利用 interface 來取代 reflection 是一種習慣, 也等於要求程式在實作時, 必需要遵守這份先天限制的軟體合約. <br/><br/>最後回到您 ruby 的例子:<br/>那個 each 不就是一個 interface 的隱性概念, 任何要傳入 abc 的物件, 必需要實作 each 這個 method.<br/>如果您範例最後一行加個 abc(12), 是會出錯的(NoMethodError: undefined method `each' for 12:Fixnum), 即始 12 是個 Fixnum 物件.<br/>所以傳入 abc function 的物件, 還是要遵守一份軟體合約, 那就是實作特定的 method.<br/><br/>而這個 ruby 例子點出的是 ruby 另一個令人激賞的特點.<br/>Ruby classes are open. You can open them up, add to them, and change them at any time.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11086959)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 12:44:26 +0800</div>
+<div class="roodo-comment-text">你說的沒錯。<br/><br/>你舉的種種例子，對 Java 而言是特點，對 OOPL 而言，卻是種缺點。<br/><br/>所以，我一直認為 PHP 不該學 Java 的作法。就 PHP 的特性來看，它提供的實現方式應該更像 JavaScript 與 Ruby 的方式， PHP 使用者用起來才直覺。<br/><br/>而 SPL 這種仿 Java 的實現方式，對 PHP 使用者而言就不夠直覺。或許這可以說明為何用的人少。<br/><br/>在正文的 Ruby 範例中，我示範的是只改變個體的行為，而不改變同類個體的行為 (同類個體的行為不變)。這點你有些誤解，所以你抓了同類行為 obj.getClass().getDeclaredMethods();<br/>我在《<a href="http://blog.roodo.com/rocksaying/archives/2884871.html">PHP 實踐 mix-in</a>》提到了其中差別。<br/><br/>最後，我們沒有理由認為方法呼叫一定要是 obj.method(arguments) 的形式。事實上，有另一派形式是 function(obj, arguments) 。因此 is_array($obj) 也具有 $obj->is_array() 的意義；而且這也相容PHP傳統寫法。如此一來我們就不必特意區分 primitive array 或 ArrayObject ，反正都可以用同一組函數。當然，我在正文的例子就說 PHP 在這方面做得不夠圓滑。於是傳統的函數幾乎只適用於 primitive type ，而 Object 則是用另一套。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11087319)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 13:47:54 +0800</div>
+<div class="roodo-comment-text">嗯, Java 在設計之初, 捨棄了多重繼承及指標及運算元復載, 試圖改變以往 70% 的 bug 發生在這 30% 的功能上. 當然, 也就衍生出了 Interface 的方式, 這點在 java forum 有相當多的討論, 是功是過也已論定.<br/><br/>最後, 換成您誤解我的意思了.<br/>obj.getClass().getDeclaredMethods(); 不是用來回答您 ruby 中的範例, 它用來回答您 "實際上我們還是被迫只關心 $obj 有沒有這個方法" java 即使不用 interface, 依然可以用 reflection 來只關心有沒有這個方式..<br/><br/>而我故意換了一行空白, 才說"最後回到 ruby 的範例", 對於 ruby, 我想說的是,  範例中的 abc function 它依然是需要傳入的物件有實作 each member function. <br/>在這樣物件相依的模式下, 有了 interface 介面來限制傳入的物件, 這樣發生 bug 的機率就小很多, 因為 compiler 會找出來.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11089281)</div>
+<div class="roodo-comment-date">Fri, 29 Jun 2007 15:08:32 +0800</div>
+<div class="roodo-comment-text">關於傳入 int 使 Ruby 擲出錯誤的事。在語言的抽象概念上，"數" 仍是單獨的資料概念，而不是集合的資料概念。而動態語言在這一方面的解決方式也非常直覺: 若為集合則以集合的方式待之，否則以單獨的方式對待。即 PHP 那段範例所示。<br/><br/>若我用 Java 寫那個範例，參數的型別寫了個 Object ，compile 一樣會過，我丟一個 Int 實例一樣會error。<br/><br/>我們或多或少要處理一些型態判斷的事，而如何處理則反應了語言的設計哲學。靜態語言通常把這一方面的判斷工作寫在參數列(就是型別限制)，因為這樣 compiler 比較容易處理。動態語言通常把它寫在程式區塊中，因為這樣程序員比較容易理解。<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11093665)</div>
+<div class="roodo-comment-date">Sat, 30 Jun 2007 03:16:23 +0800</div>
+<div class="roodo-comment-text">您還是誤解了我的意思.. <br/>我的重點還是只放在 "關注類別是否有實作方法" 也就是 "介面" 的這個概念, 因為原文是討論這個議題. <br/><br/>由於 ruby anything is object, 所以我才會延伸舉 abc(12) 的例子.<br/>是因為連 12 (這個 "數" ) 在 ruby 也都是一個物件(Fixnum). <br/>所以只要 12(Fixnum) 有實作 each method , 也能被 abc 處理.<br/><br/>所以我要說的是, 只要實作 each method 的 object , 都可以被 abc 所處理. <br/>而這個絕對要求實作中必須含有 each method 的 "軟體合約" 不就是 interface 的本意嗎.<br/><br/>class Fixnum<br/>  def each<br/>    self.times {|c| yield c}<br/>  end<br/>end<br/>abc(12) ## list 0-11 <br/><br/>primitive type 在 java 不能 cast 成 Object.<br/>必須透過 Wrapper Class 也就是 int => Integer.<br/>然而, 您不能繼承或覆寫任何 Integer class , 因為它是 final class.<br/><br/>所以我的回應想要明白解譯 Interface 這個概念.<br/>也因了解 java abc(12) 作不到, 所以又稱讚了 ruby 二點:<br/>1. anything is object.<br/>2. class are open.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11096549)</div>
+<div class="roodo-comment-date">Sat, 30 Jun 2007 15:52:38 +0800</div>
+<div class="roodo-comment-text">因為回應內容用得是 C 語言碼，所以我另寫一篇《<a href="http://blog.roodo.com/rocksaying/archives/3556355.html">在個體之間協議互動行為的多種形式</a>》。<br/><br/>嗯。透過 interface 在編譯時期幫程序員找出錯誤，在 Java 推出時，是一個吸引 C 程序員的特點。不過有些人覺得它礙手礙腳。<br/><br/>我這幾天同時也一直在想，為什麼我在寫動態語言程式時，不像寫 C/C++ 那麼強調型態宣告，卻不覺得程式會出錯？後來想到了，那是因為有 TDD。而且 tester 所產生的結果更可靠。<br/>	</div>
+</blockquote>
+</div>

@@ -152,3 +152,55 @@ Because by default mysql_query uses mysql_store_result C library call and buffer
 <p>
 但是其他資料庫的查詢函數則是用 PHP內建記憶體配置機制儲存資料。所以當我用 PHP 向 PostgreSQL, MS SQL 等 DB 查詢大筆資料內容時，就會受到 memory_limit 的限制。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/4903965.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">hoamon@hoamon.info(hoamon) (#comment-15499219)</div>
+<div class="roodo-comment-date">Thu, 10 Jan 2008 16:12:26 +0800</div>
+<div class="roodo-comment-text">> FIEND 不瞭解查詢結果的記憶體管理機制。<br/>> 當 PHP 向 DB 查詢資料後，資料內容就已經被儲存在 PHP 這方的記憶體內容了。<br/>> 說的更明白些，例如: $resource = mysql_query($query);。<br/>> 此時 $resource 已經是一個儲存了查詢結果的變數(但型態不是陣列)。<br/>> 如果查詢結果有一千萬筆資料，那麼 $resource 就會配置那麼多的記憶體空間儲存那一千萬筆資料。<br/>> 接著再使用 mysql_fetch_array() 等方法取出個別資料記錄。 <br/>不過，我記得不知那裡看來的資訊，mysql_query回傳的確不是陣列而是 cursor ，它的意義類似 reference 的概念，它所指向的目標物是 Mysql 的 sql cache，所以，我們才需要利用 mysql_fetch_array($resource) 函式，回到 mysql 的 sql cache 去撈回資料。<br/><br/>也就是說，當我在 sleep(120) 時，所看到的記憶體增加使用量應該花在 mysql cache 上的。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15499963)</div>
+<div class="roodo-comment-date">Thu, 10 Jan 2008 17:10:44 +0800</div>
+<div class="roodo-comment-text">不是用在 Mysql cache，上面那個範例你拿去放在不同機器上跑就知道了。<br/><br/>印象中是 PHP 只要去 db 撈資料都是 query function 一跑下去後就全撈回來塞到記憶體去，然後等你用其他的 db 操作 function 去 fetch 記憶體裡的東西<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15500595)</div>
+<div class="roodo-comment-date">Thu, 10 Jan 2008 17:58:23 +0800</div>
+<div class="roodo-comment-text">所以先把整串文章整理一下，以免讀者在資料型態上打轉。<br/><br/>1. CakePHP 的 findAll() 回傳資料的型態是 array 。<br/><br/>2. mysql_query() 回傳資料的型態是 resource 。<br/><br/>3. 我示範的是定義一個 ArrayObject 的衍生類別封裝 resource 。<br/><br/>再參考 <a href="http://www.mysqlperformanceblog.com/2007/07/06/php-large-result-sets-and-summary-tables/">PHP Large result sets and summary tables</a> 一文的內容，則 mysql_query() 回傳的 resource 內容包含了 cursor 及儲存查詢結果的記憶體區塊，亦即 hoamon 所說的 cache。那個記憶體區塊的結構，需要透過 mysql_fetch_xxx() 之類的方法去存取。<br/><br/>然而，不論函數中的記憶體配置動作是透過 PHP內建管理機制或是直接向作業系統配置，對作業系統而言，都是 PHP 行程要求配置的，都算在 PHP 行程上。<br/><br/>另一方面，我們確實有可能透過其他方式查詢，使資料被保留在 DB 端，例如參考文章中提到透過 PDO 函數。這方面的細節依資料庫呼叫函數之實作方式而各有所異，需要個別參閱 Manual 的說明。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15539909)</div>
+<div class="roodo-comment-date">Mon, 14 Jan 2008 18:18:06 +0800</div>
+<div class="roodo-comment-text">昏倒...<br/><br/>石頭老大 你的 DB 觀念真的差到不行 ~ <br/><br/>而且還寫在 BLOG 另一頭己經討論完了 .<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15539991)</div>
+<div class="roodo-comment-date">Mon, 14 Jan 2008 18:30:38 +0800</div>
+<div class="roodo-comment-text"><a href='http://twpug.net/modules/newbb/viewtopic.php?post_id=11665#forumpost11665' rel='nofollow'>http://twpug.net/modules/newbb/viewtopic.php?post_id=11665#forumpost11665</a><br/><br/>我覺得你誤導 大家誤導的有點誇張 .<br/><br/>就算丟回來的不是陣列型態.<br/><br/>也不可能全都丟回來.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-15543443)</div>
+<div class="roodo-comment-date">Tue, 15 Jan 2008 02:10:03 +0800</div>
+<div class="roodo-comment-text">我寫的不是"我個人論點"，我引的是 PHP Manual 的說法，引的是別人 trace PHP MySQL module 後的說明。<br/><br/>你只以 "你的認知" 說 "QUERY 完資料會放在 DB 的記憶體 , PHP 端只會有一些快取的資料."，你只說我"DB觀念錯誤"。<br/><br/><strong>Ok, Show Me The Source.</strong><br/><br/>既然我DB觀念不好，那我謙虛地請問三個問題:<br/><br/>1.把 query 的資料放在 DB 端？ 如果是千人同時連線的系統，每人各查1MB的資料結果(1MB不算多)放在 DB 端，那 DB 端就要吃下 1GB 的記憶體空間。這難道不會嚴重影嚮 DB 運作效率嗎？<br/><br/>所謂的"資料結果"也不必是資料的 context ，只要是 index 就可以。上百萬筆資料結果的index佔1MB，絕不算多。<br/><br/>2.在Client/Server架構下，把這每人1MB的資料結果存在Client，等於把1GB的記憶體用量分散在1000台Client電腦中。這樣對系統架構的負擔差別大不大？<br/><br/>3.在分散式架構下，把資料結果存在 AP Server上，至少是把1GB的記憶體用量分散到另一台主機上了。如果我們要進一步用 Matrix/GRID/Balance 分散單一服務的硬體負載，應該是對 DB server 做比較簡單，還是對 AP server 做簡單？<br/><br/>你的 DB觀念是參考哪本書的？說來聽聽，我去找來學習正確的觀念。我一向非常樂於接受正確觀念。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">liaosankai@gmail.com(::SANKAI::) (#comment-16451837)</div>
+<div class="roodo-comment-date">Sun, 18 May 2008 00:35:23 +0800</div>
+<div class="roodo-comment-text">石頭兄您好，從此篇看見你和FIEND雙方由討論cakephp換頁排序功能延伸到記憶體的問題，在此提出我的愚見，純是研討無任何敵意=_=，不禮之處還多見諒。<br/><br/>首先我試著用memory_get_usage()去寫個測試頁，觀查執行每個動作所佔用的記憶體大小(程式碼略)，輸出結果所下：<br/><br/>PHP可使用的記憶體上限：89400<br/>一開始的使用的記憶體：59616<br/>mysql_connect()後使用的記憶體：60872<br/>mysql_select_db()後使用的記憶體：60960<br/>mysql_query()後使用的記憶體：61008<br/>=====以下為用迴圈執行mysql_fetch_array()======<br/>使用的記憶體：63408<br/>使用的記憶體：65800<br/>使用的記憶體：65912<br/>使用的記憶體：65984<br/>使用的記憶體：66056<br/>使用的記憶體：66120<br/>使用的記憶體：66240<br/>使用的記憶體：66264<br/>使用的記憶體：66312<br/>使用的記憶體：66336<br/>使用的記憶體：66384<br/>使用的記憶體：66400<br/>使用的記憶體：66472<br/>使用的記憶體：66528<br/>使用的記憶體：66592<br/>使用的記憶體：66640<br/>使用的記憶體：66680<br/>使用的記憶體：66736<br/>使用的記憶體：66736<br/>==========================================<br/>mysql_free_result()後使用的記憶體：66736<br/>mysql_close()後使用的記憶體：65768<br/>unset()所有變數後已使用的記憶體：65768<br/><br/>從記憶體的大小來看，mysql_query()這個動作似乎沒有佔很大記憶體空間(與上一個動作相差才48)，反倒是在執行mysql_fetch_array()時，記憶體的使用量才逐一增加，如此說來的話？在執行mysql_query()後，查詢結果的資料記憶體是由誰控管呢？很抱歉石頭兄，我推論是由DB所控管的。以下為我對流程的擬人法舉例<br/><br/>    PHP：mysql呀，幫我查詢一下test table內的所有資料<br/>  MySQL：拿去~ (MySQL丟了一張大小只有48的紙絛Resource #1給PHP)<br/>    PHP：這啥？= = (此時PHP看了紙絛內容："資料放在記憶區段20~50裡啦")<br/>    PHP：……=_=|||，喂，mysql_fetch_array()，看這紙絛，去把從記憶區段20~50的東西給我搬回來放在我們的記憶區段(自己的變數)<br/>(當連結存在時)<br/> SYSTEM：啦啦啦~我來清記憶區段囉，把0~100的全都清空空吧~<br/>  MySQL：等等！！=_=，我有東西放在20~50區段裡，是php要的，他跟我還在連線中(connect)，先不要清<br/>    PHP：那個mysql_fetch_array()呀，把搬來的東西先丟進$row吧<br/>(當連結不存在時)<br/> SYSTEM：啦啦啦~我來清記憶區段囉，把0~100的全都清空空吧~<br/>  MySQL：zzzZZZ....<br/>    PHP：什麼！？找不到東西#-__-...<br/>    <br/>接下來回答石頭兄所提的問題<br/>1.把 query 的資料放在 DB 端？ 如果是千人同時連線的系統，每人各查1MB的資料結果(1MB不算多)放在 DB 端，那 DB 端就要吃下 1GB 的記憶體空間。這難道不會嚴重影向 DB 運作效率嗎？所謂的"資料結果"也不必是資料的 context ，只要是index就可以。上百萬筆資料結果的index佔1MB，絕不算多。<br/><br/>如果連線都是屬於不中斷的，那麼的確每個人查詢1MB的結果，就真的會吃掉1GB的記憶體空間，所以都常只要有查詢的動作完成都會馬上中斷資料庫連線<br/><br/>2.在Client/Server架構下，把這每人1MB的資料結果存在Client，等於把1GB的記憶體用量分散在1000台Client電腦中。這樣對系統架構的負擔差別大不大？<br/><br/>當PHP把資料讀入變數時，1MB的資料結果應該存在Server端的PHP上，而不是在Client，但當PHP把這1MB的資料透過網路傳送給client後，他就馬上釋放掉了(換句話說這時候1MB的資料，才會由clinet吃掉，不過是由clinet的瀏覽器，而不是clinet的PHP，因為沒有特定有安裝PHP的人才能開啟php網頁)，所以網路遊戲才會有等待連線這狀態，因為伺服器如果一次全吃，它記憶體應該爆掉，所以可能會限制最多N個連線，大於N的就排隊吧<br/><br/>3.在分散式架構下，把資料結果存在 AP Server上，至少是把1GB的記憶體用量分散到另一台主機上了。如果我們要進一步用 Matrix/GRID/Balance 分散單一服務的硬體負載，應該是對 DB server 做比較簡單，還是對 AP  server做簡單？你的DB觀念是參考哪本書的？說來聽聽，我去找來學習正確的觀念。我一向非常樂於接受正確觀念。<br/><br/>我覺得記憶用量並沒有實際分散到另一台主機，而是執行的程序被分散到由另一台主機執行，所佔用的記憶體則由分散的那台主機自己傷腦筋，不過相對的，由於少了一些執行程序，自己本身在"執行同時段"所需佔用的記憶體就降低了，直接享用另一台主機的執行結果(但最終仍然要用自己的記憶體將結果記錄起來)<br/><br/>以上希望石頭兄能討論錯誤之處<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16461001)</div>
+<div class="roodo-comment-date">Mon, 19 May 2008 17:43:32 +0800</div>
+<div class="roodo-comment-text">To SANKAI:<br/><br/>你寫了很多內容，不過最重要的一點錯了: 你用 memory_get_usage() 去測試是錯誤的，那完全不準。<br/><br/>我在最後一段引用一篇文章提到「mysql_query 跳過 PHP 內建記憶體配置機制」。而 memory_get_usage() 查詢的是 PHP 內建記憶體配置狀態。所以透過 memory_get_usage() 完全看不到 mysql_query() 查詢結果所佔用的記憶體。<br/><br/>這篇文章還有兩篇後續文章，一切解答盡在其中。<br/>其一: jaceju 寫的 <a href="http://blog.roodo.com/jaceju/archives/4991595.html">mysql_query 的記憶體使用與分頁方式</a>。這是正確的測試方式。<br/><br/>其二: 我trace PHP 與 MySQL source code 的記錄: <a href="http://blog.roodo.com/rocksaying/archives/4986803.html">以源碼探索 PHP 查詢 MySQL 後儲存資料結果的方式</a>。<br/><br/>至於你接下來回答我三個提問的內容，我很認真的看完了，也發現要回答你的內容實在太多。但我並沒有收你學費，要仔細回答你似乎不太划算。<br/><br/>所幸有一個很好的解決方式，我誠摯地建議你把從「接下來回答石頭兄所提的問題」到「以上希望石頭兄能討論錯誤之處」之間的內容列印出來，然後就近請教你的教授或老師。我相信你很快就會得到答案。<br/><br/>一些小小的指點:<br/><br/>關於你針對第二個問題的回應: <br/>你對 PHP 與 DB 在client/server架構中的角色定位認知錯誤。在 client/server架構中，運行 PHP 的 AP Server 屬於 Client角色，而 DB Server 屬於 Server 角色。<br/><br/>PHP 把資料回應給瀏覽器後，就結束自身行程與釋放所配置之資源，這點沒錯，大家都沒疑問。然<br/>而本文討論的重點是: PHP 向 DB 查詢內容後，還沒有輸出到瀏覽器之前的情況。<br/><br/>關於你針對第三個問題的回應: <br/>你回答的內容讓我感到驚訝。<br/>你的開發環境是 Grid 運算環境嗎？或者你的系統架構用了「分散式共享記憶體機制」(將NFS配上Giga或光纖網路，利用虛擬記憶體技術，將網路檔案空間映射為本機記憶體)？<br/><br/>這實在是非常先進的技術運用。我所回答的內容則是針對一般傳統架構，不適用於那種環境。<br/>你擁有那種環境，實在令我感到欽羨。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">liaosankai@gmail.com(::SANKAI::) (#comment-16469807)</div>
+<div class="roodo-comment-date">Tue, 20 May 2008 22:16:46 +0800</div>
+<div class="roodo-comment-text">感謝石頭兄破費受教= =|||，讓晚輩受益良多<br/>可能我用詞不當，有得罪之處請見諒了，不然我怎麼感覺你回文的回氣跟那個FIEND一樣呀，下次在發文之前，我會再校正看看有沒有讓人誤會的言詞<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16574961)</div>
+<div class="roodo-comment-date">Mon, 02 Jun 2008 10:05:22 +0800</div>
+<div class="roodo-comment-text">插嘴一下，memory_get_usage()指的是當前 PHP 所管理使用的記憶體大小沒錯，可問題是，PHP的記憶體管理是屬於計數參考的方式，所以在某些情況下，你下了 unset 他未必會真的去釋放記憶體，只會解除該變數的參考。<br/>另外一點，記憶體回收是有個亂數週期的，所以當我們下 unset 時，也未必立刻就會釋放掉記憶體。<br/>	</div>
+</blockquote>
+</div>

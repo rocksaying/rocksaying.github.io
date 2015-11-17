@@ -99,3 +99,20 @@ $ guvcview -d /dev/video1 -f MJPG -s 1280x720
 <p>
 此時通常可以同時開啟兩隻 WebCam 。如果還是不行，那就要調低解析度。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/25359530.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">edt1023@gmail.com(qtnez) (#comment-24325488)</div>
+<div class="roodo-comment-date">Mon, 10 Mar 2014 10:30:46 +0800</div>
+<div class="roodo-comment-text">> guvcview 執行參數改用 -f MJPG<br/><br/>這樣似乎是指 rawvideo -> mjpeg 的意義？嘗試去改裡頭的格式：<br/><br/>v4l2-ctl -v pixelformat='MJPG'<br/><br/>從 v4l2-ctl -V 來看，是修改成功了。<br/><br/>root[~]# v4l2-ctl -V<br/>Format Video Capture:<br/>	Width/Height  : 640/480<br/>	Pixel Format  : 'MJPG'<br/>	Field         : None<br/>	Bytes per Line: 0<br/>	Size Image    : 921600<br/>	Colorspace    : SRGB<br/><br/><br/>但是只要去錄影或看鏡頭，就又自動改回 YUYV。是我哪裡搞錯了嗎？<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-24325848)</div>
+<div class="roodo-comment-date">Mon, 10 Mar 2014 13:30:32 +0800</div>
+<div class="roodo-comment-text">注意，v4l2-ctl 改變的狀態，一樣是暫時的，會被後來的程式改變。當電腦重開或 webcam 拔插之後，也會重置。<br/><br/>你應該去設定你的錄影程式或播放程式的參數。<br/>因為它們可能會根據自己的設定內容，改回 YUYV 格式。<br/>例如本文就是用 guvcview -f MJPG 要求 guvcview 在播放/錄影時使用 MJPG 格式。<br/><br/>guvcview 本身不會做 rawvideo 轉 mjpg 的工作。加上 -f MJPG 的結果，和  v4l2-ctl 的動作是一樣的，都是對 webcam 下指令。<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">edt1023@gmail.com(qtnez) (#comment-24327076)</div>
+<div class="roodo-comment-date">Mon, 10 Mar 2014 22:29:26 +0800</div>
+<div class="roodo-comment-text">謝謝回應！<br/><br/>因為這些東西我不太懂，所以可能理解得不是很明白。以下是我執行時的情形：<br/><br/>qtnez:~$ guvcview -d /dev/video-cam1 -f MJPG -s 640x480<br/>[...]<br/>Init. Webcam C170 (location: usb-0000:00:1d.7-2)<br/>{ pixelformat = 'YUYV', description = 'YUV 4:2:2 (YUYV)' }<br/>[...]<br/><br/>是不是說傳輸的還是 YUYV，只是 guvcview 接收後才轉碼的（libv4lconvert ?）？<br/><br/>不過也可能我這個簡單的視訊頭，guvcview 沒辦法驅動它改用 mjpg 格式（確定這個視訊頭有支援 mjpg）？<br/>	</div>
+</blockquote>
+</div>

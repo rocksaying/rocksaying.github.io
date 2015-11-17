@@ -142,3 +142,15 @@ tags: [database,activerecord,orm,pdo]
 我在「<a href="{{ site.baseurl }}/archives/2010/PHP%20-%20Schema-Database.html">PHP - Schema-Database</a>」的介紹文章最後，舉了一個 PowerQuery 例子。當時在該範例中，我要自己取出記錄後轉成 <dfn>Database_Row</dfn> 個體。現在不必這麼做了。
 但實際操作時的效能議題依舊。如果你只需要從查詢結果中取值，我仍建議你取為標準個體(<dfn>PDO::FETCH_OBJ</dfn>)或陣列(<dfn>PDO::FETCH_ASSOC</dfn>)。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/16920627.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22046751)</div>
+<div class="roodo-comment-date">Wed, 12 Oct 2011 14:59:48 +0800</div>
+<div class="roodo-comment-text">我不熟識 PHP 。依我理解，這是一個應該由類別建構式來初始化還是應該由 PDO framework 透過資料庫提供的資料來初始化的問題，亦即是應該由被呼叫方還應該由呼叫方初始化的問題。<br/><br/>假若在呼叫完建構式後，再由 framework 主動初始化一次，即是你認為通常的過程，則在建構式執行時，建構式沒有之後會發生的事的知識（亦不應該有），無法再做進一步的初始化。變通方法之一是要求類別有一個 init 函式讓 framework 或 end programmer 在 framework 初始化完後（即填完資料後）再呼叫。變通方法之二是讓類別的實作暴露出來，由 end programmer 在 framework 初始化完後再自行做後續初始化。怎樣都好，都對類別有特定要求。<br/><br/>假若由 framework 先初始化就得到你的問題。變通方法之一是提供額外物件或函式，讓類別建構式可以加以使用來做初始化工作。<br/><br/>第三種方式是，把資料庫資料當參數傳入建構式來讓建構式被初始化，但這樣一來，建構式的介面就被固定了。<br/><br/>只要你以這裡存在 framework 、類別、使用它們的 end programmer 三方的角度思考，就會發現這是一個非常難搞的問題。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22067079)</div>
+<div class="roodo-comment-date">Thu, 27 Oct 2011 16:48:56 +0800</div>
+<div class="roodo-comment-text">LungZeno ，在 PDO::FETCH_CLASS 的情境中，類別實體是由 PDO 配置的，並不是由我們的程式配置後傳給 PDO。 PDO 既是調用建構式的人，也是設定個體初始屬性的人。<br/><br/>然後 PDO 是透過指派運算把資料值指派給個體屬性，而不是透過建構式參數列，所以不必顧慮到它會不會限定建構式介面的事。如果程序員需要隱藏屬性的存取細節，基本上只要透過 PHP 的 magic method 覆寫個體屬性的指派行為即可，不需要提供初始值的特定設定方法<br/><br/>我想 PHP 開發團隊當時或許真的顧慮到什麼，才保留了這個奇特行為。但基於語言的特性，PHP 在處理這問題時，困難處應該不在你說的點上。<br/><br/>如果你對 PDO FETCH_CLASS 的用法有興趣，也可以再看看我寫的 database_query.php 內部是如何處理的。<br/>	</div>
+</blockquote>
+</div>

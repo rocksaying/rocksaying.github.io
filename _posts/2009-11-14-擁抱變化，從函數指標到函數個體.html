@@ -276,3 +276,35 @@ Java 語言沒有實現讓普通的程序員表現更好的承諾，現在反而
 <p>
 例如"全知的"架構設計師一開始就規劃要用介面，"全知的"架構設計師一開始就設計出依賴注射的框架，那麼上面變更設計的故事就不會發生。俗話說「千金難買早知道」， Java 語言讓我們體會這個道理。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/10700785.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">edwardsayer@gmail.com(Edward) (#comment-20081243)</div>
+<div class="roodo-comment-date">Thu, 19 Nov 2009 00:15:31 +0800</div>
+<div class="roodo-comment-text">java client 端程式也是可以不必改寫的。還是一樣 PV pv = new PV(); 即可。舉例而言，Cat雖然繼承 Pet，但在建構單一實例時，其實很少會用 Pet cat = new Cat(); 因為這樣寫，會使這隻 cat 喪失除了 Pet 之外的其他特性，如 catchMouse()。會用介面/父類別來宣告，通常用在類別階層體系中，應用上僅著重共同的行為或特徵，如下：<br/>Pet[] pets = new Pet[]{new Dog(), new Cat()};<br/>for (Pet pet : pets) pet.cry();<br/>其實Java語言看來中規中矩，但它卻可讓錯誤機率降到極低。當我跟用 C++ 的同事講說，用 java 寫程式之後，幾乎不用 debug，這是他很難理解的…<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20084399)</div>
+<div class="roodo-comment-date">Thu, 19 Nov 2009 21:25:54 +0800</div>
+<div class="roodo-comment-text">上面故事的重點在於「一開始的不良設計」與「中途變更設計」這兩點。<br/><br/>確實，只以這個範例程式的內容來說，我們沒有必要修改設計方式。<br/><br/>但是我們在實務開發時，總是碰到比上述範例更複雜、更多行的程式。也肯定會碰到有人一時粗心，就寫出直接相依，形成耦合度過高的程式碼。而且又會不可避免的碰到變更設計或是擴充功能的情形。一但碰到這種情形，勢必要做上面故事中說的事。<br/><br/>經驗豐富的編程人員，一定要有兩個想法常駐心中:<br/>1.人總是會犯錯。<br/>2.設計總是會中途變更。<br/><br/><br/>我當初寫 C 語言也很少用 debug。只有錯誤發生在複數指標處 (例如指標的指標的指標, ***point) 才祭出 debug 觀察指標到底指到哪去了。既然 Java 不讓你用指標，那用 debug 的必要性也不存在。<br/><br/>我更常使用的是測試程式。我一向只把 compiler 當成語法檢查工具。單元測試工具才是真正可信賴的除錯工具。<br/><br/>像我也很難理解許多 Java 程序員以為 compile 過就安心的想法。<br/><br/>Java 在語法層級上就把程序員可做的事掐得死死的。你在用 IDE 和 javac 時，就已經花上許多時間去修正錯誤，甚至比你真正的設計時間還多。就算如此，若我沒有先寫 test case ，我仍然覺得替 Java 程式除錯是舉步唯艱。<br/><br/>我今天正好就犯了忘了寫 test case 的錯。我重構了一個 controller 與 model ，結果 junit 報了一個錯誤。一追下去，發現錯誤不在我剛重構的 controller 與 model 中，而是發生在它們調用的另一個類別的靜態方法之內。<br/><br/>偏偏那另一個類別是我在一時偷懶沒寫 test case 的情形下寫出來的(因為只有2個靜態方法)。當場給我難堪。<br/><br/>我老老實實地補上 test case 抓出那個靜態方法的錯誤後，再回頭去跑 AllTests ，一路綠燈，痛快到底。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">mikimotoh@gmail.com(Miki) (#comment-21131955)</div>
+<div class="roodo-comment-date">Tue, 24 Aug 2010 16:39:50 +0800</div>
+<div class="roodo-comment-text">fpv.cpp的這一行:<br/>for_each(a1, a1 + sizeof(*a1) + 1, pv);<br/><br/>參數2的是要給sequence end。可是sizeof()裡面怎麼是放 *a1，也就是 a1[0]的型別，integer (4 bytes) 。最後又要再加 1。<br/><br/>通常來說，都會用 <br/>#define ARRAY_SIZE(a) sizeof(a)/sizeof(a[0])<br/><br/>for_each(a1, a1 + ARRAY_SIZE(a1), pv);<br/><br/>sizeof是傳回byte count，不是element count。<br/><br/>再來，fpv的那個例子，我看不懂從function pointer轉換到function object有何好處。還是說這文章是要示範std::for_each的好處？<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21132181)</div>
+<div class="roodo-comment-date">Tue, 24 Aug 2010 18:53:39 +0800</div>
+<div class="roodo-comment-text">sizeof(*a1)+1的問題，是我計算錯誤。因為4+1剛好是陣列大小，所以沒跳錯誤，我也就沒有仔細檢查。<br/><br/>function pointer 轉 function object 的優點，我已經引用 Nicolai M. Josuttis 的話說明了。當然啦，在這個例子中是看不出有這個必要的。但你總不能指望我為了說明這麼一件小事，就寫幾百行程式碼出來突顯 function pointer 轉 function object 的優點吧。其實只要玩過 JavaScript, Ruby 或 Python，就知道 function object 擁有哪些好處了。<br/><br/>此外，本文的重點也不是 for_each()。這篇文章是要把 C++ 與 Java 這兩個版本一起看完之後，讓讀者自己的體會 C++ 提供了什麼樣的彈性，而 Java 又失去了什麼。<br/><br/>由於Java 語言不支援函數指標或函數委派，也不支援運算子覆載，所以 function pointer 和 function object 都是不存在的字眼。我認識的 Java 程序員中，幾乎沒有第一次接觸 function object (例如 JavaScript 中的 function object) 就能理解的。所以我才以這些為例寫了這篇故事。<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">mikimotoh@gmail.com(Miki) (#comment-21134095)</div>
+<div class="roodo-comment-date">Wed, 25 Aug 2010 11:44:37 +0800</div>
+<div class="roodo-comment-text">我去google了一下「java function pointer」，發現有60%的人都要你改成用interface，而你要輸入一個method時用一個anonymous class包裝起來。<br/>另有30%是建議用 reflection。另10%是用一些新的JSR功能。 <br/><br/>但不管是用interface或是reflection，寫起來都比function pointer複雜，不易懂。C#都至少有給delegate。<br/><br/>我認為這是因為java把method當成「動詞」來想，而不是名詞。只有名詞才可當物件來操作，而動詞不可以。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21134741)</div>
+<div class="roodo-comment-date">Wed, 25 Aug 2010 16:32:01 +0800</div>
+<div class="roodo-comment-text">某人(似乎是 Steve Yegge) 調侃 Java 語言是充滿名詞的世界。Joel Spolsky 在《約耳續談軟體》中抱怨 Java 不具有將函數視為第一級物件的能力。指的就是 Java 在這方面的重大缺陷。<br/>	</div>
+</blockquote>
+</div>

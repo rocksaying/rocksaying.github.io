@@ -94,3 +94,40 @@ PHP5 對 <dfn>object</dfn> 型態的變數之指派動作預設是「參照」�
 <p>
 基本上，這是一個語言陷阱(trick)。再者，若將上例第6行的指派動作加上 <dfn>clone</dfn> 關鍵字，將會產生非預期的結果。同時， PHP 會警告程序員:<q>Warning:  __clone method called on non-object</q>. 此意味著，程序員編寫之敘述必須區別個體與非個體資料型態。關鍵字 <dfn>clone</dfn> 僅作用於右值為 <dfn>object</dfn> 型態之變數，故而降低了 PHP 的泛型能力。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3686877.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11609289)</div>
+<div class="roodo-comment-date">Fri, 20 Jul 2007 09:31:39 +0800</div>
+<div class="roodo-comment-text">PHP5 的 clone 是 shallow copy ，這點手冊有提到。<br/><br/>所以我們必須實作 __clone() 來複製個體裡其他的內在變數，也就是 deep copy 。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11609333)</div>
+<div class="roodo-comment-date">Fri, 20 Jul 2007 09:40:39 +0800</div>
+<div class="roodo-comment-text">呃...上面的是補充而已，跟內容沒什麼太大關係。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-11609377)</div>
+<div class="roodo-comment-date">Fri, 20 Jul 2007 09:47:22 +0800</div>
+<div class="roodo-comment-text">那段程式超出我撰寫PHP的習慣，在非常明顯的情況下，我個人是不會把陣列使用成物件～<br/><br/>所以老實說，他為何要那樣寫，我不是很理解～<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-11609419)</div>
+<div class="roodo-comment-date">Fri, 20 Jul 2007 09:56:00 +0800</div>
+<div class="roodo-comment-text">剛剛又重新看了一下，發現是我看錯...<br/>我把 $cust 跟 $custs 看成同一個，如果是這樣的話，其實問題就簡單，那是 PHP5 的特性，我在這裡：<br/><a href='http://blog.pixnet.net/HACGIS/post/1880532' rel='nofollow'>http://blog.pixnet.net/HACGIS/post/1880532</a><br/>已經作過討論～<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-11622447)</div>
+<div class="roodo-comment-date">Fri, 20 Jul 2007 11:48:33 +0800</div>
+<div class="roodo-comment-text">其實那段程式的作法也算常用。<br/><br/>例如我現在要產生多筆紀錄，而這些紀錄中可能只有一、兩項資料不同。如果我還要每筆紀錄都重新配置一個object，效率很差，也會重覆相似的程式碼。<br/><br/>那麼我就會想只配置一個object，然後每次只改一、兩項資料，再把這個object目前的內容複製到陣列。如此便不需要重覆重新配置並填入每一項資料值的動作。<br/><br/>亦即，他的需求是複製，而不是參照。<br/><br/>在C/C++中，這點倒不會混淆。因為指派動作的意義就是複製 (覆載 operator= 或 copy constructor 決定複製程度之深淺)。只有加上參照算符時，才會用參照。<br/><br/>其實 PHP4 也不會混淆...<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">racklin+blogger@gmail.com(racklin) (#comment-12232329)</div>
+<div class="roodo-comment-date">Sun, 22 Jul 2007 13:04:05 +0800</div>
+<div class="roodo-comment-text">猜測原發問者可能是要模擬類似 ORM (http://en.wikipedia.org/wiki/Object-relational_mapping) 的功能. 這在 java programmer 大部份都會利用 spring / ibatis / hibernate 這麼做.<br/>只是, 它沒有合理的為每一個 cust 擁有一個自己  instance.<br/>For ORM issue, 會為每一個 object 配置一個 instance, 通常它們只是一個資料的封裝(POJO ,http://en.wikipedia.org/wiki/POJO).<br/>所以, 他原意可能希望的 custs 代表 cust object array, 只是 cust object 沒有 new cust() and assign data.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-12685605)</div>
+<div class="roodo-comment-date">Tue, 24 Jul 2007 17:04:05 +0800</div>
+<div class="roodo-comment-text">原發問者的原意，是想用 operator= 或 copy constructor 一次完成 new and assign 的動作。喔，我記得 Java2 的 assign 動作是用參照，沒有 operator= 和 copy constructor 的概念，這一點跟 C/C++ 不同。<br/><br/>PHP4 時代， StdClass::operator= 的用法像 C/C++ 。PHP5 把 StdClass::operator= 的動作改成像 Java 一樣用 reference ，所以無法達成他要的效果。<br/><br/>原發問者也提到有些主機可以，有些主機不行。顯然，有些主機安裝的是 PHP4 ，所以可用；有些主機裝 PHP5 ，故不可用。<br/>	</div>
+</blockquote>
+</div>

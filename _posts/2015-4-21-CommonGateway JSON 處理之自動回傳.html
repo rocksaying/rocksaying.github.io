@@ -45,3 +45,25 @@ tags: [php,restful,common-gateway]
 
 <p>在一個設計規格比較寬鬆的環境中，設計者用 CG 實作 RESTfu API 時，實作好控制項方法後，可以先套用 CG 的自動回傳 JSON 規則，看看它產出的 JSON 文件的格式是否符合你的設計需求。如果不滿足的話，你才需要建立自己的 .pjs 視圖去處理回傳內容。在多數案例中，只需要實作控制項內容，而不必設計視圖，就幾乎完成一個可以用的 RESTful API 了。</p>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/44123533.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">chiu0602@gmail.com(chiu) (#comment-25320520)</div>
+<div class="roodo-comment-date">Tue, 05 May 2015 14:57:06 +0800</div>
+<div class="roodo-comment-text">石頭大大你好，我遇到一點困難：我傳送了一個GET request到"/index.php/main"，"Accept"為"application/json, text/plain, */*"，專案中"main"只有"index.phtml"，結果common-gateway 回傳json_encode(index.phtml)，這算是bug嗎？我認為common-gateway應直接回傳index.phtml內容<br/><br/>再一次謝謝你的傑作！<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-25320679)</div>
+<div class="roodo-comment-date">Thu, 07 May 2015 10:56:59 +0800</div>
+<div class="roodo-comment-text">你的 get request 是 index.php/main 。所以 CG 會載入 controllers/main.php ，配置 Main 類別的實體。<br/>main.php 應該有 class Main 的定義。<br/><br/>因為沒有其他參數，所以 CG 會呼叫 main->index() 方法。<br/>index.php/main/xxx => 呼叫 main->get('xxx'); <br/>index.php/main  (後面不帶參數) => 呼叫 main->index() 。<br/><br/>common-gateway 只看 accept 的第一個內容，所以第二個 text/plain 無用。<br/>根據你的 Accept 設置 application/json， CG 處理視圖時會讀 views/main/index.pjs ，而不是 views/main/index.phtml 。<br/><br/>如果你沒有 views/main/index.pjs ， CG 就套用本文說的自動回傳機制，直接呼叫 json_encode($model) 。<br/>ps. $model = main 實體。<br/><br/>所以初步看來，你得到結果不是 Bug 。<br/><br/>因為你沒說你的 index() 回傳了什麼，我不能判斷更多內容。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-25321034)</div>
+<div class="roodo-comment-date">Mon, 11 May 2015 11:04:08 +0800</div>
+<div class="roodo-comment-text">問題就是common-gateway 只看 accept 的第一個內容, 若CG能判斷index.pjs而看accept 的第二個內容, 再回傳index.phtml(若存在)就不是bug了<br/>因為request accept應該是回傳優先次序, 對嗎?<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-25321124)</div>
+<div class="roodo-comment-date">Tue, 12 May 2015 11:48:11 +0800</div>
+<div class="roodo-comment-text">沒有人規定服務端默認的回傳型態一定是 HTML 。你看 Apache 的文件，服務端可以指定不同的預設回傳型態。甚至可以不回報 Content-Type ，而讓客戶端自己猜收到什麼文件。http://httpd.apache.org/docs/current/mod/core.html#defaulttype<br/><br/>按 CG 的設計，文件型態優先回傳序列最高的是 JSON 。就算 CG 加入了 Accept 優先序列的判讀行為，若按你的 Accept ， CG 還是會回報 JSON 給你。<br/><br/>而在 RESTful 的實務設計中，為了簡化設計內容，客戶端或服務端通常都選擇明確地提示它只要或只提供什麼樣的文件型態。以你的例子來說，你送出的 Accept 若列了多種型態，那你的 RESTful 客戶端程式在接收資料時，也必須判斷 RESTful 服務端回報的 Content-Type 的內容才能正確處理接收到的資料。但大多數的設計者，不會或根本就忘了這件事。所以常見的情形是，RESTful API 直接說我可以提供哪些型態；客戶端直接就按自己的需要索取指定的一種型態。讓彼此都省點事。<br/><br/>配合實務經驗，而且我也不想為這個很少使用的功能增加 CG 的程式碼行數，所以我的 CG 只看 Accept 的第一項。<br/>ps. 我當初在規劃 Accept 優先順序的處理程式時，寫不到三分之一就不想實作它了。<br/><br/>說句實在話，隨著現在 RESTful API 全面向 JSON 靠攏的趨勢，我甚至覺得載入視圖的動作都可以省掉了。只要把控制項動作的回傳結果(方法回傳值) JSON 化回傳客戶端就好 (所以 CG 才有了 JSON 自動回傳規則)。<br/>	</div>
+</blockquote>
+</div>

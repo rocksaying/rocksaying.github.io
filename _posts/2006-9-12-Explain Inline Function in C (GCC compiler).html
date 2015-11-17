@@ -583,3 +583,25 @@ case_l_3.asm
 <li><a href="{{ site.baseurl }}/archives/2006/C%20Macro%20%E4%BC%BC%E4%B9%8E%E5%8F%AA%E5%89%A9%E4%B8%8B%E8%AE%93%20programmer%20%E5%B0%91%E6%89%93%E4%BA%9B%E5%AD%97%E7%9A%84%E5%8A%9F%E8%83%BD.html">C Macro 似乎只剩下讓 programmer 少打些字的功能</a></li>
 </ul>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2139426.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">Matthew0320@gmail.com(Matthew) (#comment-3400060)</div>
+<div class="roodo-comment-date">Mon, 23 Oct 2006 16:19:19 +0800</div>
+<div class="roodo-comment-text">你好,<br/>我最近在學要如何從 C 程式 (main)呼叫 組合語言 程式(function)，不知道你是否可以介紹我ㄧ些書或只是網站的教學<br/><br/>主要是因為 DSP或 PICO等,必須使用它的指令來撰寫，有些還有特定的暫存器，所以想要知道如何以 C 來呼叫 DSP或PICO的組合語言程式<br/><br/>Best Regards,<br/>Matthew<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-3407062)</div>
+<div class="roodo-comment-date">Tue, 24 Oct 2006 14:42:59 +0800</div>
+<div class="roodo-comment-text">我當年 (大約十年以前) 曾在 80x86 CPU 和 DOS 環境下，用 Microsoft MASM 開發給 QuickBASIC 和 Turbo C 調用的 function library 。記得關於混合語言的使用方法 (BASIC, C, 組合語言互相呼叫彼此的 functuions) ，大約十幾年前還有蠻多資料可參考的。但那早在 Internet 興起前，如今想在網路上找到這類資料，並不容易。自己跑一趟學校的圖書館還快些。<br/><br/>回到正題。你可以先試試用 ANSI C/C++ 的 inline assembler 功能，關鍵字是 asm (或 __asm) 。<br/><br/>一般來說，不論用什麼程式語言，我們在 make 程式時首先需由 compiler/assembler 編譯或組譯產生出 obj file ，再由 linker 將 obj files 連結起來。這部份的操作過程以及 obj file format ，要看你的開發工具使用手冊。例如 GCC 開發工具的操作過程如下所示。 gcc 是一個 front-end tool ，根據來源檔副檔名決定處理動作， .c 是調用 C compiler ， .as 是調用 assembler ， .o 則是調用 linker 。<br/><br/><br/>$ gcc -c -o a.o a.c<br/>$ gcc -c -o b.o b.as<br/>$ gcc -o c a.o b.o<br/><br/><br/>在程式碼的編寫上， C 語言在呼叫外部程式的 function 時，須用 extern "C" {} 括住外部程式的函數宣告，以抑制 C/C++ compiler 對函數名稱符號 (symbol) 的修改動作。在組合語言方面，函數名稱符號要宣告為 global ，還要配合 C 語言的函數呼叫慣例處理 stack 和回傳值。以 80x86 CPU 為例，參數由 C 語言負責放在 stack segment 中，並由 C 語言這方負責清除；函數回傳值要放在 ax/eax register ；返回 (ret) 之前不需要清除 stack 等等。這方面同樣要參閱晶片架構和開發工具手冊的說明。<br/><br/>我想 <a href="http://nasm.sourceforge.net/doc/html/nasmdoc0.html">NASM Manual</a> 中，有些資料可以參考。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22470186)</div>
+<div class="roodo-comment-date">Sun, 03 Jun 2012 15:17:39 +0800</div>
+<div class="roodo-comment-text">你這個方法其實沒有inline的時候，有優化和沒有優化的部份，就已經有這個差別了，並不是因為你加上的關係。<br/><br/>通常這種差別再普通的compiler就會這樣了。<br/><br/>至於marco，他是比較標準的preprocessing，不管優化前和優化後，都會貼上。不會有限制。不過高階語言的marco只是要讓可讀性增加而已。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22470660)</div>
+<div class="roodo-comment-date">Mon, 04 Jun 2012 02:05:45 +0800</div>
+<div class="roodo-comment-text">to 幻影火<br/>1.「有這個差別了」:  "這個"是指什麼？<br/>2.「並不是因為你加上的關係」 : 加上的又是指什麼？<br/>3.「不管優化前和優化後，都會貼上」:  我完全看不出主詞是什麼。<br/><br/>抱歉，我看不出你要表達的主題是什麼，我不知道你希望和我討論本文的哪一段內容。<br/>	</div>
+</blockquote>
+</div>

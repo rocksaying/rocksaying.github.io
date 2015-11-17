@@ -108,3 +108,15 @@ Anyway, 當我發覺 MySQL 的鎖定能力有限時，我也不打算在這上�
 <p>
 一般而言，我會直接把 PostgreSQL 的 <code>SERIAL</code> 視為等義的 <code>INT NOT NULL IDENTITY(1,1)</code> (MS SQL) 或 <code>INT PRIMARY KEY AUTO_INCREMENT</code>，直接替換。例如 <code>s/\sSERIAL(?=\s*,)/$dbSerialType/gi';</code>
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/6223035.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-18781839)</div>
+<div class="roodo-comment-date">Sat, 21 Mar 2009 10:04:56 +0800</div>
+<div class="roodo-comment-text">請問一下!<br/>PostgreSQL 的 SERIAL <br/>有沒有上限<br/>如果交易資料用SERIAL做ID<br/>會不會到了上限後就不能在新增資料了<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-18897207)</div>
+<div class="roodo-comment-date">Fri, 10 Apr 2009 05:46:54 +0800</div>
+<div class="roodo-comment-text">回答一: <br/>SERIAL 是一個 INT，上限是 2147483647。BIGSERIAL 是一個 INT8，上限是 9223372036854775807。<br/><br/>回答二: <br/>還是可以新增資料，只是會得到重複的值 (2147483647)。<br/><br/>因為 SERIAL 只附帶了 NOT NULL 的約束，並不包含 UNIQUE 或 PRIMARY KEY 的約束。所以可以用重複的值插入資料列。<br/><br/>只是當它插入重複的值時，便失去了設計者原本的設計意圖: 唯一的可識別代號。<br/><br/>另外補充個人的看法，我認為 SQL Standard 不制定 Serial 或 Auto increment 這些功能的原因，就在於這個普遍的設計方式並不是理想的方式。<br/><br/>SQL Standard 似乎傾向於「在插入資料列前，你就要知道識別代號」的設計方式。簡單地說，在插入資料列前，你就要自己算出一個唯一的識別代號，而不是插入資料列後才知道。 MySQL 使用者的常見作法是後者(插入資料列後才知道id)。<br/><br/>嚴謹的作法是，如果你需要為資料列設計一個「唯一的識別代號欄位」，而資料筆數又可能超過 2147483647(4bytes) 或 9223372036854775807(8bytes)，那麼你應該使用「字串」。並仿 RFC822 的 Message-ID 的方式產生識別代號。<br/>例如: class1.38971932.rock@mydomain<br/>	</div>
+</blockquote>
+</div>

@@ -149,3 +149,100 @@ JavaScript 表達的方式是:
 <li><a href="{{ site.baseurl }}/archives/2009/%E8%88%87%20metavige%20%E5%92%8C%20alexchen%20%E5%B0%8D%E8%A9%B1%20Java%20%E8%AA%9E%E8%A8%80.html">與 metavige 和 alexchen 對話 Java 語言</a></li>
 </ul>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/10867569.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20123765)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 08:48:27 +0800</div>
+<div class="roodo-comment-text">Sorry, 我承認 Hibernate 的確有他不好用的地方<br/>但是，關於您的使用方式，我想您對 Hibernate 的『狀態』並不很了解<br/><br/>基本上您的作法，不太正確<br/>您如果有一個物件，已經將資料存入，但並不是由資料庫取出的『Persistent』物件，我想大多數的情況應該就是畫面上的資料<br/>應該使用的是 session.persistent() 方法<br/>先將物件的狀態由 transit 變成 persistence<br/>就可以<br/><a href='https://www.hibernate.org/hib_docs/v3/api/org/hibernate/Session.html#persist' rel='nofollow'>https://www.hibernate.org/hib_docs/v3/api/org/hibernate/Session.html#persist</a>(java.lang.Object)<br/><br/>您的步驟的確是多餘的<br/>但是並不是沒有解決方案<br/><br/>我想，Hibernate 會到現在出到 3.X 版，而且現在是 Java EE 5 之後，EJB Entity Bean 的核心技術<br/>並不是沒有道理的<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20123827)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 09:10:45 +0800</div>
+<div class="roodo-comment-text">另外，您所作的"reflection"<br/>其實，比較資深的java工程師，或許不會這樣作<br/>他們應該會採用 Apache 的 BeanUtils <br/><a href='http://commons.apache.org/beanutils/index.html' rel='nofollow'>http://commons.apache.org/beanutils/index.html</a><br/><br/>就如同您所說的 DRY 原則<br/>這部份目前已經有人實做出來了<br/>對於效能考慮上來說，基本上直接作多屬性的Setter<br/>比起用 reflection 讓程式碼好懂來說，是重要的多了<br/><br/>所以，或許對不同的考量點，會有不同的寫法<br/>這應該是因為專案的特性以及時代的變遷有關吧～～～<br/>所以以 PHP, Ruby, Javascript 自己的特性去比較 Java 的某些特性，並不是太適合<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20124139)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 11:23:28 +0800</div>
+<div class="roodo-comment-text">TO METAVIGE<br/>在您第一個 回覆中 使用 persistent()方法，就我的認知，因該是新建一筆資料，等同於SQL中insert，跟原PO所說明的傳入更新資料(如果結合Struts 1.X那個值是由Action From傳入)應該是沒辦法直接使用persistent()做處理，因為記憶體中已經存在有相同ID的Object(oldItem)，所以一定要如同原PO使用把新值set到原本的oldItem中，在做update()的方式做處理，不然直接使用persistent()會產生不同的ID。<br/><br/>原本的資料oldItem = session_findById(session, item.getId()); 在Transaction中本身就已經是 persistence的狀態。<br/><br/>因此我看不懂您所稱的"把先將物件的狀態由 transit 變成 persistence就可以"是如何操作????可否請您針對這部分再說一些說明呢?<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20124153)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 11:31:57 +0800</div>
+<div class="roodo-comment-text">恩～ 這部份倒是我的問題了～～<br/><br/>應該是要用 merge 才對<br/><br/>以下是 merge 這個方法的說明<br/>Copy the state of the given object onto the persistent object with the same identifier. If there is no persistent instance currently associated with the session, it will be loaded. Return the persistent instance<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20124155)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 11:33:24 +0800</div>
+<div class="roodo-comment-text">另外 Apache 的 BeanUtils source code也應該是像版主一樣的Reflection 做法實作(不然他著麼知道有哪些屬性需要作get、set)，只是把它包裝的像是您所說的多屬性的Setter而已，本質上Java的Reflection就沒有PHP, Ruby, Javascript這些描述式的語言方便，我覺得版主想表達的就只是這個意思而已:)<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20124171)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 11:37:12 +0800</div>
+<div class="roodo-comment-text"><a href='http://caterpillar.onlyfun.net/Gossip/HibernateGossip/Session.html' rel='nofollow'><a href='http://caterpillar.onlyfun.net/Gossip/HibernateGossip/Session.html' rel='nofollow'><a href='http://caterpillar.onlyfun.net/Gossip/HibernateGossip/Session.html' rel='nofollow'><a href='http://caterpillar.onlyfun.net/Gossip/HibernateGossip/Session.html' rel='nofollow'><a href='http://caterpillar.onlyfun.net/Gossip/HibernateGossip/Session.html' rel='nofollow'>http://caterpillar.onlyfun.net/Gossip/HibernateGossip/Session.html</a></a></a></a></a><br/><br/>您可以參考這部份的說明文件<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20124185)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 11:41:31 +0800</div>
+<div class="roodo-comment-text">Apache BeanUtils裡面的http://svn.apache.org/repos/asf/commons/proper/beanutils/trunk/src/java/org/apache/commons/beanutils/PropertyUtilsBean.java<br/>在這個理面搜尋getMethod()就可以知道也是使用反射原理實作的:)<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20124193)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 11:44:05 +0800</div>
+<div class="roodo-comment-text">我看不懂您所稱的"把先將物件的狀態由 transit 變成 persistence就可以"是如何操作<br/>這句話意思是指我不了解 為什麼狀態改變，會讓persist()可以用來update資料o.O，兩者我覺得毫無關聯，我以為是其他的用法XD<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20125665)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 18:28:06 +0800</div>
+<div class="roodo-comment-text">這個部份是有關 ORM 的基本觀念了<br/>不太好解釋<br/><br/>簡單來說，你由網頁上面把資料放入一個物件裡面，但是並不是由session取出的物件，狀態是暫時的，雖然有 identity, 但是未跟 ORM 作關聯<br/><br/>你由 session 取出的物件，其狀態是有跟 ORM 作同步，所以，你更新屬性不用下 update , ORM 就會自動更新<br/><br/>所以，你要更新屬性，首先，你必須要把物件的狀態，變成是 persistence, 簡單來說就是要與 ORM 目前內部這個物件的狀態作同步<br/><br/>不知道這樣您這邊是否清楚？如果還是不清楚，我會建議你參考書籍比較快<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20130271)</div>
+<div class="roodo-comment-date">Mon, 30 Nov 2009 21:21:07 +0800</div>
+<div class="roodo-comment-text">首先，我承認 Hibernate 是很優秀的 ORM 實作。但我也強烈地認為如果是用其他的語言 (C# 3.0如何) 來實現，它會表現的更好。<br/>現在的情形就像是 Benz 320 的車體(Hibernate) 裝上 4 個八角形的輪子(Java 語言)。車子怎麼開都讓人不舒服。<br/><br/>alexchen 有仔細看正文。<br/>請 metavige，再仔細看一次我的需求: 我要求在「一筆交易」內進行。<br/><br/>我的程式碼也明確地寫著:<br/>----<br/>tx = session.beginTransaction();  <br/>oldItem = session_findById(session, item.getId());  <br/>session.update(oldItem);  <br/>tx.commit();<br/>----<br/>find and update 的動作是夾在 beginTransaction 和 commit 之間，沒有中斷。<br/><br/>metavige 貼的良葛格的參考內容在處理更新動作時，卻是拆成兩筆交易了。<br/><br/>Transaction tx = session.beginTransaction();<br/>User user = (User) session.get(User.class, new Integer(2));<br/>tx.commit();<br/>session.close();<br/><br/>user.setAge(new Integer(27));<br/>session = sessionFactory.openSession();   <br/>tx= session.beginTransaction();<br/>session.update(user);<br/>tx.commit();<br/>session.close();<br/><br/>注意到了嗎？它的動作分別處於不同的 session 。這跟我所作的事不相同。<br/><br/>我知道在 find() 之後關閉 session 就可以中止 object to entity 的繫結，那麼我不必做欄位的指派 (oldItem.set(item.get())，直接開啟一個新的 session，就可以調用 session.update(item) 完成更新動作。但那不是我的需求。<br/><br/>至於你說的 session.merge() ，確實比 session.update() 更適合案例的 hibernate 操作需求。<br/><br/>但是這不影響本文的主旨。本文主旨是 Java 的 reflection 。<br/><br/>資深的 Java 工程師，也是像我一樣採用反射方式來實現你所說的多屬性指派動作。只是我以為這不過是個小問題，至少在動態語言裡真的很簡單，所以在我上網搜尋 package 之前，我就自己動手解決了。<br/><br/>那些 BeanUtil 的工具，也是用反射在抓 setter, getter 。你去鑽研一下 BeanUtil 的源碼(Alexchan有貼連結)，就會發現他們內部做的事不會比我正文示範的動作少。我們不該學鴕鳥，把頭往 package 裡一埋，就對那些複雜性視而不見。<br/><br/>我最近也是漸漸認清一個事實: 在動態語言中很簡單的事，用 Java 自帶的環境來做都很複雜。多花點時間上網搜尋 third party 的 package 才不會浪費生命... Ok, 浪費的是其他人的生命。讓我們向那些英勇的志士們致上衷心的祝福。<br/><br/>人生苦短，沒有輕量化會更短。<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20134063)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 20:13:58 +0800</div>
+<div class="roodo-comment-text">TO 石頭大 <br/>每個語言實作的時候，都有自己時空背景下的考量跟觀點，事情通常也是有一好就沒有兩好，魚與熊掌沒有辦法兼得，動態語言有它的優點，同時也有他的缺點。例如因為他的弱型別語言(一個變數可以同時為字串、數字、浮點數)，為了檢查型別，所以執行速度就會比較慢些。Java也是同樣的狀況，也許他的執行速度比較快，物件導向的表達能力比PHP好些，但是相對的他提供的反射能力就差了點，看您部落格的文章，您似乎實做過相當多種語言，並且對JAVA有些批判，當我在看到您凸顯Java的弱點的文章時，我更由衷的期望看到您對這些問題探討並提供解決的文章，在看過您許多文章，以您的學識，我想應該可以提出許多有用的建議，畢竟如果把這一切都歸責到這是JAVA的原罪，就直接宣告JAVA你無可救藥了，那對我們這些只有學JAVA的人真的也太悲慘了XD。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20134089)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 20:30:29 +0800</div>
+<div class="roodo-comment-text">TO metavige大 <br/>因為我以為您所要表達的內容為 "如果狀態由transtransit 變成 persistence，就可以使用pesist()指令去update物件的狀態"，所以我才會回覆 "為什麼狀態改變，會讓persist()可以用來update資料o.O，兩者我覺得毫無關聯，我以為是其他的用法"造成您的誤會真不好意思:P<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20134109)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 20:36:53 +0800</div>
+<div class="roodo-comment-text">這篇文章有把所有的狀態與可以用的函式說明的蠻清楚的:P<br/><a href='http://itfuture.javaeye.com/blog/182201' rel='nofollow'>http://itfuture.javaeye.com/blog/182201</a><br/>可以當參考瞜，<br/><br/>不過請教metavige大，如果物件存於persistence狀態下，如果改變其內容，就自動會執行對應的SQL語法，這個你有實際上使用過嗎??使用上有沒有什麼需要注意的地方呢，因為我每次都有執行update，所以我不確定這樣子使用是否有什麼特別該注意的地方，盼您告知。 thanks<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20134249)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 21:14:19 +0800</div>
+<div class="roodo-comment-text">Ruby, Python 等語言也是強型別語言，而非弱型別。此外，在動態語言中，一個變數同時也只會是一種型別，不可能同時為字串、數字等。<br/><br/>alexchen: "以您的學識，我想應該可以提出許多有用的建議，畢竟如果把這一切都歸責到這是JAVA的原罪，就直接宣告JAVA你無可救藥了，那對我們這些只有學JAVA的人真的也太悲慘了XD。"<br/><br/>提建議是不敢當。畢竟十年來一直有人在提建議，其中不乏Java祖師級的人物，就不用我來獻醜了。<br/><br/>但是你提到「只有學Java」這一點，我不能贊同。<br/><br/>軟體管理學名作《人月神話》(二十年前出版)的作者在書中說: "採用高階語言最主要的理由就是生產力和除錯速度。...我相信會拒絕廣泛採用這些工具的因素只有惰性和懶散，技術性的困難已不再是合理的藉口"。<br/><br/>《程式設計師提升生產力秘笈》作者建議: "Java 平台現在支援大量語言，有些是針對不同任務而高度專業化。這就是我們逃離 Java 語言怪異處的出獄卡"。<br/><br/>我強烈地建議，至少至少，學會 JavaScript 吧。它還是 Java6 javax.script package 中預設的 script engnine。<br/><br/>沒有人需要離開 Java 平台，但是 Java 語言現在不是那平台上唯一可以說的語言。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20134467)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 22:20:43 +0800</div>
+<div class="roodo-comment-text">呵~ 我其實並不是要去抵制批判 Java 的人<br/>對石頭兄所提的意見，其實我自己是有深深的感受，畢竟我也寫 Java 幾年了~<br/>但我自己認為，我自己對 Java 來說，認為其優點還是多於缺點的。<br/>我其實回應，只是對於石頭兄所說，由寫的程式來評判這個語言的好或不好，有點意見<br/>因為作法可以有很多種，當然或許那得搭配一些已經行之有年的套件<br/>對於目前的動態語言來說，這些特性已經內建在裏面了<br/>所以當然這個 Java 老語言來說，自然沒得比了~<br/><br/>目前的開發方式或者是環境變遷，都是朝向 RIA 的方向，強調的是快速開發，以往那種慢工出細活的方式已經有點不合時宜了<br/>所以，自己也要跟著調整自己的思考方向以及學習的方向<br/>目前我也有在看 Groovy 這個 Java 的兄弟語言<br/><br/>就如同石頭兄所說的：『沒有人需要離開 Java 平台，但是 Java 語言現在不是那平台上唯一可以說的語言』<br/><br/>而我自己認為：沒有最好的語言，只有最適合的語言~<br/>就像從前大家一窩蜂的學英文，現在反倒外國人一窩蜂的來學中文了，這就是時代的變遷<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20134481)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 22:24:51 +0800</div>
+<div class="roodo-comment-text">TO alexchen：<br/><br/>其實自己呼叫 update, 我自己認為是個好習慣<br/>因為完全靠 session 來做這類型的更新，你可能會不容易 debug<br/>我現在是沒有想到甚麼特別的事情<br/>倒是，Hibernate 不會在你呼叫 update 的時候就更新<br/>會在 tx.commit 的時候，一次處理。除非你自己呼叫 session.flush<br/><br/>這倒是一個特別的地方<br/>我想，這對大量資料更新的時候，會有一些需要調整的地方<br/>你可以參考 Hibernate Reference 的 bulk update 的說明<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">coolpopy7022@gmail.com(alexchen) (#comment-20134751)</div>
+<div class="roodo-comment-date">Tue, 01 Dec 2009 23:31:02 +0800</div>
+<div class="roodo-comment-text">TO 石頭大 型態這邊我語誤了<br/>不會同時是不同型別，應該說 設一個 var a;在弱型態的語言中，不管是字串或著是數字，都可以assign給這個var a，實際上 在執行的時候，當一個var a 要跟var b作運算的時候，執行器會才會去檢查 兩者的型別 是否可以執行該運算，而不像強型態的語言在編譯時期就做了大部分的型態檢查，因此速度慢了些。應該是這樣子才對。 <br/><br/>只學JAVA...應該說目前吃飯的傢伙 就非靠JAVA不可，我現在找工作，或著是接案子，或著我要面試找人進來，都只會偏重於JAVA的運用，因為legacy system的存在，在公司不願意花時間refactor的狀況下，很現實也很無奈的狀況下，我就沒有其他的選擇跟考慮，我必須使用Java這個語言來過生活，老闆也不一定願意去使用其他的語言在新系統的開發，因為當我用了一個新的語言即使是在同一個JVM的平台上run，會造成這個系統後續的人維護不是那麼容易，對於接手的人而言，勢必他也要會我新使用的語言，所以老闆就打回票了XD不准!!!許多工作環境我想都會有類似的考量，只有沒有那些古董的負擔，開立新的專案或公司，才比較有機會吧:P，遺憾的在這樣子的環境下，我與其不斷的抱怨這個語言不好寫，我就只能好好考量該有什麼方式把這個東西寫好瞜，並且把我的心思"暫時"的全部都放在JAVA上面以求在這圈子不被淘汰，不知道石頭大是根本沒這個煩惱，還是有很好的方式可以克服這樣子的問題?<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20141983)</div>
+<div class="roodo-comment-date">Fri, 04 Dec 2009 00:52:36 +0800</div>
+<div class="roodo-comment-text">回應內容太多，另發一篇。<br/>請看《<a href="http://blog.roodo.com/rocksaying/archives/10914229.html">與 metavige 和 alexchen 對話 Java 語言</a>》。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">fcamel@gmail.com(fcamel) (#comment-21806395)</div>
+<div class="roodo-comment-date">Fri, 10 Jun 2011 14:15:42 +0800</div>
+<div class="roodo-comment-text">文中比較 java 和 php/js 的地方有點不公平。java 是用 setX/getX 存取資料, 而 php/js 是用 dictionary (hashtable) 存取資料。我沒用過 Hibernate, 若它有提供 dict-like 的方式存取資料, 就用不到 reflection。<br/><br/>以 python 為例, 若不使用 dict 存取資料, 而也用 setX/getX 的話, 要做如本篇文章的事時, 也會相對笨重。<br/><br/>當然, 做同樣的事, php/js/python 都會比 java 輕巧, 這是不同語言看重不同特性的結果, 有各自的 trade-offs, 這是另一個議題。我想強調的是, 本文以 java + setX/getX + reflection 和 php/js + dictionary 做對照, 而造成很大的對比, 我覺得有失公平。<br/>	</div>
+</blockquote>
+</div>

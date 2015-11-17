@@ -137,3 +137,30 @@ $a = new A;
 $a-&gt;run();
 </code></pre>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/5763473.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16108325)</div>
+<div class="roodo-comment-date">Sat, 29 Mar 2008 00:43:33 +0800</div>
+<div class="roodo-comment-text">我試著整理一下我的論點：<br/>1. 我的目的是為了分割程式的功能，也就是說，原本調用的方式是$x->y();，分割完後還是用$x->y();。<br/><br/>2. 我並不是為了想取得更多的動態性，反而我個人是認為過多的動態可能會引起混亂，這也就是為何我只用__call而不用__set的原因。<br/><br/>3. 每個插件對於他的宿主的非私有方法擁有直接調用的能力，反過來也是成立的。唯一的例外是有同名方法情況時，會根據本身物件具有的方法為優先，這點在以宿主物件調用方法時，保障了插件不會覆寫宿主原有的方法，這件事對於插件本身的地位來說是至關重要的。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16108363)</div>
+<div class="roodo-comment-date">Sat, 29 Mar 2008 00:48:58 +0800</div>
+<div class="roodo-comment-text">另外我覺得，不論我們設計的機制或是想達到的目的為何，既然都不能免除使用__call加上函數表來達到我們要的目的，那麼效率的低落是在所難免。<br/>令人欣慰的事情是，這樣的作法可以讓我們在「個人」可行的範圍內，減少我們維護程式碼的負荷。<br/><br/>不過最後我還是要文人相輕一下：我不喜歡用eval，也不喜歡用反映，我個人是覺得那個真的算是奇技淫巧，未來PHP改版後能不能適用，其實我不太有把握之後的相容性。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16222845)</div>
+<div class="roodo-comment-date">Tue, 15 Apr 2008 00:50:37 +0800</div>
+<div class="roodo-comment-text">本來這個系列應該到此結束，但最近的實做跟重構過程，我發現幾個問題，想跟你請教：<br/>1. 用這類方式擴充類別的能力，有時會碰到相依性的問題，當然我可以複寫建構式來先行載入相關的「插件」，可是當某個插件被使用的機率很高時，我是否該改寫他，將他重構進入「宿主」類別中呢？<br/>2. 有時我需要某些橫切的機制，比如說紀錄、快取等等，但有時候這些機制會跟我選擇的儲存體相關（檔案、資料庫），這些又整個糾結在一起（比如我把紀錄放在資料庫，那如果資料庫存取發生錯誤怎麼辦），有沒有一個比較清晰的方式可以解決？<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16262559)</div>
+<div class="roodo-comment-date">Mon, 21 Apr 2008 14:19:58 +0800</div>
+<div class="roodo-comment-text">1.如果是 Ruby/JavaScript/Python 等等動態語言開發的專案，那是完全不需要考慮 "重構進入宿主" 這種事的。因為不需要這麼做。<br/><br/>你在先前的回應中提到了"函數表"，事實上，基於個體導向的動態語言本身就是一個巨大的函數表管理器。所謂的建立類別與方法等動作，就是重覆的插入、置換函數表。因為它的內部機制就是如此，我們是沒有必要考慮 "重構進入宿主" 這種事的。<br/><br/>但對於 PHP 而言，因為它在這方面帶有 Java 的影子(說實話，這真是個錯誤決策)，所以你可能需要這麼做。我會建議你先做效能測試，如果 "載入機制" 會造成瓶頸，那就把它寫進去。<br/><br/>2.我的習慣是，當我調用一個動作失敗時，就回傳 false 或丟出例外訊息，交給 Container 去處理。我看不懂你想要尋求什麼？<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16281703)</div>
+<div class="roodo-comment-date">Thu, 24 Apr 2008 09:32:56 +0800</div>
+<div class="roodo-comment-text">感謝你的建議，我會量測看看兩種作法的時間差異<br/>	</div>
+</blockquote>
+</div>

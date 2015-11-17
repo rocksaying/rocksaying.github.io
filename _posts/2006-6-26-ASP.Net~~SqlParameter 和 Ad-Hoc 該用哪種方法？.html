@@ -169,3 +169,15 @@ string SqlCommand = String.Format("INSERT INTO Example (UserID, Qty, Memo, Modif
 <p>
 同樣的程式風格，也可像上面這樣用 SqlCommand 來實作。而這兩種用法外觀上的主要差別，在於少了一個 escaping 的動作。以我的觀點，這個工作本來就是 programmer 應該要加的，<strong>不能因為常常有 programmer 忘了加 escaping ，而斷定 Ad-Hoc 的安全性較差。因為這是 programmer 的態度問題</strong>。追求簡潔的程式碼，和鄉愿地假定輸入的資料都是「善意的」而省略該做的事，是兩碼子事。透過對同一程式風格的兩種不同實現方式，應該更容易了解 SqlParameter 的實作目的。只是我向來對 M$ 感冒的原因之一也在此，為什麼它就不能說清楚為什麼要用 SqlParameter 呢？把 programmer 當笨蛋一樣，好像在說「你用就對了，不需要知道理由」。附帶一提，因為 SqlParameter 不查驗資料格式，而對資料型態的核對則會等到進行查詢時才進行，所以依然應該使用 Property 的方式立即查驗輸入資料的正確性。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/1816510.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">xoran_tc@yahoo.com(Tony Chu) (#comment-16464301)</div>
+<div class="roodo-comment-date">Tue, 20 May 2008 03:10:02 +0800</div>
+<div class="roodo-comment-text">我的中文不是很好,所以如有文法上的錯誤, 請見諒.<br/><br/>你說的的確很有道理. 如果我只會用微軟給我的工具, 而我不知道這些工具到底掩蔽了哪些問題, 這對於我寫程式的[功力]的確有所影響. 但是對於微軟這種[語言簡化]的作風, 我想還是有一個好處的.<br/><br/>這個好處是什麼呢? 如果明天SQL這個語言的 escaping rules 改了. 如果你是用微軟[正統]的方法 of using SqlParameters 的話, 你大可以放心的等, 因為你知道微軟如果把這些新的 rules 放到 .NET 裡面的話, 它一定會同時改變 SqlParameter 確定它不受到這個 rule 的影響.  但是如果你是用你自己的 escaping 的方法的話, 那你什麼時候需要upgrade或是改你的程式時, 你就得確定你的 escape rules 還能100%的用.<br/><br/>當然啦, 無論如何測試都是必要的, 但是我想使用微軟建議的方法還是比較能確保 compatibility 吧...<br/><br/>-Tony<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16465019)</div>
+<div class="roodo-comment-date">Tue, 20 May 2008 09:23:47 +0800</div>
+<div class="roodo-comment-text">如果你熟悉 SQL 語法，那麼你說的疑慮不復存在。因為 SQL standard syntax 有很明確的 escaping rule. 這個 rule 比微軟 .Net API 還穩定不變。<br/><br/>在我的經驗中， API 是易變的，syntax 卻是穩定的。為何你相信易變的 Framework API，卻不相信幾乎不變的語法呢？<br/><br/>當我產生 SQL 查詢句時，我用了 SQL standard syntax 抽離這個句子對資料庫系統的相依性。這不因 upgrade 而改變。<br/>	</div>
+</blockquote>
+</div>

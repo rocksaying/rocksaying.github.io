@@ -23,3 +23,35 @@ Steve Donovan 在《<a href="http://www.stlchina.org/twiki/bin/view.pl/Main/STLO
 <p>
 那些動態程式語言讓 programmer 覺得寫 library 和 application 是一樣的事，自然 library 甚至是 framework 都能快速發展出來。代表性例子就是 Ruby 和 Ruby on Rails 。反觀 template 曲高和寡， C++ 如何冀望更多人參與 libaray 的開發工作？
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2583288.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">yeychang@yahoo.com.tw(Simon) (#comment-15311863)</div>
+<div class="roodo-comment-date">Tue, 18 Dec 2007 01:02:51 +0800</div>
+<div class="roodo-comment-text">Hi : <br/>你好,不知道直接叫你石頭成,可以嗎?<br/>有一問題想請教您,關於撰寫C++ Library 的書籍是否可以推薦較好上手的,以及該如何去學習撰寫,謝謝!!<br/>對於C++ Library 搞不定的菜鳥  Simon<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">mikimotoh@gmail.com(Miki) (#comment-21131915)</div>
+<div class="roodo-comment-date">Tue, 24 Aug 2010 16:04:24 +0800</div>
+<div class="roodo-comment-text">在我上一個做的工作裡，我引入了STL、Boost，我那時教條地認為這是業界潮流，認為所有組員都應該一樣跟我學會template metaprogramming。<br/><br/>但後來做另一個計畫時，改用python這種軟型別的語言，驚覺到以前在C++需要複雜的技巧的程式改用python就可簡單地表達出來。我也在不斷省思說為了run-time 效能而要把「多型」搬到compile-time的這種metaprogramming技巧是否真有必要。<br/><br/>比如，記得在boost metaprogramming有提供一個功能，可以在compile-time就把binary bit-string，如 0011 (不加雙括號) 轉成integer 3。<br/><br/>其實template跟virtual function都是讓演算法可以處理多型物件的技巧，只不過一個是compile-time，另一個是run-time。我認為C++應該演化出一個更泛用的語法來實作多型，使得程式員不需要區分要用template或是virtual function實作，那就更好了。<br/><br/>我建議是只要給compiler一些hint，比如"compile_time"，就能讓compiler自動判斷這個演算法或物件能不能在compile生成(template specialization)，如果不能就警告或錯誤。<br/><br/>總之，讓複雜的留給電腦，簡單的留給人類。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21133501)</div>
+<div class="roodo-comment-date">Wed, 25 Aug 2010 01:03:18 +0800</div>
+<div class="roodo-comment-text">Scott Meyers 在 Effective C++ 這本書中，將 C++ 語言劃分成4個領域語言，即 C, OO C++, Template, STL 。每個領域都有各自的使用策略。然而，並不是每一件專案都會同時涉及這四個領域，也因此並非每個程序員都有機會熟悉這四個領域。<br/><br/>我個人一向把 C 和 C++ 的程式劃在同一類。但嚴格說來，就我維護過的 C/C++ 程式中，九成以上屬於 C 與 OO C++ 。涉及 template 和 STL 的不到一成。所以各有所偏，其實也是很合理的。<br/><br/>就我所知，C++ compiler 是目前的程式語言中最複雜的了(Java compiler 則是我眼中的 lazy compiler)。你最後的建議，現在 C++ compiler 其實也做到了。只是它只能提出警告訊息，而不能告訴你是否有更好的解法。<br/><br/>不過呢，聰明的 C 程序員早就想出救贖之道了。那就是用 C 語言寫出其他程式語言處理那些複雜的工作。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">mikimotoh@gmail.com(Miki) (#comment-21134025)</div>
+<div class="roodo-comment-date">Wed, 25 Aug 2010 11:11:02 +0800</div>
+<div class="roodo-comment-text">現在的C++ compiler有做到我所說的這一點？<br/><br/>我再舉例好了。<br/><br/>C++ metaprogramming 可以做出 fibonacci，請見:<br/><br/><a href='http://knanshon.blogspot.com/2006/05/c-meta-programming-fibonacci-and-phi.html' rel='nofollow'><a href='http://knanshon.blogspot.com/2006/05/c-meta-programming-fibonacci-and-phi.html' rel='nofollow'><a href='http://knanshon.blogspot.com/2006/05/c-meta-programming-fibonacci-and-phi.html' rel='nofollow'>http://knanshon.blogspot.com/2006/05/c-meta-programming-fibonacci-and-phi.html</a></a></a><br/><br/>它主要是用 template specialization的特性，來做到像if-else的分支，還有用到recursive。<br/><br/>但是fibonacci的演算法很簡單，要用template metaprogramming寫就很複雜。但這樣變複雜有何好處呢？只是為了讓某些可在compile-time就知道的算式(參數為常數)搬到 compile-time來做，而不要拖到run-time才做，提昇點執行效能。<br/><br/>你所說的「compiler有做到」，我想你指的是否為 optimization，不過這是各家compiler做的最佳化，而不是語言的規範。<br/><br/>再來另外，template metaprogramming無法接受參數為string。如果要用meta-programming寫個STRLEN("abc") 肯定是不行。<br/><br/>我所希望的是，程序員不需要寫兩套fibonacci，一套是run-time用，一套用是compile-time(用metaprogramming寫的變複雜了)，他只要寫一套就好，而由compiler自行生成。當程式員給予hint希望在compile-time而compiler做不到，compiler能給予警告。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21134813)</div>
+<div class="roodo-comment-date">Wed, 25 Aug 2010 17:09:32 +0800</div>
+<div class="roodo-comment-text">就我所知，如果不考慮效能最佳化，很多演算法的 template 其實不複雜。<br/>某路人: 啊，不就是浪費時間在 copy, destroy 嘛。(挖鼻孔)<br/><br/>在邏輯上，Compiler 其實無從得知何謂「效能」，它只是忠實地按程序員的指示做事。除非我們能教會 compiler 什麼叫「效能」。我想這已經是 AI 領域的事了。<br/><br/>C++ 程序員對「效能」的這個字眼是很敏感的，這就形成了一個有趣的現象。用 C++ 程序員眼中沒有經過特化的 template 演算法所產生的程式，也就是所謂「效能差的程式」，它的執行效能其實還是優於用動態語言設計的同樣演算法程式。<br/><br/>許多動態語言的設計哲學就是，隨著計算機計算速度的提昇，把工作時間用來提高程式的生產效率，而不是去最佳化某特定項目的演算法。用 C++ 的術語來說，就是「雖然這個演算法template的效能不好，但把它交給計算機的計算速度解決，我們就別浪費時間在 specialization 上了」。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">yuri@hotmail.com(tiara) (#comment-22615780)</div>
+<div class="roodo-comment-date">Thu, 13 Sep 2012 16:57:39 +0800</div>
+<div class="roodo-comment-text">>程序員不需要寫兩套fibonacci，一套是run-time用，一套用是compile-time<br/>這已經可以做到了，因為C++11已經引入了constexpr<br/><br/>constexpr factorial (float n)<br/>{<br/>    return n > 0 ? n * factorial( n - 1 ) : 1;<br/>}<br/><br/>如果你輸入的數據是常數，則可以在編譯時間算出來<br/>若不是，則會轉成在執行時間計算<br/>更贊的是這些常數不再限制於整數，連浮點數也可以支援，帥啊<br/>	</div>
+</blockquote>
+</div>

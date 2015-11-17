@@ -131,3 +131,65 @@ $ cat strrev.s
 
 <p>乍看之下很簡單的一道問題，確實能看出面試者對指標與計算機架構的理解程度。就是要懂這些<em>基礎知識</em>，才能說明你的程式碼真的沒有使用額外的記憶體。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/12418697.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-20803977)</div>
+<div class="roodo-comment-date">Mon, 31 May 2010 14:21:45 +0800</div>
+<div class="roodo-comment-text">受教了<br/>謝謝囉<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21329915)</div>
+<div class="roodo-comment-date">Mon, 18 Oct 2010 00:58:49 +0800</div>
+<div class="roodo-comment-text">搜尋時突然看到這問題<br/>覺得滿有趣的<br/>這樣應該可以吧<br/> <br/><br/>int main(int argc, char **argv)<br/>{<br/>        while(*argv[1])<br/>                argv[1]++;<br/><br/>        argv[1]--;<br/><br/>        while(*argv[1]) {<br/>                printf("%c", *argv[1]);<br/>                argv[1]--;<br/>        }<br/>        argv[1]++;<br/><br/>        return 0;<br/>}<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21330073)</div>
+<div class="roodo-comment-date">Mon, 18 Oct 2010 01:47:49 +0800</div>
+<div class="roodo-comment-text">你只是從尾巴往前把字串中的字元印出來而已，並沒有把字串中的字元順序反轉過來。<br/><br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21331065)</div>
+<div class="roodo-comment-date">Mon, 18 Oct 2010 13:15:57 +0800</div>
+<div class="roodo-comment-text">天阿~~~我亂入了~~~<br/>版主涉獵的東西還真廣阿~~~~<br/>從底層到UI<br/>工作一年的倦怠...在半夜12點看了版主的部落格<br/>我又燃起一股熱情<br/>不過我還在想有辦法不宣告變數寫一個void strrev(char *p)嗎<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21334117)</div>
+<div class="roodo-comment-date">Tue, 19 Oct 2010 16:34:52 +0800</div>
+<div class="roodo-comment-text">可以啊，用 inline assembly 寫，只用暫存器，不用變數。<br/><br/>組合語言碼可以用本文教的方式，讓 gcc 幫你產生出來。<br/><br/>:p<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21337349)</div>
+<div class="roodo-comment-date">Thu, 21 Oct 2010 00:11:42 +0800</div>
+<div class="roodo-comment-text">hi <br/>我後來有寫一個遞迴版的<br/>想一想好像不符合不使用額外記憶體<br/>stack會長大....<br/>發現自己看到這題目一直執著於不宣告變數<br/><br/>#include <br/><br/>void strrev(char *p)<br/>{<br/>        if (*(p + 1))<br/>                strrev(p + 1);<br/>        while (*(p + 1)) {<br/>                *p ^= *(p + 1);<br/>                *(p + 1) ^= *p;<br/>                *p ^= *(p + 1);<br/>                p++;<br/>        }<br/>}<br/><br/><br/>int main(int argc, char **argv)<br/>{<br/>        strrev(argv[1]);<br/><br/>        printf("%s\n", argv[1]);<br/><br/>        return 0;<br/>}<br/>跟版主交流一下<br/>使用-O效果如何也不清楚<br/>沒trace過gcc inline 的組語<br/>GCC-Inline-Assembly-HOWTO 努力學習中<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21339017)</div>
+<div class="roodo-comment-date">Thu, 21 Oct 2010 17:23:43 +0800</div>
+<div class="roodo-comment-text">我記得在其他地方看過用遞迴解法的文章。但是遞迴法一定不合格。<br/><br/>在程式語言中，遞迴法就是在用記憶體消除程式碼的複雜度。編譯器最佳化也不能幫你改變這項結果。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-21667021)</div>
+<div class="roodo-comment-date">Wed, 16 Mar 2011 23:44:16 +0800</div>
+<div class="roodo-comment-text">混在一起後，少宣告一個int<br/>交換用XOR algorithm<br/><br/>#include <br/> <br/>int main(int argc, char **argv) {<br/>	char *f, *t;<br/><br/>	if (argc < 2) {<br/>		puts("input one string");<br/>		return 1;<br/>	}<br/><br/>	f = t = argv[1];<br/><br/>	while (*t) <br/>		t++;<br/>	--t;<br/><br/>	while (t > f) {<br/>		*f ^= *t;<br/>		*t ^= *f;<br/>		*f++ ^= *t--;<br/>	}<br/>	puts(argv[1]);<br/><br/>	return 0;<br/>}<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">yuri@hotmail.com(tiara) (#comment-22615772)</div>
+<div class="roodo-comment-date">Thu, 13 Sep 2012 16:52:21 +0800</div>
+<div class="roodo-comment-text">C++的泛型解法<br/><br/>template<br/>void reverse(RandomItr first, RandomItr last)<br/>{<br/>   while(first < last) std::swap(*first++, *(--last));<br/>}<br/><br/>使用方法<br/><br/>char A[] = "jljljiohoskjbmjbkja";<br/>reverse(std::begin(A), std::end(A));<br/><br/>不過STL已經提供了更精緻的版本，我們不用再重造輪子<br/>std::reverse(std::begin(A), std::end(A));即可<br/><br/>石頭大不太喜歡C++的template，我倒是對他能夠將算法抽象化的能力感到很興奮<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22615840)</div>
+<div class="roodo-comment-date">Thu, 13 Sep 2012 17:44:32 +0800</div>
+<div class="roodo-comment-text">本文的問題重點在於「解釋你的程式不用額外記憶體」。<br/><br/>用 C++ STL 回答的話，答題者必須把 template 的內容列出來，<br/>證明這個 template 不會使用額外記憶體，我想這反而是自找麻煩了。<br/><br/>至於「我不太喜歡C++的template」的印象，這只是比較性的態度差異。<br/>事實上，如同你的說法，我也很喜歡它的抽象化能力。<br/><br/>但是其他的程式語言，如Ruby, Python也提供同樣的抽象能力，而且門檻使用更低。<br/>我從不諱言 template 的高門檻，因此我對 C++ template 所表現出的喜好度就沒那麼明顯了。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22615904)</div>
+<div class="roodo-comment-date">Thu, 13 Sep 2012 19:16:06 +0800</div>
+<div class="roodo-comment-text">補充說明，「就地(不用額外記憶體)把字串反向」是《約耳趣談軟體》的作者 Joel 在書中提到的題目。<br/>他書中說明出題目的是要測試面試者對計算機系統的具體知識、微觀知識。<br/>並不是看面試者對演算法的抽象知識、宏觀知識。<br/><br/>在這個題旨下，使用指標以外的語法並不合適，因為答題者必須花更多的功夫證明他的用法合乎題旨。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">yuri@hotmail.com(tiara) (#comment-22616344)</div>
+<div class="roodo-comment-date">Fri, 14 Sep 2012 03:10:48 +0800</div>
+<div class="roodo-comment-text">>如Ruby, Python也提供同樣的抽象能力，而且門檻使用更低。<br/>但是執行速度沒那麼理想<br/>至於template門檻高，我覺得還好<br/>撇開那些複雜無比的TMP技巧，其實還滿容易理解和使用的<br/><br/>我發現很多不理解template的人大多都不清楚那些東西可以在<br/>編譯期完成，那些必須在執行期間完成，只要能突破這關<br/>剩下的只是一些語法問題和比較瑣碎的知識而已<br/><br/>另外，玩玩haskell對於理解recursive會有很大的幫助<br/>	</div>
+</blockquote>
+</div>

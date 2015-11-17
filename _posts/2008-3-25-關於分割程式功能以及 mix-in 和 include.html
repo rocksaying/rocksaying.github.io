@@ -88,3 +88,35 @@ $a-&gt;bye();
 <p>
 透過混成，我不用回頭修改 A.php 這個源碼的內容，而是在別的地方做這件事。是「由外而內」的重構，所以說是 "mix-<em>in</em>"。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/5751881.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16075849)</div>
+<div class="roodo-comment-date">Tue, 25 Mar 2008 21:04:42 +0800</div>
+<div class="roodo-comment-text">你的mix-in可以把外部的function加入類別內，可問題是，既然已經在外部定義了function，直接調用function不就好了嗎？<br/><br/>我所需要的是「擴充」該類別的功能，換言之，他必須能像繼承一般，可以調用類別內protected的方法（存取屬性的問題不考慮）。<br/><br/>在分割程式功能時，我是把一些不常用的方法移出核心類別，以插件的方式寫在另外一個類別中，藉由我設計的那個「插件」類別把核心與插件類別的非private方法用__call這個魔術方法掛入。<br/><br/>由於我不想手動寫函數表，所以利用反映的方式自動產生該函數表。<br/><br/>我知道那個算是奇技淫巧，不過我實在沒有比較好的方式來作～<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">HACGIS@gmail.com(tokimeki) (#comment-16075969)</div>
+<div class="roodo-comment-date">Tue, 25 Mar 2008 21:23:19 +0800</div>
+<div class="roodo-comment-text">我在補充一點，我給出的範例，核心類別是「測試」，裡面有一個protected的「測試01」方法，我在插件類別「測試：test02」中的「測試02」方法中有呼叫$this->測試01()。<br/><br/>這樣子為何不會出現錯誤呢？這是因為那個「_插件」類別搞的鬼，他把「測試：test02」和「測試」類別的方法公開給這兩個類別來使用。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16088357)</div>
+<div class="roodo-comment-date">Thu, 27 Mar 2008 13:56:01 +0800</div>
+<div class="roodo-comment-text">回應見:<br/><br/><a href="http://blog.roodo.com/rocksaying/archives/5763473.html">延續討論</a>。<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">lp81sam@hotmail.com(lp81sam) (#comment-18115019)</div>
+<div class="roodo-comment-date">Mon, 08 Dec 2008 19:45:36 +0800</div>
+<div class="roodo-comment-text">===============================================================<br/><br/><a href='http://lp81sam.spaces.live.com/blog/cns!FE9AB5CD84013FC2!324.entry' rel='nofollow'><a href='http://lp81sam.spaces.live.com/blog/cns!FE9AB5CD84013FC2!324.entry' rel='nofollow'>http://lp81sam.spaces.live.com/blog/cns!FE9AB5CD84013FC2!324.entry</a></a><br/><br/>------------------------------------------------------------------<br/><br/>...<br/>	function __call($name, $args)<br/>	{<br/>		$file = dirname(__FILE__) . '/module_' . $this.moduleName . '/' . $name . '.php';<br/>		if(file_exists($file)) {<br/>			return include($file);<br/>		}<br/>	}<br/>...<br/>------------------------------------------------------------------<br/><br/>------------------------------------------------------------------<br/>現在才看到這篇文章 :p<br/><br/>我覺得要達到「由外而內」的重構效果<br/>只要在__call動手腳就好拉<br/>透過檔案去Mix-in<br/>我寫那篇的時候就這麼想<br/>只是沒說明，我只是在展現原理<br/>其實我沒要跟你爭論這樣的作法是不是Mix-in<br/>因為目前php應該本來就沒有這樣的機制<br/>當然有你說的runkit<br/>我只是要利用php既有的特性<br/>去達到你要的效果<br/>當然作法我覺得是越簡單越好<br/>因為這些問題都是可以從底層就處理的<br/>所以現階段的功能到哪，我就善用它<br/>原則就是"簡單易用powerful少寫code"<br/>當然這樣的代價<br/>就是機器去跑<br/>否則怎麼有哪麼多的動態語言<br/>我想未來應該寫程式應該會變成<br/>用說的<br/>或是用比的<br/>或是用眼睛瞄的吧<br/>這樣才會符合人類的習慣  :-)<br/><br/>===============================================================<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">lp81sam@hotmail.com(lp81sam) (#comment-18115047)</div>
+<div class="roodo-comment-date">Mon, 08 Dec 2008 19:53:49 +0800</div>
+<div class="roodo-comment-text">歹勢<br/>關於上面的回應<br/>因為有部份的程式碼被截掉了<br/>預覽的時候是沒有問題的<br/>所以我把回應貼在這<br/><br/><a href='http://lp81sam.spaces.live.com/blog/cns!FE9AB5CD84013FC2!452.entry' rel='nofollow'>http://lp81sam.spaces.live.com/blog/cns!FE9AB5CD84013FC2!452.entry</a><br/><br/>PS:<br/>因為我滿懶的 :p<br/>所以直接就複製貼上<br/>然後也沒有加一些特殊的標籤<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-18427417)</div>
+<div class="roodo-comment-date">Fri, 23 Jan 2009 15:47:55 +0800</div>
+<div class="roodo-comment-text">to lp81sam:<br/><br/>__call() 的解除方案有些缺點。例如效能，它把 __call() 當成行為函數的 gateway ，在小系統中尚可快速回應，但在大系統就會是瓶頸。<br/><br/>另一方面，它是全域性的影嚮，而不能區域性。在 mix-in 的概念中，你可以針對一個類別混入新行為，也可以針對一個實例(instance)混入新行為。但用 __call() 的話，影嚮的是 global 環境，而不是區域性的單一類別或單一實例。<br/>	</div>
+</blockquote>
+</div>
