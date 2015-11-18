@@ -96,6 +96,7 @@ Generator 具有相當強大的應用威力，不過它使用在迴圈以外的�
 ###### 相關文章
 
 * 更多關於 Generator 的事，可進一步閱讀 [ES6 In Depth: Generators](https://hacks.mozilla.org/2015/05/es6-in-depth-generators/) 。
-* 石頭閒語: [ECMAScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
 * 石頭閒語: [ECMAScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
-* 石頭閒語: [ECMAScript 6- for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
+* 石頭閒語: [ECMAScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
+* 石頭閒語: [ECMAScript 6 - for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
+* 石頭閒語: [ECMAScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
