@@ -88,24 +88,6 @@ var x = 1;
 var y = [2,3];
 {% endhighlight %}
 
-通常我們會將解構語法用於接收函數回傳值是陣列時。如下:
-
-{% highlight javascript %}
-function get_image_size() {
-    // do something...
-    return [w, h, x, y];
-}
-
-// without destructuring:
-var result = get_image_size();
-var width = result[0];
-var height = result[1];
-
-// with destructuring:
-var [width, height] = get_image_size();
-
-{% endhighlight %}
-
 
 #### 解構個體屬性
 
@@ -126,6 +108,44 @@ var z = undefined;
 var {x, length} = [10, 20];
 console.log(x);      // undefined
 console.log(length); // 2; 因為陣列一定有表示長度的屬性 length ，而 [10,20] 這個陣列的長度是 2 。
+{% endhighlight %}
+
+
+#### 應用情境
+
+通常我們會將解構語法用於接收函數回傳值是陣列時。如下:
+
+{% highlight javascript %}
+function get_image_size() {
+    // do something...
+    return [w, h, x, y];
+}
+
+// without destructuring:
+var result = get_image_size();
+var width = result[0];
+var height = result[1];
+
+// with destructuring:
+var [width, height] = get_image_size();
+
+{% endhighlight %}
+
+for-of 也是解構語法的常用場合。例如 ES6 新增的集合型態 <dfn>Map</dfn> 每次迭代回傳的值都是一組 <code>[key, value]</code> 結構，所以 for-of 時可以用解構語法將迭代結果分別指派給兩個變數。如下:
+
+{% highlight javascript %}
+var map = new Map();
+map.set('a', 1);
+map.set('b', 2);
+
+for (let [k, v] of map) {  // [k, v] = [key, value]
+    console.log(k, ' => ', v);
+}
+
+// without destructuring
+for (let v of map) {
+    console.log(v[0], ' => ', v[1]);  // 可讀性差了許多
+}
 {% endhighlight %}
 
 Destructuring 是一個語法糖衣。介紹到此也就差不多了。
