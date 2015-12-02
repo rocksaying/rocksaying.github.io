@@ -78,7 +78,7 @@ x, _, y = [1, 2, 3]
 {% endhighlight %}
 </div>
 
-ES6 也允許你用多層結構或 <dfn>Rest parameters<dfn> 。
+ES6 也允許你用多層結構或 <dfn>Rest parameters</dfn> 。
 
 {% highlight javascript %}
 var [x, y, [a,b,c]] = [1, 2, [10,11,12]];
