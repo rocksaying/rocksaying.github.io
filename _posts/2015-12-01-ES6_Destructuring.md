@@ -2,6 +2,7 @@
 title: ECMAScript 6 - Destructuring
 category: programming
 tags: [javascript,ecmascript,es6]
+lastupdated: 2015-12-02
 ---
 
 在 JavaScript 的設計場景中，我們使用了大量的陣列內容與屬性值操作。甚至在定義函數時也會使用屬性表作為參數，以換取選用性參數與擴充參數項目的彈性。例如:
