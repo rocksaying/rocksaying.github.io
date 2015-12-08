@@ -10,7 +10,7 @@ tags: [javascript,ecmascript,es6,proxy,reflect,tdd]
 
 #### Proxy
 
-<dfn>Proxy</dfn> 是一個建構函數，它接受兩個參數。第一個參數是委託者(代理目標)，第二個參數則是一組代理行為表。 Proxy 會建立一個代理者，這個代理者可以視為委託者的分身，但是代理者的行為將根據代理行為表的內容表現，而不是委託者應有的行為。
+<dfn>Proxy</dfn> 是一個建構者函數，它接受兩個參數。第一個參數是委託者(代理目標)，第二個參數則是一組代理行為表。 Proxy 會建立一個代理者，這個代理者可以視為委託者的分身，但是代理者的行為將根據代理行為表的內容表現，而不是委託者應有的行為。
 
 例如 <var>document.location</var> 的屬性 <var>href</var> 的實際內容為 "http://localhost/" 。你以 <var>document.location</var> 建立了一個代理者 <var>ag_location</var> 。當你透過 <var>ag_location</var> 查看 <var>href</var> 的屬性內容時，它可能會傳回 "http://rocksaying.tw/" ，而不是委託者應該傳回的內容。以下程式碼實作了此一情況。
 
@@ -40,7 +40,7 @@ Proxy 提供了十四種可以代理的抽象行為，請參考 [Proxy - Methods
 
 #### Reflect
 
-ES6 新增的 <dfn>Reflect</dfn> 與 Java/C# 中的不一樣。在動態語言中，你可以輕易地用各種方式探知與操作一個個體的屬性與方法，實在沒必要像 Java/C# 那麼麻煩。所以 ES6 新增的 Reflect 並不是一個建構函數，而是一組靜態方法集合。ES6 是為了 Proxy 而增加 Reflect 。基於 Proxy 可代理的抽象行為， Reflect 也提供了相對應的十四種靜態方法。請參考 [Reflect methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect)。Reflect 的靜態方法的第一個參數，通常是 Proxy 的委託者。
+ES6 新增的 <dfn>Reflect</dfn> 與 Java/C# 中的不一樣。在動態語言中，你可以輕易地用各種方式探知與操作一個個體的屬性與方法，實在沒必要像 Java/C# 那麼麻煩。所以 ES6 新增的 Reflect 並不是一個建構者，而是一組靜態方法集合。ES6 是為了 Proxy 而增加 Reflect 。基於 Proxy 可代理的抽象行為， Reflect 也提供了相對應的十四種靜態方法。請參考 [Reflect methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect)。Reflect 的靜態方法的第一個參數，通常是 Proxy 的委託者。
 
 Reflect 可以簡化代理行為表的設計工作。以上述程式碼為例，它其實應該寫成下列形式:
 
