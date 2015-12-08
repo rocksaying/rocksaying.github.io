@@ -161,3 +161,4 @@ Destructuring 是一個語法糖衣。介紹到此也就差不多了。
 * 石頭閒語: [ECMAScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
 * 石頭閒語: [ECMAScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
+* 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
