@@ -220,7 +220,7 @@ sudo dkms install -m arh -v 7.2.10
 如果我想要完整移除整個驅動程式模組，就執行 `dkms remove` 。如下:
 
 ```term
-sudo dkms remove -m arh -v 7.2.10
+sudo dkms remove arh/7.2.10 --all
 ```
 
 在此可以看出 DKMS 機制的好處。只要驅動程式的安裝動作導入 DKMS 機制，那麼系統維護人員統一操作 `dkms install -m 名稱 -v 版本` 就可以編譯各個驅動程式，方便作業自動化。
