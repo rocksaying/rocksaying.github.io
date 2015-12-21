@@ -1,7 +1,7 @@
 ---
 title: Linux DKMS 機制導入筆記
 category: computer
-tags: linux, debian, driver, dkms
+tags: [linux,debian,driver,dkms]
 ---
 
 公司基於 Debian/Ubuntu 的資訊產品裝配了幾個特殊配件，它們需要安裝驅動程式 (kernel module) 才能使用。原廠提供了驅動程式的源碼給我們，但並不是 deb/rpm 這類的套件。我原本用自己寫的工具 [make-package](https://github.com/shirock/rocksources/tree/master/linux/make-package) 將原廠提供的特殊配件驅動程式源碼打包成 deb 套件。但公司的產品維護人員又反應一件事：有時執行系統套件更新之後，驅動程式就不見了或載入失敗。
