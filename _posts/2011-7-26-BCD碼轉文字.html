@@ -21,15 +21,15 @@ tags: [php,python,bcd]
 <p>他的情況可簡化為下列敘述:
 </p>
 
-<pre class="code">
+<pre>
 $n = 12;
   // in memory: [0x12]
-echo $n, "\n";  
+echo $n, "\n";
   // 他預期顯示 12 ，而且他也確實看到 12
 
 $s = "\x00\x12\x34\x56\x78\x90";
   // in memory: [00, 0x12, 0x34, 0x56, 0x78, 0x90]
-echo $s, "\n"; 
+echo $s, "\n";
   // 他預期顯示001234567890，但他看到的是 ??4Vx?
   // 他認為有問題。
 </pre>
@@ -129,10 +129,10 @@ echo $s, "\n";
 第二個是 Python 的轉碼程式。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
-<span class="c"># coding: utf-8</span>
+<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<span class="c"># coding: utf-8</span>
 
-<span class="c"># BCD碼轉文字第一種解法: 推算法。</span>
+<span class="c"># BCD碼轉文字第一種解法: 推算法。</span>
 <span class="k">def</span> <span class="nf">bcd_to_ascii_calculate</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
@@ -144,16 +144,16 @@ echo $s, "\n";
 
     <span class="k">return</span> <span class="s">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
-<span class="c">## BCD碼轉文字第二種解法: 查表法。速度比較快。</span>
-<span class="c"># 開始定義全域變數 asc_table</span>
-<span class="c"># 只需要定義一次。</span>
+<span class="c">## BCD碼轉文字第二種解法: 查表法。速度比較快。</span>
+<span class="c"># 開始定義全域變數 asc_table</span>
+<span class="c"># 只需要定義一次。</span>
 <span class="n">asc_table</span> <span class="o">=</span> <span class="p">[</span><span class="s">'00'</span><span class="p">,</span> <span class="s">'01'</span><span class="p">,</span> <span class="s">'02'</span><span class="p">,</span> <span class="s">'03'</span><span class="p">,</span> <span class="s">'04'</span><span class="p">,</span> <span class="s">'05'</span><span class="p">,</span> <span class="s">'06'</span><span class="p">,</span> <span class="s">'07'</span><span class="p">,</span> <span class="s">'08'</span><span class="p">,</span> <span class="s">'09'</span><span class="p">,</span>
       <span class="s">'0a'</span><span class="p">,</span> <span class="s">'0b'</span><span class="p">,</span> <span class="s">'0c'</span><span class="p">,</span> <span class="s">'0d'</span><span class="p">,</span> <span class="s">'0e'</span><span class="p">,</span> <span class="s">'0f'</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">256</span><span class="p">):</span>
     <span class="n">asc_table</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">code</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span>
-<span class="c">#asc_tuple = tuple(asc_table)</span>
-<span class="c">#print(asc_table)</span>
-<span class="c"># 結束</span>
+<span class="c">#asc_tuple = tuple(asc_table)</span>
+<span class="c">#print(asc_table)</span>
+<span class="c"># 結束</span>
 
 <span class="k">def</span> <span class="nf">bcd_to_ascii_search_table</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
@@ -167,7 +167,8 @@ echo $s, "\n";
     <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">h</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">h</span><span class="p">:</span> <span class="c"># high bits</span>
+        <span class="k">if</span> <span class="n">h</span><span class="p">:</span> <span class="c"># high bits
+</span>
             <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span>
             <span class="n">h</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">else</span><span class="p">:</span>
@@ -178,8 +179,9 @@ echo $s, "\n";
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
     <span class="n">s</span> <span class="o">=</span> <span class="s">"</span><span class="se">\x00\x12\x34\x56\x78\x90\xab</span><span class="s">"</span>
-    <span class="c"># in memory: [ 00, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab ]</span>
-    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>  <span class="c"># you will see '\x00\x124Vx\x90\xab'</span>
+    <span class="c"># in memory: [ 00, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab ]
+</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>  <span class="c"># you will see '\x00\x124Vx\x90\xab'</span>
 
     <span class="k">print</span><span class="p">(</span><span class="n">bcd_to_ascii_calculate</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
 
@@ -214,7 +216,7 @@ echo $s, "\n";
 <blockquote class="roodo-comment">
 <div class="roodo-comment-author">g943936@oz.nthu.edu.tw(CCC) (#comment-21885073)</div>
 <div class="roodo-comment-date">Tue, 26 Jul 2011 22:01:08 +0800</div>
-<div class="roodo-comment-text">也可以用 Python 內建的 binascii 套件<br/><a href='http://docs.python.org/library/binascii.html' rel='nofollow'>http://docs.python.org/library/binascii.html</a><br/><br/><code>import binascii<br/><br/>s = "\x00\x12\x34\x56\x78\x90\xab"<br/>print(binascii.b2a_hex(s))<br/></code><br/>	</div>
+<div class="roodo-comment-text">也可以用 Python 內建的 binascii 套件<br/><a href='http://docs.python.org/library/binascii.html' rel='nofollow'>http://docs.python.org/library/binascii.html</a><br/><br/>import binascii<br/><br/>s = "\x00\x12\x34\x56\x78\x90\xab"<br/>print(binascii.b2a_hex(s))<br/><br/>	</div>
 </blockquote>
 <blockquote class="roodo-comment">
 <div class="roodo-comment-author">aoc90058@joen.cc(Joen) (#comment-21893475)</div>
@@ -222,17 +224,17 @@ echo $s, "\n";
 <div class="roodo-comment-text">個人認為這還是一個基本素養，如果是正統資工出來的，不會這個就有點傻眼了:（<br/>	</div>
 </blockquote>
 <blockquote class="roodo-comment">
-<div class="roodo-comment-author">未留名 (#comment-21896227)</div>
+<div class="roodo-comment-author">遊手好閒的石頭成 (#comment-21896227)</div>
 <div class="roodo-comment-date">Tue, 02 Aug 2011 14:46:00 +0800</div>
 <div class="roodo-comment-text">那我確實該傻眼了。因為我同事是資工系的，而我是唸國際貿易系的。<br/>	</div>
 </blockquote>
 <blockquote class="roodo-comment">
-<div class="roodo-comment-author">未留名 (#comment-21915655)</div>
+<div class="roodo-comment-author">LungZeno (#comment-21915655)</div>
 <div class="roodo-comment-date">Sun, 14 Aug 2011 22:41:29 +0800</div>
 <div class="roodo-comment-text">我又玩。<br/><br/>// BCD碼轉文字: 完全推算法。<br/>// 把關鍵地方寫出來，應該比較好理解。<br/>// 不過這就跟石頭大大設計的函式不等價了。<br/>function bcd_to_ascii_calculate_fully($s) {<br/>    $result = array();<br/>    $len = strlen($s);<br/>    for ($i = 0; $i < $len; ++$i) {<br/>        $int_val = ord($s[$i]);<br/>        $result[] =  chr(($int_val >> 4) + 48);<br/>        $result[] =  chr(($int_val & 0x0f) + 48);<br/>    }<br/>    return implode('', $result);<br/>}<br/><br/>// BCD碼轉文字: 完全查表法。<br/>// 因為用腳本語言，省卻中間轉成整數型別的步驟，速度更快。<br/>$asc_table_2 = array("\0"=>"00","\1"=>"01","\2"=>"02","\3"=>"03","\4"=>"04",<br/>      "\5"=>"05","\6"=>"06","\7"=>"07","\x8"=>"08","\x9"=>"09");<br/>for ($i = 10; $i < 256; ++$i)<br/>    $asc_table_2[chr($i)] = dechex($i);<br/> <br/>function bcd_to_ascii_search_table_fully($s) {<br/>    global $asc_table_2;<br/>    $result = array();<br/>    $len = strlen($s);<br/>    for ($i = 0; $i < $len; ++$i)<br/>        $result[] = $asc_table[$s[$i]];<br/>    return implode('', $result);<br/>}<br/><br/>// 文字轉BCD碼: 查表法。<br/>// 這是我以前學習時很喜歡玩的東西，思考「是否也可以？」。<br/>$bcd_table = array();<br/> <br/>for ($j = $i = 0; $j < 16; ++$j) {<br/>    $subtable = &$bcd_table[dechex($j)];<br/>    $subtable = array();<br/>    for ($k = 0; $k < 16; ++$k, ++$i)<br/>        $subtable[dechex($k)] = chr($i);<br/>}<br/> <br/>function ascii_to_bcd_search_table($s) {<br/>    global $bcd_table;<br/>    $len = strlen($s);<br/>    $result = array();<br/>    for ($i = 0; $i < $len; $i += 2)<br/>         $result[] = $bcd_table[$s[$i]][$s[$i+1]];<br/>    return implode('', $result);<br/>}<br/><br/><br/>其實這類函式在現今強大的腳本語言和數之不盡的程式庫面前，只是寫好玩……<br/>	</div>
 </blockquote>
 <blockquote class="roodo-comment">
-<div class="roodo-comment-author">未留名 (#comment-21918389)</div>
+<div class="roodo-comment-author">遊手好閒的石頭成 (#comment-21918389)</div>
 <div class="roodo-comment-date">Tue, 16 Aug 2011 17:14:11 +0800</div>
 <div class="roodo-comment-text">華生，你突破盲點了。<br/><br/>不過LungZeno的解釋內容中，如果再補上一條內容，就可以讓我們對PHP的理解再往前走一步。<br/>我測了LungZeno與我的程式的效率後，我得到的結論是「PHP 沒有真正的序數陣列(ordered array)，PHP 的陣列全都是雜湊表(hash table)」。<br/><br/>我的思路一開始走的是組合語言/C語言那套，在那邊序數陣列與雜湊表的查表演算法完全是兩回事。<br/>序數陣列是位址偏移；雜湊表則是先對鍵值算出雜湊值，再以雜湊值搜尋表(通常是搜尋一棵二元樹)。<br/>兩者的速度天差地遠。<br/><br/>我認定 PHP 會把以「整數」為鍵值的陣列配置為序數陣列，而以「字串」為鍵值的陣列配置為雜湊表。<br/>我希望用序數陣列去查表，避免雜湊表計算雜湊值的損耗。所以建表時做了字串轉數值的動作。<br/>而 LungZeno 的程式碼則是直接用字串為鍵值建表。而實際執行的結果顯示，整數表查起來並未比字串表快。<br/>事實上，我的程式碼比較慢。<br/><br/>如果整數表真的是序數陣列的話，那麼它的查詢速度足以抵消轉型別的損耗，不應該比字串表慢。<br/>因此效率差異的理由除了 LungZeno 所說「少了轉型別的步驟」之外，另一個理由就是「PHP 沒有序數陣列」。<br/><br/>不論我是用整數建表，亦或是LungZeno用字串建表，PHP都是配置成雜湊表。查詢時都少不了求雜湊值與搜尋樹的動作。<br/>而我的程式多了轉型別的動作，就比較慢了。<br/>	</div>
 </blockquote>
