@@ -1,5 +1,5 @@
 ---
-title: ECMAScript 6 - for-of 與 iterator
+title: 學習 ECMAScript 6 - for-of 與 iterator
 category: programming
 tags: [javascript,ecmascript,es6,iterator]
 ---
@@ -162,3 +162,4 @@ for (v of o) {
 * 石頭閒語: [ECMAScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
+* 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})

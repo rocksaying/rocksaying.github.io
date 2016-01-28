@@ -1,5 +1,5 @@
 ---
-title: ECMAScript 6 - Module
+title: 學習 ECMAScript 6 - Module
 category: programming
 tags: [javascript,ecmascript,es6,module]
 ---

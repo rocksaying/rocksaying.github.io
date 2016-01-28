@@ -1,5 +1,5 @@
 ---
-title: ECMAScript 6 - Template strings
+title: 學習 ECMAScript 6 - Template strings
 category: programming
 tags: [javascript,ecmascript,es6]
 lastupdated: 2015-11-09
@@ -56,3 +56,4 @@ tag 允許設計者做更多的事。你可以自己解釋如何使用要插值�
 * 石頭閒語: [ECMAScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
+* 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})

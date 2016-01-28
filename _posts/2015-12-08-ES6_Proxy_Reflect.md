@@ -1,5 +1,5 @@
 ---
-title: ECMAScript 6 - Proxy 和 Reflect
+title: 學習 ECMAScript 6 - Proxy 和 Reflect
 category: programming
 tags: [javascript,ecmascript,es6,proxy,reflect,tdd]
 ---
@@ -74,3 +74,4 @@ Proxy 的用途並不廣泛，它主要用於設計測試框架。而 Reflect �
 * 石頭閒語: [ECMAScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
 * 石頭閒語: [ECMAScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
+* 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
