@@ -3,14 +3,15 @@ title: Ajax and Blocking IO - Server side performance tuning memo
 category: programming
 old-category: Programming
 tags: [ajax,polling,Blocking IO,D-Bus]
+permalink: /archives/12063807.html
 ---
 <p>
-我在 <a href="{{ site.baseurl }}/archives/2010/Ajax%20and%20Blocking%20IO%20-%20To%20Resolve%20Polling%20Anti-pattern.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a> 中闡述了 Ajax 設計時，如何運用 Blocking IO 模型解決輪詢反模式(polling anti-pattern)；這整個模型，又稱之為「需求把持模型(Request handle model)」。結語時，我提到我們在實際應用中，需要在伺服端規劃另一種行程間通訊機制(IPC)。這就衍生了一個問題，即伺服端的需求把持模型與效能問題。
+我在 <a href="{{ site.baseurl }}/archives/12010463.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a> 中闡述了 Ajax 設計時，如何運用 Blocking IO 模型解決輪詢反模式(polling anti-pattern)；這整個模型，又稱之為「需求把持模型(Request handle model)」。結語時，我提到我們在實際應用中，需要在伺服端規劃另一種行程間通訊機制(IPC)。這就衍生了一個問題，即伺服端的需求把持模型與效能問題。
 </p>
 
 <!--more-->
 <p>
-首先看下圖，一個最基本的 HTTP 需求把持模型，實際上牽動了三個行程以及兩段資料流。圖中的個體名稱，係按我在 <a href="{{ site.baseurl }}/archives/2010/Ajax%20and%20Blocking%20IO%20-%20To%20Resolve%20Polling%20Anti-pattern.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a> 的用語。
+首先看下圖，一個最基本的 HTTP 需求把持模型，實際上牽動了三個行程以及兩段資料流。圖中的個體名稱，係按我在 <a href="{{ site.baseurl }}/archives/12010463.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a> 的用語。
 </p>
 <img src="{{ site.baseurl }}/images/06bf85ba.png" alt="Ajax Blocking IO model and Event model" />
 
@@ -24,7 +25,7 @@ tags: [ajax,polling,Blocking IO,D-Bus]
 為了減輕資料流的維護成本，我們在實務上往往選擇 Non-blocking 模型處理 Getter 與 Poster 之間的資料流。在 Non-blocking 模型中，又以透過 Poster 主動觸發 Getter 設定的事件處理方法的設計模式最常見，又稱為事件模型(Event model)。
 </p>
 <p>
-目前有兩種實作品可以協助我們實現 Getter 與 Poster 之間的事件模型。我在 <a href="{{ site.baseurl }}/archives/2010/Ajax%20and%20Blocking%20IO%20-%20To%20Resolve%20Polling%20Anti-pattern.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a> 提到的 D-Bus 是一種。另一種則是 Cometd ，聽說 Java Serlvet3 會把 Cometd 列入規範。
+目前有兩種實作品可以協助我們實現 Getter 與 Poster 之間的事件模型。我在 <a href="{{ site.baseurl }}/archives/12010463.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a> 提到的 D-Bus 是一種。另一種則是 Cometd ，聽說 Java Serlvet3 會把 Cometd 列入規範。
 </p>
 <p>
 關於 D-Bus 的部份，我改日再詳談。而 Cometd ，則可以閱讀 <a href="http://www.ibm.com/developerworks/web/library/wa-aj-hiperform/index.html">High-performance Ajax with Tomcat Advanced I/O</a>。Jetty Cometd 的實現方式又有些微不同。我個人對 Cometd 興趣不高，不會多談。

@@ -3,6 +3,7 @@ title: Python - Pipe 在 Signal 發生時的處理事項
 category: programming
 old-category: Programming
 tags: [python,multiprocessing,pipe,signal,posix]
+permalink: /archives/14644791.html
 ---
 <p>
 當我在 Python 中結合 <dfn>multiprocessing.Pipe</dfn>、<dfn>multiprocessing.Process</dfn> 與 <dfn>signal</dfn> 模組進行傳統的多工行程設計時，我注意到被擱置的管道資料讀取方法(read)，在沒有取得資料的情形下就返回。使得父、子行程之間的互動過程不如預期。錯誤訊息顯示，讀取方法被系統中斷了(Interrupted system call)。<em>read, signal, interrupted system call</em> 這三個關鍵資訊，讓我直覺聯想到我碰到 <dfn>EINTR</dfn> 這個狀況了。當我在錯誤處理的流程中增加 <var>errno</var> 的判斷動作之後，我確認這就是 <dfn>EINTR</dfn> 狀況。

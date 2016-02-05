@@ -3,6 +3,7 @@ title: JavaScript 與 Desktop - Desktop and WebKit
 category: programming
 old-category: JavaScript
 tags: [web,javascript,gjs,webkit]
+permalink: /archives/14456843.html
 ---
 <p>
 本文是《JavaScript 與 Desktop》系列最後一篇。前兩篇文章中，分別述敘了在 gjs/seed 中呼叫系統函數庫與調用 WebKit 處理圖形化使用介面的工作。
@@ -17,7 +18,7 @@ tags: [web,javascript,gjs,webkit]
 </h4>
 
 <p>
-在《<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20WebKit.html">JavaScript 與 Desktop - WebKit</a>》一文中，我們讓 gjs/seed 載入 libwebkit 函數庫，透過該函數庫配置了一個 WebKit 環境空間。在該 WebKit 環境中，它包含了一個獨立的 HTML render 與 JavaScript host。在這個自成一格的內部空間中，它本身就能獨自處理 HTML 與相關資源，運作自己的一套 JavaScript host。如果我們想要從外部干涉這個內部空間，或是讓內部空間中的狀況可以為外部所得知，我們就要依靠 libwebkit 所提供的 API 才能實現(<span class="Onote">WebKit 專案有許多分支，其中有些分支直接提供了內外部互動的 API 。例如 OS X 的 WebKit 或是 Nokia 的 QtWebKit。那些分支提供的特殊 API 不具相容性，不適用於本文的開發環境</span>)。
+在《<a href="{{ site.baseurl }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a>》一文中，我們讓 gjs/seed 載入 libwebkit 函數庫，透過該函數庫配置了一個 WebKit 環境空間。在該 WebKit 環境中，它包含了一個獨立的 HTML render 與 JavaScript host。在這個自成一格的內部空間中，它本身就能獨自處理 HTML 與相關資源，運作自己的一套 JavaScript host。如果我們想要從外部干涉這個內部空間，或是讓內部空間中的狀況可以為外部所得知，我們就要依靠 libwebkit 所提供的 API 才能實現(<span class="Onote">WebKit 專案有許多分支，其中有些分支直接提供了內外部互動的 API 。例如 OS X 的 WebKit 或是 Nokia 的 QtWebKit。那些分支提供的特殊 API 不具相容性，不適用於本文的開發環境</span>)。
 </p>
 
 <p>
@@ -60,7 +61,7 @@ WebKit 端沒有提供任何讓 WebKit host 內的程式碼接觸到外部資源
 #!/usr/bin/gjs
 </span><span class="c1">// 一、定義 dbus 函數</span>
 <span class="c1">// see: dbus-notify.js</span>
-<span class="c1">// link: {{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html</span>
+<span class="c1">// link: {{ site.baseurl }}/archives/14229429.html</span>
 <span class="kr">const</span> <span class="nx">DBus</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">dbus</span><span class="p">;</span>
 <span class="kd">function</span> <span class="nx">Notifications</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// 定義代理個體的類別</span>
     <span class="k">this</span><span class="p">.</span><span class="nx">_init</span><span class="p">();</span>
@@ -144,7 +145,7 @@ WebKit 端沒有提供任何讓 WebKit host 內的程式碼接觸到外部資源
 </code></pre>
 
 <p>
-第一步，我先定義調用 DBus Notify 方法的函數，參考《<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>》。
+第一步，我先定義調用 DBus Notify 方法的函數，參考《<a href="{{ site.baseurl }}/archives/14229429.html">JavaScript 與 Desktop - DBus</a>》。
 </p>
 <p>
 第二步，我要由外部要求內部定義一個<dfn>notify()</dfn> 轉接函數供內部端呼叫。這個動作利用 <dfn>execute_script()</dfn> 方法實現。此轉接函數實際上將觸發 <dfn>title-changed</dfn> 事件訊號，讓外部接收內部的請求，進而調用 DBus Notify 方法在桌面上顯示訊息方塊。一如我們過往在 Ajax 中學到的經驗，若我們想要額外地、動態地定義 JavaScript 函數，最好是等到頁面載入完成，瀏覽器發出 <dfn>onload</dfn> 事件之後。對於外部的 gjs 端而言，則是透過 WebKit 的 <dfn>notify::load-status</dfn> 訊號捕抓 <dfn>onload</dfn> 事件。所以我將定義 <dfn>notify()</dfn> 轉接函數的動作，寫在 <code>view.loadStatus == WebKitLoadStatus.WEBKIT_LOAD_FINISHED</code> 成立之後的程式區塊中。
@@ -153,11 +154,11 @@ WebKit 端沒有提供任何讓 WebKit host 內的程式碼接觸到外部資源
 第三步，利用 <dfn>title-changed</dfn> 接收內部送出的訊息方塊顯示請求，調用 DBus Notify 方法。接著再利用 <dfn>execute_script()</dfn> 調用回呼函數，將外部資源的回傳結果送回。本範例中並未定義回呼函數的處理方式，只是簡單地以 <dfn>alert()</dfn> 代表回呼函數。
 </p>
 <p>
-最後，我繼續使用《<a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a>》中已經存在的文件，只是改成載入 index2.html (複製自 index.html，並加了一行程式碼)。
+最後，我繼續使用《<a href="{{ site.baseurl }}/archives/13354357.html">Hello HTML5 and XULRunner</a>》中已經存在的文件，只是改成載入 index2.html (複製自 index.html，並加了一行程式碼)。
 </p>
 
 <p>
-至於 UI 的部份，我將《<a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a>》的 index.html 的內容另存為 index2.html，並在其 <dfn>event_change_name()()</dfn> 之中，多加了一個呼叫 <code>notify(name</code> 的動作。這個 <dfn>notify()</dfn> 函數，是由 gjs 從外部額外加進來的。文件內容摘要於下:
+至於 UI 的部份，我將《<a href="{{ site.baseurl }}/archives/13354357.html">Hello HTML5 and XULRunner</a>》的 index.html 的內容另存為 index2.html，並在其 <dfn>event_change_name()()</dfn> 之中，多加了一個呼叫 <code>notify(name</code> 的動作。這個 <dfn>notify()</dfn> 函數，是由 gjs 從外部額外加進來的。文件內容摘要於下:
 </p>
 
 
@@ -197,10 +198,10 @@ Reference
 </h4>
 
 <ul>
-    <li><a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a> - 本系列文章第一篇</li>
-    <li><a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20WebKit.html">JavaScript 與 Desktop - WebKit</a> - 本系列文章第二篇</li>
+    <li><a href="{{ site.baseurl }}/archives/14229429.html">JavaScript 與 Desktop - DBus</a> - 本系列文章第一篇</li>
+    <li><a href="{{ site.baseurl }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a> - 本系列文章第二篇</li>
     <li><a href="http://www.aclevername.com/articles/python-webgui/#message-passing-with-webkit">HOWTO Create Python GUIs using HTML</a> - 基於 PyWebKit 的參考文章</li>
-    <li><a href="{{ site.baseurl }}/archives/2010/Hello%20HTML5%20and%20XULRunner.html">Hello HTML5 and XULRunner</a></li>
+    <li><a href="{{ site.baseurl }}/archives/13354357.html">Hello HTML5 and XULRunner</a></li>
     <li><a href="http://library.gnome.org/devel/gtk/2.15/GtkWindow.html">GTK+ Reference Manual</a> - GTK 視窗 C API 參考文件.</li>
     <li><a href="http://webkitgtk.org/reference/index.html">WebKitGTK+ Reference Manual</a> - WebKitGtk+ C API 參考文件.</li>
 </ul><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/14456843.html</div>

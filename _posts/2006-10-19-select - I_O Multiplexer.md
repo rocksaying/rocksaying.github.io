@@ -3,6 +3,7 @@ title: How to use the select(), an I/O Multiplexer
 category: programming
 old-category: C/C++/C#/Java
 tags: [unix,linux,select,ipc,multi-process]
+permalink: /archives/2333878.html
 ---
 
 根據《<a href="http://www-128.ibm.com/developerworks/linux/library/l-async/">Boost application performance using asynchronous I/O</a>》一文所做的區分，在 POSIX 上的 I/O 處理模式可分為四種。該文所舉的 POSIX AIO API 是晚近較新的處理模式，是 POSIX.1b 基於 realtime system (即時系統、實時系統) 之需求而定的規範內容，其概念是事件驅動模式， AJAX 中的 XMLHttpRequest 調用方式就是這種模式。在 POSIX 傳統上的非同步 I/O 模式 (即 Asynchronous blocking I/O) ，則是使用 select() 來達成。本文將說明這種傳統模式的使用方式。
@@ -160,7 +161,7 @@ while( some_condition ) {
 
 ###### 相關文章
 
-* <a href="{{ site.baseurl }}/archives/2010/Ajax%20and%20Blocking%20IO%20-%20To%20Resolve%20Polling%20Anti-pattern.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a>
+* <a href="{{ site.baseurl }}/archives/12010463.html">Ajax and Blocking IO - To Resolve Polling Anti-pattern</a>
 
-<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/2333878.html">http://blog.roodo.com/rocksaying/archives/2333878.html</a><br/>
+<div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2333878.html<br/>
 First edition: 1998-10-01 [<a href="http://home.educities.edu.tw/shirock/comp/How_to_use_select.txt">How to use select()</a>]</div>

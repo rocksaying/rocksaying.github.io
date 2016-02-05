@@ -3,9 +3,10 @@ title: GJS - D-Bbus 自動內觀(Introspect)與配置代理個體
 category: programming
 old-category: JavaScript
 tags: [javascript,xml,d-bus,gjs,e4x]
+permalink: /archives/18612549.html
 ---
 <p>
-我之前在「<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>」說明 gjs 如何調用 D-Bus 服務時，提到 gjs 提供的 D-Bus 實作內容相當低階，以致於我們必須要自己定義我們想要調用的 D-Bus 代理個體的介面原型。在該文中我也提到，大部份的 D-Bus 服務都會實作 org.freedesktop.DBus.Introspectable 介面，提供 Introspect 方法(<span class="Onote">D-Bus 的 introspect 在 Java/C# 中採用的說法就是 reflect</span>)，讓其他人可以藉由這個方法查看介面規格。我們查詢的結果會是一份 XML 文件，若我們進一步分析該文件，就可以直接將分析結果交給 DBus.proxifyPrototype() 注入指定的代理類別。
+我之前在「<a href="{{ site.baseurl }}/archives/14229429.html">JavaScript 與 Desktop - DBus</a>」說明 gjs 如何調用 D-Bus 服務時，提到 gjs 提供的 D-Bus 實作內容相當低階，以致於我們必須要自己定義我們想要調用的 D-Bus 代理個體的介面原型。在該文中我也提到，大部份的 D-Bus 服務都會實作 org.freedesktop.DBus.Introspectable 介面，提供 Introspect 方法(<span class="Onote">D-Bus 的 introspect 在 Java/C# 中採用的說法就是 reflect</span>)，讓其他人可以藉由這個方法查看介面規格。我們查詢的結果會是一份 XML 文件，若我們進一步分析該文件，就可以直接將分析結果交給 DBus.proxifyPrototype() 注入指定的代理類別。
 </p>
 
 <p>
@@ -53,7 +54,7 @@ DBus.proxifyPrototype 要求的介面原型資訊表之格式如下:
 </p>
 
 <p>
-關於 E4X 的使用，可以參考「<a href="{{ site.baseurl }}/archives/2010/ECMAScript%20E4X%20%E9%AB%94%E9%A9%97%E8%88%87%E5%AF%A6%E4%BD%9C%E7%8F%BE%E6%B3%81.html">ECMAScript E4X</a>」。另一個常常與 gjs 相提的 Seed，並不支援 E4X，所以 Seed 不能使用本文實作的程式。
+關於 E4X 的使用，可以參考「<a href="{{ site.baseurl }}/archives/12211077.html">ECMAScript E4X</a>」。另一個常常與 gjs 相提的 Seed，並不支援 E4X，所以 Seed 不能使用本文實作的程式。
 </p>
 
 <h5>ProxyObjectFactory</h5>
@@ -67,7 +68,7 @@ DBus.proxifyPrototype 要求的介面原型資訊表之格式如下:
 </p>
 
 <p>
-關於在 JavaScript 中產生匿名類別的技巧，請參考「<a href="{{ site.baseurl }}/archives/2011/%E7%94%A2%E7%94%9F%E6%96%B0%E9%A1%9E%E5%88%A5%E7%9A%84%E9%A1%9E%E5%88%A5.html">JavaScript - 產生類別的類別</a>」。
+關於在 JavaScript 中產生匿名類別的技巧，請參考「<a href="{{ site.baseurl }}/archives/18294075.html">JavaScript - 產生類別的類別</a>」。
 </p>
 
 
@@ -282,7 +283,7 @@ args:
 之所以會有這種時機區別，原因在於 D-Bus 是一種非同步訊息機制，也可以說是一種事件機制。它的事件由 GNOME Library 的事件迴圈(event loop)輪詢觸發。GNOME Library 事件迴圈可以是 mainloop 也可以是 Gtk.main 。在本文中預設是用 mainloop 作為事件迴圈。當你的程序調用 <code>mainloop.run()</code> 之後，你的程序狀態就進入一個無限迴圈中，不停地輪詢是否有新的事件發生。當事件發生時，就調用已登記的回呼函數(callback)處理。
 </p>
 <p>
-D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴圈分派工作。所以在 gjs 中，所有的 D-Bus 方法，都應透過回呼函數處理結果。請參考「<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>」的寫法，調用 D-Bus 方法的結果，並不是儲放在函數回傳值，而是由 callback 處理。
+D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴圈分派工作。所以在 gjs 中，所有的 D-Bus 方法，都應透過回呼函數處理結果。請參考「<a href="{{ site.baseurl }}/archives/14229429.html">JavaScript 與 Desktop - DBus</a>」的寫法，調用 D-Bus 方法的結果，並不是儲放在函數回傳值，而是由 callback 處理。
 </p>
 <p>
 但本文實作時，卻遇到了一個矛盾。我希望程序在進入事件迴圈之前，就先透過 D-Bus 的 Introspect 方法取得 D-Bus 服務的內觀資訊。但要取得 D-Bus 服務的內觀資訊，就必須要進入事件迴圈之後，才可以觸發 D-Bus Introspect 方法的事件。簡單地說，我想要在事件之前得到訊息，但這訊息要在事件之後才能產生。本文實作時，就是遇到了這麼一個矛盾。
@@ -380,7 +381,7 @@ D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴�
 
 
 <p>
-與「<a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20DBus.html">JavaScript 與 Desktop - DBus</a>」的內容相比，最大的差異就在於此處的 demo.js 已經不再需要程序員定義 D-Bus 服務的原型資訊與類別了。這一切都由 rock.dbus 處理。demo.js 展示了三種不同的使用方式，其中有 callback 參數與沒有 callback 參數的方式，要根據前一節所說的使用時機決定。
+與「<a href="{{ site.baseurl }}/archives/14229429.html">JavaScript 與 Desktop - DBus</a>」的內容相比，最大的差異就在於此處的 demo.js 已經不再需要程序員定義 D-Bus 服務的原型資訊與類別了。這一切都由 rock.dbus 處理。demo.js 展示了三種不同的使用方式，其中有 callback 參數與沒有 callback 參數的方式，要根據前一節所說的使用時機決定。
 </p>
 
 <p>

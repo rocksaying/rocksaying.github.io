@@ -3,10 +3,11 @@ title: CommonGateway 控制項動作函數回傳狀態碼的作法之二
 category: programming
 old-category: PHP
 tags: [php,restful,common-gateway]
+permalink: /archives/44121826.html
 ---
-<p>本文將說明 CommonGateway 一年多前加入的新功能 (r61 ~ r63; 2013年10~12月)，只是一直沒有撰寫一份專門的說明內容。作法之一，就是「<a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E5%88%9D%E6%AD%A5.html">CommonGateway 初步</a>」的內容。另外， CommonGateway 的源碼託管位置現在已搬到 github : <a href="https://github.com/shirock/rocksources/tree/master/web/common-gateway">common-gateway</a> 。</p>
+<p>本文將說明 CommonGateway 一年多前加入的新功能 (r61 ~ r63; 2013年10~12月)，只是一直沒有撰寫一份專門的說明內容。作法之一，就是「<a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a>」的內容。另外， CommonGateway 的源碼託管位置現在已搬到 github : <a href="https://github.com/shirock/rocksources/tree/master/web/common-gateway">common-gateway</a> 。</p>
 
-<p>參考「<a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E4%BB%8B%E7%B4%B9.html">CommonGateway 介紹</a>」，在 CommonGateway 初期版本時，如果你的控制項方法成功執行但不需要回傳資料文件時，你的方法應回傳 false ，讓 CG 不必繼續處理視圖工作。但這項要求違反一般函數的慣例，回傳 false 通常表示動作失敗。而在本文描述的情況中，你的控制項方法實際上成功了，卻要回傳 false ，語意有重大矛盾。</p>
+<p>參考「<a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>」，在 CommonGateway 初期版本時，如果你的控制項方法成功執行但不需要回傳資料文件時，你的方法應回傳 false ，讓 CG 不必繼續處理視圖工作。但這項要求違反一般函數的慣例，回傳 false 通常表示動作失敗。而在本文描述的情況中，你的控制項方法實際上成功了，卻要回傳 false ，語意有重大矛盾。</p>
 
 <!--more-->
 <p>仔細探討 HTTP 和 CGI 規範，當一項客戶端要求圓滿完成時，至少要回傳一個表示成功的狀態碼標頭，例如常見的 "Status: 200" 。而 CG 實際上也是這麼做。當控制項方法正常地回傳 false 時， CG 視為控制項成功執行但不必載入視圖，並默認回報客戶端狀態碼 200 。</p>

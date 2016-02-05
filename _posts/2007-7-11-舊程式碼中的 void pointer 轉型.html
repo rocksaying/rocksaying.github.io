@@ -3,10 +3,11 @@ title: 舊程式碼中的 void* 轉型
 category: programming
 old-category: C/C++/C#/Java
 tags: [c++,void,cast,函數指標]
+permalink: /archives/3641993.html
 ---
 <div class="tags" style="display:none">Tags: C++ void cast 函數指標</div>
 <p>
-前一陣子，為了說明《<a href="{{ site.baseurl }}/archives/2007/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E4%B8%AD%E7%9A%84%E4%BB%8B%E9%9D%A2%EF%BC%8C%E5%9C%A8%E5%80%8B%E9%AB%94%E4%B9%8B%E9%96%93%E5%8D%94%E8%AD%B0%E4%BA%92%E5%8B%95%E8%A1%8C%E7%82%BA%E7%9A%84%E5%A4%9A%E7%A8%AE%E5%BD%A2%E5%BC%8F.html">程式語言中的介面</a>》，我把大約八、九年前寫的 C 語言程式碼翻了出來。編譯的時候出現錯誤訊息，顯示我用了不被允許的轉型動作，即 <code>(void*)</code>。雖然心裡嘀咕了一下，不過還是很快地改成完整的轉型語法 (也更冗長)，將之用於文章範例。
+前一陣子，為了說明《<a href="{{ site.baseurl }}/archives/3556355.html">程式語言中的介面</a>》，我把大約八、九年前寫的 C 語言程式碼翻了出來。編譯的時候出現錯誤訊息，顯示我用了不被允許的轉型動作，即 <code>(void*)</code>。雖然心裡嘀咕了一下，不過還是很快地改成完整的轉型語法 (也更冗長)，將之用於文章範例。
 </p>
 <p>
 這幾天抽空檢視了一下那些舊程式碼，才發現不是程式碼的問題，而是我用錯編譯器了。我的編輯器 PSPad 設定 C/C++ 文件呼叫的編譯器是 g++ (C++ compiler) ，而不是 gcc (C compiler)。而 C++ 不允許將 <code>void*</code> 轉型為其他型態指標。這點與 C 不同。我又測了一下舊有程式碼的 C/C++ 規範相容性。
@@ -14,7 +15,7 @@ tags: [c++,void,cast,函數指標]
 
 <!--more-->
 <p>
-首先看一下程式碼，《<a href="{{ site.baseurl }}/archives/2007/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E4%B8%AD%E7%9A%84%E4%BB%8B%E9%9D%A2%EF%BC%8C%E5%9C%A8%E5%80%8B%E9%AB%94%E4%B9%8B%E9%96%93%E5%8D%94%E8%AD%B0%E4%BA%92%E5%8B%95%E8%A1%8C%E7%82%BA%E7%9A%84%E5%A4%9A%E7%A8%AE%E5%BD%A2%E5%BC%8F.html">程式語言中的介面</a>》一文中的是修改過的，而 <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib-20010331</a> 是原本的舊程式碼。取兩段列示於下:
+首先看一下程式碼，《<a href="{{ site.baseurl }}/archives/3556355.html">程式語言中的介面</a>》一文中的是修改過的，而 <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib-20010331</a> 是原本的舊程式碼。取兩段列示於下:
 </p>
 <pre class="highlight"><code><span class="cm">/* 轉型動作1 */</span>
 <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">length</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">buffer_length</span><span class="p">;</span> <span class="cm">/* 舊程式碼。 */</span>

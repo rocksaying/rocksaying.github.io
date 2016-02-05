@@ -2,6 +2,7 @@
 title: Kensington Orbit Trackball 軌跡球 在 Linux 中的使用設定
 category: computer
 tags: [linux,debian,trackball,kensington]
+permalink: /archives/48245554.html
 ---
 
 身為一位 Logitech Marble Trackball 木星軌跡球的用戶，我拿到 Kensington Orbit Trackball 軌跡球後第一眼就覺得這兩隻的球體大小似乎一樣。當場動手互換，證實 Orbit 軌跡球和 Logitech Marble 木星軌跡球的球體通用。
@@ -134,7 +135,7 @@ xinput 與 evdev 的屬性說明請參考 [EVDEV manual](http://www.x.org/archiv
 
 ###### 相關文章
 
-* [Logitech Trackman Marble on Debian / Ubuntu]({{ site.baseurl }}/archives/2011/Logitech%20Trackman%20Marble%20on%20Debian%20_%20Ubuntu.html)
-* [Kensington SlimBlade Trackball 軌跡球在 Linux 中的使用設定]({{ site.baseurl }}/archives/2015/Kensington%20SlimBlade%20Trackball%20%E8%BB%8C%E8%B7%A1%E7%90%83%E5%9C%A8%20Linux%20%E4%B8%AD%E7%9A%84%E4%BD%BF%E7%94%A8%E8%A8%AD%E5%AE%9A.html)
+* [Logitech Trackman Marble on Debian / Ubuntu]({{ site.baseurl }}/archives/15305647.html)
+* [Kensington SlimBlade Trackball 軌跡球在 Linux 中的使用設定]({{ site.baseurl }}/archives/48245538.html)
 
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/48245554.html</div>

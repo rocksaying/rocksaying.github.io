@@ -3,8 +3,9 @@ title: CommonGateway JSON 處理之自動回傳
 category: programming
 old-category: PHP
 tags: [php,restful,common-gateway]
+permalink: /archives/44123533.html
 ---
-<p>在「<a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E5%88%9D%E6%AD%A5%E7%AC%AC%E4%BA%8C%E7%AF%87%20-%20JSON%20%E7%9A%84%E8%99%95%E7%90%86%E8%88%87%E8%B3%87%E6%96%99%E4%B8%8A%E5%82%B3.html">CommonGateway 初步第二篇 - JSON 的處理與資料上傳</a>」說明了 CommonGateway 對於 JSON 資料的處理辦法。根據早先的規則要求，客戶端若想要取得 JSON 文件，則應送出需求標頭 <em>Accept: application/json</em> 。而 CG 收到此需求時，會自動載入和控制項方法同名的 JSON 視圖 (.pjs)，例如 index.pjs, get.pjs 。而這些 JSON 視圖的內容，往往只有一行 <code>echo json_encode($xxx);</code> ，如「<a href="{{ site.baseurl }}/archives/2013/CommonGateway%20%E5%88%9D%E6%AD%A5%E7%AC%AC%E4%BA%8C%E7%AF%87%20-%20JSON%20%E7%9A%84%E8%99%95%E7%90%86%E8%88%87%E8%B3%87%E6%96%99%E4%B8%8A%E5%82%B3.html">CommonGateway 初步第二篇 - JSON 的處理與資料上傳</a>」範例所示。</p>
+<p>在「<a href="{{ site.baseurl }}/archives/21334380.html">CommonGateway 初步第二篇 - JSON 的處理與資料上傳</a>」說明了 CommonGateway 對於 JSON 資料的處理辦法。根據早先的規則要求，客戶端若想要取得 JSON 文件，則應送出需求標頭 <em>Accept: application/json</em> 。而 CG 收到此需求時，會自動載入和控制項方法同名的 JSON 視圖 (.pjs)，例如 index.pjs, get.pjs 。而這些 JSON 視圖的內容，往往只有一行 <code>echo json_encode($xxx);</code> ，如「<a href="{{ site.baseurl }}/archives/21334380.html">CommonGateway 初步第二篇 - JSON 的處理與資料上傳</a>」範例所示。</p>
 
 <p>這樣的視圖內容實在太空泛了。如果我有好幾個控制項都這麼回傳 JSON 文件的話，我就要複製改名好幾個這樣的 .pjs 視圖。這工作的重複性太高了， <em>Don't Repeat Yourself</em> 。根據 DRY 原則， CG 在 <a href="https://code.google.com/p/schema-database/source/detail?r=62">r62</a> 擴充了視圖處理規則，增加一條自動回傳 JSON 文件的規則。如果客戶端要求傳回 JSON 文件但設計者未建立視圖時，CG 會自動調用 <code>json_encode()</code> 回傳資料模型(model)。在我的使用經驗上，九成的 JSON 視圖 (.pjs)，其內容都只有一行 <code>json_encode($model)</code> 。故將此規則寫入 CommonGateway ，減少空泛又重複的 JSON 視圖文件。</p>
 

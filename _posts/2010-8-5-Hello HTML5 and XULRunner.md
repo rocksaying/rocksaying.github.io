@@ -3,9 +3,10 @@ title: Hello HTML5 and XULRunner
 category: programming
 old-category: Programming
 tags: [web,html5,xulrunner]
+permalink: /archives/13354357.html
 ---
 
-對一位 Web 軟體開發者來說， <a href="http://en.wikipedia.org/wiki/XULRunner">XULRunner</a> 是一個很奇妙的東西，因為它可以讓我們開發出來的 Web 軟體變成一個桌面軟體。當 HTML5 試圖將我們的 Web 軟體開發經驗延伸到桌面軟體開發領域時， XULRunner 將會是承載我們的夢想之引擎。對了，GtkWebKit/QtWebKit 也具有相同的能力。這件事，我已經等了10年了(<a href="{{ site.baseurl }}/archives/2007/Web%20programming%20%28in%201999%29.html">Web programming</a>)。
+對一位 Web 軟體開發者來說， <a href="http://en.wikipedia.org/wiki/XULRunner">XULRunner</a> 是一個很奇妙的東西，因為它可以讓我們開發出來的 Web 軟體變成一個桌面軟體。當 HTML5 試圖將我們的 Web 軟體開發經驗延伸到桌面軟體開發領域時， XULRunner 將會是承載我們的夢想之引擎。對了，GtkWebKit/QtWebKit 也具有相同的能力。這件事，我已經等了10年了(<a href="{{ site.baseurl }}/archives/2628393.html">Web programming</a>)。
 
 <!--more-->
 
@@ -212,7 +213,7 @@ Windows平台執行畫面如下:
 
 ###### 相關文章
 
-* <a href="{{ site.baseurl }}/archives/2010/JavaScript%20%E8%88%87%20Desktop%20-%20WebKit.html">JavaScript 與 Desktop - WebKit</a>
+* <a href="{{ site.baseurl }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a>
 * <a href="http://blog.roodo.com/rocksaying/archives/28212965.html">Kiosk Designing 續篇 - 在 x86 PC 上，以 mplayer 替代 omxplayer</a>
 
-<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13354357.html">http://blog.roodo.com/rocksaying/archives/13354357.html</a></div>
+<div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13354357.html</div>

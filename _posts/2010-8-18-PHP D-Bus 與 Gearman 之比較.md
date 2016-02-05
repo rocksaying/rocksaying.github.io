@@ -3,10 +3,11 @@ title: PHP D-Bus 與 Gearman 之比較
 category: programming
 old-category: PHP
 tags: [d-bus,gearman]
+permalink: /archives/13478419.html
 ---
 
 我先前介紹 php-dbus 時，曾捎帶提及 PHP 還支援 Gearman 與 WebSphere MQ Series 兩種訊息匯流排架構。前幾日，便有位同事問我關於 Gearman 的事，他參考的文章則是 jaceju 的《<a href="http://www.jaceju.net/blog/?p=1211">Gearman 心得 </a>》。
-我們公司主要是使用 D-Bus 架構，他也熟悉 D-Bus 。我們公司運用 D-Bus 的途徑，大致如《<a href="{{ site.baseurl }}/archives/2010/D-Bus%20%E7%94%A8%E9%80%94%E8%AA%AA%E6%98%8E.html">D-Bus 用途說明</a>》所述，將其作為 API 機制。他在試用 Gearman 後，說 Gearman 不能傳 object 、方法的調用敘述不像一般函數，用起來不方便。
+我們公司主要是使用 D-Bus 架構，他也熟悉 D-Bus 。我們公司運用 D-Bus 的途徑，大致如《<a href="{{ site.baseurl }}/archives/12988053.html">D-Bus 用途說明</a>》所述，將其作為 API 機制。他在試用 Gearman 後，說 Gearman 不能傳 object 、方法的調用敘述不像一般函數，用起來不方便。
 
 我看了 jaceju 的《<a href="http://www.jaceju.net/blog/?p=1211">Gearman 心得 </a>》後，就手癢用 php-dbus 寫了一個相同的範例程式。有興趣的人，可以看看這篇文章和 jaceju 那篇，比較一下 D-Bus 與 Gearman 的程式風格差異。
 
@@ -14,7 +15,7 @@ tags: [d-bus,gearman]
 
 ### 安裝 php-dbus
 
-php-dbus 擴充元件的安裝方式，參閱《<a href="{{ site.baseurl }}/archives/2010/Write%20a%20PHP%20DBus%20client.html">Write a PHP DBus client</a> 》，在此不複述。如同 Gearman 要啟動一個 job server 居中協調， DBus 也有一個 dbus-daemon 負責訊息匯流排的牽線工作。而 dbus-daemon 目前是 Debian/Ubuntu/Fedora Linux 的必裝套件，所以不必另行安裝。
+php-dbus 擴充元件的安裝方式，參閱《<a href="{{ site.baseurl }}/archives/12193781.html">Write a PHP DBus client</a> 》，在此不複述。如同 Gearman 要啟動一個 job server 居中協調， DBus 也有一個 dbus-daemon 負責訊息匯流排的牽線工作。而 dbus-daemon 目前是 Debian/Ubuntu/Fedora Linux 的必裝套件，所以不必另行安裝。
 
 ### Client程式
 
@@ -198,7 +199,7 @@ Exec=/usr/bin/php /home/rock/t_worker.php
 User=rock
 ```
 
-關於 .service 的細節，請參閱《<a href="{{ site.baseurl }}/archives/2010/D-Bus%20service%20activation.html">D-Bus service activation</a> 》。
+關於 .service 的細節，請參閱《<a href="{{ site.baseurl }}/archives/12318427.html">D-Bus service activation</a> 》。
 
 ### 結語
 
@@ -212,7 +213,7 @@ D-Bus 與 Gearman 相比較，D-Bus 具有下列優點:
 
 ###### 相關文章
 
-* <a href="{{ site.baseurl }}/archives/2010/php-dbus%200.1.0%20%E6%92%B0%E5%AF%AB%20DBus%20service%20%E7%9A%84%E4%BD%BF%E7%94%A8%E7%B6%93%E9%A9%97.html">php-dbus 0.1.0 撰寫 DBus service 的使用經驗</a>
-* <a href="{{ site.baseurl }}/archives/2011/php-dbus%20unboxing.html">php-dbus unboxing</a>
+* <a href="{{ site.baseurl }}/archives/13799073.html">php-dbus 0.1.0 撰寫 DBus service 的使用經驗</a>
+* <a href="{{ site.baseurl }}/archives/16404035.html">php-dbus unboxing</a>
 
-<div class="note">樂多舊網址: <a href="http://blog.roodo.com/rocksaying/archives/13478419.html">http://blog.roodo.com/rocksaying/archives/13478419.html</a></div>
+<div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13478419.html</div>

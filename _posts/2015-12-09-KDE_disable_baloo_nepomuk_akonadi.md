@@ -56,5 +56,5 @@ StartServer=false
 
 ###### 相關文章
 
-* [Debian 8 (jessie) 安裝筆記 基礎篇]({% post_url 2014-9-16-Debian 8 (jessie) 安裝筆記 基礎篇 %})
-* [Debian 8 (jessie) 安裝筆記 中文環境篇]({% post_url 2014-9-26-Debian 8 (jessie) 安裝筆記 中文環境篇 %})
+* [Debian 8 (jessie) 安裝筆記 基礎篇]({{ site.baseurl }}/archives/31064659.html)
+* [Debian 8 (jessie) 安裝筆記 中文環境篇]({{ site.baseurl }}/archives/31556973.html)

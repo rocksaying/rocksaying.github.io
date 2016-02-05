@@ -3,10 +3,11 @@ title: PHP curl post file
 category: programming
 old-category: PHP
 tags: [curl,restful]
+permalink: /archives/35970791.html
 ---
 <p>日前跑一個 RESTful 服務舊案以 PHPUnit 設計的測試案例，發現有一些上傳檔案到 RESTful 服務的測試項目總是失敗。檢查程式後，發現問題出在測試案例的 curl 程式碼。</p>
 
-<p>一直以來，用 PHP 的 curl 函數上傳檔案時，只需要啟用 <code>CURLOPT_POST</code> 選項，再於 <code>CURLOPT_POSTFIELDS</code> 的欄位值中，以 <code>@</code> 標示檔案路徑， curl 就會自動幫我們處理讀取檔案內容並上傳給遠端的工作。參考 <a href="{{ site.baseurl }}/archives/2012/PHP%20%E9%80%8F%E9%81%8E%20HTTP%20POST%20%E6%96%B9%E6%B3%95%E4%B8%8A%E5%82%B3%E8%B3%87%E6%96%99%E8%88%87%E6%AA%94%E6%A1%88%E7%B5%A6%20RESTful%20%E6%9C%8D%E5%8B%99.html">PHP 透過 HTTP POST 方法上傳資料與檔案給 RESTful 服務</a> 。</p>
+<p>一直以來，用 PHP 的 curl 函數上傳檔案時，只需要啟用 <code>CURLOPT_POST</code> 選項，再於 <code>CURLOPT_POSTFIELDS</code> 的欄位值中，以 <code>@</code> 標示檔案路徑， curl 就會自動幫我們處理讀取檔案內容並上傳給遠端的工作。參考 <a href="{{ site.baseurl }}/archives/20068918.html">PHP 透過 HTTP POST 方法上傳資料與檔案給 RESTful 服務</a> 。</p>
 
 <p>但根據 PHP 線上使用手冊的記載，在 PHP 5.5 版之後，基於安全理由關閉了這項功能。要改用函數 <code>curl_file_create()</code> ，參考 <a href="http://php.net/manual/en/function.curl-file-create.php">PHP Manual: <code>curl_file_create</code></a>。原因很簡單，因為 curl 並不能區分你是真的要上傳檔案或是剛好輸入了一個開頭是 <code>@</code> 字元的字串。如果你設計了一個用 curl POST 上傳資料的程式，又允許使用者輸入資料欄位，那麼駭客就可以故意填上 <code>@/etc/passwd</code> 讓 curl 將主機上的帳號清單傳出去。</p>
 
