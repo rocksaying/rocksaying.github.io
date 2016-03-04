@@ -1,10 +1,7 @@
-MQTT
-is available in Debian.
-* mosquitto, version 3.1.
-* mosquitto-clients : command line clients.
-* python-mosquitto
-* libmosquitto-dev: C API
-* libmosquittopp-dev: C++ API
+mqtt-websockets.md
+
+python-paho-mqtt:
+pybuild
 
 If you want use mosquitto with web app, you may need websockets supports.
 Update to mosquitto 1.4 above.
@@ -27,3 +24,6 @@ protocol websockets
 ---
 
 setting manual: http://www.eclipse.org/mosquitto/man/mosquitto-conf-5.php
+
+* [Python paho-mqtt](https://pypi.python.org/pypi/paho-mqtt)
+
