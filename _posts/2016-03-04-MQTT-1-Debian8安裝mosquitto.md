@@ -1,7 +1,7 @@
 ---
 title: 體驗 MQTT - 一、在 Debian 8 安裝 mosquitto
 category: programming
-tags: [IoT,MQTT,mosquitto]
+tags: [IoT,MQTT,mosquitto,paho]
 ---
 
 本文簡單說明在 Debian 8 上安裝 MQTT 實作品 mosquitto 的經驗。
@@ -97,3 +97,7 @@ $ mosquitto_pub -t "tw/rocksaying/text" -m "test3" -q 2
 * [HiveMQ MQTT Essentials](http://www.hivemq.com/blog/mqtt-essentials/)
 * [MQTT V3.1 Protocol Specification](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
 * [IoT Standards](http://iot.eclipse.org/standards)
+
+###### 系列文章
+
+* [體驗 MQTT - 二、JavaScript 用戶端設置]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})

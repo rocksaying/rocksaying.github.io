@@ -1,4 +1,9 @@
-mqtt-websockets.md
+---
+title: 體驗 MQTT - 二、JavaScript 客戶端設置
+category: programming
+tags: [IoT,MQTT,mosquitto,paho]
+---
+
 
 python-paho-mqtt:
 pybuild
