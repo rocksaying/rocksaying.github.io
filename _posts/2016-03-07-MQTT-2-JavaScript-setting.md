@@ -1,7 +1,7 @@
 ---
 title: 體驗 MQTT - 二、JavaScript 用戶端設置
 category: programming
-tags: [IoT,MQTT,mosquitto,paho]
+tags: [IoT,MQTT,mosquitto,paho,javascript,websockets]
 ---
 
 ### Mosquitto 昇級與設置
