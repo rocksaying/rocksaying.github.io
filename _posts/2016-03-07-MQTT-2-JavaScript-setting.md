@@ -212,3 +212,4 @@ gate.open();
 ###### 系列文章
 
 * [體驗 MQTT - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [體驗 MQTT - 三、Python 用戶端設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
