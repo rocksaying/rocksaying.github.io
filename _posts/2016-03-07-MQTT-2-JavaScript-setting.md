@@ -1,5 +1,5 @@
 ---
-title: 體驗 MQTT - 二、JavaScript 用戶端設置
+title: MQTT用戶端入門 - 二、JavaScript 用戶端程式設計
 category: programming
 tags: [IoT,MQTT,mosquitto,paho,javascript,websockets]
 ---
@@ -211,5 +211,5 @@ gate.open();
 
 ###### 系列文章
 
-* [體驗 MQTT - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
-* [體驗 MQTT - 三、Python 用戶端設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+* [MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})

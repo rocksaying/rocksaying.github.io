@@ -1,5 +1,5 @@
 ---
-title: 體驗 MQTT - 一、在 Debian 8 安裝 mosquitto
+title: MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto
 category: programming
 tags: [IoT,MQTT,mosquitto,paho]
 ---
@@ -100,5 +100,5 @@ $ mosquitto_pub -t "tw/rocksaying/text" -m "test3" -q 2
 
 ###### 系列文章
 
-* [體驗 MQTT - 二、JavaScript 用戶端設置]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
-* [體驗 MQTT - 三、Python 用戶端設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+* [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
+* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})

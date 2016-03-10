@@ -1,5 +1,5 @@
 ---
-title: 體驗 MQTT - 三、Python 用戶端設計
+title: MQTT用戶端入門 - 三、Python 用戶端程式設計
 category: programming
 tags: [IoT,MQTT,mosquitto,paho,python,dbus]
 ---
@@ -216,7 +216,7 @@ while True:
 
 但我將示範另一種設計方式。延續上節訂閱主題的程式骨架，於主執行緒中處理待命迴圈。另外分出一支執行緒讀取狀態與發佈訊息。
 
-在「[體驗 MQTT - 二、JavaScript 用戶端設置]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})」中，我設定了一個閘門裝置。此節我將套用此設定，設計一個閘門服務程式。此服務程式必須:
+在「[MQTT用戶端入門 - 二、JavaScript 用戶端設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})」中，我設定了一個閘門裝置。此節我將套用此設定，設計一個閘門服務程式。此服務程式必須:
 
 * 發佈閘門狀態到主題 'tw/rocksaying/status' 上。
 * 監看主題 'tw/rocksaying/command' ，處理客戶的 open/close/alarm 命令請求。
@@ -405,7 +405,7 @@ if __name__ == '__main__':
 
 Python D-Bus 設計內容請參考「[Python DBus 教學精要]({% post_url 2011-4-14-Python DBus 教學精要 %})」。
 
-本節的服務程式範例，可以配合前文「[體驗 MQTT - 二、JavaScript 用戶端設置]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})」中的 mqtt_js_demo.html 操作。
+本節的服務程式範例，可以配合前文「[MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})」中的 mqtt_js_demo.html 操作。
 
 我個人選擇用 thread 在 MQTT 用戶端程式中加入 D-Bus 項目。當然你也可以簡單地分成兩個程式來寫。以 MQTT 服務程式主控感應器，讓 D-Bus 服務程式透過 MQTT 向主服務程式發佈訊息(下達命令)與訂閱主題(取得狀態回執)。
 
@@ -419,5 +419,5 @@ Python D-Bus 設計內容請參考「[Python DBus 教學精要]({% post_url 2011
 
 ###### 系列文章
 
-* [體驗 MQTT - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
-* [體驗 MQTT - 二、JavaScript 用戶端設置]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
+* [MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
