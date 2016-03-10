@@ -4,6 +4,17 @@ category: programming
 tags: [IoT,MQTT,mosquitto,paho,javascript,websockets]
 ---
 
+MQTT用戶端入門之二，本文說明 JavaScript 用戶端的程式設計內容。
+
+你的 JavaScript 寄宿環境必須支持 WebSockets 介面。 WebSockets 是 HTML5 規範項目之一，主要網路瀏覽器近三年的版本基本都提供 WebSockets 介面。 node.js 使用者請自行確認。本文範例將以瀏覽器為操作環境。
+
+###### 系列文章
+
+* [MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+
+<!--more-->
+
 ### Mosquitto 昇級與設置
 
 若你想要透過 JavaScript 連接 Mosquitto ，Mosquitto 的版本必須在 1.4 版以上。 Debian 8 提供的 mosquitto 套件版本僅為 1.3 版，不符需求。 Mosquitto 官方網站提供了 Debian 適用的套件庫。建議按照「[Mosquitto Debian repository](http://mosquitto.org/2013/01/mosquitto-debian-repository/)」的說明，將此套件庫加入 Debian 套件來源列表。步驟摘要如下:
@@ -11,8 +22,6 @@ tags: [IoT,MQTT,mosquitto,paho,javascript,websockets]
 1. wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key
 2. sudo apt-key add mosquitto-repo.gpg.key
 3. sudo wget http://repo.mosquitto.org/debian/mosquitto-jessie.list -O /etc/apt/sources.list.d/mosquitto.list
-
-<!--more-->
 
 更新 Mosquitto 版本之後，你需要編輯 mosquitto.conf ，啟用 WebSockets 協定功能。最重要的一點是，指定 WebSockets 連接使用的埠號。
 
@@ -35,10 +44,6 @@ Mosquitto 的 WebSockets 功能使用另一個 <dfn>listener</dfn> 項目、佔�
 ### JavaScript 用戶端程式庫用例
 
 IBM 在開放 MQTT 協定時，也貢獻了多種程式語言可用的用戶端程式庫，統一歸於 [Paho 專案](https://eclipse.org/paho/)。在 Paho 專案中，也包含了 JavaScript 程式庫: [Paho JavaScript Client](https://eclipse.org/paho/clients/js/)。參考此網頁內容取得 JavaScript 程式庫 mqttws31-min.js 。
-
-<div class="note">
-你的 JavaScript 寄宿環境必須提供 WebSockets 介面。主要網路瀏覽器近三年的版本基本都提供 WebSockets 介面。 node.js 使用者請自行確認。
-</div>
 
 
 #### 基本範例
@@ -202,14 +207,8 @@ gate.open();
 {% endhighlight %}
 
 
-
 ###### 參考項目
 
 * [Mosquitto Debian repository](http://mosquitto.org/2013/01/mosquitto-debian-repository/)
 * [Mosquitto websocksets setting](http://www.eclipse.org/mosquitto/man/mosquitto-conf-5.php)
 * [Paho JavaScript Client](https://eclipse.org/paho/clients/js/)
-
-###### 系列文章
-
-* [MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
-* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})

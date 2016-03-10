@@ -11,6 +11,11 @@ MQTT 是用於遙測裝置或行動式應用程式之間傳送訊息的協定。
 > MQTT 通訊協定預期用於無線及低頻寬網路。可針對行動式應用程式可靠地處理遞送訊息的複雜性，並保持低成本地進行網路管理。 MQTT 用戶端程式庫比較小。程式庫如同郵箱，使用連接至 MQTT 伺服器的其他 MQTT 應用程式傳送及接收訊息。透過傳送訊息（而不是保持連接至等待回應的伺服器），MQTT 應用程式可節約電池壽命。
 > <cite><a href="http://www-01.ibm.com/support/knowledgecenter/SSFKSJ_7.5.0/com.ibm.mm.tc.doc/tc00000_.htm?lang=zh-tw">IBM WebSphere MQ 資訊中心 MQTT 簡介</a></cite>
 
+###### 系列文章
+
+* [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
+* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+
 <!--more-->
 
 ### Debian 套件
@@ -51,13 +56,13 @@ MQTT 的基本觀念請參考 [HiveMQ MQTT Essentials](http://www.hivemq.com/blo
 
 #### payload
 
-<dfn>payload</dfn> 就是訊息承載的資訊內容。它的內容是任何字元，甚至是未結構化的二進位資料。
+<dfn>payload</dfn> 就是訊息承載的資訊內容。它的內容可為任何字元，甚至是未結構化的二進位資料。
 
 #### qos
 
 <dfn>qos</dfn> 表示重要等級。 MQTT 規劃了三種重要等級，如下:
 
-* 0: 最多一次 (at most once)。此等級不保證送出訊息，會遺失訊息。通常用於回報即時感測資料的場合。因為感測裝置會持繼地回報最新狀態，故不在乎漏失訊息。這也是預設的等級。
+* 0: 最多一次 (at most once)。此等級不保證送出訊息，會遺失訊息。通常用於回報即時感測資料的場合。因為感測裝置會持續地回報最新狀態，故不在乎漏失訊息。這也是預設的等級。
 * 1: 至少一次 (at least once)。訊息一定會送出一次。但因為 broker 不會確認訂閱者是否收到訊息，所以它可能會重複發送訊息以確保送出一次。
 * 2: 確定一次 (exactly once)。訊息一定且只送出一次。 broker 會確認所有此主題的訂閱者都收到訊息。
 
@@ -97,8 +102,3 @@ $ mosquitto_pub -t "tw/rocksaying/text" -m "test3" -q 2
 * [HiveMQ MQTT Essentials](http://www.hivemq.com/blog/mqtt-essentials/)
 * [MQTT V3.1 Protocol Specification](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
 * [IoT Standards](http://iot.eclipse.org/standards)
-
-###### 系列文章
-
-* [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
-* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
