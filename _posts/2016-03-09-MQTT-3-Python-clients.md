@@ -417,6 +417,7 @@ Python D-Bus 設計內容請參考「[Python DBus 教學精要]({% post_url 2011
 
 ###### 參考項目
 
+* [Paho Python Client](https://eclipse.org/paho/clients/python/)
 * [Python Package Index - paho-mqtt](https://pypi.python.org/pypi/paho-mqtt)
 * [Python Package Index - stdeb](https://pypi.python.org/pypi/stdeb)
 * [DBus 用途說明]({% post_url 2010-7-13-D-Bus 用途說明 %})
