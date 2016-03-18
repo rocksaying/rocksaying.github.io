@@ -4,10 +4,11 @@ category: computer
 old-category: 電腦技術
 tags: [debian,kde]
 permalink: /archives/44330768.html
+lastupdated: 2016-03-18
 ---
 <h4>Firefox 與 Iceweasel</h4>
 
-<p><em>最近更新日期: 2015-05-26 。隨著 Debian Jessic 轉為 stable 版本，Debian Mozilla 團隊調整了儲藏位置。</em></p>
+<p><em>最近更新日期: 2016-03-18 。隨著 Debian Jessic 轉為 stable 版本，Debian Mozilla 團隊調整了儲藏位置。於 Firefox 釋出 45.0 版時，又再次調整了 source list 路徑與套件名稱。</em></p>
 
 <p>Mozilla 將 Firefox 的圖標註冊為商標，並附帶了一些使用限制。而 Debian 團隊為了擺脫商標使用限制，選擇自行維護一個衍生版本，此即 Iceweasel 。參考 「<a href="https://wiki.debian.org/Iceweasel">Iceweasel - Debian wiki</a>」。</p>
 
@@ -22,24 +23,24 @@ permalink: /archives/44330768.html
 
 <p>同時建議安裝 gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good 這三個套件。這讓你的 Iceweasel 支援 Youtube HTML5 播放模式。</p>
 
-<p>Debian 8 的 Iceweasel 主版本固定在 31.0 ，不過 Debian Iceweasel 團體會配合 Mozilla 的安全性更新內容釋出安全性更新小版本。</p>
+<p>Debian Iceweasel 團體會配合 Mozilla 的安全性更新內容釋出安全性更新小版本，但 Debian 8 的 Iceweasel 主版本仍然較舊 (現行為 38.7)。</p>
 
 <p>如果你仍然對這安全性更新頻率感到疑慮， Debian Mozilla 小隊也提供了和 Firefox 最新正式版本同步的 Iceweasel ，但被放在 Debian Jessie Backports 套件庫 <del>experimental 實驗性套件庫</del>。如果你想讓 Iceweasel 的版本緊跟著 Firefox 最新正式版本，可以按下列步驟操作:</p>
 
 <p>首先，在 /etc/apt/sources.list.d 下新增一個設定檔(檔名可取為 iceweasel-release.list)，內容是:</p>
 
 <pre class="language-text">
-deb http://mozilla.debian.net/ jessie-backports iceweasel-release
+deb http://mozilla.debian.net/ jessie-backports firefox-release
 </pre>
 
 <p>更新套件資訊後，先安裝 pkg-mozilla-archive-keyring 套件。這是套件來源驗證金鑰，安裝後才不會抱怨套件缺乏來源驗證。</p>
 
-<p>再以強制指定套件版本的參數安裝 iceweasel ，如下所示。其中 iceweasel-l10n-zh-tw 是 iceweasel 的傳統中文語系套件。</p>
+<p>再以強制指定套件版本的參數安裝 firefox <del>iceweasel</del> ，如下所示。其中 firefox-l10n-zh-tw <del>iceweasel-l10n-zh-tw</del> 是 firefox <del>iceweasel</del> 的傳統中文語系套件。</p>
 
 <pre class="term">
 $ apt-get update
 $ apt-get install pkg-mozilla-archive-keyring
-$ apt-get install -t jessie-backports iceweasel iceweasel-l10n-zh-tw
+$ apt-get install -t jessie-backports firefoxl firefox-l10n-zh-tw
 </pre>
 
 <p>參考 <a href="http://mozilla.debian.net/">Debian Mozilla team APT archive</a> 。</p>
@@ -49,6 +50,10 @@ $ apt-get install -t jessie-backports iceweasel iceweasel-l10n-zh-tw
 <p><em>Firefox 提供的 Linux 編譯版本並非每次都開啟 gstreamer 支援。所以不一定提供 HTML5 的 h.264 影片播放功能。如果你不想安裝 flashplugin-nonfree 又常常看 Youtube 網站的話，還是裝 iceweasel 省事。</em></p>
 
 <p>我選擇下列說明的手動操作安裝 Firefox 。下列示範的方式是用 root 身份，安裝在只有 root 能寫入的目錄區，故 firefox 本身的自動更新功能將會失效。如果你想要用 firefox 的自動更新功能，那就把 firefox 放在自己的家目錄，例如 $HOME/.local/firefox ，不要放在 /opt/firefox 。</p>
+
+<div class="note">
+我建議一般桌面使用者選擇將 firefox 放在自己家目錄的方式，並啟用 firefox 自動啟新功能。這可以讓你的 firefox 版本保持在最新狀態。或是採用第一節的方式，將 Debian Mozilla 套件庫加入套件來源清單(source list) 。
+</div>
 
 <p>到 <a href="http://ftp.mozilla.org/pub/mozilla.org/firefox/">Mozilla FTP</a> 下載 firefox 的壓縮包。 releases 目錄下是正式釋出版， nightly 目錄下是嘗鮮版。下載後的檔案是 .tar.bz2 壓縮包，執行 <code>tar xjvf firefox-????.tar.bz2</code> 就會在目前目錄下建立一個 firefox 子目錄，並將內容解開放在其中。把這個目錄搬到 /opt (或者你想放的位置)。</p>
 
