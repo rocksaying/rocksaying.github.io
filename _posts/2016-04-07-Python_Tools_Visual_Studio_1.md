@@ -10,6 +10,8 @@ Python Tools for Visual Studio (PTVS) 是一個銜接 Visual Studio 和 Python �
 
 Python 解譯器與 Visual Studio Community 的安裝順序並不重要。誰先裝都行。
 
+<!--more-->
+
 #### 如何開始使用 PTVS ?
 
 在你啟動 Visual Studio Community 後，選擇建立新專案，專案類型為 Python 。接著 Visual Studio 就會帶入 PTVS 並自動偵測你安裝的 Python 解譯器環境。如果你還沒有安裝 Python 解譯器，你仍然可以建立 Python 專案與撰寫程式。但執行時會提示你尚未安裝解譯器故無法執行。
