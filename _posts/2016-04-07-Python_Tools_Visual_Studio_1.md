@@ -1,5 +1,5 @@
 ---
-title: Python Tools for Visual Studio 初步
+title: Python Tools for Visual Studio 初步入門
 category: programming
 tags: ["python","visual studio","ptvs"]
 ---
