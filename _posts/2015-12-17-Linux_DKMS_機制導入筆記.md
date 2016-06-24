@@ -39,7 +39,7 @@ dkms.conf 的設置指令很多，但必要與常用的只有 8 種。以下一�
 
 如果驅動程式只有一個模組檔案，那寫成 <code>BUILT_MODULE_NAME=???</code> 即可，不必加編號。如果有兩個以上的模組檔案，就要加上編號，例如:
 
-```text
+```
 BUILT_MODULE_NAME[0]="module1"
 BUILT_MODULE_NAME[1]="module2"
 .
@@ -62,7 +62,7 @@ BUILT_MODULE_NAME[1]="module2"
 
 編譯模組檔案的外部指令。 dkms 會透過 shell 執行此處填寫的內容，若編譯動作要依序執行好幾道指令，請用分號(;)分開。例如:
 
-```text
+```
 MAKE="./configure; make -C src"
 ```
 
@@ -72,7 +72,7 @@ MAKE="./configure; make -C src"
 
 清除編譯過程產生的檔案(包含 .ko)的外部指令。它會清除源碼目錄下的全部模組檔案，不分編號。例如:
 
-```text
+```
 CLEAN="make -C src clean"
 ```
 
@@ -109,7 +109,7 @@ make
 
 但廠商提供的 Makefile 寫的不太好，我實際操作時得要修改 Makefile 一些內容才行。所以我另外寫了一個 build.sh 整理這些工作。如下:
 
-```text
+```
 #!/bin/sh
 
 # fix Makefile
@@ -171,7 +171,7 @@ done
 
 確認上節的操作步驟可以成功編譯驅動程式各模組檔案後，我現在可以根據上節資訊，編寫此驅動程式需要的 dkms.conf 了。再強調一次，這個 dkms.conf 要放在驅動程式源碼的根目錄下。
 
-```text
+```
 PACKAGE_NAME="arh-kernel-modules"
 PACKAGE_VERSION="7.2.10"
 AUTOINSTALL="yes"

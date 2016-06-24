@@ -93,7 +93,7 @@ xinput set-prop "Kensington Kensington Slimblade Trackball" "Evdev Wheel Emulati
 
 上述調整的 xinput 指令，也可以 X 組態檔設置，如下:
 
-```text
+```
 ## Debian: /usr/share/X11/xorg.conf.d/50-slimblade.conf
 Section "InputClass"
     Identifier      "Slimblade Trackball"

@@ -19,7 +19,7 @@ XULRunner 是 Firefox3 的核心引擎；若要用具體的東西來形容的話
 
 配合 XULRunner ，我的軟體文件目錄的結構必須如下列所示。
 
-```text
+```
  /
  |
  +-+ /chrome
@@ -39,7 +39,7 @@ XULRunner 是 Firefox3 的核心引擎；若要用具體的東西來形容的話
 
 ###### chrome/chrome.manifest
 
-```text
+```
 content hello_xulrunner file:content/
 ```
 
@@ -47,7 +47,7 @@ chrome.manifest 軟體的 UI 設計文件放在 chrome 底下的哪個子目錄�
 
 ###### defaults/preferences/prefs.js
 
-```text
+```
 pref("toolkit.defaultChromeURI", "chrome://hello_xulrunner/content/index.html");
 ```
 
@@ -55,7 +55,7 @@ pref("toolkit.defaultChromeURI", "chrome://hello_xulrunner/content/index.html");
 
 ###### application.ini
 
-```text
+```
 [App]
 ; This field specifies your application's name.  This field is required.
 Name=Hello XULRunner

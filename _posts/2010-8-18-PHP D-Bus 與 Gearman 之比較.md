@@ -192,7 +192,7 @@ rock@desktop:~$
 
 ###### blog.rock.service
 
-```text
+```
 [D-BUS Service]
 Name=blog.rock
 Exec=/usr/bin/php /home/rock/t_worker.php

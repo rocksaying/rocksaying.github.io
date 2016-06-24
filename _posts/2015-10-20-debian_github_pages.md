@@ -16,7 +16,7 @@ Installing Jekyll: reference [Using Jekyll with Pages](https://help.github.com/a
 
 create Gemfile in the root of your github pages working copy.
 
-```text
+```
 source 'https://rubygems.org'
 gem 'github-pages'
 ```

@@ -40,7 +40,7 @@ KDE 桌面環境套件要求安裝 akonadi-server 和 kdepim-runtime 套件，�
 
 接著以文字編譯器開啟 <em>~/.config/akonadi/akonadiserverrc</em> ，找尋 *QMYSQL* 區塊，並修改 *StartServer* 的內容為 <dfn>false</dfn> 。要求主服務不要啟動。
 
-```text
+```
 [QMYSQL]
 Name=akonadi
 .

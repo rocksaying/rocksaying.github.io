@@ -27,7 +27,7 @@ MQTT用戶端入門之二，本文說明 JavaScript 用戶端的程式設計內�
 
 以下為 /etc/mosquitto/mosquitto.conf 設置範例:
 
-```text
+```
 # for the default listener
 bind_address localhost
 port 1883
@@ -75,13 +75,16 @@ function onMessageArrived(message) {
 
 // 發佈訊息
 function publish_message() {
-    var payload = document.getElementById("mqtt_text").value;
+    var input_text = document.getElementById("mqtt_text");
+    var payload = input_text.value;
     var message = new Paho.MQTT.Message(payload);
     message.destinationName = TOPIC + "text";
     client.send(message);
+    input_text.value = '';
 }
 
 function init() {
+    document.getElementById("mqtt_pub").addEventListener('click', publish_message);
     // 建立 MQTT 用戶端實體. 你必須正確寫上你設置的埠號.
     // ClientId 可以自行指定，提供 MQTT broker 認證用
     client = new Paho.MQTT.Client("ws://localhost:11883/", "myClientId");
@@ -94,6 +97,7 @@ function init() {
 }
 
 window.addEventListener('load', init, false);
+//document.addEventListener('DOMContentLoaded', init, false);
 </script>
 <body>
 <p>
@@ -102,7 +106,7 @@ mqtt client test...
 
 <div>
 <input type="text" id="mqtt_text" />
-<button onclick="publish_message()">Publish</button>
+<button id="mqtt_pub">Publish</button>
 </div>
 
 <div id="mqtt_monitor">

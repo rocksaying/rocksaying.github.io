@@ -109,7 +109,7 @@ xinput set-prop "Primax Kensington Eagle Trackball" "Evdev Wheel Emulation Axes"
 
 最後說明 X 組態檔設置方式。此設置內容啟用「中鍵模擬」，不使用第三鍵與滾輪模擬。
 
-```text
+```
 ## Debian: /usr/share/X11/xorg.conf.d/50-orbit-trackball.conf
 Section "InputClass"
     Identifier      "Kensington Orbit Trackball"

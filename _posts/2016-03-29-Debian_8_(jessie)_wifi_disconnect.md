@@ -7,7 +7,7 @@ tags: [debian,jessie,wifi]
 
 我的筆記型電腦 Thinkpad X200s 有好一陣子沒有使用 WiFi 網路。前兩天帶著出外勤時，才發現 WiFi 啟用後一下就斷線，之後再也連不上網路。不論是連接手機分享網路，或是無線 WiFi 基地台都相同。查看 dmesg 後發現下列錯誤訊息:
 
-```text
+```
 wlan0: authentication with xxxxx (try 1)
 wlan0: authentication with xxxxx (try 2)
 wlan0: authentication with xxxxx (try 3)
@@ -26,7 +26,7 @@ wlan0: authentication with xxxxx time out
 
 參考下列內容，加入 wheezy-backports 或 jessie-backports 套件庫。由於無線晶片模組套件不屬於自由軟體，所以屬於 non-free 類別。在 apt 套件來源中記得加上 non-free 。
 
-```text
+```
 # wheezy-backports
 deb http://opensource.nchc.org.tw/debian/ wheezy-backports non-free
 
