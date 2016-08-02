@@ -22,7 +22,7 @@ MQTT 是用於遙測裝置或行動式應用程式之間傳送訊息的協定。
 
 [Mosquitto](http://www.eclipse.org/mosquitto/) 是完整且輕量的 MQTT 伺服端軟體。但在 MQTT 術語中， 稱  mosquitto 的角色為 broker (中間人)。它是基於 Eclipse Foundation Contributor License 的開放源碼軟體。在它的正式網站上，你也可以取得供 Windows, Linux, Mac 等平台的安裝包。設置簡便，是理想的 MQTT 入門磚。
 
-Debian 8 套件庫中提供了 mosquitto 3.1 版套件，相關套件於下列:
+Debian 8 套件庫中提供了 mosquitto 1.3 版套件，此版支持 MQTT 3.1/3.1.1 規格。相關套件於下列出:
 
 * mosquitto: MQTT broker.
 * mosquitto-clients: command line clients.
@@ -33,6 +33,11 @@ Debian 8 套件庫中提供了 mosquitto 3.1 版套件，相關套件於下列:
 通常你只需要安裝 mosquitto 與 mosquitto-clients 套件即可。
 
 安裝之後， mosquitto 就會作為背景服務自動執行。可以查看 /etc/mosquitto/mosquitto.conf 了解設置內容。如果你的電腦位於公用網路上，建議加上 <q>bind_address localhost<q> 避免外部電腦連入。請參考 [mosquitto.conf](http://mosquitto.org/man/mosquitto-conf-5.html) 了解其他設置項目。修改設置後，再以 root 身份於命令列下達 <kbd>/etc/init.d/mosquitto restart</kbd> 重啟服務。
+
+<div class="note">
+如果你想安裝 mosquitto 最新的版本，請參考「[MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})」的昇級設置。
+</div>
+
 
 ### topic, payload 與 qos
 
