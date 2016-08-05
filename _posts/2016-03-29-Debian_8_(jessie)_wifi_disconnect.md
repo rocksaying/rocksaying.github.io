@@ -18,11 +18,11 @@ wlan0: authentication with xxxxx time out
 
 幸好我還帶著一台平板電腦 (Windows 10)。利用它上網搜尋，發現遇到這情形的使用者並不少，但多數為 Intel 無線晶片的用戶 (模組套件 firmware-iwlwifi)。而我的 Thinkpad X200s 則使用 Realtek 無線晶片 (模組套件 firmware-realtek) 。
 
-按照那些人回報的狀況，似乎在去年 5 月升級某一版本的 Linux 核心之後，穩定版(stable)套件庫提供的模組套件 firmware-iwlwifi 就不相容了，導致 WiFi 模組在啟用會不斷發生認證逾時而斷線的錯誤。解決之道是裝回舊版的 firmware-iwlwifi 。
+按照那些人回報的狀況，似乎在去年 5 月升級某一版本的 Linux 核心之後，穩定版(stable)套件庫提供的模組套件 firmware-iwlwifi 就不相容了，導致 WiFi 模組啟用時會不斷發生認證逾時而斷線的錯誤。解決之道是裝回舊版的 firmware-iwlwifi 。
 
-由於狀況雷同，於是我也試著將我的模組套件 firmware-realtek 強制安裝 wheezy-backports 提供的舊版本。重新啟動系統後， WiFi 連線就正常了。我又在 jessie-backports 看到一個更新的版本，我也試著安裝它，也能正常運作。
+由於狀況雷同，於是我也試著將我的模組套件 firmware-realtek 強制安裝 wheezy-backports 提供的舊版本。重新啟動系統後， WiFi 連線就正常了。我又在 jessie-backports 看到一個更新的版本。我試著安裝它，也能正常運作。
 
-總結，如果你是 Debian 8 Stable 版本用戶，但你的 WiFi 模組會斷線的話，那麼你的 WiFi 模組就得要安裝 wheezy-backports 或 jessie-backports 提供的版本。
+結論，如果你是 Debian 8 Stable 版本用戶，而且 WiFi 模組會斷線的話，那麼你的 WiFi 模組就得安裝 wheezy-backports 或 jessie-backports 提供的版本。
 
 參考下列內容，加入 wheezy-backports 或 jessie-backports 套件庫。由於無線晶片模組套件不屬於自由軟體，所以屬於 non-free 類別。在 apt 套件來源中記得加上 non-free 。
 
