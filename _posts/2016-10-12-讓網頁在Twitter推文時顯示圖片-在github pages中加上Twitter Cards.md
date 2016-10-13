@@ -19,7 +19,7 @@ cover: http://i.imgur.com/Rj0CL90.png
 
 查看資料後，我得知這種效果稱為「[Twitter Cards](https://dev.twitter.com/cards/overview)」，是 Twitter 擬訂的一種網頁資訊標籤規範。只要在網頁中添加指定的 meta 標籤， Twitter 就會在含有該網頁連結的推文中，顯示更多關於文章內容的資訊，如文中的圖片與摘要。最重要的一點，這些由 Twitter 主動呈現的網頁資訊，並不算入推文字數。因此可以在推文中表達更多資訊。
 
-此外，由於具有些類資訊分享功能的社交服務網站愈來愈多，而每個服務提供者都希望提供這類呈現效果，也就順勢產生了「[Open Graph 協定](http://ogp.me/)」。 Open Graph 協定規範了可在社交服務網站中通用的網頁資訊標籤 (metadata)。Facebook, Twitter 等皆同樣認可這些標籤，故可依此在分享文章時，主動顯示文中的圖片。
+此外，由於具這類資訊分享功能的社交服務網站愈來愈多，而每個服務提供者都希望提供這類呈現效果，也就順勢產生了「[Open Graph 協定](http://ogp.me/)」。 Open Graph 協定規範了可在社交服務網站中通用的網頁資訊標籤 (metadata)。Facebook, Twitter 等皆同樣認可這些標籤，故可依此在分享文章時，主動顯示文中的圖片。
 
 由於 Twitter Cards 和 Open Graph 協定部份內容互通，所以我就在我的部落格中，混用這兩種標籤，實現 Twitter Cards 效果。
 
@@ -34,7 +34,7 @@ Twitter Cards 提供多種呈現效果。我需要在推文中顯示一張代表
 * <dfn>twitter:description</dfn>: 網頁內容摘要。
 * <dfn>twitter:image</dfn>: 要在 Card 中呈現的圖片。請寫完整的圖片網址。
 
-Twitter Cards 要求的表達方式是欄位名稱要用 <dfn>meta</dfn> 標籤的 <dfn>name</dfn> 屬性；而欄位內容要用 <dfn>meta</dfn> 標籤的 <dfn>content</dfn> 屬性。注意這個細節，因為接下來要提的 Open Graph 所用的屬性不一樣。
+Twitter Cards 要求的表達方式是欄位名稱要用 <dfn>meta</dfn> 標籤的 <dfn>name</dfn> 屬性；而欄位內容要用 <dfn>meta</dfn> 標籤的 <dfn>content</dfn> 屬性。注意這個細節，因為接下來提到得 Open Graph 所用的屬性不一樣。
 
 ### Open Graph
 
