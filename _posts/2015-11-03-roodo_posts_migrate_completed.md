@@ -1,7 +1,7 @@
 ---
 title: 樂多部落格文章轉移到 github pages 完工
 category: events
-tags: [github pages]
+tags: [blog,github pages]
 lastupdated: 2015-11-11
 ---
 

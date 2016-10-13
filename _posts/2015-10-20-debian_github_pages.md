@@ -1,7 +1,7 @@
 ---
 title: Debian 8 and Github Pages.
 category: computer
-tags: [github, jekyll]
+tags: [github pages, jekyll]
 lastupdated: 2016-02-05
 ---
 
