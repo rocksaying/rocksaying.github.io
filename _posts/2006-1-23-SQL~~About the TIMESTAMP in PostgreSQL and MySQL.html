@@ -17,7 +17,7 @@ permalink: /archives/1038137.html
 在 PostgreSQL 中， TIMESTAMP 提供了相當長的時間範圍，可以表示的時間範圍從西元前 4713 年 到西元 5874897 年。PostgreSQL 使用 8bytes 儲存 TIMESTAMP 的資料，如果設計者只是要儲存日期而不需要時間 (例如出生日期) ，那麼應該使用 DATE 資料型態，DATE 型態只需要用 4 bytes 儲存。
 </p>
 <p>
-設計者在表示時間資料時，是用一個格式化字串來表示 [<span class="Onote">表示時間的字串格式很多，但個人建議設計者使用 ISO8601 的格式來表示，即 YYYY-MM-DD hh:mm:ss (年-月-日 時:分:秒)，文化差異性最低。在 C/C++ 函數中，即 strftime(s, max, "%Y-%m-%d %H:%M:%S", gmtime());，在 PHP 中，即 gmdate("Y-m-d H:i:s");</span>]，例如 '2004-10-19 10:23:54' ，而且 PostgreSQL 會假設這個字串所表示的是 UTC 時間。只有當字串中包含 '+' 或 '-' 時， PostgreSQL 才會將字串所表示的時間，視為帶時區的時間，例如 '2004-10-19 10:23:54+08' (UTC時間再加8小時，亦即中原／臺北時間)。
+設計者在表示時間資料時，是用一個格式化字串來表示 [<span class="note">表示時間的字串格式很多，但個人建議設計者使用 ISO8601 的格式來表示，即 YYYY-MM-DD hh:mm:ss (年-月-日 時:分:秒)，文化差異性最低。在 C/C++ 函數中，即 strftime(s, max, "%Y-%m-%d %H:%M:%S", gmtime());，在 PHP 中，即 gmdate("Y-m-d H:i:s");</span>]，例如 '2004-10-19 10:23:54' ，而且 PostgreSQL 會假設這個字串所表示的是 UTC 時間。只有當字串中包含 '+' 或 '-' 時， PostgreSQL 才會將字串所表示的時間，視為帶時區的時間，例如 '2004-10-19 10:23:54+08' (UTC時間再加8小時，亦即中原／臺北時間)。
 </p>
 <p>
 在 PostgreSQL v7.3 以前， TIMESTAMP 資料型態預設為帶時區標示 (timestamp with time zone) 。以後則改為不帶時區標示，以相容於 SQL 標準。然而 PostgreSQL 總是使用 UTC (GMT) 時間儲存 TIMESTAMP 資料，只在輸出時，會依據 timezone 換算成本地時間。在輸出時，是以 ISO8601 的格示顯示時間，例如 '2004-10-19 10:23:54' 。若欄位的型態為帶時區標示的 TIMESTAMP ，則輸出 '2004-10-19 10:23:54+08' 。
@@ -51,5 +51,5 @@ MySQL 雖然也提供 TIMESTAMP 資料型態，但行為和 PostgreSQL 並不相
 </p>
 <h3>TIMESTAMP is MS SQL Server 2000</h3>
 <p>
-在 MS SQL Server 中， TIMESTAMP 型態的行為不同於 SQL-92 標準[<span class="Onote">根據 MS SQL Server 手冊中的說法「未來版本的 Microsoft® SQL Server™ 將會修改 Transact-SQL timestamp 資料型別的功能，使其與標準定義的功能一致。屆時，現有的 timestamp 資料型別將會被 rowversion 資料型別所取代。」</span>]，反而是 MS SQL Server 的 DATETIME 型態和 SQL-92 的 TIMESTAMP 相同。MS SQL Server 的 TIMESTAMP 型別之作用，相近於 PostgreSQL 的 SERIAL 型別；而 MS SQL Server 的 DATETIME 型別和 PostgreSQL 的 TIMESTAMP 可說是相等的。MS SQL Server 的 DATETIME 型別可表達範圍從 1753 年 1 月 1 日到 9999年 12 月 31 日。
+在 MS SQL Server 中， TIMESTAMP 型態的行為不同於 SQL-92 標準[<span class="note">根據 MS SQL Server 手冊中的說法「未來版本的 Microsoft® SQL Server™ 將會修改 Transact-SQL timestamp 資料型別的功能，使其與標準定義的功能一致。屆時，現有的 timestamp 資料型別將會被 rowversion 資料型別所取代。」</span>]，反而是 MS SQL Server 的 DATETIME 型態和 SQL-92 的 TIMESTAMP 相同。MS SQL Server 的 TIMESTAMP 型別之作用，相近於 PostgreSQL 的 SERIAL 型別；而 MS SQL Server 的 DATETIME 型別和 PostgreSQL 的 TIMESTAMP 可說是相等的。MS SQL Server 的 DATETIME 型別可表達範圍從 1753 年 1 月 1 日到 9999年 12 月 31 日。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/1038137.html</div>

@@ -126,7 +126,7 @@ while (true) {
 ?>
 {% endhighlight %}
 
-D-Bus 將訊息匯流排分為兩種，即 System Bus 與 Session Bus ，分別採用不同的安全控管政策。本文範例的 worker 程式將把訊息管道接在 System Bus 上，根據 D-Bus 的控管政策，你必須準備下列的組態文件(<span class="Onote">只有 D-Bus service 程式才需要準備此一組態文件。 D-Bus client 程式不需要</span>)，並將它儲存在 /etc/dbus-1/system.d/blog.rock.conf (<span class="Onote">此文件的主檔名必須與 service name 相同</span>)。
+D-Bus 將訊息匯流排分為兩種，即 System Bus 與 Session Bus ，分別採用不同的安全控管政策。本文範例的 worker 程式將把訊息管道接在 System Bus 上，根據 D-Bus 的控管政策，你必須準備下列的組態文件(<span class="note">只有 D-Bus service 程式才需要準備此一組態文件。 D-Bus client 程式不需要</span>)，並將它儲存在 /etc/dbus-1/system.d/blog.rock.conf (<span class="note">此文件的主檔名必須與 service name 相同</span>)。
 
 ###### blog.rock.conf
 

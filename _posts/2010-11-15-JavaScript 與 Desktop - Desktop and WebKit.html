@@ -9,7 +9,7 @@ permalink: /archives/14456843.html
 本文是《JavaScript 與 Desktop》系列最後一篇。前兩篇文章中，分別述敘了在 gjs/seed 中呼叫系統函數庫與調用 WebKit 處理圖形化使用介面的工作。
 </p>
 <p>
-但是在這個架構中，實際上存在了兩個 JavaScript host (<span class="Onote"><dfn>host</dfn> 是 ECMAScript/JavaScript 規範術語，意指 JavaScript 語言解譯器寄宿的環境，故有人將之譯為「宿主」</span>) 。一個是 gjs/seed，另一個便是 WebKit JavaScriptCore 。這兩個 host 都是獨立的環境空間，彼此之間的資源不能直接互通。例如 gjs/seed 這個 host 提供的資源可以載入 DBus 服務，調用 DBus 方法；但是 WebKit JavaScriptCore 並不提供這類資源，所以不能調用 DBus 方法。是以我們需要找出一個互通訊息的途徑，讓這兩個 host的程式碼可以互動。本文將說明其中一種基於事件觸發的途徑。
+但是在這個架構中，實際上存在了兩個 JavaScript host (<span class="note"><dfn>host</dfn> 是 ECMAScript/JavaScript 規範術語，意指 JavaScript 語言解譯器寄宿的環境，故有人將之譯為「宿主」</span>) 。一個是 gjs/seed，另一個便是 WebKit JavaScriptCore 。這兩個 host 都是獨立的環境空間，彼此之間的資源不能直接互通。例如 gjs/seed 這個 host 提供的資源可以載入 DBus 服務，調用 DBus 方法；但是 WebKit JavaScriptCore 並不提供這類資源，所以不能調用 DBus 方法。是以我們需要找出一個互通訊息的途徑，讓這兩個 host的程式碼可以互動。本文將說明其中一種基於事件觸發的途徑。
 </p>
 
 <!--more-->
@@ -18,7 +18,7 @@ permalink: /archives/14456843.html
 </h4>
 
 <p>
-在《<a href="{{ site.baseurl }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a>》一文中，我們讓 gjs/seed 載入 libwebkit 函數庫，透過該函數庫配置了一個 WebKit 環境空間。在該 WebKit 環境中，它包含了一個獨立的 HTML render 與 JavaScript host。在這個自成一格的內部空間中，它本身就能獨自處理 HTML 與相關資源，運作自己的一套 JavaScript host。如果我們想要從外部干涉這個內部空間，或是讓內部空間中的狀況可以為外部所得知，我們就要依靠 libwebkit 所提供的 API 才能實現(<span class="Onote">WebKit 專案有許多分支，其中有些分支直接提供了內外部互動的 API 。例如 OS X 的 WebKit 或是 Nokia 的 QtWebKit。那些分支提供的特殊 API 不具相容性，不適用於本文的開發環境</span>)。
+在《<a href="{{ site.baseurl }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a>》一文中，我們讓 gjs/seed 載入 libwebkit 函數庫，透過該函數庫配置了一個 WebKit 環境空間。在該 WebKit 環境中，它包含了一個獨立的 HTML render 與 JavaScript host。在這個自成一格的內部空間中，它本身就能獨自處理 HTML 與相關資源，運作自己的一套 JavaScript host。如果我們想要從外部干涉這個內部空間，或是讓內部空間中的狀況可以為外部所得知，我們就要依靠 libwebkit 所提供的 API 才能實現(<span class="note">WebKit 專案有許多分支，其中有些分支直接提供了內外部互動的 API 。例如 OS X 的 WebKit 或是 Nokia 的 QtWebKit。那些分支提供的特殊 API 不具相容性，不適用於本文的開發環境</span>)。
 </p>
 
 <p>

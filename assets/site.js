@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(){
 //console.log("my style");
+//document.getElementsByTagName('h1')[0].insertAdjacentHTML('afterend', window.screen.availWidth + ', ' + window.screen.width);
 
 //** start adjust image
 function setImageWithTitle() {
@@ -78,9 +79,9 @@ for (i=0;i<imgs.length;++i) {
 // });
 // document.getElementById('site_categories').innerHTML=cl.join('');
 
-var inotes = document.querySelectorAll('section.post .Onote');
+var inotes = document.querySelectorAll('section.post span.note');
 for (i = 0; i < inotes.length; ++i) {
-    inotes[i].insertAdjacentHTML('beforebegin', '<span class="Onote_no">*'+(i+1)+'</span>');
+    inotes[i].insertAdjacentHTML('beforebegin', '<span class="note_no">*'+(i+1)+'</span>');
     inotes[i].insertAdjacentHTML('afterbegin', '*'+(i+1)+' ');
 }
 

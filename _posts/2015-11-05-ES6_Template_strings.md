@@ -57,3 +57,4 @@ tag 允許設計者做更多的事。你可以自己解釋如何使用要插值�
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
 * 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
+* [Variable declarations and more in the new JavaScript](http://www.ibm.com/developerworks/web/library/wa-ecmascript6-neward-p1/index.html?ca=drs-&ce=ism0070&ct=is&cmp=ibmsocial&cm=h&cr=crossbrand&ccy=us)

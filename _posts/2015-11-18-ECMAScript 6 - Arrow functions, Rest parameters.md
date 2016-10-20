@@ -113,7 +113,7 @@ add_all(7,6,4,3,9,5,1);
 
 #### Spread parameters
 
-Spread parameters (攤開參數) 意指調用函數時，將緊跟著 <code>...</code> 的那個集合內容，攤開成獨自的參數(<span class="Onote">攤開對象必須是陣列或迭代器</span>)。而且它可以用在參數列的任何位置。
+Spread parameters (攤開參數) 意指調用函數時，將緊跟著 <code>...</code> 的那個集合內容，攤開成獨自的參數(<span class="note">攤開對象必須是陣列或迭代器</span>)。而且它可以用在參數列的任何位置。
 
 {% highlight javascript %}
 var a = [1,2,3];
@@ -187,3 +187,4 @@ xyz('x', 'z');
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
 * 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
+* [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)

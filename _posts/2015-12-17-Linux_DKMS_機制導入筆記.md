@@ -10,7 +10,7 @@ tags: [linux,debian,driver,dkms]
 
 <!--more-->
 
-[DKMS](http://linux.dell.com/dkms/manpage.html) 全名為 Dynamic Kernel Module Support ，是由 Dell 所貢獻的一套 Linux 驅動程式安裝管理機制。它提供一組統一的驅動程式管理方式，讓使用者不需要在檔案系統中找尋驅動程式源碼與編譯。更可於載入 Linux kernel 時自動檢查需不需要為此 kernel 編譯驅動程式(<span class="Onote">需要 dkms_autoinstaller </span>)。
+[DKMS](http://linux.dell.com/dkms/manpage.html) 全名為 Dynamic Kernel Module Support ，是由 Dell 所貢獻的一套 Linux 驅動程式安裝管理機制。它提供一組統一的驅動程式管理方式，讓使用者不需要在檔案系統中找尋驅動程式源碼與編譯。更可於載入 Linux kernel 時自動檢查需不需要為此 kernel 編譯驅動程式(<span class="note">需要 dkms_autoinstaller </span>)。
 
 #### dkms.conf
 

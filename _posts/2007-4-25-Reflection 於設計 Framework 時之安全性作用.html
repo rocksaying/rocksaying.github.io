@@ -24,13 +24,13 @@ PHP 的 Variable Function 並不具備 <code>eval()</code> 語意。 PHP 將代�
 
 
 <p>
-Reflection 在 PHP 中由 extension (by C) 實現而非實作在框架(framework)中。事實上 PHP 要以框架形式實作 Reflaction 非常困難。要讀入類別源碼，然後分析源碼內容等等。我懷疑有多少人覺得在 PHP 中值得這麼做。如同我在 <a href="{{ site.baseurl }}/archives/2633503.html">PHP5 的動態函數/行為調用效率測試</a> 一文所說，PHP 的傳統方式就足以探知大部份的函數資訊了。我將 PHP 的傳統方式視為 PHP 語言原生的<a href="{{ site.baseurl }}/archives/2728221.html">自識能力</a>，而儘量不使用 PHP5 的 Reflection class (<span class="Onote">以自識能力為標準，PHP 作為動態語言的能力仍嫌不足。我同時認為它的 Reflection class 作法並不可取</span>)。
+Reflection 在 PHP 中由 extension (by C) 實現而非實作在框架(framework)中。事實上 PHP 要以框架形式實作 Reflaction 非常困難。要讀入類別源碼，然後分析源碼內容等等。我懷疑有多少人覺得在 PHP 中值得這麼做。如同我在 <a href="{{ site.baseurl }}/archives/2633503.html">PHP5 的動態函數/行為調用效率測試</a> 一文所說，PHP 的傳統方式就足以探知大部份的函數資訊了。我將 PHP 的傳統方式視為 PHP 語言原生的<a href="{{ site.baseurl }}/archives/2728221.html">自識能力</a>，而儘量不使用 PHP5 的 Reflection class (<span class="note">以自識能力為標準，PHP 作為動態語言的能力仍嫌不足。我同時認為它的 Reflection class 作法並不可取</span>)。
 </p>
 <p>
 再說說以 REST URL 形式 (<code>http://host/class/method/arguments</code>) 調用方法時，為什麼需要運用<a href="{{ site.baseurl }}/archives/2728221.html">自識能力</a>增加安全性。
 </p>
 <p>
-我在設計框架時， controler 務必檢查類別源碼是否位在 URL 子目錄下 (或指定的目錄)。只有在指定目錄下的類別源碼，才視為此服務可用的類別。接著會在配置實例後，藉助 自識能力探知此實例是否具備指定方法以及相關的參數宣告。不過 PHP 的自識能力僅得以 <code>is_callable()</code> 檢查是否有指定方法可調用，而不能探知參數宣告資訊(<span class="Onote">PHP5 可以 Reflection class 進一步探知方法的參數資訊</span>)。為其美中不足之處。
+我在設計框架時， controler 務必檢查類別源碼是否位在 URL 子目錄下 (或指定的目錄)。只有在指定目錄下的類別源碼，才視為此服務可用的類別。接著會在配置實例後，藉助 自識能力探知此實例是否具備指定方法以及相關的參數宣告。不過 PHP 的自識能力僅得以 <code>is_callable()</code> 檢查是否有指定方法可調用，而不能探知參數宣告資訊(<span class="note">PHP5 可以 Reflection class 進一步探知方法的參數資訊</span>)。為其美中不足之處。
 </p>
 <p>
 下列是一個非常簡單的實作品。假設其 URL 為 http://localhost/test/index.php 。它允許我以 http://localhost/test/index.php/<var>class</var>/<var>method</var>/<var>argument</var> 之 URL 形式調用個體方法。

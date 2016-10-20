@@ -6,7 +6,7 @@ tags: [javascript,繼承,oop]
 permalink: /archives/2165837.html
 ---
 <p>
-JavaScript/ECMAScript (配合 <a href="http://www.ecma-international.org/">ECMAScript Language Specification - Standard ECMA-262 - 用語，以下稱 ECMAScript</a>) 是一種個體導向程式語言 (object-oriented programming language, OOPL) ，但並不是一種基於類別的個體導向程式語言 (class-based OOPL) (<span class="Onote">ECMA-262 section 4.2 "Language Overview"</span>)。只接觸過 C++, Smalltalk, Java, C# 這些程式語言的 programmer ，一開始多少會因 ECMAScript 沒有 class, public, protoected, private 這些關鍵字而困惑。不過 ECMAScript 仍然支援繼承 (inheritance) 、封裝 (encapsulation) 、動態連結 (dynamic binding) 這三種特性。
+JavaScript/ECMAScript (配合 <a href="http://www.ecma-international.org/">ECMAScript Language Specification - Standard ECMA-262 - 用語，以下稱 ECMAScript</a>) 是一種個體導向程式語言 (object-oriented programming language, OOPL) ，但並不是一種基於類別的個體導向程式語言 (class-based OOPL) (<span class="note">ECMA-262 section 4.2 "Language Overview"</span>)。只接觸過 C++, Smalltalk, Java, C# 這些程式語言的 programmer ，一開始多少會因 ECMAScript 沒有 class, public, protoected, private 這些關鍵字而困惑。不過 ECMAScript 仍然支援繼承 (inheritance) 、封裝 (encapsulation) 、動態連結 (dynamic binding) 這三種特性。
 </p>
 
 <!--more-->
@@ -91,20 +91,20 @@ See also: ECMA-262 chapter.13 Function Definition.
 </span></code></pre>
 
 <p>
-在第 7-27 行中，是 A function object 的定義，其 scope 就是第 7-27 行的區域。第 8-9 中定義了兩個區域變數 x,y ，第 10 行是 A 的 z property 。第 12-14 行定義了一個 function object 並將之指派為 A 的 setX property, 也就是 setX method ，其他皆同。而第 29-35 行，則是在 A 的 scope 外定義兩個 function objects - setY,getY - ，並透過 A 的 prototype property ，將 setY/getY 指派為 A 的 method 。透過 prototype property 所指派的成員，是被參考同一條 prototype chain (<span class="Onote">ECMA-262 section 4.2.1 "Objects"</span>) 的個體所共享，也就是會被繼承。而直接指派的成員，則是該個體獨有的。
+在第 7-27 行中，是 A function object 的定義，其 scope 就是第 7-27 行的區域。第 8-9 中定義了兩個區域變數 x,y ，第 10 行是 A 的 z property 。第 12-14 行定義了一個 function object 並將之指派為 A 的 setX property, 也就是 setX method ，其他皆同。而第 29-35 行，則是在 A 的 scope 外定義兩個 function objects - setY,getY - ，並透過 A 的 prototype property ，將 setY/getY 指派為 A 的 method 。透過 prototype property 所指派的成員，是被參考同一條 prototype chain (<span class="note">ECMA-262 section 4.2.1 "Objects"</span>) 的個體所共享，也就是會被繼承。而直接指派的成員，則是該個體獨有的。
 </p>
 <p>
 第 37-38 行，透過 new 指令要求系統以 A function object 為建構者，配置兩個新的個體 a, a2 。基本上， a 和 a2 是 A function object 的複本 (只有一些不同，例如 a, a2 的 prototype property 的屬性[attribute] 是 read only) ，它們各自擁有自己私有的 x,y 區域變數和 z property。第 44 行的輸出結果，顯示 a2 的 x 區域變數的值，並未被改變。
 第 41 行並不是試圖存取 a 的區域變數 x 。從語意上就可以了解，這個語法是設定 a 的 x property 的值。如果現在還沒有這個 property ，那麼系統會為 a 增加這個 property 。 ECMAScript 在語意上就指明了第 41 行存取的對象是 a 的 x property ，系統不會認為這裡試圖存取的對象是 a 的 x 區域變數。於是第 41 行後， a 就有一個名為 x 的區域變數和一個名為 x 的 property ，系統不會混淆這兩者。第 42-43 行的輸出結果，證實了這點。
 </p>
 <p>
-第 13 行處， setX method 試圖存取一個名為 x 的個體。這裡沒有加上 this 關鍵字，所以系統會沿著 scope chain (<span class="Onote">ECMA-262 section 10.1.4 "Scope Chain and Identifier Resolution"</span>) 尋找，由於在同一個 scope 中就有符合的個體，因此 setX 存取的就是同一個 scope 中的 x 區域變數。第 21 行處，由於加上了 this 關鍵字，所以系統會去存取 activation object (<span class="Onote">ECMA-262 section 10.1.6 "Activation Object"</span>) 的 z property 。
+第 13 行處， setX method 試圖存取一個名為 x 的個體。這裡沒有加上 this 關鍵字，所以系統會沿著 scope chain (<span class="note">ECMA-262 section 10.1.4 "Scope Chain and Identifier Resolution"</span>) 尋找，由於在同一個 scope 中就有符合的個體，因此 setX 存取的就是同一個 scope 中的 x 區域變數。第 21 行處，由於加上了 this 關鍵字，所以系統會去存取 activation object (<span class="note">ECMA-262 section 10.1.6 "Activation Object"</span>) 的 z property 。
 </p>
 <p>
 第 46-47 行展示了一個沒有保護效果的封裝，即可透過 method 又可直接存取成員。
 </p>
 <p>
-第 50-53 行展示了一個較易令人困惑的例子。此處調用 setY method ，而從語意中就可以發現一個問題，即第 30 行中試圖存取的名為 y 的個體是哪個？沒有加 this ，所以不是 activation object 的 y property 。在 A function object 的 scope 之外，所以也不是第 9 行中定義的 y 區域變數。碰到這種情形， ECMAScript 會建構一個名為 y 的 global object (<span class="Onote">ECMA-262 10.1.5 "Global Object", 俗稱全域變數</span>) 。第 52 行顯示現在系統中確實有一個 y 全域變數。
+第 50-53 行展示了一個較易令人困惑的例子。此處調用 setY method ，而從語意中就可以發現一個問題，即第 30 行中試圖存取的名為 y 的個體是哪個？沒有加 this ，所以不是 activation object 的 y property 。在 A function object 的 scope 之外，所以也不是第 9 行中定義的 y 區域變數。碰到這種情形， ECMAScript 會建構一個名為 y 的 global object (<span class="note">ECMA-262 10.1.5 "Global Object", 俗稱全域變數</span>) 。第 52 行顯示現在系統中確實有一個 y 全域變數。
 </p>
 <p>
 在本文中反覆提到了 prototype chain, scope chain 這幾個字眼，這是 ECMAScript 支援「繼承」(inheritance) 特性的關鍵概念。我想改天再說吧。

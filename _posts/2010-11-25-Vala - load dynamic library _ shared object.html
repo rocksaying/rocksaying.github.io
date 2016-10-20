@@ -10,7 +10,7 @@ Vala 有許多途徑可以整合 C 語言程式，例如在《<a href="{{ site.b
 </p>
 
 <p>
-本文首先以 C 語言撰寫一個 <dfn>md5sum()</dfn> 並將其存入一個動態函數庫(<span class="Onote">dynamic library, Unix界的傳統說法稱為 shared object</span>)。再分別透過動態連結以及動態載入兩種途徑，于 Vala 程式碼中調用此函數。
+本文首先以 C 語言撰寫一個 <dfn>md5sum()</dfn> 並將其存入一個動態函數庫(<span class="note">dynamic library, Unix界的傳統說法稱為 shared object</span>)。再分別透過動態連結以及動態載入兩種途徑，于 Vala 程式碼中調用此函數。
 </p>
 
 <!--more-->
@@ -18,7 +18,7 @@ Vala 有許多途徑可以整合 C 語言程式，例如在《<a href="{{ site.b
 建立撰寫 md5sum 函數庫
 </h4>
 <p>
-首先，我以 C 語言撰寫一個 <dfn>md5sum()</dfn>，並建立一個儲存這個函數的動態函數庫，命名為 md5sum (<span class="Onote">在 Unix/Linux 中，這個動態函數庫的檔名慣例是 libmd5sum.so；在 Windows 中則是 md5sum.dll</span>)。
+首先，我以 C 語言撰寫一個 <dfn>md5sum()</dfn>，並建立一個儲存這個函數的動態函數庫，命名為 md5sum (<span class="note">在 Unix/Linux 中，這個動態函數庫的檔名慣例是 libmd5sum.so；在 Windows 中則是 md5sum.dll</span>)。
 </p>
 
 <pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
@@ -61,7 +61,7 @@ $ export LD_LIBRARY_PATH=.
 </pre>
 
 <p>
-Linux 系統預設儲放與尋找函數庫的路徑列表是 <em>/usr/lib</em> 以及 <em>/lib</em> (<span class="Onote">細節請看 manpage ldconfig</span>)。不論是編譯時的連結動作，亦或是執行時的載入動作，預設情形都是往前述的路徑列表中尋找函數庫。但我不打算將剛剛產生的 libmd5sum.so 放在系統指定路徑下。所以我使用環境變數 <dfn>LD_LIBRARY_PATH</dfn> 指定額外的函數庫搜尋路徑為當前路徑。接下來的範例皆沿用此設定。
+Linux 系統預設儲放與尋找函數庫的路徑列表是 <em>/usr/lib</em> 以及 <em>/lib</em> (<span class="note">細節請看 manpage ldconfig</span>)。不論是編譯時的連結動作，亦或是執行時的載入動作，預設情形都是往前述的路徑列表中尋找函數庫。但我不打算將剛剛產生的 libmd5sum.so 放在系統指定路徑下。所以我使用環境變數 <dfn>LD_LIBRARY_PATH</dfn> 指定額外的函數庫搜尋路徑為當前路徑。接下來的範例皆沿用此設定。
 </p>
 
 <h4>
@@ -182,7 +182,7 @@ Unix 系統很久以前就實現了動態連結與載入機制，而相關的 AP
 
 
 <p>
-首先，我先按照 POSIX 規範的動態連結載入 API 內容(<span class="Onote"><a href="http://www.opengroup.org/onlinepubs/009695399/functions/dlopen.html">man dlopen</a></span>)，用 Vala 語法重新宣告 <dfn>dlopen(), dlsym()</dfn> 等函數。接著我使用 Vala 的委派語法，宣告一個 <dfn>Chksum</dfn> 委派型態，內容參考 <dfn>md5sum()</dfn> 的介面。以此委派型態，定義一個 <var>md5sum</var> 委派變數。接著調用 <dfn>dlopen()</dfn> 載入 libmd5sum.so ，將函數庫中的 <dfn>md5sum()</dfn> 指派給 <var>md5sum</var>。最後就可以透過這個委派變數調用實際的 <dfn>md5sum()</dfn>函數。
+首先，我先按照 POSIX 規範的動態連結載入 API 內容(<span class="note"><a href="http://www.opengroup.org/onlinepubs/009695399/functions/dlopen.html">man dlopen</a></span>)，用 Vala 語法重新宣告 <dfn>dlopen(), dlsym()</dfn> 等函數。接著我使用 Vala 的委派語法，宣告一個 <dfn>Chksum</dfn> 委派型態，內容參考 <dfn>md5sum()</dfn> 的介面。以此委派型態，定義一個 <var>md5sum</var> 委派變數。接著調用 <dfn>dlopen()</dfn> 載入 libmd5sum.so ，將函數庫中的 <dfn>md5sum()</dfn> 指派給 <var>md5sum</var>。最後就可以透過這個委派變數調用實際的 <dfn>md5sum()</dfn>函數。
 </p>
 
 <p>
@@ -208,7 +208,7 @@ d = [hello 石頭成], len = [15]
 GLib gmodule
 </h5>
 <p>
-GLib 提供了一個 <a href="http://library.gnome.org/devel/glib/stable/glib-Dynamic-Loading-of-Modules.html">gmodule</a> 函數庫，簡化程序員動態載入函數庫的處理工作(<span class="Onote">在Linux中，gmodule 底層實際就是 POSIX dlopen functions</span>)。而 Vala 已經提供整合 GLib gmodule 的 <a href="http://www.valadoc.org/gmodule-2.0/index.html">Module</a> 元件，所以在 Vala 中可以直接使用 Module 元件載入動態函數庫。這就不需要像上一節那樣，還得自己再宣告一次 POSIX dlopen 的介面。
+GLib 提供了一個 <a href="http://library.gnome.org/devel/glib/stable/glib-Dynamic-Loading-of-Modules.html">gmodule</a> 函數庫，簡化程序員動態載入函數庫的處理工作(<span class="note">在Linux中，gmodule 底層實際就是 POSIX dlopen functions</span>)。而 Vala 已經提供整合 GLib gmodule 的 <a href="http://www.valadoc.org/gmodule-2.0/index.html">Module</a> 元件，所以在 Vala 中可以直接使用 Module 元件載入動態函數庫。這就不需要像上一節那樣，還得自己再宣告一次 POSIX dlopen 的介面。
 </p>
 
 <p>
