@@ -109,9 +109,9 @@ cover: http://i.imgur.com/Rj0CL90.png
 
 最後要提醒一件事。請慎選用在 Twitter Cards 的圖片。毫無重點的圖片，反而破壞 twitter 的簡潔感。
 
-### 相關文件
+#### 相關文件
 
-#### 原始文件
+###### 原始文件
 
 * [Front Matter 加上 cover 欄位的文章](https://raw.githubusercontent.com/rocksaying/rocksaying.github.io/master/_posts/2016-02-03-Sansui_AU-X901.md)。
 * [模版文件](https://github.com/rocksaying/rocksaying.github.io/blob/master/_includes/meta.html)。
