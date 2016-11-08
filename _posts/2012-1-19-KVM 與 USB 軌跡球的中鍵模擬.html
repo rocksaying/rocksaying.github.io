@@ -2,7 +2,7 @@
 title: KVM 與 USB 軌跡球的中鍵模擬
 category: computer
 old-category: 電腦技術
-tags: [trackball,kvm]
+tags: [trackball,kvm,dbus]
 permalink: /archives/18797680.html
 ---
 <p>
@@ -36,8 +36,10 @@ permalink: /archives/18797680.html
 我苦練十餘年的編程功力，這時候就要派上用場了(天之聲: 就為了這點小事...)。所以我利用 Linux 的 HAL 服務，寫了一個軌跡球組態守護程式(daemon)，它會傾聽 HAL 放出的設備新增訊號，一但發現軌跡球被插入了，它就會接著執行中鍵模擬滾輪的設定工作。我終於不必每次按 KVM 切換後還得再動手跑一次設定。程式 trackman_init 的源碼於下列:
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
-<span class="c"># coding: utf-8</span>
+<pre class="highlight"><code><span class="c">#!/usr/bin/python
+</span>
+<span class="c"># coding: utf-8
+</span>
 <span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
 <span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
@@ -63,18 +65,20 @@ permalink: /archives/18797680.html
         <span class="n">HAL_DEVICE_IFACE</span><span class="p">)</span>
     <span class="n">info_product</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">"info.product"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">info_product</span> <span class="o">==</span> <span class="n">TRACKBALL_PRODUCT_NAME</span><span class="p">:</span>
-        <span class="c">#init_wheel_emulation()</span>
+        <span class="c">#init_wheel_emulation()
+</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">return</span> <span class="bp">False</span>
 
 <span class="k">class</span> <span class="nc">DeviceAddedSignalRecipient</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">add_signal_receiver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device_added_handler</span><span class="p">,</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">add_signal_receiver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device_added_handler</span><span class="p">,</span>
             <span class="n">dbus_interface</span><span class="o">=</span><span class="n">HAL_MANAGER_IFACE</span><span class="p">,</span> <span class="n">signal_name</span> <span class="o">=</span> <span class="s">"DeviceAdded"</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">device_added_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
-        <span class="c">#print "Signal recivied: %s" % device_path</span>
+        <span class="c">#print "Signal recivied: %s" % device_path
+</span>
         <span class="k">if</span> <span class="n">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
             <span class="n">init_wheel_emulation</span><span class="p">()</span>
 
@@ -82,13 +86,13 @@ permalink: /archives/18797680.html
     <span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
     <span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
-    
+
     <span class="n">hal_manager</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span>
         <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">HAL_SERVICE_NAME</span><span class="p">,</span> <span class="n">HAL_MANAGER_PATH</span><span class="p">),</span>
         <span class="n">HAL_MANAGER_IFACE</span><span class="p">)</span>
 
     <span class="n">device_paths</span> <span class="o">=</span> <span class="n">hal_manager</span><span class="o">.</span><span class="n">FindDeviceByCapability</span><span class="p">(</span><span class="s">"input.mouse"</span><span class="p">)</span>
-    
+
     <span class="k">for</span> <span class="n">device_path</span> <span class="ow">in</span> <span class="n">device_paths</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
             <span class="n">init_wheel_emulation</span><span class="p">()</span>

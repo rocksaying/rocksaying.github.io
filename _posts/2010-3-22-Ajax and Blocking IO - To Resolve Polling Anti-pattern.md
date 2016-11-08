@@ -2,7 +2,7 @@
 title: Ajax and Blocking IO - To Resolve Polling Anti-pattern
 category: programming
 old-category: Programming
-tags: [javascript,PHP,ajax,polling,Blocking IO,D-Bus]
+tags: [javascript,PHP,ajax,polling,Blocking IO,dbus]
 permalink: /archives/12010463.html
 ---
 

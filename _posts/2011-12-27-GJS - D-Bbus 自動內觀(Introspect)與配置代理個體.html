@@ -2,7 +2,7 @@
 title: GJS - D-Bbus 自動內觀(Introspect)與配置代理個體
 category: programming
 old-category: JavaScript
-tags: [javascript,xml,d-bus,gjs,e4x]
+tags: [javascript,xml,dbus,gjs,e4x]
 permalink: /archives/18612549.html
 ---
 <p>
@@ -33,7 +33,7 @@ DBus.proxifyPrototype 要求的介面原型資訊表之格式如下:
 </p>
 <pre class="language-text">
 {
-  介面名稱: 
+  介面名稱:
   {
     name: "介面名稱",
     methods: [
@@ -90,10 +90,10 @@ License: GNU LGPL (http://www.gnu.org/licenses/lgpl.html)
 
 <span class="cm">/**
 分析輸出端點的 XML 資料，轉成下列的表格形式:
-  { 
-    name: 端點名稱, 
-    inSignature: 輸入參數的 DBus 型態簽名, 
-    outSignature: 輸出參數的 DBus 型態簽名 
+  {
+    name: 端點名稱,
+    inSignature: 輸入參數的 DBus 型態簽名,
+    outSignature: 輸出參數的 DBus 型態簽名
   };
 @param export_node : DBus 輸出端點的 XML 資料。
  它可以是 DBus Method，也可以是 DBus Signal。
@@ -104,7 +104,7 @@ License: GNU LGPL (http://www.gnu.org/licenses/lgpl.html)
     <span class="nx">po</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">export_node</span><span class="p">.</span><span class="err">@</span><span class="nx">name</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
     <span class="k">if</span> <span class="p">(</span><span class="nx">po</span><span class="p">.</span><span class="nx">name</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">po</span><span class="p">.</span><span class="nx">name</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    
+
     <span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="cm">/*
     n = export_node.arg.length();
@@ -113,7 +113,7 @@ License: GNU LGPL (http://www.gnu.org/licenses/lgpl.html)
     for (var i = 0; i &lt; n; ++i) {
         arg_node = export_node.arg[i];
         // &lt;arg name="interface" direction="in" type="s"/&gt;
-        print("\t\tArg name: "  + arg_node.@name + 
+        print("\t\tArg name: "  + arg_node.@name +
               "; dir: "         + arg_node.@direction +
               "; type: "        + arg_node.@type)
     }
@@ -150,22 +150,25 @@ License: GNU LGPL (http://www.gnu.org/licenses/lgpl.html)
 @return DBus介面原型表
  */</span>
 <span class="kd">function</span> <span class="nx">_parseDBusIntrospectXML</span><span class="p">(</span><span class="nx">introspection</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XML</span><span class="p">(</span><span class="nx">introspection</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/&lt;!DOCTYPE </span><span class="se">[^</span><span class="sr">&gt;</span><span class="se">]</span><span class="sr">+&gt;/</span><span class="p">,</span><span class="s1">''</span><span class="p">));</span> <span class="c1">// gjs supports E4X.</span>
-    <span class="c1">// The DOCTYPE description of DBus XML look like illegal for E4X,</span>
-    <span class="c1">// so I need to strip it.</span>
+    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XML</span><span class="p">(</span><span class="nx">introspection</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/&lt;!DOCTYPE </span><span class="se">[^</span><span class="sr">&gt;</span><span class="se">]</span><span class="sr">+&gt;/</span><span class="p">,</span><span class="s1">''</span><span class="p">));</span> <span class="c1">// gjs supports E4X.
+</span>
+    <span class="c1">// The DOCTYPE description of DBus XML look like illegal for E4X,
+</span>
+    <span class="c1">// so I need to strip it.
+</span>
 
     <span class="kd">var</span> <span class="nx">export_types</span> <span class="o">=</span> <span class="p">{</span><span class="na">method</span><span class="p">:</span> <span class="s1">'methods'</span><span class="p">,</span> <span class="na">signal</span><span class="p">:</span> <span class="s1">'signals'</span><span class="p">};</span>
     <span class="kd">var</span> <span class="nx">extype</span><span class="p">,</span> <span class="nx">extypeval</span><span class="p">;</span>
     <span class="kd">var</span> <span class="nx">number_export</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">export_node</span><span class="p">;</span>
     <span class="kd">var</span> <span class="nx">iface_table</span> <span class="o">=</span> <span class="p">{};</span>
     <span class="kd">var</span> <span class="nx">iface_node</span><span class="p">,</span> <span class="nx">iface_desc</span><span class="p">,</span> <span class="nx">result</span><span class="p">;</span>
-    
+
     <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">x</span><span class="p">.</span><span class="kr">interface</span><span class="p">.</span><span class="nx">length</span><span class="p">();</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">iface_node</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="kr">interface</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-        <span class="nx">iface_desc</span> <span class="o">=</span> <span class="p">{</span> 
-            <span class="na">name</span><span class="p">:</span> <span class="nx">iface_node</span><span class="p">.</span><span class="err">@</span><span class="nx">name</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span> 
-            <span class="na">methods</span><span class="p">:</span> <span class="p">[],</span> 
-            <span class="na">signals</span><span class="p">:</span> <span class="p">[]</span> 
+        <span class="nx">iface_desc</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="na">name</span><span class="p">:</span> <span class="nx">iface_node</span><span class="p">.</span><span class="err">@</span><span class="nx">name</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span>
+            <span class="na">methods</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="na">signals</span><span class="p">:</span> <span class="p">[]</span>
         <span class="p">};</span>
 
         <span class="k">for</span> <span class="p">(</span><span class="nx">extype</span> <span class="k">in</span> <span class="nx">export_types</span><span class="p">)</span> <span class="p">{</span>
@@ -180,9 +183,11 @@ License: GNU LGPL (http://www.gnu.org/licenses/lgpl.html)
                         <span class="nx">iface_desc</span><span class="p">[</span><span class="nx">extypeval</span><span class="p">].</span><span class="nx">push</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
                 <span class="p">}</span>
             <span class="p">}</span>
-        <span class="p">}</span> <span class="c1">//foreach export_types</span>
+        <span class="p">}</span> <span class="c1">//foreach export_types
+</span>
         <span class="nx">iface_table</span><span class="p">[</span><span class="nx">iface_desc</span><span class="p">.</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">iface_desc</span><span class="p">;</span>
-    <span class="p">}</span> <span class="c1">// foreach interface</span>
+    <span class="p">}</span> <span class="c1">// foreach interface
+</span>
     <span class="k">return</span> <span class="nx">iface_table</span><span class="p">;</span>
 <span class="p">}</span>
 
@@ -221,16 +226,19 @@ args:
     service_name
     object_path
     interface_name
- 
+
  option:
     interface_prototype
     callback
  */</span>
-<span class="kd">function</span> <span class="nx">ProxyObjectFactory</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> 
+<span class="kd">function</span> <span class="nx">ProxyObjectFactory</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">poc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>    <span class="c1">// proxy object class</span>
-    <span class="kd">var</span> <span class="nx">po</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>     <span class="c1">// proxy object</span>
-    <span class="kd">var</span> <span class="nx">proto</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>  <span class="c1">// prototype</span>
+    <span class="kd">var</span> <span class="nx">poc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>    <span class="c1">// proxy object class
+</span>
+    <span class="kd">var</span> <span class="nx">po</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>     <span class="c1">// proxy object
+</span>
+    <span class="kd">var</span> <span class="nx">proto</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>  <span class="c1">// prototype
+</span>
 
     <span class="kd">function</span> <span class="nx">_construct_proxy_object</span><span class="p">(</span><span class="nx">proto</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">poc</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s2">"this._init();"</span><span class="p">);</span>
@@ -239,17 +247,19 @@ args:
 	            <span class="nx">args</span><span class="p">.</span><span class="nx">bus</span><span class="p">.</span><span class="nx">proxifyObject</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">service_name</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">object_path</span><span class="p">);</span>
             <span class="p">}</span>
         <span class="p">};</span>
-        <span class="c1">// 將介面原型注入代理類別</span>
+        <span class="c1">// 將介面原型注入代理類別
+</span>
         <span class="nx">proxifyPrototype</span><span class="p">(</span><span class="nx">poc</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="nx">proto</span><span class="p">);</span>
         <span class="nx">po</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">poc</span><span class="p">();</span>
-        <span class="nx">poc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">// release</span>
+        <span class="nx">poc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">// release
+</span>
     <span class="p">}</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_prototype</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">proto</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">interface_prototype</span><span class="p">;</span>
     <span class="p">}</span>
     <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">IntrospectPrototype</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">bus</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">service_name</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">object_path</span><span class="p">,</span> 
+        <span class="nx">IntrospectPrototype</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">bus</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">service_name</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">object_path</span><span class="p">,</span>
             <span class="kd">function</span><span class="p">(</span><span class="nx">protos</span><span class="p">){</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
                     <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
@@ -264,7 +274,8 @@ args:
         <span class="k">if</span> <span class="p">(</span><span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
         <span class="nx">proto</span> <span class="o">=</span> <span class="nx">protos</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">interface_name</span><span class="p">];</span>
-        <span class="nx">protos</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">//release</span>
+        <span class="nx">protos</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">//release
+</span>
     <span class="p">}</span>
     <span class="nx">_construct_proxy_object</span><span class="p">(</span><span class="nx">proto</span><span class="p">);</span>
 
@@ -301,14 +312,17 @@ D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴�
 使用範例
 </h4>
 
-<pre class="highlight"><code><span class="c1">//const DBus = imports.dbus;</span>
+<pre class="highlight"><code><span class="c1">//const DBus = imports.dbus;
+</span>
 <span class="kr">const</span> <span class="nx">DBus</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">rock</span><span class="p">.</span><span class="nx">dbus</span><span class="p">;</span>
 <span class="kr">const</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
 
-<span class="c1">// new way via rock.dbus.</span>
-<span class="c1">// Case 1: 在程式狀態進入 mainloop 之前可用此形式。</span>
+<span class="c1">// new way via rock.dbus.
+</span>
+<span class="c1">// Case 1: 在程式狀態進入 mainloop 之前可用此形式。
+</span>
 <span class="kd">let</span> <span class="nx">notifier</span> <span class="o">=</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
-    <span class="na">bus</span><span class="p">:</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">session</span><span class="p">,</span> 
+    <span class="na">bus</span><span class="p">:</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">session</span><span class="p">,</span>
     <span class="na">service_name</span><span class="p">:</span>   <span class="s1">'org.freedesktop.Notifications'</span><span class="p">,</span>
     <span class="na">object_path</span><span class="p">:</span>    <span class="s1">'/org/freedesktop/Notifications'</span><span class="p">,</span>
     <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.Notifications'</span><span class="p">});</span>
@@ -316,23 +330,26 @@ D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴�
 <span class="kr">const</span> <span class="nx">NetworkManagerServiceName</span> <span class="o">=</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">;</span>
 
 <span class="kd">let</span> <span class="nx">network_manager</span> <span class="o">=</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
-    <span class="na">bus</span><span class="p">:</span>        <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span> 
+    <span class="na">bus</span><span class="p">:</span>        <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span>
     <span class="na">service_name</span><span class="p">:</span>       <span class="nx">NetworkManagerServiceName</span><span class="p">,</span>
     <span class="na">object_path</span><span class="p">:</span>        <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">,</span>
     <span class="na">interface_name</span><span class="p">:</span>     <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">});</span>
 
 <span class="nx">network_manager</span><span class="p">.</span><span class="nx">GetDevicesRemote</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">paths</span><span class="p">){</span>
-    <span class="c1">// 此間內容已處於 mainloop 狀態，必須使用下列兩種形式調用 DBus.ProxyObjectFactory.</span>
+    <span class="c1">// 此間內容已處於 mainloop 狀態，必須使用下列兩種形式調用 DBus.ProxyObjectFactory.
+</span>
     <span class="k">for</span> <span class="p">(</span><span class="kd">let</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">paths</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">print</span><span class="p">(</span><span class="s2">"Path: "</span> <span class="o">+</span> <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
 
-        <span class="c1">// Case 2: 若不知介面原型，則必須給予回呼函數.</span>
-        <span class="c1">// async (callback) mode:</span>
+        <span class="c1">// Case 2: 若不知介面原型，則必須給予回呼函數.
+</span>
+        <span class="c1">// async (callback) mode:
+</span>
         <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
             <span class="na">bus</span><span class="p">:</span>    <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span>
             <span class="na">service_name</span><span class="p">:</span>   <span class="nx">NetworkManagerServiceName</span><span class="p">,</span>
-            <span class="na">object_path</span><span class="p">:</span>    <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> 
-            <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.DBus.Properties'</span> <span class="p">,</span> 
+            <span class="na">object_path</span><span class="p">:</span>    <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span>
+            <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.DBus.Properties'</span> <span class="p">,</span>
             <span class="na">callback</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">network_device</span><span class="p">){</span>
                 <span class="nx">network_device</span><span class="p">.</span><span class="nx">GetAllRemote</span><span class="p">(</span><span class="s2">"org.freedesktop.NetworkManager.Device"</span><span class="p">,</span>
                 <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">){</span>
@@ -344,12 +361,14 @@ D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴�
             <span class="p">}</span>
         <span class="p">});</span>
 
-        <span class="c1">// Case 3: 你給予介面原型(interface_prototype), 則流程可循序進行.</span>
-        <span class="c1">// sync mode:</span>
+        <span class="c1">// Case 3: 你給予介面原型(interface_prototype), 則流程可循序進行.
+</span>
+        <span class="c1">// sync mode:
+</span>
         <span class="kd">let</span> <span class="nx">network_device</span> <span class="o">=</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">ProxyObjectFactory</span><span class="p">({</span>
             <span class="na">bus</span><span class="p">:</span>    <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">,</span>
             <span class="na">service_name</span><span class="p">:</span>   <span class="nx">NetworkManagerServiceName</span><span class="p">,</span>
-            <span class="na">object_path</span><span class="p">:</span>    <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> 
+            <span class="na">object_path</span><span class="p">:</span>    <span class="nx">paths</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span>
             <span class="na">interface_name</span><span class="p">:</span> <span class="s1">'org.freedesktop.DBus.Properties'</span><span class="p">,</span>
             <span class="na">interface_prototype</span><span class="p">:</span> <span class="nx">DBus</span><span class="p">.</span><span class="nx">Properties</span><span class="p">});</span>
 
@@ -360,7 +379,7 @@ D-Bus 會把它的事件註冊在 GNOME Library 事件迴圈中，讓事件迴�
             <span class="nx">print</span><span class="p">(</span><span class="s2">"-- end sync output --"</span><span class="p">);</span>
         <span class="p">});</span>
    <span class="p">}</span>
-<span class="p">});</span> 
+<span class="p">});</span>
 
 <span class="nx">notifier</span><span class="p">.</span><span class="nx">NotifyRemote</span><span class="p">(</span>
     <span class="s2">"appname"</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"message-im"</span><span class="p">,</span> <span class="s2">"Test"</span><span class="p">,</span> <span class="s2">"end after 2 seconds"</span><span class="p">,</span> <span class="p">[],</span> <span class="p">{},</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>

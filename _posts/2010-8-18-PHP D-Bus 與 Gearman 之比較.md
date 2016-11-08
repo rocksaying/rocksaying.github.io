@@ -2,7 +2,7 @@
 title: PHP D-Bus 與 Gearman 之比較
 category: programming
 old-category: PHP
-tags: [d-bus,gearman]
+tags: [php,dbus,gearman]
 permalink: /archives/13478419.html
 ---
 

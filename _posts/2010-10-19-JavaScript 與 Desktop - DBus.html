@@ -2,7 +2,7 @@
 title: JavaScript 與 Desktop - DBus
 category: programming
 old-category: JavaScript
-tags: [javascript,d-bus,gjs,seed]
+tags: [javascript,dbus,gjs,seed]
 permalink: /archives/14229429.html
 ---
 <p>我先前在 <a href="{{ site.baseurl }}/archives/13833669.html">ICOS 2010 記事</a> 提及目前有多項軟體專案，正試圖將 Web 軟體開發經驗延伸到 Linux 桌面軟體開發領域。
@@ -69,7 +69,8 @@ Proxy object
 <span class="p">};</span>
 <span class="nx">ProxyObjectClassName</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
     <span class="na">_init</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">// session bus or system bus</span>
+    <span class="c1">// session bus or system bus
+</span>
 	<span class="nx">DBus</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">proxifyObject</span> <span class="p">(</span><span class="k">this</span><span class="p">,</span>
 				   <span class="s1">'dbus service name'</span><span class="p">,</span>
 				   <span class="s1">'dbus service object path'</span><span class="p">);</span>
@@ -91,25 +92,25 @@ gjs/seed 使用下列的表格形式描述介面規格:
 <pre class="highlight"><code><span class="p">{</span>
     <span class="nl">name</span><span class="p">:</span> <span class="s1">'interface name'</span><span class="p">,</span>
     <span class="nx">methods</span><span class="err">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Method name'</span><span class="p">,</span> 
-            <span class="na">inSignature</span><span class="p">:</span> <span class="s1">'the type signature of input parameters'</span><span class="p">,</span> 
-            <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'the type signature of input values'</span> 
+        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Method name'</span><span class="p">,</span>
+            <span class="na">inSignature</span><span class="p">:</span> <span class="s1">'the type signature of input parameters'</span><span class="p">,</span>
+            <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'the type signature of input values'</span>
         <span class="p">}</span>
         <span class="p">,</span>
         <span class="p">...</span>
     <span class="p">],</span>
     <span class="nx">signals</span><span class="err">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Signal name'</span><span class="p">,</span> 
-            <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> 
-            <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'the type signature of input values'</span> 
+        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Signal name'</span><span class="p">,</span>
+            <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'the type signature of input values'</span>
         <span class="p">}</span>
         <span class="p">,</span>
         <span class="p">...</span>
     <span class="p">],</span>
     <span class="nx">properties</span><span class="err">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Property name'</span><span class="p">,</span> 
-            <span class="na">signature</span><span class="p">:</span> <span class="s1">'the type signature of property'</span><span class="p">,</span> 
-            <span class="na">access</span><span class="p">:</span> <span class="s1">'read or readwrite'</span> 
+        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Property name'</span><span class="p">,</span>
+            <span class="na">signature</span><span class="p">:</span> <span class="s1">'the type signature of property'</span><span class="p">,</span>
+            <span class="na">access</span><span class="p">:</span> <span class="s1">'read or readwrite'</span>
         <span class="p">}</span>
         <span class="p">,</span>
         <span class="p">...</span>
@@ -155,10 +156,13 @@ Notifications Notify
 
 <a name="dbus-notify.js"></a>
 <pre class="highlight"><code><span class="kr">const</span> <span class="nx">DBus</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">dbus</span><span class="p">;</span>
-<span class="c1">// 'const' 是 ECMAScript v5 的保留用字，目前尚未定義其用途。</span>
-<span class="c1">// 在 gjs 和 seed 中，這個關鍵字的用途是定義一個常數。</span>
+<span class="c1">// 'const' 是 ECMAScript v5 的保留用字，目前尚未定義其用途。
+</span>
+<span class="c1">// 在 gjs 和 seed 中，這個關鍵字的用途是定義一個常數。
+</span>
 
-<span class="kd">function</span> <span class="nx">Notifications</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// 定義代理個體的類別</span>
+<span class="kd">function</span> <span class="nx">Notifications</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// 定義代理個體的類別
+</span>
     <span class="k">this</span><span class="p">.</span><span class="nx">_init</span><span class="p">();</span>
 <span class="p">};</span>
 <span class="nx">Notifications</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
@@ -168,8 +172,10 @@ Notifications Notify
 				   <span class="s1">'/org/freedesktop/Notifications'</span><span class="p">);</span>
     <span class="p">}</span>
 <span class="p">};</span>
-<span class="nx">DBus</span><span class="p">.</span><span class="nx">proxifyPrototype</span><span class="p">(</span><span class="nx">Notifications</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="c1">// 將介面內容注入代理類別</span>
-<span class="p">{</span>   <span class="c1">// 描述 org.freedesktop.Notifications 的介面內容 </span>
+<span class="nx">DBus</span><span class="p">.</span><span class="nx">proxifyPrototype</span><span class="p">(</span><span class="nx">Notifications</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="c1">// 將介面內容注入代理類別
+</span>
+<span class="p">{</span>   <span class="c1">// 描述 org.freedesktop.Notifications 的介面內容
+</span>
     <span class="na">name</span><span class="p">:</span> <span class="s1">'org.freedesktop.Notifications'</span><span class="p">,</span>
     <span class="na">methods</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'GetServerInformation'</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'ssss'</span><span class="p">},</span>
@@ -180,7 +186,8 @@ Notifications Notify
     <span class="p">]</span>
 <span class="p">});</span>
 
-<span class="kd">var</span> <span class="nx">notifier</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Notifications</span><span class="p">();</span> <span class="c1">// 建立遠端個體在本地端的代理者</span>
+<span class="kd">var</span> <span class="nx">notifier</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Notifications</span><span class="p">();</span> <span class="c1">// 建立遠端個體在本地端的代理者
+</span>
 
 <span class="nx">notifier</span><span class="p">.</span><span class="nx">GetServerInformationRemote</span><span class="p">(</span>
     <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
@@ -197,7 +204,7 @@ Notifications Notify
     <span class="p">}</span>
 <span class="p">);</span>
 
-<span class="nx">notifier</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'NotificationClosed'</span><span class="p">,</span> 
+<span class="nx">notifier</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'NotificationClosed'</span><span class="p">,</span>
     <span class="kd">function</span><span class="p">(</span><span class="nx">emitter</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">reason</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">print</span><span class="p">(</span><span class="s2">"Closed. ID: "</span> <span class="o">+</span> <span class="nx">id</span> <span class="o">+</span> <span class="s2">", reason: "</span> <span class="o">+</span> <span class="nx">reason</span><span class="p">);</span>
         <span class="nx">main_quit</span><span class="p">();</span>
@@ -230,7 +237,7 @@ $ dbus-send --session --print-reply --dest=org.freedesktop.Notifications \
     /org/freedesktop/Notifications \
     org.freedesktop.DBus.Introspectable.Introspect
 
-$ gjs dbus-notify.js 
+$ gjs dbus-notify.js
 object
 0: notify-osd
 1: Canonical Ltd
@@ -320,7 +327,8 @@ GetDevices 方法可得知目前有幾個網路設備可用。
     <span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_run</span><span class="p">(</span><span class="nx">mainloop</span><span class="p">);</span>
 <span class="p">}</span>
 <span class="k">else</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span> <span class="c1">//Seed doesn't define this.</span>
+    <span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span> <span class="c1">//Seed doesn't define this.
+</span>
     <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
 <span class="p">}</span>
 

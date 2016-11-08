@@ -2,7 +2,7 @@
 title: Embed VLC video in your GTK app and control via DBus
 category: programming
 old-category: Programming
-tags: [python,d-bus,vlc,dbus]
+tags: [python,vlc,dbus]
 permalink: /archives/15945609.html
 ---
 <p>
@@ -18,7 +18,7 @@ VLC 這套媒體播放軟體的擴充性實在好用，在 Linux 桌面環境能
 請留意這個 DBus 介面是一個通用介面，有許多 Linux 環境的媒體播放軟體也逐漸加入此介面的支援行列。
 例如 banshee, rhythmbox, amarok 。所以你也可以透過同樣的 DBus 介面控制它們。
 甚至只需要用 shell script 就可以實現一些簡單的小功能。
-但若你要把播放的影像內容嵌入，則你必須再看那些媒體播放軟體是否提供你指定呈像視窗的選項。 
+但若你要把播放的影像內容嵌入，則你必須再看那些媒體播放軟體是否提供你指定呈像視窗的選項。
 VLC 就可透過 <code>--drawable-xid</code> 指定。
 </p>
 <p>
@@ -57,8 +57,8 @@ xwininfo: Window id: 79691795 "VLC media player"
     <li>
     並非每種視覺控制項都可以用於繪出視訊內容。在 GTK 工具中，我們應使用 <dfn>DrawingArea</dfn> 控制項才能供 VLC 繪出視訊內容。
     </li>
-    
-    <li>To enable vlc's dbus control function: 
+
+    <li>To enable vlc's dbus control function:
 (ref: <a href="http://wiki.videolan.org/DBus">http://wiki.videolan.org/DBus</a>)
     <br/>
 <pre class="language-term">
@@ -70,14 +70,14 @@ $ vlc --control dbus
 (ref: <a href="http://trac.videolan.org/vlc/ticket/4655">http://trac.videolan.org/vlc/ticket/4655</a>)
     <br/>
 <pre class="language-term">
-#X11: 
+#X11:
 $ vlc --drawable-xid $XID
 
-#Windows: 
+#Windows:
 C:> vlc --drawable-hwnd $HWND
 </pre>
     </li>
-</ul>    
+</ul>
 </div>
 
 <p>
@@ -92,11 +92,13 @@ C:> vlc --drawable-hwnd $HWND
 當 GTK 完成上述視覺控制項的配置工作並顯示在螢幕上後，程式會執行 media_play() 函數。它先啟動一個 VLC 行程(launch_vlc_service)，靜待2秒等 VLC 行程啟動完成。接著配置 VLC DBus 的代理個體，透過其 DBus 介面，將指定的影片加入媒體清單並播放之。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
+<pre class="highlight"><code><span class="c">#!/usr/bin/python
+</span>
 <span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">gtk</span><span class="o">,</span> <span class="nn">gtk.gdk</span>
 <span class="kn">import</span> <span class="nn">dbus</span>
-<span class="c">#from dbus.mainloop.glib import DBusGMainLoop</span>
+<span class="c">#from dbus.mainloop.glib import DBusGMainLoop
+</span>
 
 <span class="n">vlc_service</span> <span class="o">=</span> <span class="s">'org.mpris.vlc'</span>
 <span class="n">vlc_path</span> <span class="o">=</span> <span class="s">'/'</span>
@@ -108,7 +110,8 @@ C:> vlc --drawable-hwnd $HWND
 <span class="n">Vlc</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="n">Player</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="n">Tracklist</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="c">#DBusGMainLoop(set_as_default=True)</span>
+<span class="c">#DBusGMainLoop(set_as_default=True)
+</span>
 
 <span class="k">def</span> <span class="nf">init_xid</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
     <span class="k">global</span> <span class="n">XID</span>
@@ -118,7 +121,8 @@ C:> vlc --drawable-hwnd $HWND
 <span class="k">def</span> <span class="nf">launch_vlc_service</span><span class="p">(</span><span class="n">view_id</span><span class="p">):</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="s">"vlc -I dummy --control dbus --drawable-xid </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">view_id</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
-    <span class="n">pid</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">pid</span> <span class="c"># background and NOWAIT</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">pid</span> <span class="c"># background and NOWAIT
+</span>
 
 <span class="k">def</span> <span class="nf">init_player</span><span class="p">():</span>
     <span class="k">global</span> <span class="n">Vlc</span><span class="p">,</span> <span class="n">Player</span><span class="p">,</span> <span class="n">Tracklist</span>
@@ -173,7 +177,8 @@ C:> vlc --drawable-hwnd $HWND
 
 <span class="n">media_view</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">"map"</span><span class="p">,</span> <span class="n">media_play</span><span class="p">)</span>
 
-<span class="n">w</span><span class="o">.</span><span class="n">set_decorated</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span> <span class="c"># disable all decorations.</span>
+<span class="n">w</span><span class="o">.</span><span class="n">set_decorated</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span> <span class="c"># disable all decorations.
+</span>
 <span class="n">w</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>
 
 <span class="n">w</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">"destroy"</span><span class="p">,</span> <span class="n">program_quit</span><span class="p">)</span>
