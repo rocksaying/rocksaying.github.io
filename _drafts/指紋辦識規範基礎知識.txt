@@ -1,0 +1,54 @@
+指紋辦識規範基礎知識
+
+0. 基本流程
+
+取得指紋影像 -> 解析紋路記錄 -> 辨別不同記錄。
+
+附圖來源: http://www.identityone.net/BiometricTechnology.aspx
+
+1. 指紋影像資料 FID
+
+使用指紋掃描設備，掃描手指指紋，取得指紋影像資料。術語稱之為 FID (Fingerprint Image Data)。
+
+FID 是無檔頭的 raw 資料，而不是一般常見的 BMP 或 JPEG 格式。
+
+FID 的標準規範為:
+
+* ISO/IEC 19794-4
+* ANSI 381-2004
+
+指紋掃描機讀出的指紋影像資料，一般提供這兩項規範的格式。ISO 規範的檔頭格式為 FIR 。
+
+NIST (美國國家標準局) 建議 FID 的檔案儲存格式為 WSQ (Wavelet Scalar Quantization) 或 JPEG2000 lossless 。
+
+2. 指紋細節記錄 FMD
+
+取得指紋影像資料後，必須再從影像資料中解析出指紋細節記錄 (Minutiae record)。術語稱之為 FMD (Fingerprint Minutiae Data)。一般稱為指紋特徵 (features) 或樣板 (template)。這些解析過後的結構性指紋細節記錄，才是指紋辨識引擎真正的處理對象。
+
+FMD 可組成資料結構中的圖，但不能從 FMD (節點) 反推回原本的 FID (指紋影像)。故基於個人隱私與安全性，絕大多數指紋辨識系統不儲存用戶的 FID ，僅儲存解析過的 FMD 。
+
+FMD 的標準規範為:
+
+* ISO/IEC 19794-2
+* ANSI 378-2004
+
+ISO 規定的檔案儲存格式為:
+
+* Fingerprint Minutiae Format (FMR)
+* Fingerprint Card Format (FMCard)
+* Compact Fingerprint Card Format (FMCard Compact).
+
+FMD 的檔案儲存格式可從檔案開頭的前 3 個字元看出，例如 FMR 格式的開頭必為 "FMR" 。
+
+3. 識別與驗證
+
+指紋辨識引擎的辨識工作分為兩種情境:
+
+* Identification - 識別。專指一對多 (1:Many) 的使用情境。
+* Verification - 驗證。專指一對一 (1:1) 的使用情境。
+
+大多數辨識引擎的辨識結果採用統計分數概念，術語稱為 False Accept Rate (FAR) 或 False Match Rate (FMR) 。它的意義是可接受的判斷錯誤機率。在一對多情境中，分數愈高的指紋表示判斷錯誤的機率愈低；判斷錯誤的機率高於門檻值 (Threshold) 的指紋，直接判定不相符。
+
+一般的測試門檻是 0.001% (1 in 100,000)，預期十萬筆中，會有一筆判斷錯誤。
+
+注意，測試門檻愈高，辨識工作愈耗時。通常只在一對一情境中，才會採用比 0.001% 更高的門檻值。
