@@ -163,5 +163,6 @@ Destructuring 是一個語法糖衣。介紹到此也就差不多了。
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
 * 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
+* 石頭閒語: [ECMAScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
 * [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)
 * [Variable declarations and more in the new JavaScript](http://www.ibm.com/developerworks/web/library/wa-ecmascript6-neward-p1/index.html?ca=drs-&ce=ism0070&ct=is&cmp=ibmsocial&cm=h&cr=crossbrand&ccy=us)

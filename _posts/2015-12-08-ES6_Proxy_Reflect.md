@@ -75,3 +75,4 @@ Proxy 的用途並不廣泛，它主要用於設計測試框架。而 Reflect �
 * 石頭閒語: [ECMAScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
 * 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
+* 石頭閒語: [ECMAScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
