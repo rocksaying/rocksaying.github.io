@@ -79,15 +79,23 @@ data-hashtags="{{ page.tags | join: ',' }}">Tweet</a>
 {% endif %}
 </div><!--pagination-->
 
+{% if page.comment %}
 <div id="disqus_thread"></div>
 <script>
 /**
-    *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-    *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
-    */
+LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+*/
 var disqus_config = function () {
     this.page.url = "http://{{ site.url }}{{ site.baseurl }}{{ page.url }}";  // Replace PAGE_URL with your page's canonical URL variable
-    this.page.identifier = "{{ page.id }}"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+
+  {% case page.comment %}
+  {% when 'shared' %}
+    this.page.identifier = "{{ site.url }}"; // the post will shared the same thread of comments on this site.
+  {% when 'single' %}
+    this.page.identifier = "{{ page.id }}"; // single comment
+  {% else %}
+    this.page.identifier = "{{ page.comment }}"; // same title comment
+  {% endcase %}
 };
 (function() {  // DON'T EDIT BELOW THIS LINE
     var d = document, s = d.createElement('script');
@@ -96,6 +104,7 @@ var disqus_config = function () {
     (d.head || d.body).appendChild(s);
 })();
 </script>
+{% endif %}
 
 </footer>
 </article>
