@@ -4,6 +4,14 @@ category: computer
 tags: [linux,uvc]
 ---
 
+UVC ([USB video class - wikipedia](https://zh.wikipedia.org/wiki/USB%E8%A6%96%E9%A0%BB%E9%A1%9E%E5%88%A5)) 泛指使用 USB 連接介面的影像產品。一般使用者最熟悉的 UVC 設備就是 WebCam 。除了 WebCam ，還有數位攝影機、電視卡、或具有照相功能的設備。故一台電腦接了兩台以上的 UVC 設備並非罕見。
+
+在 Linux 核心中，會為可用的 UVC 設備各自分配一個 dev 路徑，檔名為 video 編號。例如 */dev/video0*, */dev/video1* 。但是當你的電腦接了兩台以上不同的 UVC 設備時，你將發現系統缺乏清楚的訊息告訴你這些 dev 路徑與 UVC 設備的關係。你不知道這些 dev 路徑各自代表哪一台 UVC 設備。當你的應用軟體需要用 dev 路徑開啟特定設備時，這會帶給你一些小麻煩。
+
+本文以 shell script 和 python 分別實作了一個列出 dev 路徑與其代表的 UVC 設備名稱的小工具。
+
+<!--more-->
+
 ### shell script
 
 ls-uvc.sh
