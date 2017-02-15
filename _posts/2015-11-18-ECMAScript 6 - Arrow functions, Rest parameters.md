@@ -1,5 +1,5 @@
 ---
-title: 學習 ECMAScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value
+title: 學習 ECMAScript 6 - 新函數語法 - Arrow function, Rest and Spread parameters, Default value
 category: programming
 tags: [javascript,ecmascript,es6,function]
 lastupdated: 2017-01-13
@@ -7,18 +7,18 @@ lastupdated: 2017-01-13
 
 ECMAScript 6 為函數定義與操作增加了一些新的語法，在此一併介紹。它們分別是:
 
-* 匿名函數箭形語法: Arrow functions
+* 匿名函數箭形語法 (箭頭函數): Arrow functions
 * 不定數量參數: Rest parameters / Spread parameters
 * 指定參數預設值: Parameters default value
 
 <!--more-->
 
-### Arrow functions 箭形語法
+### Arrow functions 箭頭函數
 
-ECMAScript 傳統的匿名函數定義語法只是去掉一般函數定義中的名稱部份。 ES6 則從 C# 借來了新的匿名函數語法，讓設計者少打一些字。並稱此新語法為 <dfn>Arrow functions (箭形函數)</dfn>。因為我本來就會 C# ，這個 ES6 的新語法在我眼中反而有著熟悉感。
+ECMAScript 傳統的匿名函數定義語法只是去掉一般函數定義中的名稱部份。 ES6 則從 C# 借來了新的匿名函數語法，讓設計者少打一些字。並稱此新語法為 <dfn>Arrow functions (箭頭函數)</dfn>。因為我本來就會 C# ，這個 ES6 的新語法在我眼中反而有著熟悉感。
 
 <div class="note">
-在 C# 中，此語法就稱為「匿名函數」。但 ECMAScript 原本就有匿名函數語法。為了區別新舊，ES6 造了一個象形字 <dfn>Arrow functions</dfn> ，以新語法中的主要符號 <code>=&gt;</code> 的箭頭形狀稱呼這項新語法。我叫它匿名函數箭形語法。
+在 C# 中，此語法就稱為「匿名函數」。但 ECMAScript 原本就有匿名函數語法。為了區別新舊，ES6 造了一個象形字 <dfn>Arrow functions</dfn> ，以新語法中的主要符號 <code>=&gt;</code> 的箭頭形狀稱呼這項新語法。我叫它匿名函數箭形語法。一般稱為<dfn>箭頭函數</dfn>。
 </div>
 
 {% highlight javascript %}
