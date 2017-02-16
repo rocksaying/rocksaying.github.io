@@ -26,6 +26,7 @@ You should see https://rocksources.googlecode.com/ to get more information about
 ```
 <img src="http://www.gnu.org/graphics/lgplv3-147x51.png" alt="LGPLv3"/>
 
+<!--more-->
 
 ## 概觀
 
@@ -42,6 +43,8 @@ source repo: [https://github.com/shirock/rocksources/tree/master/web/touch-ime](
 * on-screen-keyboard-demo.html - 配合 touch-ime 的 OSD Keyboard 範例。
 
 deb安裝: 安裝 touch-ime 。檔案將被安裝在 /usr/share/javascript/touch-ime 。以瀏覽器開啟範例文件，例如 file:///usr/share/javascript/touch-ime/index.html (部份瀏覽器不允許開啟 file:// 協定) 。
+
+參考: [Touch IME 介紹](http://rocksaying.tw/archives/25452026.html)。
 
 ### 使用情境 (index.html)
 
