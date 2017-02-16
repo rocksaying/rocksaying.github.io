@@ -1,9 +1,8 @@
 ---
 title: Touch IME HTML5 輸入法引擎使用手冊
 category: computer
-tags: [touch-ime,javascript,html5]
+tags: [touch-ime,html5,javascript,輸入法]
 ---
-
 
 ```text
 Touch 輸入法 Copyright (C) 2013 遊手好閒的石頭成 <shirock.tw@gmail.com>
@@ -30,7 +29,28 @@ You should see https://rocksources.googlecode.com/ to get more information about
 
 ## 概觀
 
-TouchInputMethod (以下稱 *touch-ime* ) 是針對純觸控螢幕、無鍵盤環境的 HTML5 應用軟體設計的輸入法引擎。目前提供四種中文輸入法: 注音、拼音、倉頡速成和行列30。
+TouchInputMethod (以下稱 *touch-ime* ) 是針對純觸控螢幕、無鍵盤環境的 HTML5 應用軟體設計的輸入法引擎。
+
+使用特徵:
+
+* 焦點進入輸入框時，便會出現鍵盤。一般設計時亦可採固定顯示。
+* touch-ime 會記憶最近使用的輸入框。就算使用者碰觸其他區域使焦點離開輸入框， touch-ime 還是會把輸入內容填入預期的輸入框。
+* 點擊鍵盤上的「結束輸入法」鍵，則會收起鍵盤。
+* touch-ime 可以在失去焦點的狀態下，繼續輸入工作。所以不會以「失去焦點」為時間點自動收起浮動鍵盤。
+* 選取特定型態輸入框時 (password, mail) ，會出現對應型態的鍵盤佈局。
+* touch-ime 會記憶單純文字型態 (text) 的輸入框使用的輸入法引擎，而不是每次都使用預設輸入法引擎。
+* 可擴展的輸入法引擎以及可自定的鍵盤佈局。
+* 可自定詞庫與常用符號表。
+
+目前提供下列輸入法與鍵盤佈局:
+
+* 英數: en
+* 行列30: array30
+* 注音: zhuyin
+* 拼音 (漢語拼音): pinyin
+* 倉頡速成 (快速倉頡): quick
+* 倉頡三代: cangjie3
+* 電子郵件型態輸入元件適用的鍵盤佈局: email
 
 source repo: [https://github.com/shirock/rocksources/tree/master/web/touch-ime](https://github.com/shirock/rocksources/tree/master/web/touch-ime)
 
