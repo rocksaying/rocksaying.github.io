@@ -2,6 +2,7 @@
 title: 台灣 119 求救簡訊 APP 使用說明與開發筆記
 category: programming
 tags: [html5,gps,webapp,uwp]
+lastupdated: 2017-03-02
 cover: http://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png
 comment: taiwan119gps
 ---
@@ -27,12 +28,20 @@ comment: taiwan119gps
 注意:
 
 * 啟動程式時，最好在空曠或看得到天空的地點，提高 GPS 偵測位置準確度。
-* 發送簡訊使用電信通訊系統。你的設備必須提供電信簡訊功能，如手機。如果你使用的手機收不到訊號的話，你需要移動到通信訊號良好的地方。
+* 發送簡訊使用 SMS 電信系統。你的設備必須提供 SMS 簡訊功能，如手機。如果你使用的手機收不到訊號的話，你需要移動到通信訊號良好的地方。
 
 ![使用圖例](http://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png)
 
 
 ### 安裝方式
+
+你可以選擇下列其中一種:
+
+1. 下載源碼自行修改。
+2. 直接以瀏覽器開啟 Webapp 。
+3. Windows 10 用戶可以安裝 UWP 版本。
+
+#### 源碼
 
 * 取得 [台灣 119 求救簡訊 源碼](https://github.com/shirock/rocksources/tree/master/web/taiwan-119-gps) 。
 * 以 GNU GPL 3.0 軟體授權證授權使用者利用。
@@ -46,7 +55,7 @@ comment: taiwan119gps
 
 #### Windows UWP App
 
-要在「Windows 市集」上發行 App 前，必須先註冊微軟開發人員帳號，且最基本的個人帳號也要收一筆註冊費。而我沒有註冊開發人員帳號，也完全不想為這個免費的工具花錢註冊，所以我不打算自己上傳「台灣 119 求救簡訊」到 Windows 市集。但我歡迎具有微軟開發人員帳號的朋友，將它打包上傳到 Windows 市集。 **請記得維持 GNU GPL 的自由軟體授權聲明** 。
+此工具未在「Windows 市集」上發佈。因為在「Windows 市集」上發行 App 前，必須先註冊微軟開發人員帳號，且最基本的個人帳號也要收一筆註冊費。而我沒有註冊開發人員帳號，也完全不想為這個免費的工具花錢註冊，所以我不打算自己上傳「台灣 119 求救簡訊」到 Windows 市集。但我歡迎具有微軟開發人員帳號的朋友，將它打包上傳到 Windows 市集。 **請記得維持 GNU GPL 的自由軟體授權聲明** 。
 
 我僅提供 UWP 的 .appx 安裝檔供人安裝。想透過 .appx 安裝的用戶，需要啟用 Windows 10 系統設定的「更新與安全性 > 開發人員專用 > 側載應用程式」。
 
