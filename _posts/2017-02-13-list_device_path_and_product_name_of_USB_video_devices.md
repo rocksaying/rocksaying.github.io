@@ -21,6 +21,11 @@ ls-uvc.sh
 # list device path and product name of USB video devices (WebCam).
 UVCROOT=/sys/bus/usb/drivers/uvcvideo
 
+if [ ! -d $UVCROOT ]; then
+    echo "No UVC device!"
+    exit 0
+fi
+
 for FILE in `ls $UVCROOT`; do
     V4LPATH=$UVCROOT/$FILE/video4linux
     if [ -d $V4LPATH ]; then
