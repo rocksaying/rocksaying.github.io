@@ -2,7 +2,7 @@
 title: 台灣 119 求救簡訊 APP 使用說明與開發筆記
 category: programming
 tags: [html5,gps,webapp,uwp]
-lastupdated: 2017-03-02
+lastupdated: 2017-06-22
 cover: http://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png
 comment: taiwan119gps
 ---
@@ -12,6 +12,8 @@ comment: taiwan119gps
 此類工具對經常從事戶外活動的人頗有用處，各地方政府亦有發行類似的 App 。例如新聞「[定位神準！119APP救出摸黑的登山客](http://tw.hiking.biji.co/index.php?q=news&act=info&id=8839)」。但受限於我國政府單位的短淺目光，僅在 Android 和 iOS 的軟體市集上發布此類 App 。
 
 我用 HTML5 和 JavaScript 設計了「台灣 119 求救簡訊」這個純網頁版本的 Webapp 。此外，受益於微軟在 Windows 10 時增加了 UWP (Universal Windows Platform, 通用 Windows 平台) 的應用程式模式，同樣的源碼可以直接包裝成 UWP App 供 Windows 安裝。
+
+* [登山突發狀況免驚 手機求援牢記這2招](http://www.cna.com.tw/news/firstnews/201706210354-1.aspx)
 
 <!--more-->
 
@@ -23,7 +25,7 @@ comment: taiwan119gps
 
 接著，在求救訊息欄位中，請輸入受困狀況和個人穿著特徵。此處的文字內容是按照內政部消防署建議的格式。如果用戶在野外受困，這些訊息可以幫助救難人員尋找你。你可以在出門前先輸入你的姓名和穿著特徵，「台灣 119 求救簡訊」會儲存此處內容。
 
-當 GPS 位置偵測完成後，就會在畫面下方顯示用戶目前所在地點的經緯度，並出現 Google 地圖讓你確認地點(如果網際網路可用)。如果地點無誤，你就可以按下「發送求救簡訊」的按鈕，然後用戶的畫面就會切換到簡訊系統，並帶入簡訊內容和 GPS 位置。你只需要再確認一次內容，然後按下發送即可。
+當 GPS 位置偵測完成後，就會在畫面下方顯示用戶目前所在地點的經緯度，並出現 Google 地圖讓你確認地點(如果網際網路可用)。若地點無誤，你就可以按下「發送求救簡訊」的按鈕，然後用戶的畫面就會切換到簡訊系統，並帶入簡訊內容和 GPS 位置。你只需要再確認一次內容，最後按下發送即可。
 
 注意:
 
@@ -50,7 +52,7 @@ comment: taiwan119gps
 
 台灣 119 求救簡訊 Webapp 網址: [http://rocksaying.tw/webapp/119/](http://rocksaying.tw/webapp/119/index.html) 。將此網址保存在瀏覽器書籤。
 
-由於這是單一網頁版本，只需要儲存單一的 html 文件就可使用。故也可選擇儲存離線網頁在手機中，就可在不連接網際網路的狀態下用瀏覽器開啟。
+由於這是單一網頁版本，只需要儲存單一的 html 文件就可使用。 **故選擇儲存離線網頁在手機中，可不連接網際網路的狀態下用瀏覽器開啟。**
 
 
 #### Windows UWP App
