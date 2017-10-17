@@ -18,11 +18,11 @@ Mosquitto 安裝程式 (Native build) 會提示你在繼續安裝前，先複製
 
 ##### 1. pthreadVC2.dll
 
-來源 ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/ 。下載 pthreadVC2.dll ，複製到 C:\Windows 目錄中。
+來源 [ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/](ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/) 。下載 pthreadVC2.dll ，複製到 C:\Windows 目錄中。
 
 ##### 2. Win32 OpenSSL v1.0.2 Light 32 bits
 
-來源 https://slproweb.com/products/Win32OpenSSL.html 。下載 Win32OpenSSL_Light-1_0_2L.exe 。
+來源 [https://slproweb.com/products/Win32OpenSSL.html](ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/) 。下載 Win32OpenSSL_Light-1_0_2L.exe 。
 
 注意，不要下載 v1.1.0f 版，這個較新的版本中並沒有 Mosquitto 需要的 *libeay32.dll* 和 *ssleay32.dll* 兩個檔案。也不要下載 Win64 版本。
 
@@ -34,7 +34,7 @@ Mosquitto 安裝程式 (Native build) 會提示你在繼續安裝前，先複製
 
 目前的 Mosquitto (v1.4.9) 使用 Visual Studio 2015 編譯，所以你實際上還需要安裝 Visual C++ 2015 可轉發套件 (Visual C++ Redistributable for Visual Studio 2015) 。安裝文件沒有說明這一點。
 
-來源 https://www.microsoft.com/en-us/search/result.aspx?q=+Visual+C%2B%2B+Redistributable+for+Visual+Studio+2015
+來源 [Microsoft Download Search](https://www.microsoft.com/en-us/search/result.aspx?q=+Visual+C%2B%2B+Redistributable+for+Visual+Studio+2015)
 
 若未安裝 Visual C++ Redistributable for Visual Studio 2015 ，則 mosquitto 執行時會說缺少  *vcruntime140.dll* 。
 
