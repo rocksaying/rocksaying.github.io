@@ -35,10 +35,7 @@ Debian 8 套件庫中提供了 mosquitto 1.3 版套件，此版支持 MQTT 3.1/3
 
 安裝之後， mosquitto 就會作為背景服務自動執行。可以查看 /etc/mosquitto/mosquitto.conf 了解設置內容。如果你的電腦位於公用網路上，建議加上 <q>bind_address localhost<q> 避免外部電腦連入。請參考 [mosquitto.conf](http://mosquitto.org/man/mosquitto-conf-5.html) 了解其他設置項目。修改設置後，再以 root 身份於命令列下達 <kbd>/etc/init.d/mosquitto restart</kbd> 重啟服務。
 
-<div class="note">
-如果你想安裝 mosquitto 最新的版本，請參考「[MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})」的昇級設置。
-</div>
-
+如果你想安裝 mosquitto 最新的版本或需要 MQTT over websocket 功能，請參考「 [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %}) 」的昇級設置。
 
 ### topic, payload 與 qos
 
