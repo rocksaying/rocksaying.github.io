@@ -8,7 +8,11 @@ tags: [IoT,MQTT,mosquitto]
 
 #### 缺少功能
 
-Mosquitto 的 Windows 系統安裝包並未啟用 MQTT over websocket 功能。如果你需要這功能，你得要下載原始碼自行編譯。
+Mosquitto 的 Windows 系統安裝包並未啟用 MQTT over websockets 功能。如果你需要這功能，你得要下載原始碼自行編譯。
+
+至於我個人的作法則不一樣。因為是 Windows 10 ，所以我啟用 Windows Subsystem for Linux (WSL) 安裝 Ubuntu on Windows 。然後在 Ubuntu on Windows 中直接用 apt-get 安裝 mosquitto 套件，同 [Debian 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})。本文寫作時， Ubuntu on Windows 運行的散佈版本為 16.04 ， mosquitto 套件版本為 1.4.8 ，已可使用 MQTT over websockets 。
+
+Windows Subsystem for Linux 是好東西啊。
 
 #### 安裝時的必要項目
 
