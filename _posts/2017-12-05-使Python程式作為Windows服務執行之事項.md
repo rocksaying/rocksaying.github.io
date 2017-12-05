@@ -13,7 +13,7 @@ tags: [python,windows]
 
 #### 為何需要 nssm
 
-在 Linux/Unix 系統的 Python 程序員眼中，想讓一個 Python 程式在開機後自動啟動於背景中工作，是一件很簡單的事 (<span class="note">這種開機後就在背景中工作的程式， Linux/Unix 稱為 *daemon* ，而在 Windows 上，就是 *Windows 服務 (Windows Service)* 。</span>) 最直覺的做法，不過是編輯 */etc/rc.local* ，加上一行 Python 指令，並在指令最後補上一個 `&` 字元。但同一件事，在 Windows 上就不是那麼簡單了。
+在 Linux/Unix 系統的 Python 程序員眼中，想讓一個 Python 程式在開機後自動啟動於背景中工作，是一件很簡單的事 (<span class="note">這種開機後就在背景中工作的程式， Linux/Unix 稱為 *daemon* ，而在 Windows 上，就是 *Windows 服務 (Windows Service)* </span>)。 最直覺的做法，不過是編輯 */etc/rc.local* ，加上一行 Python 指令，並在指令最後補上一個 `&` 字元。但同一件事，在 Windows 上就不是那麼簡單了。
 
 首先， Windows 對服務程式要求不一樣的啟動方式。如果你使用 Python.org 釋出的 Windows 版本 Python ，按一般 Python 程式的寫法，你的程式並不能作為 Windows 服務啟動。這幾乎是所有 Windows 的解譯式開發工具都會碰上的狀況。這時，你需要一個發動器作為前導。將這個發動器以 Windows 服務啟動，再由它導入你的 Python 程式。
 
