@@ -9,6 +9,7 @@
 
 * lastupdated
 * comment
+* cover
 
 comment:
 
