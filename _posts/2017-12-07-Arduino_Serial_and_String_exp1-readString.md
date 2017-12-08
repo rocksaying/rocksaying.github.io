@@ -1,7 +1,7 @@
 ---
 title: Arduino Serial 與 String 使用經驗 - readString
 category: programming
-tags: [arduino,serial,智慧農業]
+tags: [arduino,serial,lora,智慧農業]
 cover: https://i.imgur.com/WhjgjLm.jpg
 ---
 
@@ -112,6 +112,7 @@ void loop()
 
 ###### 參考資料
 
+* [Arduino Serial 與 String 使用經驗 - readBytes]({% post_url 2017-12-08-Arduino_Serial_and_String_exp2-readBytes %})
 * [Arduino String](https://www.arduino.cc/reference/en/language/variables/data-types/stringobject/)
 * [Arduino Serial](https://www.arduino.cc/reference/en/language/functions/communication/serial/)
 * [Arduino Stream](https://www.arduino.cc/reference/en/language/functions/communication/stream/)
