@@ -245,7 +245,7 @@ void loop()
 
 ###### 參考資料
 
-* [readString 使用經驗]({% post_url 2017-12-07-Arduino_Serial_and_String_exp1-readString %})
+* [Arduino Serial 與 String 使用經驗 - readString]({% post_url 2017-12-07-Arduino_Serial_and_String_exp1-readString %})
 * [Arduino String](https://www.arduino.cc/reference/en/language/variables/data-types/stringobject/)
 * [Arduino Serial](https://www.arduino.cc/reference/en/language/functions/communication/serial/)
 * [Arduino Stream](https://www.arduino.cc/reference/en/language/functions/communication/stream/)
