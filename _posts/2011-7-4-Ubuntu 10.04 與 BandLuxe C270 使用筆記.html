@@ -65,33 +65,34 @@ Ubuntu 10.04 的 Linux kernel 版本是 2.6.32 ，已經支援 BandLuxe C270。
 我寫成 shell script ，如下:
 </p>
 
-<pre class="highlight"><code><span class="c">#!/bin/sh</span>
+{% highlight sh %}
+#!/bin/sh
 
-<span class="nv">DEVICE_NAME</span><span class="o">=</span><span class="s2">"BandLuxe C270"</span>
-<span class="nv">DEVICE</span><span class="o">=</span>/dev/disk/by-label/BandLuxe<span class="se">\\</span>x20C270
 
-<span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$DEVICE</span> <span class="o">]</span>; <span class="k">then
-  </span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">DEVICE_NAME</span><span class="k">}</span><span class="s2"> is not pluging. I will do nothing."</span>
-  <span class="nb">exit </span>1
-<span class="k">fi
+DEVICE_NAME="BandLuxe C270"
+DEVICE=/dev/disk/by-label/BandLuxe\\x20C270
 
-</span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">DEVICE_NAME</span><span class="k">}</span><span class="s2"> found."</span>
-sudo eject <span class="nv">$DEVICE</span>
+if [ ! -e $DEVICE ]; then
+  echo "${DEVICE_NAME} is not pluging. I will do nothing."
+  exit 1
+fi
 
-<span class="nb">echo</span> <span class="s2">"Waiting for system detect </span><span class="k">${</span><span class="nv">DEVICE_NAME</span><span class="k">}</span><span class="s2"> as 3G Modem. (Ctrl+C to break)"</span>
-<span class="nv">WAITING</span><span class="o">=</span>1
-<span class="k">while</span> <span class="o">[</span> <span class="nv">$WAITING</span> -eq 1 <span class="o">]</span>; <span class="k">do
-  </span><span class="nb">echo</span> -n <span class="s2">"."</span>
+echo "${DEVICE_NAME} found."
+sudo eject $DEVICE
+
+echo "Waiting for system detect ${DEVICE_NAME} as 3G Modem. (Ctrl+C to break)"
+WAITING=1
+while [ $WAITING -eq 1 ]; do
+  echo -n "."
   sleep 1
-  <span class="k">if</span> <span class="o">[</span> -e /dev/ttyUSB0 <span class="o">]</span>; <span class="k">then
-    </span><span class="nb">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">Ok."</span>
-    <span class="nv">WAITING</span><span class="o">=</span>0
-  <span class="k">fi
+  if [ -e /dev/ttyUSB0 ]; then
+    echo "\nOk."
+    WAITING=0
+  fi
 done
 
-</span><span class="nb">exit </span>0
-</code></pre>
-
+exit 0
+{% endhighlight %}
 
 <h4>
 usb modeswitch
