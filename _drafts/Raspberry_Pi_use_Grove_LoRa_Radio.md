@@ -1,13 +1,33 @@
 ---
 title: Raspberry Pi 使用 Grove LoRa 無線模組
 category: programming
-tags: [raspberrypi,lora,智慧農業]
+tags: [raspberrypi,lora,mqtt,智慧農業]
 cover:
 ---
 
+本案例在 Raspberry Pi 使用 [Grove - LoRa Radio](http://wiki.seeed.cc/Grove_LoRa_Radio/) 模組，實作簡單的 LoRa 無線應用。 Raspberry Pi 的角色是 Gateway 。它負責收集其他 LoRa 模組的訊號，再透過 Internet 發佈到 MQTT 頻道上。
+
+Grove LoRa Radio 模組的供應商並不提供 Raspberry Pi 使用的 SDK 。但 Alexander Krause 為它寫了一個 Python 套件，咼稱為 pyRFM 。各位可以在 Github 上取得 pyRFM 的源碼: [erazor83/pyRFM](https://github.com/erazor83/pyRFM)。
 
 <!--more-->
 
+#### 作業系統與硬體支援
+
+拜 Python 的跨平台特性所賜， pyRFM 一舉打破了 Grove LoRa Radio 的供應商對其他硬體平台支援不足的困境。只要可以運行 Python 環境的作業平台，都可以透過 pyRFM 使用 Grove LoRa Radio 。我本人在下列作業平台中成功使用:
+
+* Raspberry Pi 1/2/3: Raspbian 作業系統。
+* x86 PC: Windows 10 作業系統 ，安裝 CPython3 for win32 。
+* x86 PC: Bash on Ubuntu on Windows 子系統。
+* x86 PC: Debian 作業系統。
+
+我都使用 Python 3 。
+
+#### 硬體連接
+
+Grove LoRa Radio 模組被封裝為一個 serial 連接裝置。與 Raspberry Pi 連接時，要接在 GPIO 的 serial 埠針腳。與 PC 連接時，則需要使用 USB to TTL 轉接模組。我個人用 CP2102 晶片或 FTDI FT232R 晶片的轉接模組。
+
+
+#### 接收 LoRa 訊號
 
 {% highlight python %}
 #!/usr/bin/python3
@@ -80,4 +100,4 @@ if ll.setOpModeSleep(True, True):
 
 {% endhighlight %}
 
-
+#### 發佈到 MQTT
