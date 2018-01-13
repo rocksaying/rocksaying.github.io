@@ -40,12 +40,12 @@ Raspberry Pi 3 內建了藍牙模組，為此它改變了過去的硬體 UART �
 不論你是否啟用硬體 UART ， Pi 3 都會建立 */dev/serial0* 這個設備符號指向真正的 UART 設備。所以使用 pyRFM 時，應該以 */dev/serial0* 作為連接埠參數。不建議直接用 */dev/ttyS0* 或 */dev/ttyAMA0* 。
 
 <div class="note">
-對於 UART 的變動與調整設置，官方文件 [The Raspberry Pi UARTs](https://www.raspberrypi.org/documentation/configuration/uart.md) 有詳細的說明。隨著 UART 和 藍牙設備的設置參數不同， */dev/ttyS0* 和 */dev/ttyAMA0* 連接的設備可能會互換。為了避免使用上的困擾， Pi 3 固定讓 */dev/serial0* 指向 UART ，讓 */dev/serial1*  指向藍牙設備。
+對於 UART 的變動與調整設置，官方文件 [The Raspberry Pi UARTs](https://www.raspberrypi.org/documentation/configuration/uart.md) 有詳細的說明。隨著 UART 和 藍牙設備的設置參數不同， /dev/ttyS0 和 /dev/ttyAMA0 連接的設備可能會互換。為了避免使用上的困擾， Pi 3 固定讓 /dev/serial0 指向 UART ，讓 /dev/serial1  指向藍牙設備。
 </div>
 
 #### LoRa 訊號接收程式
 
-首先，你需要取得 [pyRFM 源碼](https://github.com/erazor83/pyRFM) 。然後手動安裝到 Python3 的套件目錄內。在 Pi 3 ，我安裝在 /usr/lib/python3.5/pyrfm 。如果你不是安裝在 Python3 預設的套件目錄內，你得在程式中用 `sys.path.append()` 指定 pyRFM 的路徑。
+首先，你需要取得 [pyRFM 源碼](https://github.com/erazor83/pyRFM) 。然後手動安裝到 Python3 的套件目錄內。在 Pi 3 ，我安裝在 /usr/lib/python3.5/pyrfm 。如果你不是安裝在 Python3 預設的套件目錄內，你得在程式中用 `sys.path.append()` 加入 pyRFM 的路徑。
 
 pyRFM 初始化時必須指定 serial port 參數。在 x86 PC 的 Linux 系統上，預設是 */dev/ttyS0* ；但在 Pi 3 ，則應該用 */dev/serial0* 。原因在上節中說明了。至於 Windows 系統的話，參數的字串格式是 *COM2* 之類。數字部分則需自己到裝置管理員中查看。
 
