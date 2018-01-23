@@ -14,7 +14,7 @@ permalink: /archives/44121826.html
 
 <p>考量回傳 false 形成語意矛盾， CG 在 <a href="https://code.google.com/p/schema-database/source/detail?r=61">r61</a> 時擴充了一項規則。當控制項方法回傳介於 200~599 之間的整數 (<em>必須是整數，而不是字串</em>)，就將此回傳值視為控制項方法要回報給客戶端的狀態碼。並且認為這是一個只需要回報狀態碼而沒有後續內容的動作，故也不繼續載入視圖。如此一來，就可以在方法的回傳動作中明確表達設計意圖，同時讓 CG 理解此動作不必載入視圖。 </p>
 
-<pre class="highlight"><code>
+{% highlight php %}
 class Player
 {
     // Before r61
@@ -35,7 +35,7 @@ class Player
         return HttpResponse::OK;
     }
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>比較上例兩個新舊寫法，新寫法更直觀，語意更明確。</p>
@@ -63,17 +63,17 @@ class Player
 
 <p>因此舊寫法，如 <code>HttpResponse::exception(HttpResponse::NOT_FOUND);</code> ，現在可以寫成 <code>HttpResponse::not_found();</code> 。意義不變，長度少一半。當然按照 r61 擴充的回傳規則，你寫成 <code>return HttpResponse::NOT_FOUND;</code> 也一樣。但是回應方法可以接受一個狀態訊息參數，這是回傳值做不到的事。</p>
 
-<pre class="highlight"><code>
+{% highlight php %}
 class Player
 {
     // Before r63
     /**
-    @param $track_number should &gt;= 1.
+    @param $track_number should >= 1.
      */
     public function play_track($track_number)
     {
         $number = intval($track_number);
-        if ($number <span class="err">&lt;</span>= 0) {
+        if ($number <= 0) {
             HttpResponse::exception(HttpResponse::BAD_REQUEST, "Bad Track Number");
         }
 
@@ -84,7 +84,7 @@ class Player
     public function play_track($track_number)
     {
         $number = intval($track_number);
-        if ($number <span class="err">&lt;</span>= 0) {
+        if ($number <= 0) {
             HttpResponse::bad_request("Bad Track Number");
             // or
             return HttpResponse::BAD_REQUEST;
@@ -93,7 +93,7 @@ class Player
         // ...
     }
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>附帶一提，在 <a href="https://code.google.com/p/schema-database/source/detail?r=62">r62</a> 後，CG 會檢查參數數量是否滿足控制項方法宣告。如果參數不夠，會直接回報狀態 400 (Bad request) 。所以範例的 <code>play_track()</code> 方法不需要先確認參數數量，則可以直接檢查 <code>$track_number</code> 的內容。以往 CG 遇到參數不足的情形時會回報 500 (PHP

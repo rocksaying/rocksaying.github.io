@@ -12,33 +12,33 @@ permalink: /archives/44123533.html
 <!--more-->
 <p>舉例來說，我設計了一個音樂播放控制項 player.php 。其方法 <code>index()</code> 可以取回目前的曲目清單。</p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Player</span>
-<span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">index</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="c1">// do something to get play-list.
-</span>        <span class="c1">// for example:
-</span>        <span class="nv">$playlist</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'song1'</span><span class="p">,</span>
-            <span class="s1">'song2'</span><span class="p">,</span>
-            <span class="s1">'song3'</span>
-        <span class="p">);</span>
+{% highlight php %}
+<?php
+class Player
+{
+    public function index()
+    {
+        // do something to get play-list.
+        // for example:
+        $playlist = array(
+            'song1',
+            'song2',
+            'song3'
+        );
 
-        <span class="k">return</span> <span class="nv">$playlist</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+        return $playlist;
+    }
+}
+?>
+{% endhighlight %}
 
 <p>範例 <code>index()</code> 方法以陣列型態回傳了一個曲目清單。在介紹 CommonGateway 時就說， CG 會自動將方法回傳值指派為 <code>$model</code> 變數。當客戶端要求回傳 JSON 文件時， CG 會載入和控制項方法同名的 index.pjs 視圖，交由視圖處理 <code>$model</code> 的回報格式和內容。在此，這個方法只是要回傳曲目清單，又資料模型已經是曲目清單了，那麼 index.pjs 只需要一行便可完成工作:</p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$model</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+{% highlight php %}
+<?php
+echo json_encode($model);
+?>
+{% endhighlight %}
 
 <p>不過這是在 r62 之前的情形。在 r62 增加自動回傳 JSON 規則之後，如果 CG 找不到 views/player/index.pjs ，就會自動調用 <code>json_encode($model)</code> 回傳 JSON 文件給客戶端。如果你的資料模型符合上述狀況，那麼你可以省略 JSON 視圖文件。</p>
 

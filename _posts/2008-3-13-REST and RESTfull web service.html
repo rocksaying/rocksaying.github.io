@@ -51,17 +51,20 @@ REST 把軟體視為 "資源"(Resource)，以 URL (Uniform Resource Locator) 定
 <p>
 實務上有什麼不同呢？主要是歷史因素，早期的瀏覽器只實作了 HTTP 中的兩種方法，即 GET, POST。這個歷史因素沿續至今，使得絕大多數的 Web 應用服務只接受 GET, POST 兩種方法傳遞的資料。同時把操作方法也放在 GET, POST 的資料欄位中，而不是看 HTTP 的 'method' 。例如:
 </p>
-<pre class="highlight"><code>例1.
-http://localhost/resource?method=delete
 
+<p>例1. <code>http://localhost/resource?method=delete</code></p>
 
+<p>
 例2.
-<span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">"resource"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"id"</span> <span class="na">value=</span><span class="s">"101"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"name"</span> <span class="na">value=</span><span class="s">"rock"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;button</span> <span class="na">name=</span><span class="s">"method"</span> <span class="na">value=</span><span class="s">"get"</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Query(Get)<span class="nt">&lt;/button&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-</code></pre>
+</p>
+
+{% highlight html %}
+<form action="resource" method="post">
+    <input name="id" value="101"/>
+    <input name="name" value="rock"/>
+    <button name="method" value="get" type="submit">Query(Get)</button>
+</form>
+{% endhighlight %}
 
 <p>
 第一個例子，瀏覽器送出的 HTTP Method 是 GET ，但在 URL 中指示的操作動作是刪除(delete)。第二個例子，瀏覽器送出的 HTTP Method 是 POST ，但在表單欄位中指示的動作是查詢資源(get)。
@@ -82,158 +85,160 @@ http://localhost/resource?method=delete
 </p>
 
 <h5>Example: Controller</h5>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  * 對動態語言而言，不用 interface 也可以。
  * 如果你不習慣動態語言的使用方式，不用 interface 覺得沒有安全感，
  * 那就用吧。 
- */</span> 
-<span class="k">interface</span> <span class="nx">RESTMethod</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restGet</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPost</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPut</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restDelete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-<span class="p">}</span>
+ */ 
+interface RESTMethod {
+    public function restGet($segments);
+    public function restPost($segments);
+    public function restPut($segments);
+    public function restDelete($segments);
+}
 
 
-<span class="k">class</span> <span class="nc">Controller</span> <span class="cm">/*implements RESTMethod*/</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'create|read|update|delete'</span><span class="p">;</span>
-    <span class="p">}</span>
+class Controller /*implements RESTMethod*/ {
+    public function index() {
+        echo 'create|read|update|delete';
+    }
     
-    <span class="c1">// RESTful: controller/id  by POST.
-</span>    <span class="c1">// traditional: controller/create
-</span>    <span class="k">public</span> <span class="k">function</span> <span class="nf">create</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'create new resource'</span><span class="p">;</span>
-    <span class="p">}</span>
+    // RESTful: controller/id  by POST.
+    // traditional: controller/create
+    public function create() {
+        echo 'create new resource';
+    }
     
-    <span class="c1">// RESTful: controller/id  by GET.
-</span>    <span class="c1">// traditional: controller/id or controller/read/id
-</span>    <span class="k">public</span> <span class="k">function</span> <span class="nf">read</span><span class="p">(</span><span class="nv">$id</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'read resource: '</span> <span class="o">.</span> <span class="nv">$id</span><span class="p">;</span>
-    <span class="p">}</span>
+    // RESTful: controller/id  by GET.
+    // traditional: controller/id or controller/read/id
+    public function read($id) {
+        echo 'read resource: ' . $id;
+    }
    
-    <span class="c1">// RESTful: controller/id  by PUT.
-</span>    <span class="c1">// traditional: controller/update/id  with POST data.
-</span>    <span class="k">public</span> <span class="k">function</span> <span class="nf">update</span><span class="p">(</span><span class="nv">$id</span><span class="o">=</span><span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nv">$id</span> <span class="p">)</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">create</span><span class="p">();</span>
-        <span class="k">echo</span> <span class="s1">'update resource: '</span><span class="o">.</span> <span class="nv">$id</span><span class="p">;</span>
-    <span class="p">}</span>
+    // RESTful: controller/id  by PUT.
+    // traditional: controller/update/id  with POST data.
+    public function update($id=false) {
+        if ( !$id )
+            return $this->create();
+        echo 'update resource: '. $id;
+    }
    
-    <span class="c1">// RESTful: controller/id  by DELETE.
-</span>    <span class="c1">// traditional: controller/delete/id
-</span>    <span class="k">public</span> <span class="k">function</span> <span class="nf">delete</span><span class="p">(</span><span class="nv">$id</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'delete resource: '</span><span class="o">.</span> <span class="nv">$id</span><span class="p">;</span>
-    <span class="p">}</span>
+    // RESTful: controller/id  by DELETE.
+    // traditional: controller/delete/id
+    public function delete($id) {
+        echo 'delete resource: '. $id;
+    }
 
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPost</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'invoke restPost.'</span><span class="p">;</span>
-        <span class="nb">readfile</span><span class="p">(</span><span class="s1">'php://input'</span><span class="p">);</span> <span class="c1">// read the raw put data. 
-</span>        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">create</span><span class="p">();</span>
-    <span class="p">}</span>
+    public function restPost($segments) {
+        echo 'invoke restPost.';
+        readfile('php://input'); // read the raw put data. 
+        return $this->create();
+    }
     
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restGet</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'invoke restGet.'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">read</span><span class="p">(</span><span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-    <span class="p">}</span>
+    public function restGet($segments) {
+        echo 'invoke restGet.';
+        return $this->read($segments[0]);
+    }
     
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPut</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'invoke restPut.'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">update</span><span class="p">(</span><span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-    <span class="p">}</span>
+    public function restPut($segments) {
+        echo 'invoke restPut.';
+        return $this->update($segments[0]);
+    }
     
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restDelete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'invoke restDelete.'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">delete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+    public function restDelete($segments) {
+        echo 'invoke restDelete.';
+        return $this->delete($segments[0]);
+    }
+}
+?>
+{% endhighlight %}
 
 <h5>Example: Loader</h5>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Loader</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$control</span><span class="p">;</span>
-    <span class="k">private</span> <span class="nv">$segments</span><span class="p">;</span>
+{% highlight php %}
+<?php
+class Loader {
+    private $control;
+    private $segments;
     
-    <span class="c1">//private $RESTMethodMap;
-</span>    
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$Controller</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//$this-&gt;control = new $controllerConfig['controllerName'];
-</span>        <span class="c1">//$this-&gt;RESTMethodMap = $controllerConfig['RESTMethodMap'];
-</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$Controller</span><span class="p">;</span>
-    <span class="p">}</span> 
+    //private $RESTMethodMap;
+    
+    function __construct($Controller) {
+        //$this->control = new $controllerConfig['controllerName'];
+        //$this->RESTMethodMap = $controllerConfig['RESTMethodMap'];
+        $this->control = new $Controller;
+    } 
 
-    <span class="k">function</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">PHP_SAPI</span> <span class="o">==</span> <span class="s1">'cli'</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">global</span> <span class="nv">$argv</span><span class="p">;</span>
-            <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'/'</span> <span class="o">.</span> <span class="nb">implode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$argv</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
-        <span class="p">}</span>
+    function run() {
+        if (PHP_SAPI == 'cli') {
+            global $argv;
+            $_SERVER['PATH_INFO'] = '/' . implode('/', array_slice($argv, 1));
+        }
 
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">])</span> <span class="k">or</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'/'</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
-        <span class="p">}</span>
+        if ( !isset($_SERVER['PATH_INFO']) or $_SERVER['PATH_INFO'] == '/') {
+            $this->segments = false;
+        }
+        else {
+            $this->segments = explode('/', $_SERVER['PATH_INFO']);
+        }
         
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// Without parameter
-</span>            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="na">index</span><span class="p">();</span> 
-        <span class="p">}</span>
+        if ( !$this->segments ) { // Without parameter
+            return $this->control->index(); 
+        }
         
-        <span class="k">if</span> <span class="p">(</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="p">{</span>
-            <span class="c1">//request resource by traditional way.
-</span>            <span class="nv">$method</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+        if (method_exists($this->control, $this->segments[1])) {
+            //request resource by traditional way.
+            $method = $this->segments[1];
 
-            <span class="c1">//deny directly invoke method of interface RESTMethod
-</span>            <span class="k">if</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="nv">$method</span><span class="p">,</span> <span class="s1">'rest'</span><span class="p">)</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> 
-                <span class="nb">header</span><span class="p">(</span><span class="s1">'HTTP/1.0 403 Forbidden'</span><span class="p">);</span>
-                <span class="k">echo</span> <span class="s1">'The server understood the request, but is refusing to fulfill it.
-                     Authorization will not help and the request SHOULD NOT be repeated.'</span><span class="p">;</span>
-                <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-            <span class="p">}</span>
+            //deny directly invoke method of interface RESTMethod
+            if (strpos($method, 'rest') === 0) { 
+                header('HTTP/1.0 403 Forbidden');
+                echo 'The server understood the request, but is refusing to fulfill it.
+                     Authorization will not help and the request SHOULD NOT be repeated.';
+                return false;
+            }
 
-            <span class="nv">$objMethod</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="p">,</span>
-                <span class="nv">$method</span>
-            <span class="p">);</span>
-            <span class="nv">$arguments</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+            $objMethod = array(
+                $this->control,
+                $method
+            );
+            $arguments = array_slice($this->segments, 2);
             
-            <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$objMethod</span><span class="p">,</span> <span class="nv">$arguments</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="c1">//request resource by RESTful way.
-</span>            <span class="c1">//$method = $this-&gt;RESTMethodMap[$_SERVER['REQUEST_METHOD']];
-</span>            <span class="nv">$method</span> <span class="o">=</span> <span class="s1">'rest'</span> <span class="o">.</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nb">strtolower</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'REQUEST_METHOD'</span><span class="p">]));</span>
-            <span class="nv">$arguments</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+            call_user_func_array($objMethod, $arguments);
+        }
+        else {
+            //request resource by RESTful way.
+            //$method = $this->RESTMethodMap[$_SERVER['REQUEST_METHOD']];
+            $method = 'rest' . ucfirst(strtolower($_SERVER['REQUEST_METHOD']));
+            $arguments = array_slice($this->segments, 1);
             
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="nv">$method</span><span class="p">(</span><span class="nv">$arguments</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span> <span class="c1">//end class Loader
-</span>
-<span class="cm">/*
+            $this->control->$method($arguments);
+        }
+    }
+} //end class Loader
+
+/*
 $controllerConfig = array(
-    'controllerName' =&gt; 'Controller',
-    'RESTMethodMap'  =&gt; array(
-            'GET'   =&gt;  'read',
-            'POST'  =&gt;  'create',
-            'PUT'   =&gt;  'update',
-            'DELETE'=&gt;  'delete'
+    'controllerName' => 'Controller',
+    'RESTMethodMap'  => array(
+            'GET'   =>  'read',
+            'POST'  =>  'create',
+            'PUT'   =>  'update',
+            'DELETE'=>  'delete'
         )
 );
-*/</span>
+*/
 
-<span class="nv">$loader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Loader</span><span class="p">(</span><span class="s1">'Controller'</span><span class="p">);</span>
+$loader = new Loader('Controller');
 
-<span class="c1">//$loader-&gt;run($controllerConfig);
-</span><span class="nv">$loader</span><span class="o">-&gt;</span><span class="na">run</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+//$loader->run($controllerConfig);
+$loader->run();
+?>
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

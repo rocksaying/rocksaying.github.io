@@ -22,72 +22,72 @@ PHP5 內建一種它稱為 <a href="http://www.php.net/manual/en/wrappers.php">W
 使用範例如下:
 </p>
 
-<pre class="highlight"><code>#!/usr/bin/phpunit
-<span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+{% highlight php %}
+#!/usr/bin/phpunit
+<?php
+require_once 'PHPUnit/Framework.php';
 
-<span class="k">function</span> <span class="nf">do_stream_post_request</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$postdata</span> <span class="o">=</span> <span class="kc">false</span><span class="p">,</span> <span class="nv">$files</span> <span class="o">=</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$boundary</span> <span class="o">=</span> <span class="nb">md5</span><span class="p">(</span><span class="nb">time</span><span class="p">());</span>
+function do_stream_post_request($url, $postdata = false, $files = false) {
+    $boundary = md5(time());
 
-    <span class="nv">$data</span> <span class="o">=</span> <span class="s2">"--${boundary}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$postdata</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">foreach</span><span class="p">(</span><span class="nv">$postdata</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"--${boundary}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-            <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"Content-Disposition: form-data; name="</span><span class="err">$</span><span class="p">{</span><span class="nx">k</span><span class="p">}</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">${v}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"--${boundary}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    $data = "--${boundary}\r\n";
+    if ($postdata) {
+        foreach($postdata as $k => $v) {
+            $data .= "--${boundary}\r\n";
+            $data .= "Content-Disposition: form-data; name="${k}"\n\n${v}\n";
+        }
+    }
+    $data .= "--${boundary}\n";
 
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$files</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$files</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$content</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"Content-Disposition: form-data; name="</span><span class="err">$</span><span class="p">{</span><span class="nx">k</span><span class="p">}</span><span class="s2">"; filename="</span><span class="err">$</span><span class="p">{</span><span class="nx">k</span><span class="p">}</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-            <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"Content-Type: application/octet-stream</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-            <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"Content-Transfer-Encoding: binary</span><span class="se">\r\n\r\n</span><span class="s2">"</span><span class="p">;</span>
-            <span class="nv">$data</span> <span class="o">.=</span> <span class="nv">$content</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="nv">$data</span> <span class="o">.=</span> <span class="s2">"--${boundary}--</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
+    if ($files) {
+        foreach ($files as $k => $content) {
+            $data .= "Content-Disposition: form-data; name="${k}"; filename="${k}"\r\n";
+            $data .= "Content-Type: application/octet-stream\r\n";
+            $data .= "Content-Transfer-Encoding: binary\r\n\r\n";
+            $data .= $content . "\r\n";
+        }
+        $data .= "--${boundary}--\n\n";
+    }
 
-    <span class="nv">$params</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'http'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'method'</span> <span class="o">=&gt;</span> <span class="s1">'POST'</span><span class="p">,</span>
-        <span class="s1">'header'</span> <span class="o">=&gt;</span>
-            <span class="s2">"Accept: */*</span><span class="se">\r\n</span><span class="s2">"</span> <span class="o">.</span>
-            <span class="s2">"Content-Type: multipart/form-data; boundary=${boundary}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">,</span>
-        <span class="s1">'content'</span> <span class="o">=&gt;</span> <span class="nv">$data</span>
-    <span class="p">));</span>
+    $params = array(
+    'http' => array(
+        'method' => 'POST',
+        'header' =>
+            "Accept: */*\r\n" .
+            "Content-Type: multipart/form-data; boundary=${boundary}\r\n",
+        'content' => $data
+    ));
 
-    <span class="nv">$ctx</span> <span class="o">=</span> <span class="nb">stream_context_create</span><span class="p">(</span><span class="nv">$params</span><span class="p">);</span>
-    <span class="nv">$response</span> <span class="o">=</span> <span class="o">@</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nx">FILE_TEXT</span><span class="p">,</span> <span class="nv">$ctx</span><span class="p">);</span>
-    <span class="c1">// if status is not 200, here will throw an exception.
-</span>    <span class="k">return</span> <span class="nv">$response</span><span class="p">;</span>
-<span class="p">}</span>
+    $ctx = stream_context_create($params);
+    $response = @file_get_contents($url, FILE_TEXT, $ctx);
+    // if status is not 200, here will throw an exception.
+    return $response;
+}
 
-<span class="k">class</span> <span class="nc">StreamPostTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$uri</span> <span class="o">=</span> <span class="s1">'http://localhost/rock/post/post-dump.php'</span><span class="p">;</span>
+class StreamPostTest extends PHPUnit_Framework_TestCase {
+    var $uri = 'http://localhost/rock/post/post-dump.php';
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">test_post_by_stream</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="nv">$content</span> <span class="o">=</span> <span class="nx">do_stream_post_request</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uri</span><span class="p">,</span>
-            <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'field1'</span> <span class="o">=&gt;</span> <span class="s1">'hello world.'</span><span class="p">,</span>
-            <span class="s1">'field2'</span> <span class="o">=&gt;</span> <span class="s1">'post form by stream.'</span>
-            <span class="p">),</span>
-            <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'1.png'</span> <span class="o">=&gt;</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'1.png'</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="p">);</span>
+    public function test_post_by_stream()
+    {
+        $content = do_stream_post_request($this->uri,
+            array(
+            'field1' => 'hello world.',
+            'field2' => 'post form by stream.'
+            ),
+            array(
+            '1.png' => file_get_contents('1.png')
+            )
+        );
 
-        <span class="k">echo</span> <span class="nv">$content</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'post form by stream.'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'hello world.'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'[name] =&gt; 1.png'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'[size] =&gt; 33108'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+        echo $content;
+        $this->assertContains('post form by stream.', $content);
+        $this->assertContains('hello world.', $content);
+        $this->assertContains('[name] => 1.png', $content);
+        $this->assertContains('[size] => 33108', $content);
+    }
+}
+?>
+{% endhighlight %}
 
 <p>
 這個方法使用時的準備工作太麻煩了。
@@ -109,61 +109,61 @@ PHP 最常用的資料上傳方法。curl 內部會處理很多瑣事，使用�
 使用範例如下:
 </p>
 
-<pre class="highlight"><code>#!/usr/bin/phpunit
-<span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+{% highlight php %}
+#!/usr/bin/phpunit
+<?php
+require_once 'PHPUnit/Framework.php';
 
-<span class="k">class</span> <span class="nc">CurlPostFormTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$uri</span> <span class="o">=</span> <span class="s1">'http://localhost/rock/post/post-dump.php'</span><span class="p">;</span>
+class CurlPostFormTest extends PHPUnit_Framework_TestCase {
+    var $uri = 'http://localhost/rock/post/post-dump.php';
 
-    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">();</span> <span class="c1">// HttpRequest
-</span>        <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
-        <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLOPT_URL</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uri</span><span class="p">);</span>
-    <span class="p">}</span>
+    protected function setUp() {
+        $this->hr = curl_init(); // HttpRequest
+        curl_setopt($this->hr, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->hr, CURLOPT_URL, $this->uri);
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">test_get</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$opts</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="nx">CURLOPT_HTTPGET</span> <span class="o">=&gt;</span> <span class="kc">true</span>
-        <span class="p">);</span>
+    public function test_get() {
+        $opts = array(
+            CURLOPT_HTTPGET => true
+        );
 
-        <span class="nb">curl_setopt_array</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">);</span>
-        <span class="nv">$content</span> <span class="o">=</span> <span class="nb">curl_exec</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">);</span>
-        <span class="nv">$status</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLINFO_HTTP_CODE</span><span class="p">);</span>
-        <span class="nv">$content_type</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLINFO_CONTENT_TYPE</span><span class="p">);</span>
+        curl_setopt_array($this->hr, $opts);
+        $content = curl_exec($this->hr);
+        $status = curl_getinfo($this->hr, CURLINFO_HTTP_CODE);
+        $content_type = curl_getinfo($this->hr, CURLINFO_CONTENT_TYPE);
 
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$status</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-    <span class="p">}</span>
+        $this->assertEquals($status, 200);
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">test_post_by_curl</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$data</span> <span class="o">=</span><span class="k">array</span><span class="p">(</span>
-            <span class="s1">'field1'</span> <span class="o">=&gt;</span> <span class="s1">'hello world.'</span><span class="p">,</span>
-            <span class="s1">'field2'</span> <span class="o">=&gt;</span> <span class="s1">'post form by curl.'</span><span class="p">,</span>
-            <span class="c1">// 'pic.png' =&gt; '@1.png'  # 說明2. &lt;= PHP 5.4.
-</span>            <span class="s1">'pic.png'</span> <span class="o">=&gt;</span> <span class="nb">curl_file_create</span><span class="p">(</span><span class="s1">'1.png'</span><span class="p">)</span>  <span class="c1">#說明3. &gt;= PHP 5.5.
-</span>        <span class="p">);</span>
-        <span class="nv">$opts</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="nx">CURLOPT_POST</span>    <span class="o">=&gt;</span> <span class="kc">true</span><span class="p">,</span>  <span class="c1">#說明1
-</span>            <span class="nx">CURLOPT_POSTFIELDS</span> <span class="o">=&gt;</span> <span class="nv">$data</span>
-        <span class="p">);</span>
+    public function test_post_by_curl() {
+        $data =array(
+            'field1' => 'hello world.',
+            'field2' => 'post form by curl.',
+            // 'pic.png' => '@1.png'  # 說明2. <= PHP 5.4.
+            'pic.png' => curl_file_create('1.png')  #說明3. >= PHP 5.5.
+        );
+        $opts = array(
+            CURLOPT_POST    => true,  #說明1
+            CURLOPT_POSTFIELDS => $data
+        );
 
-        <span class="nb">curl_setopt_array</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">);</span>
-        <span class="nv">$content</span> <span class="o">=</span> <span class="nb">curl_exec</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">);</span>
-        <span class="nv">$status</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLINFO_HTTP_CODE</span><span class="p">);</span>
-        <span class="nv">$content_type</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLINFO_CONTENT_TYPE</span><span class="p">);</span>
+        curl_setopt_array($this->hr, $opts);
+        $content = curl_exec($this->hr);
+        $status = curl_getinfo($this->hr, CURLINFO_HTTP_CODE);
+        $content_type = curl_getinfo($this->hr, CURLINFO_CONTENT_TYPE);
 
-        <span class="k">echo</span> <span class="nv">$content</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$status</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$content_type</span><span class="p">,</span> <span class="s1">'text/html'</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'post form by curl.'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'hello world.'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'[name] =&gt; 1.png'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'[size] =&gt; 33108'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+        echo $content;
+        $this->assertEquals($status, 200);
+        $this->assertEquals($content_type, 'text/html');
+        $this->assertContains('post form by curl.', $content);
+        $this->assertContains('hello world.', $content);
+        $this->assertContains('[name] => 1.png', $content);
+        $this->assertContains('[size] => 33108', $content);
+    }
+}
+?>
+{% endhighlight %}
 
 <p>
 使用說明:
@@ -200,48 +200,48 @@ curl 若啟用了 CURLOPT_POST 選項，它就一定會把上傳的文件型態�
 使用範例如下:
 </p>
 
-<pre class="highlight"><code>#!/usr/bin/phpunit
-<span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
+{% highlight php %}
+#!/usr/bin/phpunit
+<?php
+require_once 'PHPUnit/Framework.php';
 
-<span class="k">class</span> <span class="nc">CurlPostJsonTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$uri</span> <span class="o">=</span> <span class="s1">'http://localhost/rock/post/post-dump.php'</span><span class="p">;</span>
+class CurlPostJsonTest extends PHPUnit_Framework_TestCase {
+    var $uri = 'http://localhost/rock/post/post-dump.php';
 
-    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">();</span> <span class="c1">// HttpRequest
-</span>        <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
-        <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLOPT_URL</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uri</span><span class="p">);</span>
-    <span class="p">}</span>
+    protected function setUp() {
+        $this->hr = curl_init(); // HttpRequest
+        curl_setopt($this->hr, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->hr, CURLOPT_URL, $this->uri);
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">test_post_json_by_curl</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$data</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'field1'</span> <span class="o">=&gt;</span> <span class="s1">'hello world.'</span><span class="p">,</span>
-            <span class="s1">'field2'</span> <span class="o">=&gt;</span> <span class="s1">'post form by curl customrequest.'</span><span class="p">,</span>
-            <span class="s1">'1.png'</span>  <span class="o">=&gt;</span> <span class="nb">base64_encode</span><span class="p">(</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'1.png'</span><span class="p">))</span> <span class="c1">#說明4
-</span>        <span class="p">);</span>
-        <span class="nv">$opts</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="nx">CURLOPT_CUSTOMREQUEST</span> <span class="o">=&gt;</span> <span class="s1">'POST'</span><span class="p">,</span> <span class="c1"># 說明1
-</span>            <span class="nx">CURLOPT_HTTPHEADER</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-                <span class="s1">'Content-Type: application/json'</span> <span class="c1">#說明2
-</span>            <span class="p">),</span>
-            <span class="nx">CURLOPT_POSTFIELDS</span> <span class="o">=&gt;</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$data</span><span class="p">)</span> <span class="c1">#說明3
-</span>        <span class="p">);</span>
+    public function test_post_json_by_curl() {
+        $data = array(
+            'field1' => 'hello world.',
+            'field2' => 'post form by curl customrequest.',
+            '1.png'  => base64_encode(file_get_contents('1.png')) #說明4
+        );
+        $opts = array(
+            CURLOPT_CUSTOMREQUEST => 'POST', # 說明1
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json' #說明2
+            ),
+            CURLOPT_POSTFIELDS => json_encode($data) #說明3
+        );
 
-        <span class="nb">curl_setopt_array</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">);</span>
-        <span class="nv">$content</span> <span class="o">=</span> <span class="nb">curl_exec</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">);</span>
-        <span class="nv">$status</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLINFO_HTTP_CODE</span><span class="p">);</span>
-        <span class="nv">$content_type</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">hr</span><span class="p">,</span> <span class="nx">CURLINFO_CONTENT_TYPE</span><span class="p">);</span>
+        curl_setopt_array($this->hr, $opts);
+        $content = curl_exec($this->hr);
+        $status = curl_getinfo($this->hr, CURLINFO_HTTP_CODE);
+        $content_type = curl_getinfo($this->hr, CURLINFO_CONTENT_TYPE);
 
-        <span class="k">echo</span> <span class="nv">$content</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$status</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'post form by curl customrequest.'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$content_type</span><span class="p">,</span> <span class="s1">'text/html'</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertContains</span><span class="p">(</span><span class="s1">'hello world.'</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+        echo $content;
+        $this->assertEquals($status, 200);
+        $this->assertContains('post form by curl customrequest.', $content);
+        $this->assertEquals($content_type, 'text/html');
+        $this->assertContains('hello world.', $content);
+    }
+}
+?>
+{% endhighlight %}
 
 <p>
 使用說明:
