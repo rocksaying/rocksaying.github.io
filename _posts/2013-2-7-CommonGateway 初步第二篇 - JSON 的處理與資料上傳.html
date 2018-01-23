@@ -137,11 +137,11 @@ Template is missing. Missing views/book/index.pjs.
 index.pjs 實作內容如下。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$books</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+{% highlight php %}
+<?php
+echo json_encode($books);
+?>
+{% endhighlight %}
 
 <p>
 CG 會依 <dfn>Accept</dfn> 載入對應的視圖，也會自動添加正確的 <dfn>Content-Type</dfn> 文件型態宣告。所以我不用寫出 <code>header('Content-Type: application/json');</code> 。
@@ -159,11 +159,11 @@ RESTClient 再送出一次請求。現在我就會看到預期的 <var>$books</v
 依樣畫葫蘆，接著實作 get.pjs 。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$book</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
-
+{% highlight php %}
+<?php
+echo json_encode($book);
+?>
+{% endhighlight %}
 
 <p>
 RESTClient 送出請求內容。
@@ -206,29 +206,29 @@ RESTful 提交文件給服務端的方法有兩種。一為 POST ，對應資料
 我先很快速地實作一個 Book 表單，以便我先用傳統的表單新增書籍資料。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">BookForm</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">edit</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?php
+class BookForm {
+    function edit() {
+        return;
+    }
+}
+?>
+{% endhighlight %}
 
-
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&lt;?=$_SERVER['SCRIPT_NAME'].'/book'?</span><span class="nt">&gt;</span> method="POST"&gt;
-    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"isbn"</span><span class="nt">&gt;</span>ISBN: <span class="nt">&lt;/label&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">id=</span><span class="s">"isbn"</span> <span class="na">name=</span><span class="s">"isbn"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;br/&gt;</span>
-    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"title"</span><span class="nt">&gt;</span>Title: <span class="nt">&lt;/label&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">id=</span><span class="s">"title"</span> <span class="na">name=</span><span class="s">"title"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;br/&gt;</span>
-    <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
-
+{% highlight html %}
+<html>
+<form action=<?=$_SERVER['SCRIPT_NAME'].'/book'?> method="POST">
+    <label for="isbn">ISBN: </label>
+    <input type="text" id="isbn" name="isbn" />
+    <br/>
+    <label for="title">Title: </label>
+    <input type="text" id="title" name="title" />
+    <br/>
+    <button type="submit">Submit</button>
+</form>
+</html>
+{% endhighlight %}
 
 <p>
 表單重點在於以 POST 方法提交表單內容給 index.php/book 。
@@ -246,20 +246,21 @@ POST 實作
 我想沒有必要再一步步引導了。我直接在 controllers/book.php 中添加 <dfn>post()</dfn> 內容。
 </p>
 
-<pre class="highlight"><code>class Book {
+{% highlight php %}
+class Book {
     // ... 省略其他部份
     function get($isbn) {
         /*
-        $book = $query-&gt;from('book')-&gt;
-                    -&gt;where(array('isbn' =&gt; $isbn))
-                    -&gt;select();
+        $book = $query->from('book')->
+                    ->where(array('isbn' => $isbn))
+                    ->select();
         */
         $data_filepath = '/tmp/' . $isbn;
         if (!file_exists($data_filepath)) {
             HttpResponse::exception(HttpResponse::NOT_FOUND);
         }
 
-        $this-&gt;book = unserialize(file_get_contents($data_filepath));
+        $this->book = unserialize(file_get_contents($data_filepath));
         return;
     }
 
@@ -267,12 +268,11 @@ POST 實作
         //var_dump($_POST);
         //return false;
         $book = new BookModel($_POST['isbn'], $_POST['title']);
-        file_put_contents('/tmp/' . $book-&gt;isbn, serialize($book));
+        file_put_contents('/tmp/' . $book->isbn, serialize($book));
         return $book;
     }
 }
-</code></pre>
-
+{% endhighlight %}
 
 <p>
 從 <var>$_POST</var> 中取得表單內容這件事，對 PHP 程式人員是常識。
@@ -284,14 +284,14 @@ POST 實作
 不過在 RESTful 架構中，一般只需要回應狀態碼 200 (Ok) 或 201 (Created) 表示成功即可。錯誤通常回應狀態碼 400 (Bad request)、406 (Not acceptable) 或 409 (Conflict) 。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;p&gt;</span>Create new book:
-<span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"&lt;?=$_SERVER['SCRIPT_NAME'].'/book/'.$book-&gt;isbn?&gt;"</span><span class="nt">&gt;</span>
-<span class="cp">&lt;?=$book-&gt;title?&gt;</span><span class="nt">&lt;/a&gt;</span>.
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
-
+{% highlight html %}
+<html>
+<p>Create new book:
+<a href="<?=$_SERVER['SCRIPT_NAME'].'/book/'.$book->isbn?>">
+<?=$book->title?></a>.
+</p>
+</html>
+{% endhighlight %}
 
 <p>
 這個回應的網頁內容提供一個連結指向新增的書籍資料。
@@ -338,16 +338,14 @@ PHP 程式人員都很熟悉這個操作了，不作說明。
     <li>Body: <code>{"isbn": 789, "title": "NO 789"}</code>
 </ul>
 
-<pre class="highlight"><code>
-<span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;p&gt;</span>Create new book:
-<span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/rock/cg/index.php/book/789"</span><span class="nt">&gt;</span>
-NO 789<span class="nt">&lt;/a&gt;</span>.
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-
-</code></pre>
-
+{% highlight html %}
+<html>
+<p>Create new book:
+<a href="/rock/cg/index.php/book/789">
+NO 789</a>.
+</p>
+</html>
+{% endhighlight %}
 
 <p>
 因為這次我用 POST 方法提交的文件型態是 JSON ，所以我要用 <dfn>Content-Type</dfn> 告訴服務端上傳的文件是 JSON 。當然文件內容(Body)也必須符合 JSON 格式。
@@ -373,7 +371,8 @@ PUT 實作
 在 controllers/book.php 中實作 <dfn>put()</dfn> 內容如下:
 </p>
 
-<pre class="highlight"><code>class Book {
+{% highlight php %}
+class Book {
     /**
     @resource request
      */
@@ -386,7 +385,7 @@ PUT 實作
             HttpResponse::exception(HttpResponse::BAD_REQUEST);
         //global $HTTP_RAW_POST_DATA; var_dump($HTTP_RAW_POST_DATA);
         //var_dump($GLOBALS['HTTP_RAW_POST_DATA']);
-        //var_dump($this-&gt;book); // CG inject.
+        //var_dump($this->book); // CG inject.
         //var_dump($_POST);
         //var_dump($_REQUEST);
         //return false;
@@ -395,13 +394,12 @@ PUT 實作
             HttpResponse::exception(HttpResponse::NOT_FOUND);
         }
         $book = unserialize(file_get_contents($data_filepath));
-        $book-&gt;title = $_REQUEST['title'];
+        $book->title = $_REQUEST['title'];
         file_put_contents($data_filepath, serialize($book));
         return $book;
     }
 }
-</code></pre>
-
+{% endhighlight %}
 
 <p>
 PUT 用於更新現有的書籍資料，所以需要一個參數 <var>$isbn</var> 告知它要更新的目標資料。
@@ -428,14 +426,14 @@ Book 中不必實作任何關於 <var>$this->book</var> 的內容，而是由 CG
 最後，加入 PUT 的視圖 views/book/put.phtml 。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;p&gt;</span>Update book.
-Back to <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"&lt;?=$_SERVER['SCRIPT_NAME'].'/book/'.$book-&gt;isbn?&gt;"</span><span class="nt">&gt;</span>
-<span class="cp">&lt;?=$book-&gt;title?&gt;</span><span class="nt">&lt;/a&gt;</span>.
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
-
+{% highlight html %}
+<html>
+<p>Update book.
+Back to <a href="<?=$_SERVER['SCRIPT_NAME'].'/book/'.$book->isbn?>">
+<?=$book->title?></a>.
+</p>
+</html>
+{% endhighlight %}
 
 <p>
 在這個視圖中，有一個與 CG <a href="https://code.google.com/p/schema-database/source/detail?r=59">r59</a> 補強有關的用法。先前，當控制項回傳資料的型態是 object 時， CG 會賦予其變數名稱為 <var>$model</var>。在 <a href="https://code.google.com/p/schema-database/source/detail?r=59">r59</a> 的補強中， CG 還會賦予控制項同名名稱。
@@ -460,16 +458,14 @@ Back to <span class="nt">&lt;a</span> <span class="na">href=</span><span class="
 Response Body (Raw):
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;p&gt;</span>Update book.
-Back to <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/rock/cg/index.php/book/789"</span><span class="nt">&gt;</span>
-NO 789 2nd edition<span class="nt">&lt;/a&gt;</span>.
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-
-</code></pre>
-
+{% highlight html %}
+<html>
+<p>Update book.
+Back to <a href="/rock/cg/index.php/book/789">
+NO 789 2nd edition</a>.
+</p>
+</html>
+{% endhighlight %}
 
 <h4>
 結語
