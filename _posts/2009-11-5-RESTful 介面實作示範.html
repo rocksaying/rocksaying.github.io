@@ -94,7 +94,7 @@ Sun Microsystem 公開了一套存取它們雲端運算服務的 Web service ，
 這套 API 正是 RESTful 介面的。我取其中一個 method 來看看企業級的 RESTful 實作介面的外觀。
 </p>
 
-<pre class="language-text">
+{% highlight text %}
 Get Cloud
 
 Retrieve information about accessible resources.
@@ -105,7 +105,8 @@ Request Message Body: N/A.
 Response Headers: Content-Length, Content-Type.
 Response Message Body: Cloud.
 Response Status: 200, 400, 401, 403, 404. 
-</pre>
+{% endhighlight %}
+
 <cite><a href="http://kenai.com/projects/suncloudapis/pages/CloudAPICloudRequests">Cloud API Specification - Requests to Cloud Resources</a></cite>
 
 <p>
@@ -139,123 +140,124 @@ Demo
 <h6>
 index.php
 </h6>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Control</span> <span class="p">{</span>
-    <span class="k">static</span> <span class="k">function</span> <span class="nf">exceptionResponse</span><span class="p">(</span><span class="nv">$statusCode</span><span class="p">,</span> <span class="nv">$message</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">header</span><span class="p">(</span><span class="s2">"HTTP/1.0 </span><span class="si">{</span><span class="nv">$statusCode</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nv">$message</span><span class="si">}</span><span class="s2">"</span><span class="p">);</span>
-        <span class="k">echo</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$statusCode</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nv">$message</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">exit</span><span class="p">;</span>
-    <span class="p">}</span>
 
-    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'index...'</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+class Control {
+    static function exceptionResponse($statusCode, $message) {
+        header("HTTP/1.0 {$statusCode} {$message}");
+        echo "{$statusCode} {$message}";
+        exit;
+    }
 
-<span class="k">interface</span> <span class="nx">RESTfulInterface</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restGet</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPut</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restPost</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">restDelete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">);</span>
-<span class="p">}</span>
+    function index() {
+        echo 'index...';
+    }
+}
 
-<span class="k">class</span> <span class="nc">Container</span> <span class="k">extends</span> <span class="nx">Control</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$control</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="k">private</span> <span class="nv">$segments</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+interface RESTfulInterface {
+    public function restGet($segments);
+    public function restPut($segments);
+    public function restPost($segments);
+    public function restDelete($segments);
+}
 
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">])</span> <span class="k">or</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'/'</span><span class="p">)</span> <span class="p">{</span>
-            <span class="c1">// $this-&gt;control = $this-&gt;segments = false;
-</span>            <span class="k">return</span><span class="p">;</span>
-        <span class="p">}</span>
+class Container extends Control {
+    private $control = false;
+    private $segments = false;
 
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
-        <span class="nb">array_shift</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">);</span> <span class="c1">// first element always is an empty string.
-</span>
-        <span class="nv">$controlName</span> <span class="o">=</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nb">array_shift</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">));</span>
+    function __construct() {
+        if ( !isset($_SERVER['PATH_INFO']) or $_SERVER['PATH_INFO'] == '/') {
+            // $this->control = $this->segments = false;
+            return;
+        }
 
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">class_exists</span><span class="p">(</span><span class="nv">$controlName</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$controlFilepath</span> <span class="o">=</span> <span class="nv">$controlName</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
+        $this->segments = explode('/', $_SERVER['PATH_INFO']);
+        array_shift($this->segments); // first element always is an empty string.
 
-            <span class="k">if</span> <span class="p">(</span> <span class="nb">file_exists</span><span class="p">(</span><span class="nv">$controlFilepath</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// 載入客戶要求的 control
-</span>                <span class="k">require_once</span> <span class="nv">$controlFilepath</span><span class="p">;</span>
-            <span class="p">}</span>
-            <span class="k">else</span> <span class="p">{</span> <span class="c1">// 找不到客戶要求的 control
-</span>                <span class="nx">self</span><span class="o">::</span><span class="na">exceptionResponse</span><span class="p">(</span><span class="mi">503</span><span class="p">,</span> <span class="s1">'Service Unavailable!'</span><span class="p">);</span>
-                <span class="c1">// 回傳 501 (Not Implemented) 或 503.
-</span>                <span class="c1">// See also: RFC 2616
-</span>            <span class="p">}</span>
-        <span class="p">}</span>
+        $controlName = ucfirst(array_shift($this->segments));
 
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$controlName</span><span class="p">;</span>
-    <span class="p">}</span>
+        if ( !class_exists($controlName) ) {
+            $controlFilepath = $controlName . '.php';
 
-    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'index.php/{control name}/{object id}'</span><span class="p">;</span>
-    <span class="p">}</span>
+            if ( file_exists($controlFilepath) ) { // 載入客戶要求的 control
+                require_once $controlFilepath;
+            }
+            else { // 找不到客戶要求的 control
+                self::exceptionResponse(503, 'Service Unavailable!');
+                // 回傳 501 (Not Implemented) 或 503.
+                // See also: RFC 2616
+            }
+        }
 
-    <span class="k">function</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">index</span><span class="p">();</span>
-        <span class="p">}</span>
+        $this->control = new $controlName;
+    }
 
-        <span class="k">if</span> <span class="p">(</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// Without parameter
-</span>            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="na">index</span><span class="p">();</span>
-        <span class="p">}</span>
+    function index() {
+        echo 'index.php/{control name}/{object id}';
+    }
 
-        <span class="c1">//request resource by RESTful way.
-</span>        <span class="c1">//$method = $this-&gt;restMethodname;
-</span>        <span class="nv">$method</span> <span class="o">=</span> <span class="s1">'rest'</span> <span class="o">.</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nb">strtolower</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'REQUEST_METHOD'</span><span class="p">]));</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="p">,</span> <span class="nv">$method</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="nx">self</span><span class="o">::</span><span class="na">exceptionResponse</span><span class="p">(</span><span class="mi">405</span><span class="p">,</span> <span class="s1">'Method not Allowed!'</span><span class="p">);</span>
-        <span class="p">}</span>
+    function run() {
+        if ( $this->control === false) {
+            return $this->index();
+        }
+
+        if ( empty($this->segments) ) { // Without parameter
+            return $this->control->index();
+        }
+
+        //request resource by RESTful way.
+        //$method = $this->restMethodname;
+        $method = 'rest' . ucfirst(strtolower($_SERVER['REQUEST_METHOD']));
+        if ( !method_exists($this->control, $method) ) {
+            self::exceptionResponse(405, 'Method not Allowed!');
+        }
         
-        <span class="nv">$arguments</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">;</span>
+        $arguments = $this->segments;
 
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">control</span><span class="o">-&gt;</span><span class="nv">$method</span><span class="p">(</span><span class="nv">$arguments</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span> <span class="c1">//end class Container
-</span>
-<span class="nv">$container</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Container</span><span class="p">();</span>
+        $this->control->$method($arguments);
+    }
+} //end class Container
 
-<span class="nv">$container</span><span class="o">-&gt;</span><span class="na">run</span><span class="p">();</span>
+$container = new Container();
 
-<span class="cp">?&gt;</span>
-</code></pre>
-
+$container->run();
+?>
+{% endhighlight %}
 
 <h6>
 Mock.php
 </h6>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Mock</span> <span class="k">extends</span> <span class="nx">Control</span> <span class="k">implements</span> <span class="nx">RESTfulInterface</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">restPost</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'Create resource'</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="s1">'&lt;br/&gt;&lt;pre&gt;'</span><span class="p">;</span>
-        <span class="nb">print_r</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">);</span>
-        <span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
-    <span class="p">}</span>
 
-    <span class="k">function</span> <span class="nf">restGet</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$id</span> <span class="o">=</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$id</span> <span class="o">==</span> <span class="s1">'rock'</span><span class="p">)</span>
-            <span class="k">echo</span> <span class="s1">'Read resource: '</span> <span class="o">.</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="c1">// id
-</span>        <span class="k">else</span>
-            <span class="nx">self</span><span class="o">::</span><span class="na">exceptionResponse</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s1">'Not found'</span><span class="p">);</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+class Mock extends Control implements RESTfulInterface {
+    function restPost($segments) {
+        echo 'Create resource';
+        echo '<br/><pre>';
+        print_r($_POST);
+        echo '</pre>';
+    }
 
-    <span class="k">function</span> <span class="nf">restPut</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'Update resource: '</span> <span class="o">.</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-        <span class="k">echo</span> <span class="s1">'&lt;br/&gt; you put data: '</span> <span class="o">.</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'php://input'</span><span class="p">);</span> <span class="c1">// read the raw put data.
-</span>    <span class="p">}</span>
+    function restGet($segments) {
+        $id = $segments[0];
+        if ($id == 'rock')
+            echo 'Read resource: ' . $segments[0]; // id
+        else
+            self::exceptionResponse(404, 'Not found');
+    }
 
-    <span class="k">function</span> <span class="nf">restDelete</span><span class="p">(</span><span class="nv">$segments</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'Delete resource: '</span> <span class="o">.</span> <span class="nv">$segments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    function restPut($segments) {
+        echo 'Update resource: ' . $segments[0];
+        echo '<br/> you put data: ' . file_get_contents('php://input'); // read the raw put data.
+    }
 
+    function restDelete($segments) {
+        echo 'Delete resource: ' . $segments[0];
+    }
+}
+?>
+{% endhighlight %}
 
 <div class="note">
 <p>
@@ -318,80 +320,84 @@ Mock.php
     <h6>
     demo.html
     </h6>
+    
+{% highlight html %}
+<html>
+<script src="http://www.google.com/jsapi"></script>
+<script>
 
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">src</span><span class="o">=</span><span class="s2">"http://www.google.com/jsapi"</span><span class="o">&gt;&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+var mockUrl, options, canvas;
 
-<span class="kd">var</span> <span class="nx">mockUrl</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">canvas</span><span class="p">;</span>
+google.load("jquery", "1.3.2");
+google.setOnLoadCallback(function(){
+    //Enable Ajax object.
 
-<span class="nx">google</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="s2">"jquery"</span><span class="p">,</span> <span class="s2">"1.3.2"</span><span class="p">);</span>
-<span class="nx">google</span><span class="p">.</span><span class="nx">setOnLoadCallback</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-    <span class="c1">//Enable Ajax object.</span>
-    <span class="nx">mockUrl</span> <span class="o">=</span> <span class="s1">'http://localhost/test/restful_demo/index.php/mock/'</span><span class="p">;</span>
-    <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="na">url</span><span class="p">:</span> <span class="nx">mockUrl</span> <span class="o">+</span> <span class="s1">'rock'</span><span class="p">,</span>
-        <span class="na">async</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-        <span class="na">type</span><span class="p">:</span> <span class="s1">'get'</span><span class="p">,</span>
-        <span class="na">data</span><span class="p">:</span> <span class="s1">''</span>
-    <span class="p">};</span>
+    mockUrl = 'http://localhost/test/restful_demo/index.php/mock/';
+    options = {
+        url: mockUrl + 'rock',
+        async: false,
+        type: 'get',
+        data: ''
+    };
 
-    <span class="nx">canvas</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">'#canvas'</span><span class="p">);</span>
+    canvas = $('#canvas');
 
-    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Case 6: 新增資源 (POST)\n'</span> <span class="o">+</span> <span class="nx">demoCase6</span><span class="p">);</span>
-    <span class="nx">demoCase6</span><span class="p">();</span>
+    alert('Case 6: 新增資源 (POST)\n' + demoCase6);
+    demoCase6();
 
-    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Next Case 7: 更新資源 (PUT)\n'</span> <span class="o">+</span> <span class="nx">demoCase7</span><span class="p">);</span>
-    <span class="nx">demoCase7</span><span class="p">();</span>
+    alert('Next Case 7: 更新資源 (PUT)\n' + demoCase7);
+    demoCase7();
 
-    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Next Case 8: 刪除資源 (DELETE)\n'</span> <span class="o">+</span> <span class="nx">demoCase8</span><span class="p">);</span>
-    <span class="nx">demoCase8</span><span class="p">();</span>
+    alert('Next Case 8: 刪除資源 (DELETE)\n' + demoCase8);
+    demoCase8();
 
-    <span class="nx">alert</span><span class="p">(</span><span class="s1">'Next Case 9: 找不到指定資源\n'</span> <span class="o">+</span> <span class="nx">demoCase9</span><span class="p">);</span>
-    <span class="nx">demoCase9</span><span class="p">();</span>
+    alert('Next Case 9: 找不到指定資源\n' + demoCase9);
+    demoCase9();
 
-    <span class="nx">alert</span><span class="p">(</span><span class="s1">'End.'</span><span class="p">);</span>
-<span class="p">});</span>
+    alert('End.');
+});
 
-<span class="kd">function</span>
-<span class="nx">demoCase6</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 6: 新增資源 (POST)</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'post'</span><span class="p">;</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="s1">'abc=123&amp;def=567'</span><span class="p">;</span>
-    <span class="nx">canvas</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">).</span><span class="nx">responseText</span> <span class="p">);</span>
-<span class="p">}</span>
+function
+demoCase6() { //Case 6: 新增資源 (POST)
 
-<span class="kd">function</span>
-<span class="nx">demoCase7</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 7: 更新資源 (PUT)</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'put'</span><span class="p">;</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="s1">'abc=764'</span><span class="p">;</span>
-    <span class="nx">canvas</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">).</span><span class="nx">responseText</span> <span class="p">);</span>
-<span class="p">}</span>
+    options.type = 'post';
+    options.data = 'abc=123&def=567';
+    canvas.html( $.ajax(options).responseText );
+}
 
-<span class="kd">function</span>
-<span class="nx">demoCase8</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 8: 刪除資源 (DELETE)</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'delete'</span><span class="p">;</span>
-    <span class="nx">canvas</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">).</span><span class="nx">responseText</span> <span class="p">);</span>
-<span class="p">}</span>
+function
+demoCase7() { //Case 7: 更新資源 (PUT)
 
-<span class="kd">function</span>
-<span class="nx">demoCase9</span><span class="p">()</span> <span class="p">{</span> <span class="c1">//Case 9: 找不到指定資源</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">mockUrl</span> <span class="o">+</span> <span class="s1">'xyz'</span><span class="p">;</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'get'</span><span class="p">;</span>
-    <span class="nx">options</span><span class="p">.</span><span class="nx">complete</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">xhr</span><span class="p">,</span> <span class="nx">statusText</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">alert</span><span class="p">(</span><span class="s1">'Status code: '</span> <span class="o">+</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">status</span><span class="p">);</span>
-    <span class="p">};</span>
-    <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">options</span><span class="p">);</span>
-<span class="p">}</span>
+    options.type = 'put';
+    options.data = 'abc=764';
+    canvas.html( $.ajax(options).responseText );
+}
 
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">div</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"canvas"</span> <span class="nx">style</span><span class="o">=</span><span class="s2">"width:500;height:300;border:2px solid black"</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
-</span>
-</code></pre>
+function
+demoCase8() { //Case 8: 刪除資源 (DELETE)
 
+    options.type = 'delete';
+    canvas.html( $.ajax(options).responseText );
+}
+
+function
+demoCase9() { //Case 9: 找不到指定資源
+
+    options.url = mockUrl + 'xyz';
+    options.type = 'get';
+    options.complete = function(xhr, statusText) {
+        alert('Status code: ' + xhr.status);
+    };
+    $.ajax(options);
+}
+
+</script>
+
+<div id="canvas" style="width:500;height:300;border:2px solid black">
+</div>
+
+</html>
+{% endhighlight %}
 
 <ul>
 <li>Case 6: 新增資源 (POST)<br/>

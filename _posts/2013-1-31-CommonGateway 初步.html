@@ -22,15 +22,17 @@ You may put your controller class in controllers/{class_name}.php.
 </pre>
 
 <!--more-->
+
 <p>看到提示了嗎？根據提示，建立 <dfn>controllers</dfn> 子目錄，再於 controllers 子目錄下建立 book.php ，用以撰寫本文示範用的 <dfn>Book</dfn> 控制項。 controllers/book.php 最初內容如下:
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?php
+class Book {
 
+}
+?>
+{% endhighlight %}
 
 <p>再用瀏覽器開啟 URL <code>http://localhost/cg/index.php/book</code> (以下提到 URL 時，會省略 index.php 前的部份)，<dfn>CG</dfn> 就會根據 URL 後面的路徑 "book" 去找 book.php 並執行它。因為我還沒在 <dfn>Book</dfn> 類別中實作任何東西，所以 <dfn>CG</dfn> 會顯示下列內容:
 </p>
@@ -45,33 +47,33 @@ You may put your controller class in controllers/{class_name}.php.
 <p>我先寫 <code>index()</code>。就簡單列出兩筆書名記錄吧。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">index</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">// $books = $query-&gt;from('book')-&gt;select();
-</span>        <span class="nv">$index_model</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'books'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-                <span class="k">new</span> <span class="nx">BookModel</span><span class="p">(</span><span class="s1">'123'</span><span class="p">,</span> <span class="s1">'book 123'</span><span class="p">),</span>
-                <span class="k">new</span> <span class="nx">BookModel</span><span class="p">(</span><span class="s1">'456'</span><span class="p">,</span> <span class="s1">'Book XYZ'</span><span class="p">)</span>
-            <span class="p">),</span>
-            <span class="s1">'time'</span>  <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'Y-m-d H:i:s'</span><span class="p">)</span>
-        <span class="p">);</span>
-        <span class="k">return</span> <span class="nv">$index_model</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+class Book {
+    function index() {
+        // $books = $query->from('book')->select();
+        $index_model = array(
+            'books' => array(
+                new BookModel('123', 'book 123'),
+                new BookModel('456', 'Book XYZ')
+            ),
+            'time'  => date('Y-m-d H:i:s')
+        );
+        return $index_model;
+    }
+}
 
-<span class="k">class</span> <span class="nc">BookModel</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$isbn</span><span class="p">;</span>
-    <span class="k">var</span> <span class="nv">$title</span><span class="p">;</span>
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$isbn</span><span class="p">,</span> <span class="nv">$title</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span> <span class="o">=</span> <span class="nv">$isbn</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="nv">$title</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+class BookModel {
+    var $isbn;
+    var $title;
+    function __construct($isbn, $title) {
+        $this->isbn = $isbn;
+        $this->title = $title;
+    }
+}
 
-<span class="cp">?&gt;</span>
-</code></pre>
-
+?>
+{% endhighlight %}
 
 <p>再次用瀏覽器讀取 index.php/book ，會看到下列內容:
 </p>
@@ -83,19 +85,19 @@ Template is missing. Missing views/book/index.phtml.
 <p>根據提示，建立子目錄 views/book 。這裡將放置 <dfn>Book</dfn> 控制項所需要的視圖(View)。繼續建立視圖文件 index.phtml ，內容如下:
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;ul&gt;</span>
-    <span class="cp">&lt;?php foreach ($books as $book): ?&gt;</span>
-    <span class="nt">&lt;li&gt;</span><span class="cp">&lt;?=$book-&gt;isbn?&gt;</span> : <span class="cp">&lt;?=$book-&gt;title?&gt;</span>
-    <span class="nt">&lt;/li&gt;</span>
-    <span class="cp">&lt;?php endforeach ?&gt;</span>
-<span class="nt">&lt;/ul&gt;</span>
-<span class="nt">&lt;p&gt;</span>
-Index date: <span class="cp">&lt;?=$time?&gt;</span>
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
-
+{% highlight html %}
+<html>
+<ul>
+    <?php foreach ($books as $book): ?>
+    <li><?=$book->isbn?> : <?=$book->title?>
+    </li>
+    <?php endforeach ?>
+</ul>
+<p>
+Index date: <?=$time?>
+</p>
+</html>
+{% endhighlight %}
 
 <p>我的 <code>index()</code> 回傳了一個陣列 <var>$index_model</var>， <dfn>CG</dfn> 就會把它的內容展開變成視圖 index.phtml 中的區域變數內容，變數名稱就是陣列的鍵。所以在 index.phtml 會出現 <var>$books</var> 和 <var>$time</var> 兩個變數。然後用 PHP 的樣板語法印出 <var>$books</var> 和 <var>$time</var> 的內容。
 </p>
@@ -115,7 +117,8 @@ Index date: 2013-01-30 06:33:05
 <p>繼續實作 <code>get()</code> 方法，它需要一個 ISBN 參數以便查詢。這個參數內容會由 <dfn>CG</dfn> 根據 URL 路徑第二節的內容指派過來，我的 <dfn>Book</dfn> 不需要處理這件事。
 </p>
 
-<pre class="highlight"><code>class Book {
+{% highlight php %}
+class Book {
     function index() {
         // 省略...
     }
@@ -123,30 +126,29 @@ Index date: 2013-01-30 06:33:05
     var $book;
     function get($isbn) {
         /*
-        $book = $query-&gt;from('book')-&gt;
-                    -&gt;where(array('isbn' =&gt; $isbn))
-                    -&gt;select();
+        $book = $query->from('book')->
+                    ->where(array('isbn' => $isbn))
+                    ->select();
         */
         if ($isbn != '123') {
             HttpResponse::exception(HttpResponse::NOT_FOUND);
         }
-        $this-&gt;book = new BookModel('123', 'book 123');
+        $this->book = new BookModel('123', 'book 123');
         return;
     }
 }
-</code></pre>
-
+{% endhighlight %}
 
 <p>建立 <dfn>GET</dfn> 對應的 get.phtml 視圖。由於 <code>get()</code> 方法沒有回傳值，所以 <dfn>CG</dfn> 會直接將 <dfn>Book</dfn> 當成資料模型(Model)，將它的公開屬性成員(<var>$this->book</var>)變成視圖 get.phtml 內的區域變數 <var>$book</var>。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;h2&gt;</span><span class="cp">&lt;?=$book-&gt;title?&gt;</span><span class="nt">&lt;/h2&gt;</span>
-<span class="nt">&lt;p&gt;</span>ISBN of this book: <span class="cp">&lt;?=$book-&gt;isbn?&gt;</span>
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
-
+{% highlight html %}
+<html>
+<h2><?=$book->title?></h2>
+<p>ISBN of this book: <?=$book->isbn?>
+</p>
+</html>
+{% endhighlight %}
 
 <p>用瀏覽器開啟 index.php/book/123 ，會出現下列內容:
 </p>
