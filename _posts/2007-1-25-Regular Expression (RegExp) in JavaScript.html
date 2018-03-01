@@ -59,19 +59,20 @@ ECMAScript/JavaScript 的 REGEX 規則是以 Perl 的規則為範本 (PHP 中稱
 </ol>
 
 <h3>Example 1.</h3>
-<pre class="highlight"><code><span class="o">/</span><span class="err">\</span><span class="nx">d</span><span class="p">{</span><span class="mi">4</span><span class="p">}</span><span class="o">-</span><span class="err">\</span><span class="nx">d</span><span class="p">{</span><span class="mi">2</span><span class="p">}</span><span class="o">-</span><span class="err">\</span><span class="nx">d</span><span class="p">{</span><span class="mi">2</span><span class="p">}</span><span class="sr">/.test</span><span class="se">(</span><span class="sr">'2007-01-25'</span><span class="se">)</span><span class="sr">;     /</span><span class="o">/</span> <span class="kc">true</span>
-<span class="s1">'2007-01-25'</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/</span><span class="se">\d{4}</span><span class="sr">-</span><span class="se">\d{2}</span><span class="sr">-</span><span class="se">\d{2}</span><span class="sr">/</span><span class="p">);</span>    <span class="c1">// true</span>
 
-<span class="kd">var</span> <span class="nx">datePart</span> <span class="o">=</span> <span class="s1">'2007-01-25'</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/</span><span class="se">(\d{4})</span><span class="sr">-</span><span class="se">(\d{2})</span><span class="sr">-</span><span class="se">(\d{2})</span><span class="sr">/</span><span class="p">);</span>
-<span class="c1">// datePart is ['2007-01-25', '2007', '01', '25']</span>
+{% highlight javascript %}
+/\d{4}-\d{2}-\d{2}/.test('2007-01-25');     // true
+'2007-01-25'.match(/\d{4}-\d{2}-\d{2}/);    // true
 
-<span class="kd">var</span> <span class="nx">emailPart</span> <span class="o">=</span> <span class="sr">/^</span><span class="se">(\w</span><span class="sr">+</span><span class="se">)</span><span class="sr">@</span><span class="se">([\w</span><span class="sr">.</span><span class="se">]</span><span class="sr">+</span><span class="se">)</span><span class="sr">/</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="s1">'rock@example.com'</span><span class="p">);</span>
-<span class="c1">// emailPart = ['rock@example.com', 'rock', 'example.com']</span>
+var datePart = '2007-01-25'.match(/(\d{4})-(\d{2})-(\d{2})/);
+// datePart is ['2007-01-25', '2007', '01', '25']
 
-<span class="kd">var</span> <span class="nx">words</span> <span class="o">=</span> <span class="s1">'How are you doing, john?'</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/</span><span class="se">[\s</span><span class="sr">,</span><span class="se">\?\.]</span><span class="sr">+/</span><span class="p">);</span>
-<span class="c1">// words = ['How', 'are', 'you', 'doing', 'john', '']</span>
-</code></pre>
+var emailPart = /^(\w+)@([\w.]+)/.exec('rock@example.com');
+// emailPart = ['rock@example.com', 'rock', 'example.com']
 
+var words = 'How are you doing, john?'.split(/[\s,\?\.]+/);
+// words = ['How', 'are', 'you', 'doing', 'john', '']
+{% endhighlight %}
 
 <h3>Example 2. 一個簡單的 REGEX 測試工具，可以立即回應輸入的字串與 pattern 是否相符</h3>
 
@@ -154,61 +155,62 @@ function regexp_match() {
 </fieldset>
 </span>
 
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">r_test</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'r_test'</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span>
-        <span class="nx">regex</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
-            <span class="p">?</span> <span class="s1">'Match!'</span>
-            <span class="p">:</span> <span class="s1">'Not match!'</span>
-    <span class="p">);</span>
-    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
-<span class="p">}</span>
+{% highlight javascript %}
+<script type="text/javascript">
+function r_test(regex, s) {
+    var p = document.getElementById('r_test');
+    var result = document.createTextNode(
+        regex.test(s)
+            ? 'Match!'
+            : 'Not match!'
+    );
+    p.replaceChild(result, p.lastChild);
+}
 
-<span class="kd">function</span> <span class="nx">r_exec</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'r_exec'</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">matches</span> <span class="o">=</span> <span class="nx">regex</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span>
-        <span class="nx">matches</span>
-            <span class="p">?</span> <span class="nx">matches</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span>
-            <span class="p">:</span> <span class="s1">'Not match!'</span>
-    <span class="p">);</span>
-    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
-<span class="p">}</span>
+function r_exec(regex, s) {
+    var p = document.getElementById('r_exec');
+    var matches = regex.exec(s);
+    var result = document.createTextNode(
+        matches
+            ? matches.toString()
+            : 'Not match!'
+    );
+    p.replaceChild(result, p.lastChild);
+}
 
-<span class="kd">function</span> <span class="nx">s_split</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s_split'</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">splits</span> <span class="o">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="nx">regex</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span>
-        <span class="nx">splits</span>
-            <span class="p">?</span> <span class="nx">splits</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span>
-            <span class="p">:</span> <span class="s1">'Not match!'</span>
-    <span class="p">);</span>
-    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
-<span class="p">}</span>
+function s_split(regex, s) {
+    var p = document.getElementById('s_split');
+    var splits = s.split(regex);
+    var result = document.createTextNode(
+        splits
+            ? splits.toString()
+            : 'Not match!'
+    );
+    p.replaceChild(result, p.lastChild);
+}
 
-<span class="kd">function</span> <span class="nx">regexp_match</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'regex'</span><span class="p">);</span>
+function regexp_match() {
+    var p = document.getElementById('regex');
 
-    <span class="kd">var</span> <span class="nx">inputString</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'inputString'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">patternString</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'patternString'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">regexFlags</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s1">'regexFlags'</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">flags</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">regexFlags</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">regexFlags</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">checked</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">flags</span> <span class="o">+=</span> <span class="nx">regexFlags</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">value</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+    var inputString = document.getElementById('inputString').value;
+    var patternString = document.getElementById('patternString').value;
+    var regexFlags = document.getElementsByName('regexFlags');
+    var flags = '';
+    for (i = regexFlags.length - 1; i >= 0; --i) {
+        if (regexFlags[i].checked) {
+            flags += regexFlags[i].value;
+        }
+    }
 
-    <span class="kd">var</span> <span class="nx">regex</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="nx">patternString</span><span class="p">,</span> <span class="nx">flags</span><span class="p">);</span>
-    <span class="nx">p</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="nx">regex</span><span class="p">.</span><span class="nx">toString</span><span class="p">()),</span> <span class="nx">p</span><span class="p">.</span><span class="nx">lastChild</span><span class="p">);</span>
+    var regex = new RegExp(patternString, flags);
+    p.replaceChild(document.createTextNode(regex.toString()), p.lastChild);
 
-    <span class="nx">r_test</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">inputString</span><span class="p">);</span>
-    <span class="nx">r_exec</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">inputString</span><span class="p">);</span>
-    <span class="nx">s_split</span><span class="p">(</span><span class="nx">regex</span><span class="p">,</span> <span class="nx">inputString</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span></code></pre>
+    r_test(regex, inputString);
+    r_exec(regex, inputString);
+    s_split(regex, inputString);
+}
+</script>
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>
