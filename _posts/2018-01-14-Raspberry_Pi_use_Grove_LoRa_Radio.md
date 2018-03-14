@@ -49,6 +49,8 @@ Raspberry Pi 3 內建了藍牙模組，為此它改變了過去的硬體 UART �
 
 pyRFM 初始化時必須指定 serial port 參數。在 x86 PC 的 Linux 系統上，預設是 */dev/ttyS0* ；但在 Pi 3 ，則應該用 */dev/serial0* 。原因在上節中說明了。至於 Windows 系統的話，參數的字串格式是 *COM2* 之類。數字部分則需自己到裝置管理員中查看。
 
+基礎的 LoRa 訊號接收程式碼如下所示。完整範例可從我的源碼庫取得: [LoRa-gateway](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway) 。
+
 {% highlight python %}
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
@@ -210,14 +212,18 @@ if ll.setOpModeSleep(True, True):
 
 {% endhighlight %}
 
-上列是參考設計，非完整程式碼。
+上列是參考設計。完整程式碼請看 [LoRa-gateway@rocksources](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway) 。
 
 ![實際運用情形](https://i.imgur.com/80jMWdF.jpg)
+
+###### 程式資源
+
+* [本文完整範例](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway)
+* [erazor83/pyRFM](https://github.com/erazor83/pyRFM)
 
 ###### 參考文件
 
 * [Grove - LoRa Radio](http://wiki.seeed.cc/Grove_LoRa_Radio/)
-* [erazor83/pyRFM](https://github.com/erazor83/pyRFM)
 * [The Raspberry Pi UARTs](https://www.raspberrypi.org/documentation/configuration/uart.md)
 * [Arduino Serial 與 String 使用經驗](http://rocksaying.tw/archives/2017/Arduino_Serial_and_String_exp2-readBytes.html)
 * [MQTT用戶端入門 - 三、Python 用戶端程式設計](http://rocksaying.tw/archives/2016/MQTT-3-Python-clients.html)
