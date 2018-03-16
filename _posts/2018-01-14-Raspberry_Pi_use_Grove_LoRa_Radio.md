@@ -2,7 +2,8 @@
 title: Raspberry Pi 使用 Grove LoRa 無線模組負擔 LoRa Gateway 角色
 category: programming
 tags: [raspberrypi,lora,mqtt,iot,智慧農業]
-cover: https://i.imgur.com/iAiYVil.jpg
+lastupdated: 2018-03-17
+cover: https://i.imgur.com/ZRfesO9.jpg
 ---
 
 本案例於 Raspberry Pi 使用 [Grove - LoRa Radio](http://wiki.seeed.cc/Grove_LoRa_Radio/) 模組，實作基本的 LoRa 無線應用。 Raspberry Pi 的角色是 LoRa Gateway 。它負責收集其他 LoRa 設備的訊號，再透過 Internet 發佈到 MQTT 頻道上。
@@ -39,13 +40,19 @@ Raspberry Pi 3 內建了藍牙模組，為此它改變了過去的硬體 UART �
 
 不論你是否啟用硬體 UART ， Pi 3 都會建立 */dev/serial0* 這個設備符號指向真正的 UART 設備。所以使用 pyRFM 時，應該以 */dev/serial0* 作為連接埠參數。不建議直接用 */dev/ttyS0* 或 */dev/ttyAMA0* 。
 
+UART 設備預設不允許一般使用者開啟。如果你想用一般使用者身份執行本文的程式，請將你的使用者 — 例如 pi — 加入 *dialout* 使用群組。指令如下:
+
+~~~term
+$ sudo usermod -a -G dialout pi
+~~~
+
 <div class="note">
 對於 UART 的變動與調整設置，官方文件 <a href="https://www.raspberrypi.org/documentation/configuration/uart.md">The Raspberry Pi UARTs</a> 有詳細的說明。隨著 UART 和 藍牙設備的設置參數不同， /dev/ttyS0 和 /dev/ttyAMA0 連接的設備可能會互換。為了避免使用上的困擾， Pi 3 固定讓 /dev/serial0 指向 UART ，讓 /dev/serial1  指向藍牙設備。
 </div>
 
 #### LoRa 訊號接收程式
 
-首先，你需要取得 [pyRFM 源碼](https://github.com/erazor83/pyRFM) 。然後手動安裝到 Python3 的套件目錄內。在 Pi 3 ，我安裝在 /usr/lib/python3.5/pyrfm 。如果你不是安裝在 Python3 預設的套件目錄內，你得在程式中用 `sys.path.append()` 加入 pyRFM 的路徑。
+首先，你需要取得 [pyRFM 源碼](https://github.com/erazor83/pyRFM)，或者從本文完整範例取得。然後手動安裝到 Python3 的套件目錄內。在 Pi 3 ，我安裝在 /usr/lib/python3.5/pyrfm 。如果你不是安裝在 Python3 預設的套件目錄內，你得在程式中用 `sys.path.append()` 加入 pyRFM 的路徑。
 
 pyRFM 初始化時必須指定 serial port 參數。在 x86 PC 的 Linux 系統上，預設是 */dev/ttyS0* ；但在 Pi 3 ，則應該用 */dev/serial0* 。原因在上節中說明了。至於 Windows 系統的話，參數的字串格式是 *COM2* 之類。數字部分則需自己到裝置管理員中查看。
 
@@ -132,7 +139,7 @@ Grove LoRa Radio 的訊號發送模式是廣播模式，任何位在有效距離
 
 至於發送設備的設計內容，請參考 [Arduino Serial 與 String 使用經驗](http://rocksaying.tw/archives/2017/Arduino_Serial_and_String_exp2-readBytes.html) 這篇文章。這篇文章提到它如何指定 to 欄位與 from 欄位的內容。
 
-藉由 to 與 from 欄位的定義，就可以讓 Pi 3 的 LoRa 接收程式負擔起 LoRa Gateway 的角色。
+藉由定義 to 與 from 欄位的用途，就可以讓 Pi 3 的 LoRa 接收程式負擔起 LoRa Gateway 的角色。
 
 #### 發佈到 MQTT
 
@@ -214,11 +221,17 @@ if ll.setOpModeSleep(True, True):
 
 上列是參考設計。完整程式碼請看 [LoRa-gateway@rocksources](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway) 。
 
-![實際運用情形](https://i.imgur.com/80jMWdF.jpg)
+![實際運用情形](https://i.imgur.com/ZRfesO9.jpg)
+
+上圖是配合完整範例附的 lora-sender.py 運作的情形。
+
+![使用案例圖](https://i.imgur.com/80jMWdF.jpg)
+
+上圖是配合繼電器控制其他設備開關的案例。
 
 ###### 程式資源
 
-* [本文完整範例](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway)
+* [本文完整範例](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway) 。我修改過的 pyRFM ，增加了 `setHeaderTo()` 和 `setHeaderFrom()` 方法。這是 Grove LoRa Radio Arduino 套件已實作，但 pyRFM 原作者未實作的方法。我加以補全。
 * [erazor83/pyRFM](https://github.com/erazor83/pyRFM)
 
 ###### 參考文件
