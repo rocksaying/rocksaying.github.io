@@ -1,0 +1,436 @@
+---
+title: OpenSSL Library - BIO 概論
+category: programming
+old-category: C/C++/C#/Java
+tags: [openssl]
+permalink: /archives/16263025.html
+---
+<p>
+<dfn>BIO</dfn> 是 OpenSSL 庫為了處理資料輸出入所設計的輸出入抽象層，參考《<a href="http://www.openssl.org/docs/crypto/bio.html">bio(3)</a>》的說明。
+OpenSSL 的程式碼經常利用 BIO 的多形性，故在使用 OpenSSL 開發應用程式時，必須先熟悉 BIO。
+</p>
+
+<p>
+BIO 的設計模式是 C 語言 (不是C++) 實作個體導向程式設計多形性(polymorphism of OOP)時常見的設計方式。
+在早期，程序員學了 OOP 的觀念可是還是要寫 C 程式的時代，我們需自己用 C 語言實作類別繼承、動態連結等內容。但我們用的是 C compiler 而非 C++ compiler ，所以很多事我們必須自己處理。
+因此它們的程式碼與近代 C++ 式的表達方式有所差異。
+例如我在《<a href="{{ site.baseurl }}/archives/3556355.html">程式語言中的介面，在個體之間協議互動行為的多種形式</a>》說的作法就是一例；GNOME Library 也是這種用 C 語言寫出來的「類別庫」。
+所以 BIO 實際上是一種類別庫。
+</p>
+
+<!--more-->
+<h4>
+BIO 類別輪廓
+</h4>
+
+<p>
+既然 BIO 是一種類別庫，那麼我們最好還是用看待類別的方式去看 BIO ，才容易看清它的輪廓。
+本節將使用 C++ 的語法表達 BIO 的類別內容，以便理解其繼承與多形關係。
+為了方便各位參考 OpenSSL 說明文件草稿，我在類別名稱第一次出現的地方，都會在其後用角括號寫出其 C 語言的原名與文件連結。原名名稱括弧內的數字，是 Unix man page 的表達習慣，表示那屬於 man page 的第幾號分類。
+</p>
+
+<p>
+因為 BIO 類別庫的內容非常多，本節只是選了常用的幾個來表達。完整的內容請查看 OpenSSL 的 bio 標頭文件 (/usr/include/openssl/bio*.h)。
+</p>
+
+<h5>
+BIO 基礎類別
+</h5>
+<p>
+BIO [<a href="http://www.openssl.org/docs/crypto/BIO_new.html">BIO_new(3)</a>] 類別是所有 BIO 類別庫的基礎類別。它宣告了 <dfn>BIO_METHOD</dfn> 介面。所有 BIO 子類別都必須實作此介面。
+</p>
+
+<p>
+在《<a href="{{ site.baseurl }}/archives/3556355.html">程式語言中的介面，在個體之間協議互動行為的多種形式</a>》說到介面宣告在 C 語言眼中其實就是一個以結構型態定義多個函數指標成員的「函數表」。BIO_METHOD 正是這種作為「介面」的函數表。程序員想配置新的 BIO 個體時，可以調用 BIO 子類別的建構子得之，亦可將子類別實作的介面傳遞給 BIO 類別的建構子得之。「介面」可以當成參數傳遞，這一點是初學者比較難以理解的特性。
+</p>
+
+{% highlight c %}
+class BIO_METHOD {
+    int type;
+    virtual int read(void *data, int len);
+    virtual int gets(char *buf, int size);
+    virtual int write(const void *data, int len);
+    virtual int puts(const char *buf);
+};
+
+class BIO : BIO_METHOD {
+  public:
+    BIO(BIO_METHOD *type); // BIO_new()
+    /*
+    BIO_METHOD 是一個函數指標表，其用途即 OOPL 的 interface，
+    每一個函數指標即 interface 中的抽象函數，
+    當建構實體時，才會將指標指向實際的函數。
+    最初的 C 語言便是透過這種模式實作繼承機制。
+    type:
+        BIO_s_file()
+        BIO_s_mem()
+        and more...
+    */
+
+    ~BIO(); // BIO_free()
+
+    int read(void *data, int len); // BIO_read()
+    int gets(char *buf, int size); // BIO_gets()
+    int write(const void *data, int len); // BIO_write()
+    int puts(const char *buf);  // BIO_puts()
+    // manpage fread(),fgets(),fwrite(),fputs()
+    
+    int tell(); // BIO_tell()
+    int seek(long offset); // BIO_seek()
+    // manpage fseek(3), ftell(3)
+
+    int printf(...); // BIO_printf()
+    int snprintf(...); // BIO_snprintf()
+    // manpage printf(3)
+    
+    int ctrl(...); // BIO_ctrl()
+};
+{% endhighlight %}
+
+<h5>
+BIO_file 與 BIO_fd 類別
+</h5>
+<p>
+BIO_file [<a href="http://www.openssl.org/docs/crypto/BIO_s_file.html">BIO_s_file(3)</a>] 是BIO 的子類別之一，它對應 ANSI C 標準庫的 FILE 處理函數。其主要對象是檔案系統中的文件與標準輸出入設備(stdin, stdout, stderr)。
+</p>
+
+<p>
+BIO_file 定義了兩個建構旗標: <dfn>BIO_CLOSE</dfn> 與 <dfn>BIO_NOCLOSE</dfn>，用以表明解構個體時，其 FILE 對象是否需要關閉。通常 FILE 對象為標準輸出入設備時，因為它們是由系統開啟，所以都要使用 <dfn>BIO_NOCLOSE</dfn> 選項表示不要關閉。 
+</p>
+
+<p>
+BIO_fd [<a href="http://www.openssl.org/docs/crypto/BIO_s_fd.html">BIO_s_fd(3)</a>] 對應 POSIX 庫的檔案描述子(file descriptor)處理函數。其對象是所有可用檔案描述子開啟的設備。
+它也同樣使用 <dfn>BIO_CLOSE</dfn> 與 <dfn>BIO_NOCLOSE</dfn> 表明解構時是否需要關閉設備。
+</p>
+
+{% highlight c %}
+// close_flag
+#define BIO_NOCLOSE 0
+#define BIO_CLOSE 1
+
+class BIO_file: public BIO {
+  public:
+    BIO_file(FILE *stream, int close_flag); // BIO_new_fp()
+    BIO_file(const char *filename, const char *mode); // BIO_new_file()
+    // manpage fopen(3)
+};
+
+class BIO_fd: public BIO {
+  public:
+    BIO_fd(int fd, int close_flag); // BIO_new_fd()
+    // manpage open(2)
+};
+{% endhighlight %}
+
+<h5>
+BIO_mem 類別
+</h5>
+
+<p>
+BIO_mem [<a href="http://www.openssl.org/docs/crypto/BIO_s_mem.html#">BIO_s_mem(3)</a>] 的對象是記憶體區塊。它把記憶體區塊當成一個設備，對它進行的讀取與寫入動作實際上是記憶體的資料複製行為。
+配合大部份的 C 語言函數需要直接傳遞記憶體區塊的指標，故它也定義了一個 get_mem_ptr() 方法。
+</p>
+
+{% highlight %}
+class BIO_mem: public BIO {
+  public:
+    BIO_mem(); // BIO_new(BIO_s_mem())
+
+    BIO_mem(void *buf, int len); // BIO_new_mem_buf()
+    
+    struct BUF_MEM {
+        void *data;
+        int length;
+        int max;
+    };
+    
+    int get_mem_ptr(BUF_MEM **ptr);
+};
+{% endhighlight %}
+
+<p>
+BIO_mem 的好處在於會自已配置並維護它持有的記憶體區塊，並隨寫入的資料量主動調整區塊大小。
+</p>
+<p>
+除此之外，它還有一個比較特殊的預設行為，當你指定一個已配置的記憶體區塊給它時，它會是一個唯讀設備。此時你只能透過它從該記憶體區塊中讀取資料，但不能透過它寫入(改變)該區塊的內容。例如:
+</p>
+
+{% highlight c %}
+char buf[4096]; // fixed-size memory block
+BIO *bio1 = new BIO_mem(buf, sizeof(buf)); // read-only
+bio1->puts("hello"); // nothing changed.
+
+BIO *bio2 = new BIO(BIO_s_mem()); // dynamic-allocate memory block
+bio2->puts("hello"); // store "hello" into the memory block.
+{% endhighlight %}
+
+<h5>
+BIO_socket 等類別
+</h5>
+<p>
+BIO_socket [<a href="http://www.openssl.org/docs/crypto/BIO_s_socket.html">BIO_s_socket(3)</a>] 對應了 socket 設備處理函數，其對象是 socket 型態為 <dfn>SOCK_STREAM</dfn> 的設備。
+另外還有 BIO_dgram 處理 socket 型態為 <dfn>SOCK_DGRAM</dfn> 的設備；
+BIO_accept [<a href="http://www.openssl.org/docs/crypto/BIO_s_accept.html">BIO_s_accept(3)</a>] 的對象是 socket 函數 accept(2) 開啟的設備；BIO_connect [<a href="http://www.openssl.org/docs/crypto/BIO_s_connect.html">BIO_s_connect(3)</a>] 的對象是 socket 函數 connect(2) 開啟的設備。
+</p>
+
+{% highlight c %}
+class BIO_socket: public BIO {
+  public:
+    BIO_socket(int sockfd, int close_flag); // BIO_new_socket()
+    // manpage socket(2), type SOCK_STREAM
+};
+
+class BIO_dgram: public BIO {
+  public:
+    BIO_dgram(int fd, int close_flag);   
+    // manpage socket(2), type SOCK_DGRAM
+};
+
+class BIO_connect: public BIO {
+  public:
+    BIO_connect(char *host_port);
+    // manpage connect(2)
+};
+
+class BIO_accept: public BIO {
+  public:
+    BIO_accept(char *host_port);         
+    // manpage accept(2)
+};
+{% endhighlight %}
+
+<h4>
+使用 BIO 類別
+</h4>
+
+<h5>
+基本操作
+</h5>
+<p>
+我將寫一個基本的範例程式，分別用 BIO_file, BIO_mem 與 BIO_fd 類別開啟4個設備，並寫入一行文字。
+</p>
+
+<p>
+我首先用 C++ 語法寫出範例程式的內容。接著再改寫為 C 語法。
+</p>
+
+<h6>
+C++ 偽碼
+</h6>
+
+<p>
+bio_pseudo.cpp 是用 C++ 語法表達 OpenSSL BIO 類別內容的偽碼，故雖可編譯但不能產生執行檔。
+</p>
+
+{% highlight c %}
+// gcc -c bio_pseudo.cpp
+#include <cstdio>
+#include "bio.hpp"
+#include "bio_file.hpp"
+#include "bio_mem.hpp"
+
+int foo(BIO *bio, const char *msg) {
+    return bio->puts(msg);
+}
+
+int main() {
+    BIO *bio1 = new BIO_file(stdin, BIO_NOCLOSE);
+    BIO *bio2 = new BIO_file("/tmp/abc", "w");
+    
+    // dynamic allocate memory block.
+    BIO_mem *bio3 = new BIO_mem();
+
+    BIO *bio4 = new BIO_fd(1, BIO_NOCLOSE); // 1 is stdout
+
+    foo(bio1, "bio1 say\n"); // put to screen
+    foo(bio2, "bio2 say\n"); // put to file '/tmp/abc' 
+    foo(bio3, "bio3 say\n"); // put to memory
+    foo(bio4, "bio4 say\n"); // put to screen
+    
+    BIO_mem::BUF_MEM *mem_ptr = NULL;
+    
+    bio3->get_mem_ptr(&mem_ptr);
+    printf("size of mem ptr: %d; max: %d; data: %s", 
+        mem_ptr->length, mem_ptr->max, (char*)mem_ptr->data);
+    
+    return 0;
+}
+{% endhighlight %}
+
+<h6>
+C 程式碼
+</h6>
+
+<p>
+bio_example.c 的 C 語言程式碼才是真正調用 OpenSSL BIO 類別庫的範例程式。
+</p>
+
+{% highlight c %}
+// gcc -lssl -o bio_example bio_example.c
+#include <stdio.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+
+int foo(BIO *bio, const char *msg) {
+    return BIO_puts(bio, msg);
+}
+
+int main() {
+    BIO *bio1 = BIO_new_fp(stdout, BIO_NOCLOSE);
+    BIO *bio2 = BIO_new_file("/tmp/abc", "w");
+    
+    // dynamic allocate memory block.
+    BIO *bio3 = BIO_new(BIO_s_mem());
+
+    BIO *bio4 = BIO_new_fd(1, BIO_NOCLOSE);
+
+    foo(bio1, "bio1 say\n"); // put to screen
+    foo(bio2, "bio2 say\n"); // put to file '/tmp/abc' 
+    foo(bio3, "bio3 say\n"); // put to memory
+    foo(bio4, "bio4 say\n"); // put to screen
+    
+    BUF_MEM *mem_ptr = NULL;
+
+    BIO_get_mem_ptr(bio3, &mem_ptr);
+    printf("size of mem ptr: %d; max: %d; data: %s", 
+        mem_ptr->length, mem_ptr->max, mem_ptr->data);
+
+    return 0;
+}
+{% endhighlight %}
+
+<p>
+編譯與執行結果如下所示。因為開啟的四個設備中，bio1, bio4 是標準輸出設備，故寫入的文字會直接出現在螢幕上。
+bio2 則是檔案系統的檔案 /tmp/abc，文字被存入其中。bio3 是記憶體，所以文字被存入記憶體。
+</p>
+
+<pre><code class="language-term">
+$ gcc -lssl -o bio_example bio_example.c
+$ ./bio_example
+bio1 say
+bio4 say
+size of mem ptr: 9; max: 16; data: bio3 say
+$ cat /tmp/abc
+bio2 say
+</code></pre>
+
+<p>
+我先用 C++ 寫出偽碼，再改寫成 C 語言碼。這是要讓大家了解操作 BIO 類別庫時，就應該要用 OOPL 的方式思考。撰寫實際的 C 語言程式碼時，更易清晰地掌握程式流程。
+</p>
+
+<h5>
+加入濾器
+</h5>
+
+<p>
+BIO 還提供一種濾器，可讓我們插入資料流中，幫我們在讀寫資料的過程中過濾資料內容。
+最常見的就是資料編碼與解碼濾器，例如 BIO::Base64 濾器 – <a href="http://www.openssl.org/docs/crypto/BIO_f_base64.html">BIO_f_base64(3)</a>。
+</p>
+
+<p>
+範例程式碼 bio_base64.c 是我將 <a href="http://www.openssl.org/docs/crypto/BIO_f_base64.html">BIO_f_base64(3)</a> 文件所附的範例程式加以擴充所得。
+範例程式在資料流中加入了 BIO::Base64 濾器，因此寫入資料流的內容都將透過此濾器被編碼為 Base64 格式後才輸出。
+修改後的範例程式，利用 BIO 的多形性，使其資料流兩端可以為標準輸出入設備亦或一般檔案。
+</p>
+
+{% highlight c %}
+// gcc -lssl -o bio_base64 bio_base64.c
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
+// program [input_filepath] [output_filepath]
+// default behaviour is to read from stdin then write to stdout.
+int main(int argc, char *argv[]) {
+    BIO *bin, *bout, *b64filter;
+    char buff[1024];
+    int rc = 0;
+
+    if (argc < 2)
+        bin = BIO_new_fp(stdin, BIO_NOCLOSE);
+    else
+        bin = BIO_new_file(argv[1], "r");
+    
+    if (bin == NULL) {
+        printf("Failed to open input file.\n");
+        return 1;
+    }
+
+    if (argc > 2)
+        bout = BIO_new_file(argv[2], "w");
+    else
+        bout = BIO_new_fp(stdout, BIO_NOCLOSE);
+
+    if (bin == NULL) {
+        printf("Failed to open output file.\n");
+        return 1;
+    }
+
+    b64filter = BIO_new(BIO_f_base64());
+    bout = BIO_push(b64filter, bout); // insert the filter.
+    
+    while ((rc = BIO_read(bin, buff, sizeof(buff))) > 0) {
+        BIO_write(bout, buff, rc);
+    }
+    BIO_flush(bout);
+
+    BIO_free_all(bout);
+    BIO_free_all(bin);
+
+    return 0;
+}
+{% endhighlight %}
+
+<p>
+此範例程式可接收兩個參數，第一個參數表示輸入的檔案名稱，第二個參數表示輸出的檔案名稱。
+如果不指定第二個參數，則資料將寫入標準輸出設備。若連第一個參數也省略，則將自標準輸入設備讀取資料。
+</p>
+
+<pre><code class="language-term">
+$ gcc -lssl -o bio_base64 bio_base64.c
+
+$ cat bio_base64.c | ./bio_base64
+# read from stdin, write to stdout
+
+$ ./bio_base64 bio_base64.c
+# read from bio_base64.c, write to stdout
+
+$ ./bio_base64 bio_base64.c /tmp/b64.txt
+# read from bio_base64.c, write to /tmp/b64.txt
+
+</code></pre>
+
+<p>
+若將 bio_base64.c 的輸出入來源改成 BIO::Socket 類別，就會支援從網路連線中讀寫資料。
+當你開發支援 SSL 保密線路的網路應用程式時，資料傳輸的基本步驟也就是用 BIO::Socket 建立資料流，再插入 BIO 加密濾器，例如 BIO::Cipher – <a href="http://www.openssl.org/docs/crypto/BIO_f_cipher.html">BIO_f_cipher(3)</a>。
+</p>
+
+<p>
+有興趣了解更多的人，可以參考以下三篇由 Kenneth Ballard 發表於 developerWorks 的《Secure programming with the OpenSSL API》系列文章是利用 OpenSSL 設計具有保密線路的網路程式。第一篇也是在教 BIO 的用法。
+</p>
+
+<ul>
+    <li><a href="http://www.ibm.com/developerworks/linux/library/l-openssl/index.html">Part 1: Overview of the API</a> 
+    </li>
+
+    <li><a href="http://www.ibm.com/developerworks/linux/library/l-openssl2/index.html">Part 2: Secure handshake</a> 
+    </li>
+
+    <li><a href="http://www.ibm.com/developerworks/linux/library/l-openssl3/index.html">Part 3: Providing a secure service</a> 
+    </li>
+</ul>
+
+<p>
+OpenSSL Library 的系列文章:
+</p>
+<ul>
+    <li>
+        <a href="{{ site.baseurl }}/archives/16158079.html">OpenSSL Library - 讀取 X509 certificate 的資訊</a> 
+    </li>
+</ul>
+<h6>相關文章</h6>
+<ul>
+<li><a href="{{ site.baseurl }}/archives/16290045.html">OpenSSL Library - EVP, Digest and Cipher</a></li>
+<li><a href="{{ site.baseurl }}/archives/17362107.html">OpenSSL - SOD 安全文件概論</a></li>
+<li><a href="{{ site.baseurl }}/archives/17760845.html">OpenSSL - SOD 與 ASN1 解讀</a></li>
+</ul>
+<div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/16263025.html</div>
