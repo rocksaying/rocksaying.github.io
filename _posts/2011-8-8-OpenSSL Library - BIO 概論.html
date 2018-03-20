@@ -44,7 +44,7 @@ BIO [<a href="http://www.openssl.org/docs/crypto/BIO_new.html">BIO_new(3)</a>] �
 在《<a href="{{ site.baseurl }}/archives/3556355.html">程式語言中的介面，在個體之間協議互動行為的多種形式</a>》說到介面宣告在 C 語言眼中其實就是一個以結構型態定義多個函數指標成員的「函數表」。BIO_METHOD 正是這種作為「介面」的函數表。程序員想配置新的 BIO 個體時，可以調用 BIO 子類別的建構子得之，亦可將子類別實作的介面傳遞給 BIO 類別的建構子得之。「介面」可以當成參數傳遞，這一點是初學者比較難以理解的特性。
 </p>
 
-{% highlight c %}
+{% highlight c++ %}
 class BIO_METHOD {
     int type;
     virtual int read(void *data, int len);
@@ -103,7 +103,7 @@ BIO_fd [<a href="http://www.openssl.org/docs/crypto/BIO_s_fd.html">BIO_s_fd(3)</
 它也同樣使用 <dfn>BIO_CLOSE</dfn> 與 <dfn>BIO_NOCLOSE</dfn> 表明解構時是否需要關閉設備。
 </p>
 
-{% highlight c %}
+{% highlight c++ %}
 // close_flag
 #define BIO_NOCLOSE 0
 #define BIO_CLOSE 1
@@ -131,7 +131,7 @@ BIO_mem [<a href="http://www.openssl.org/docs/crypto/BIO_s_mem.html#">BIO_s_mem(
 配合大部份的 C 語言函數需要直接傳遞記憶體區塊的指標，故它也定義了一個 get_mem_ptr() 方法。
 </p>
 
-{% highlight %}
+{% highlight c++ %}
 class BIO_mem: public BIO {
   public:
     BIO_mem(); // BIO_new(BIO_s_mem())
@@ -155,7 +155,7 @@ BIO_mem 的好處在於會自已配置並維護它持有的記憶體區塊，並
 除此之外，它還有一個比較特殊的預設行為，當你指定一個已配置的記憶體區塊給它時，它會是一個唯讀設備。此時你只能透過它從該記憶體區塊中讀取資料，但不能透過它寫入(改變)該區塊的內容。例如:
 </p>
 
-{% highlight c %}
+{% highlight c++ %}
 char buf[4096]; // fixed-size memory block
 BIO *bio1 = new BIO_mem(buf, sizeof(buf)); // read-only
 bio1->puts("hello"); // nothing changed.
@@ -173,7 +173,7 @@ BIO_socket [<a href="http://www.openssl.org/docs/crypto/BIO_s_socket.html">BIO_s
 BIO_accept [<a href="http://www.openssl.org/docs/crypto/BIO_s_accept.html">BIO_s_accept(3)</a>] 的對象是 socket 函數 accept(2) 開啟的設備；BIO_connect [<a href="http://www.openssl.org/docs/crypto/BIO_s_connect.html">BIO_s_connect(3)</a>] 的對象是 socket 函數 connect(2) 開啟的設備。
 </p>
 
-{% highlight c %}
+{% highlight c++ %}
 class BIO_socket: public BIO {
   public:
     BIO_socket(int sockfd, int close_flag); // BIO_new_socket()
@@ -222,7 +222,7 @@ C++ 偽碼
 bio_pseudo.cpp 是用 C++ 語法表達 OpenSSL BIO 類別內容的偽碼，故雖可編譯但不能產生執行檔。
 </p>
 
-{% highlight c %}
+{% highlight c++ %}
 // gcc -c bio_pseudo.cpp
 #include <cstdio>
 #include "bio.hpp"
