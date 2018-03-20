@@ -107,7 +107,7 @@ SOD 製作過程
 操作過程中，openssl 會詢問私鑰密碼。請記住這個密碼，因為使用私鑰時需要這個密碼。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 openssl req \
 >   -x509 -days 30 -newkey rsa:1024 \
 >   -subj "/CN=rocksaying/O=Rock's blog./C=TW" \
@@ -118,54 +118,54 @@ writing new private key to 'mycert_privkey.pem'
 Enter PEM pass phrase:
 Verifying - Enter PEM pass phrase:
 
-</pre>
+<code></pre>
 
 <p>
 下列的 x509-cert-generate.php 則是使用 PHP 撰寫的金鑰製作程式。其效果等於上述的 openssl 操作。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// See http://www.php.net/manual/en/function.openssl-csr-new.php
-</span><span class="nv">$mycert_filepath</span> <span class="o">=</span> <span class="s1">'mycert.pem'</span><span class="p">;</span>
-<span class="nv">$myprivkey_filepath</span> <span class="o">=</span> <span class="s1">'mycert_privkey.pem'</span><span class="p">;</span>
-<span class="nv">$days</span> <span class="o">=</span> <span class="mi">30</span><span class="p">;</span>
+{% highlight php %}
+<?php
+// See http://www.php.net/manual/en/function.openssl-csr-new.php
+$mycert_filepath = 'mycert.pem';
+$myprivkey_filepath = 'mycert_privkey.pem';
+$days = 30;
 
-<span class="c1">// -newkey rsa:1024
-</span><span class="nv">$pkey_config_args</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'private_key_type'</span>  <span class="o">=&gt;</span> <span class="nx">OPENSSL_KEYTYPE_RSA</span><span class="p">,</span>
-    <span class="s1">'private_key_bits'</span>  <span class="o">=&gt;</span> <span class="mi">1024</span><span class="p">,</span>
-<span class="p">);</span>
-<span class="nv">$pkey</span> <span class="o">=</span> <span class="nb">openssl_pkey_new</span><span class="p">(</span><span class="nv">$pkey_config_args</span><span class="p">);</span>
+// -newkey rsa:1024
+$pkey_config_args = array(
+    'private_key_type'  => OPENSSL_KEYTYPE_RSA,
+    'private_key_bits'  => 1024,
+);
+$pkey = openssl_pkey_new($pkey_config_args);
 
-<span class="c1">// -subj "..."
-</span><span class="nv">$dn</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="c1">#'CN'    =&gt; 'rocksaying',
-</span>    <span class="s1">'commonName'</span> <span class="o">=&gt;</span> <span class="s1">'rocksaying'</span><span class="p">,</span> <span class="c1"># 'commonName' will be converted to 'CN'
-</span>    <span class="s1">'O'</span>     <span class="o">=&gt;</span> <span class="s2">"Rock's blog."</span><span class="p">,</span>
-    <span class="s1">'C'</span>     <span class="o">=&gt;</span> <span class="s1">'TW'</span>
-<span class="p">);</span>
+// -subj "..."
+$dn = array(
+    #'CN'    => 'rocksaying',
+    'commonName' => 'rocksaying', # 'commonName' will be converted to 'CN'
+    'O'     => "Rock's blog.",
+    'C'     => 'TW'
+);
 
-<span class="c1">// req -x509
-</span><span class="nv">$csr</span> <span class="o">=</span> <span class="nb">openssl_csr_new</span><span class="p">(</span><span class="nv">$dn</span><span class="p">,</span> <span class="nv">$pkey</span><span class="p">);</span>
+// req -x509
+$csr = openssl_csr_new($dn, $pkey);
 
-<span class="c1">// -days 30
-</span><span class="nv">$self_signed_cert</span> <span class="o">=</span> <span class="nb">openssl_csr_sign</span><span class="p">(</span><span class="nv">$csr</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="nv">$pkey</span><span class="p">,</span> <span class="nv">$days</span><span class="p">);</span>
+// -days 30
+$self_signed_cert = openssl_csr_sign($csr, null, $pkey, $days);
 
-<span class="c1">// -out mycert.pem
+// -out mycert.pem
 // mycert.pem is just a self signed certificate.
 // not a trusted certificate issued by CA.
-</span><span class="nb">openssl_x509_export_to_file</span><span class="p">(</span><span class="nv">$self_signed_cert</span><span class="p">,</span> <span class="nv">$mycert_filepath</span><span class="p">);</span>
+openssl_x509_export_to_file($self_signed_cert, $mycert_filepath);
 
-<span class="c1">// -keyout mycert_privkey.pem
-</span><span class="nv">$pkey_password</span> <span class="o">=</span> <span class="s1">'1234'</span><span class="p">;</span>
-<span class="nb">openssl_pkey_export_to_file</span><span class="p">(</span><span class="nv">$pkey</span><span class="p">,</span> <span class="nv">$myprivkey_filepath</span><span class="p">,</span> <span class="nv">$pkey_password</span><span class="p">);</span>
+// -keyout mycert_privkey.pem
+$pkey_password = '1234';
+openssl_pkey_export_to_file($pkey, $myprivkey_filepath, $pkey_password);
 
-<span class="c1"># export my certificate signing request. 
+# export my certificate signing request. 
 # this should be send to third CA org for issue.
 #openssl_csr_export($csr, 'mycert.csr');
-</span><span class="cp">?&gt;</span>
-</code></pre>
-
+?>
+{% endhighlight %}
 
 <h5>
 證書可信度
@@ -191,7 +191,7 @@ Verifying - Enter PEM pass phrase:
 <p>我們可用 openssl 工具的 <code>verify</code> 選項查驗我們拿到的證書種類。如下所示範:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 # Verify X509 self-signed certificate.
 $ openssl verify mycert.pem
 mycert.pem: /CN=rocksaying/O=Rock's blog./C=TW/ST=Some-State
@@ -203,7 +203,7 @@ $ openssl verify mycert.pem
 mycert.pem: /CN=rocksaying/O=Rock's blog./C=TW/ST=Some-State
 OK
 
-</pre>
+</code></pre>
 
 <p>如果你查驗的證書是自己背書的，則查驗過程會失敗，提示錯誤代號 18 ，並說明原因為此證書是自己背書的證書。若該證書經過公證或是你本人認可，則不會顯示任何錯誤訊息。
 </p>
@@ -240,12 +240,12 @@ OK
 如果我直接用 openssl 工具去查證它的可信度，openssl 會說這是一份自己背書的證書。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ openssl verify john_cert.pem
 john_cert.pem: ....
 error 18 at 0 depth lookup: self signed certifcate
 OK
-</pre>
+</code></pre>
 
 <p>我需要先透過自己的管道，確認這份證書的可信度，然後把它納入我認可過的證書管理資料夾中。
 如果你曾經使用瀏覽器瀏覽某些 https 的網站，有時瀏覽器也會跳出提問是否接受此網站簽證的訊息，這其實也是在問你是否要認可該網站自己背書的證書。
@@ -256,26 +256,26 @@ OK
 
 <p>2.產生 john_cert.pem 的雜湊碼。(應該由強者我朋友告知)
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ openssl x509 -noout -hash -in john_cert.pem
 de3389fd
-</pre>
+</code></pre>
 
 <p>3.將證書保存在你的證書管理資料夾中，並建立雜湊碼的符號連結(或複製)。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ cp john_cert.pem $HOME/certs
 $ cd $HOME/certs
 $ ln -s john_cert.pem de3389fd.0
-</pre>
+</code></pre>
 
 <p>現在，我用 openssl 工具加上 <code>-CApath</code> 選項後，openssl 就會承認這份證書的可信度了。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ openssl verify -CApath $HOME/certs  john_cert.pem
 john_cert.pem: OK
-</pre>
+</code></pre>
 
 <p>參考 <a href="http://www.madboa.com/geek/openssl/#verify-system">How do I verify a certificate?
 </a>。
@@ -363,15 +363,15 @@ sod_asn1.conf 所規劃的結構，以 JSON 表示法示意如下。
 
 <p>使用 openssl 工具的 <code>asn1parse</code> 選項就可以完成。須提供參數 <code>-genconf</code> 告知你的 ASN.1 文件的配置結構與內容。例如:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ openssl asn1parse -genconf sod_asn1.conf -noout -out sod_asn1.der
-</pre>
+</code></pre>
 
 <p>使用參數 <code>-in</code> 則可以查看 ASN.1 文件的內容。例如:
-<pre class="language-term">
+<pre><code class="language-term">
 # ps. read this ASN1 document:
 $ openssl asn1parse -in sod_asn1.der -inform DER -i
-</pre>
+</code></pre>
 
 <h5>蠟封 ASN.1 文件
 </h5>
@@ -390,95 +390,95 @@ $ openssl asn1parse -in sod_asn1.der -inform DER -i
 <p>我們當然不可能每次都像前一節那樣手動操作。但是了解上述過程後，要寫一個建立 SOD 的工具就很簡單了。 sod_generate.php 就是一個用 PHP 語言撰寫的建立 SOD 的範例工具。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$certificate_filepath</span> <span class="o">=</span> <span class="s1">'mycert.pem'</span><span class="p">;</span>
-<span class="nv">$private_key_filepath</span> <span class="o">=</span> <span class="s1">'mycert_privkey.pem'</span><span class="p">;</span> 
-<span class="nv">$private_key_password</span> <span class="o">=</span> <span class="s1">'1234'</span><span class="p">;</span>
+{% highlight php %}
+<?php
+$certificate_filepath = 'mycert.pem';
+$private_key_filepath = 'mycert_privkey.pem'; 
+$private_key_password = '1234';
 
-<span class="nv">$asn1_conf_filepath</span> <span class="o">=</span> <span class="s1">'/tmp/digests_asn1.conf'</span><span class="p">;</span>
-<span class="nv">$digests_filepath</span> <span class="o">=</span> <span class="s1">'/tmp/digests.der'</span><span class="p">;</span> <span class="c1">// ASN1 format document
-</span><span class="nv">$sod_filepath</span> <span class="o">=</span> <span class="s1">'/tmp/sod.dat'</span><span class="p">;</span> <span class="c1">// SMIME format document
-</span>
-<span class="nv">$digest_method</span> <span class="o">=</span> <span class="s1">'sha256'</span><span class="p">;</span>
-<span class="c1">// See openssl_get_md_methods() to get available digest methods.
-</span>
-<span class="nv">$digests</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="cm">/*
+$asn1_conf_filepath = '/tmp/digests_asn1.conf';
+$digests_filepath = '/tmp/digests.der'; // ASN1 format document
+$sod_filepath = '/tmp/sod.dat'; // SMIME format document
+
+$digest_method = 'sha256';
+// See openssl_get_md_methods() to get available digest methods.
+
+$digests = array();
+/*
 $content = file_get_contents('ef1.dat');
 $digests[1] = strtoupper(openssl_digest($content, $digest_method));
 $content = file_get_contents('ef2.dat');
 $digests[2] = strtoupper(openssl_digest($content, $digest_method));
 $content = file_get_contents('ef13.dat');
 $digests[13] = strtoupper(openssl_digest($content, $digest_method));
-*/</span>
-<span class="nv">$digests</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">strtoupper</span><span class="p">(</span><span class="nb">openssl_digest</span><span class="p">(</span><span class="s1">'conetnt of EF1'</span><span class="p">,</span> <span class="nv">$digest_method</span><span class="p">));</span>
-<span class="nv">$digests</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">strtoupper</span><span class="p">(</span><span class="nb">openssl_digest</span><span class="p">(</span><span class="s1">'conetnt of EF2'</span><span class="p">,</span> <span class="nv">$digest_method</span><span class="p">));</span>
-<span class="nv">$digests</span><span class="p">[</span><span class="mi">13</span><span class="p">]</span> <span class="o">=</span> <span class="nb">strtoupper</span><span class="p">(</span><span class="nb">openssl_digest</span><span class="p">(</span><span class="s1">'conetnt of EF13'</span><span class="p">,</span> <span class="nv">$digest_method</span><span class="p">));</span>
+*/
+$digests[1] = strtoupper(openssl_digest('conetnt of EF1', $digest_method));
+$digests[2] = strtoupper(openssl_digest('conetnt of EF2', $digest_method));
+$digests[13] = strtoupper(openssl_digest('conetnt of EF13', $digest_method));
 
-<span class="nv">$asn1_conf_content</span> <span class="o">=</span> <span class="o">&lt;&lt;&lt;</span><span class="nx">ASN1_CONF_HEAD</span>
-<span class="nx">asn1</span><span class="o">=</span><span class="nx">SEQUENCE</span><span class="o">:</span><span class="nx">sod_info</span>
+$asn1_conf_content = <<<ASN1_CONF_HEAD
+asn1=SEQUENCE:sod_info
 
-<span class="p">[</span><span class="nx">sod_info</span><span class="p">]</span>
-<span class="nx">version</span><span class="o">=</span><span class="nx">INTEGER</span><span class="o">:</span><span class="mi">1</span>
-<span class="nx">algorithm</span><span class="o">=</span><span class="nx">SEQUENCE</span><span class="o">:</span><span class="nx">digest_method</span>
-<span class="nx">digests</span><span class="o">=</span><span class="nx">SEQUENCE</span><span class="o">:</span><span class="nx">digest_set</span>
+[sod_info]
+version=INTEGER:1
+algorithm=SEQUENCE:digest_method
+digests=SEQUENCE:digest_set
 
-<span class="p">[</span><span class="nx">digest_method</span><span class="p">]</span>
-<span class="nx">algorithm</span><span class="o">=</span><span class="nx">OID</span><span class="o">:</span><span class="err">$</span><span class="p">{</span><span class="nx">digest_method</span><span class="p">}</span>
+[digest_method]
+algorithm=OID:${digest_method}
 
-<span class="p">[</span><span class="nx">digest_set</span><span class="p">]</span>
+[digest_set]
 
-<span class="nx">ASN1_CONF_HEAD</span><span class="p">;</span>
+ASN1_CONF_HEAD;
 
-<span class="nv">$i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$digests</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$digest</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$asn1_conf_content</span> <span class="o">.=</span> <span class="s2">"</span><span class="nv">$i</span><span class="s2">=SEQUENCE:digest</span><span class="nv">$k</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="o">++</span><span class="nv">$i</span><span class="p">;</span>
-<span class="p">}</span>
+$i = 1;
+foreach ($digests as $k => $digest) {
+    $asn1_conf_content .= "$i=SEQUENCE:digest$k\n";
+    ++$i;
+}
 
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$digests</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$digest</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$asn1_conf_content</span> <span class="o">.=</span> <span class="s2">"
-[digest</span><span class="nv">$k</span><span class="s2">]
-file_no=INTEGER:</span><span class="nv">$k</span><span class="s2">
-digest=OCTETSTRING:</span><span class="nv">$digest</span><span class="s2">
-"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="c1">//echo $asn1_conf_content;
-</span>
-<span class="nb">file_put_contents</span><span class="p">(</span><span class="nv">$asn1_conf_filepath</span><span class="p">,</span> <span class="nv">$asn1_conf_content</span><span class="p">);</span>
-<span class="nv">$output</span> <span class="o">=</span> <span class="nb">system</span><span class="p">(</span><span class="s2">"openssl asn1parse -noout \
-    -genconf </span><span class="nv">$asn1_conf_filepath</span><span class="s2"> \
-    -out </span><span class="nv">$digests_filepath</span><span class="s2">"</span><span class="p">,</span> <span class="nv">$rc</span><span class="p">);</span>
+foreach ($digests as $k => $digest) {
+    $asn1_conf_content .= "
+[digest$k]
+file_no=INTEGER:$k
+digest=OCTETSTRING:$digest
+";
+}
+//echo $asn1_conf_content;
 
-<span class="k">if</span> <span class="p">(</span><span class="nv">$rc</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$output</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="nv">$rc</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">echo</span> <span class="s2">"Ok. The ASN1 formated secure document is saved as </span><span class="nv">$digests_filepath</span><span class="s2">.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+file_put_contents($asn1_conf_filepath, $asn1_conf_content);
+$output = system("openssl asn1parse -noout \
+    -genconf $asn1_conf_filepath \
+    -out $digests_filepath", $rc);
 
-<span class="c1">// openssl smime -sign -in /tmp/digests.der -out /tmp/sod.dat  \
+if ($rc) {
+    echo $output;
+    exit($rc);
+}
+echo "Ok. The ASN1 formated secure document is saved as $digests_filepath.\n";
+
+// openssl smime -sign -in /tmp/digests.der -out /tmp/sod.dat  \
 //     -signer mycert.pem -inkey privkey.pem -nocerts
-</span><span class="nv">$rc</span> <span class="o">=</span> <span class="nb">openssl_pkcs7_sign</span><span class="p">(</span><span class="nv">$digests_filepath</span><span class="p">,</span> <span class="c1">// -in
-</span>    <span class="nv">$sod_filepath</span><span class="p">,</span> <span class="c1">// -out
-</span>    <span class="s1">'file://'</span> <span class="o">.</span> <span class="nb">realpath</span><span class="p">(</span><span class="nv">$certificate_filepath</span><span class="p">),</span> <span class="c1">// -signer
-</span>    <span class="k">array</span><span class="p">(</span><span class="s1">'file://'</span> <span class="o">.</span> <span class="nb">realpath</span><span class="p">(</span><span class="nv">$private_key_filepath</span><span class="p">),</span> 
-            <span class="nv">$private_key_password</span><span class="p">),</span> <span class="c1">// -inkey
-</span>    <span class="k">array</span><span class="p">(),</span>
-    <span class="nx">PKCS7_DETACHED</span> <span class="o">|</span> <span class="nx">PKCS7_NOCERTS</span><span class="p">);</span> <span class="c1">// -nocerts
-</span>
-<span class="c1">// NOTICE: filepath should be a full quality URL. 
-//         like file:///home/rock/myperm.pem.
-</span>
-<span class="k">if</span> <span class="p">(</span><span class="nv">$rc</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Success.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">echo</span> <span class="s2">"The PKCS7 signed secure document is saved as </span><span class="nv">$sod_filepath</span><span class="s2">.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Failure.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$rc = openssl_pkcs7_sign($digests_filepath, // -in
+    $sod_filepath, // -out
+    'file://' . realpath($certificate_filepath), // -signer
+    array('file://' . realpath($private_key_filepath), 
+            $private_key_password), // -inkey
+    array(),
+    PKCS7_DETACHED | PKCS7_NOCERTS); // -nocerts
 
+// NOTICE: filepath should be a full quality URL. 
+//         like file:///home/rock/myperm.pem.
+
+if ($rc) {
+    echo "Success.\n";
+    echo "The PKCS7 signed secure document is saved as $sod_filepath.\n";
+}
+else {
+    echo "Failure.\n";
+}
+?>
+{% endhighlight %}
 
 <h4>
 查驗 SOD
@@ -486,45 +486,45 @@ digest=OCTETSTRING:</span><span class="nv">$digest</span><span class="s2">
 
 <p>再提醒一次，要查驗 SOD 前，你必須先取得發行者的公鑰。你可以用 openssl 工具查驗並取出內封的摘要記錄文件。例如:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ openssl smime -verify -in sod.dat -CApath certs -certfile mycert.pem \
    -out unpacked_digests.der
-</pre>
+</code></pre>
 
 <p>前一節的 sod_generate.php 產生的 SOD ，也可以用下列的 sod_verify.php 查驗。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$certificate_filepath</span> <span class="o">=</span> <span class="s1">'mycert.pem'</span><span class="p">;</span> <span class="c1">//case verify
+{% highlight php %}
+<?php
+$certificate_filepath = 'mycert.pem'; //case verify
 //$certificate_filepath = 'mycert2.pem'; //case not correct
-</span><span class="nv">$sod_filepath</span> <span class="o">=</span> <span class="s1">'/tmp/sod.dat'</span><span class="p">;</span>
+$sod_filepath = '/tmp/sod.dat';
 
-<span class="nv">$unpacked_digests_filepath</span> <span class="o">=</span> <span class="s1">'/tmp/unpacked_digests.der'</span><span class="p">;</span>
+$unpacked_digests_filepath = '/tmp/unpacked_digests.der';
 
-<span class="c1">// openssl smime -verify -in sod.dat -CApath certs -certfile mycert.pem \
+// openssl smime -verify -in sod.dat -CApath certs -certfile mycert.pem \
 //  -out unpacked_digests.der
-</span><span class="nv">$rc</span> <span class="o">=</span> <span class="nb">openssl_pkcs7_verify</span><span class="p">(</span><span class="nv">$sod_filepath</span><span class="p">,</span> <span class="c1">// -in
-</span>    <span class="mi">0</span><span class="p">,</span> 
-    <span class="s1">'/dev/null'</span><span class="p">,</span> <span class="c1">// -out
-</span>    <span class="k">array</span><span class="p">(</span><span class="s1">'certs'</span><span class="p">),</span> <span class="c1">// -CAfile -CApath
-</span>    <span class="nv">$certificate_filepath</span><span class="p">,</span> <span class="c1">// -certfile
-</span>    <span class="nv">$unpacked_digests_filepath</span><span class="p">);</span> <span class="c1">// -out
-</span>
-<span class="k">if</span> <span class="p">(</span><span class="nv">$rc</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Verify.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">echo</span> <span class="s2">"The verified content is saved as </span><span class="nv">$unpacked_digests_filepath</span><span class="s2">.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+$rc = openssl_pkcs7_verify($sod_filepath, // -in
+    0, 
+    '/dev/null', // -out
+    array('certs'), // -CAfile -CApath
+    $certificate_filepath, // -certfile
+    $unpacked_digests_filepath); // -out
 
-    <span class="nv">$output</span> <span class="o">=</span> <span class="nb">system</span><span class="p">(</span><span class="s2">"openssl asn1parse -i \
-        -in </span><span class="nv">$unpacked_digests_filepath</span><span class="s2"> -inform DER"</span><span class="p">);</span>
+if ($rc) {
+    echo "Verify.\n";
+    echo "The verified content is saved as $unpacked_digests_filepath.\n";
 
-    <span class="k">echo</span> <span class="nv">$output</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Not correct.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    $output = system("openssl asn1parse -i \
+        -in $unpacked_digests_filepath -inform DER");
 
+    echo $output;
+}
+else {
+    echo "Not correct.\n";
+}
+?>
+{% endhighlight %}
 
 <p>sod_verify.php 首先調用 PHP 函數 <code>pkcs7_verify()</code> 查驗並取出摘要內容(ASN.1 文件)。
 然後再調用外部工具 openssl 顯示 ASN.1 文件的內容。
@@ -536,7 +536,7 @@ $ openssl smime -verify -in sod.dat -CApath certs -certfile mycert.pem \
 <p>查驗過程如下所示。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 Verify.
 The verified content is saved as /tmp/unpacked_digests.der.
     0:d=0  hl=3 l= 232 cons: SEQUENCE          
@@ -553,7 +553,7 @@ The verified content is saved as /tmp/unpacked_digests.der.
   164:d=2  hl=2 l=  69 cons:   SEQUENCE          
   166:d=3  hl=2 l=   1 prim:    INTEGER           :0D
   169:d=3  hl=2 l=  64 prim:    OCTET STRING      :5D35444622F70AB896A...
-</pre>
+</code></pre>
 
 <p>這是本人 OpenSSL 系列文章的第四篇。下列為已完成的其他三篇:
 </p>

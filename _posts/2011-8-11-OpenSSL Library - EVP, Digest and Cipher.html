@@ -46,41 +46,40 @@ NID 主要用於資料交換的內部處理過程。如果在需要使用者輸�
 evp_sn-nid.c 是一個查詢 NID 與 SN 的範例程式。給它一個數字的參數，會查詢其編碼法名稱。給它編碼法名稱，則查詢其 NID 值。
 </p>
 
-<pre class="highlight"><code><span class="c1">// gcc -lcrypto -o evp_sn-nid evp_sn-nid.c
-</span><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;openssl/evp.h&gt;
-</span>
-<span class="c1">// program &lt;num or string&gt;
-</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">nid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">digest_method_name</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+{% highlight c %}
+// gcc -lcrypto -o evp_sn-nid evp_sn-nid.c
+#include <stdio.h>
+#include <openssl/evp.h>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+// program <num or string>
+int main(int argc, char *argv[]) {
+    int nid = 0;
+    const char *digest_method_name = NULL;
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="sc">'9'</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">digest_method_name</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-        <span class="n">nid</span> <span class="o">=</span> <span class="n">OBJ_sn2nid</span><span class="p">(</span><span class="n">digest_method_name</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="n">nid</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-        <span class="n">digest_method_name</span> <span class="o">=</span> <span class="n">OBJ_nid2sn</span><span class="p">(</span><span class="n">nid</span><span class="p">);</span>
-    <span class="p">}</span>
+    if (argc < 2)
+        return 1;
 
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Digest method name: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">digest_method_name</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"NID: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">nid</span><span class="p">);</span>
+    if (argv[1][0] > '9') {
+        digest_method_name = argv[1];
+        nid = OBJ_sn2nid(digest_method_name);
+    }
+    else {
+        nid = atoi(argv[1]);
+        digest_method_name = OBJ_nid2sn(nid);
+    }
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
+    printf("Digest method name: %s\n", digest_method_name);
+    printf("NID: %d\n", nid);
 
-</code></pre>
-
+    return 0;
+}
+{% endhighlight %}
 
 <p>
 執行範例如下:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ gcc -lcrypto -o evp_sn-nid evp_sn-nid.c
 $ ./evp_sn-nid 4
 Digest method name: MD5
@@ -97,7 +96,7 @@ NID: 19
 $ ./evp_sn-nid IDEA-CBC
 Digest method name: IDEA-CBC
 NID: 34
-</pre>
+</code></pre>
 
 <p>
 若輸入的名稱查出的 NID 為 0，表示查無對應的編碼方法。例如，若僅輸入 IDEA ，則查無 NID。要輸入 IDEA-CBC, IDEA-ECB, IDEA-CFB 或 IDEA-OFB 才行。
@@ -138,97 +137,96 @@ evp_digest.c 是用 EVP 撰寫的摘要程式。使用者必須指定第一個�
 加註 NID 的用途，主要用於電子文件交換過程的資料查核作業。這樣接收方才知道要用哪種演算法查核。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;openssl/bio.h&gt;
-#include &lt;openssl/evp.h&gt;
-</span>
-<span class="cm">/**
-ths size of dest should be &gt;= EVP_MAX_MD_SIZE.
+{% highlight c %}
+#include <stdio.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
+/**
+ths size of dest should be >= EVP_MAX_MD_SIZE.
 See also: http://www.openssl.org/docs/crypto/EVP_DigestInit.html
- */</span>
-<span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">stream_digest</span><span class="p">(</span>
-                    <span class="kt">int</span> <span class="n">nid</span><span class="p">,</span>
-                    <span class="n">BIO</span> <span class="o">*</span><span class="n">bin</span><span class="p">,</span>
-                    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">dest</span><span class="p">,</span>
-                    <span class="kt">int</span> <span class="o">*</span><span class="n">dest_len</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
-    <span class="kt">int</span> <span class="n">rc</span><span class="p">;</span>
+ */
+unsigned char *stream_digest(
+                    int nid,
+                    BIO *bin,
+                    unsigned char *dest,
+                    int *dest_len)
+{
+    unsigned char buf[1024];
+    int rc;
 
-    <span class="o">*</span><span class="n">dest_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    *dest_len = 0;
 
-    <span class="c1">// select digest module.
-</span>    <span class="c1">//const EVP_MD *md = EVP_get_digestbyname("SHA256"); // sn
-</span>    <span class="k">const</span> <span class="n">EVP_MD</span> <span class="o">*</span><span class="n">md</span> <span class="o">=</span> <span class="n">EVP_get_digestbynid</span><span class="p">(</span><span class="n">nid</span><span class="p">);</span> <span class="c1">// nid
-</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">md</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    // select digest module.
+    //const EVP_MD *md = EVP_get_digestbyname("SHA256"); // sn
+    const EVP_MD *md = EVP_get_digestbynid(nid); // nid
 
-    <span class="n">EVP_MD_CTX</span> <span class="n">ctx</span><span class="p">;</span>
+    if (md == NULL)
+        return NULL;
 
-    <span class="n">EVP_MD_CTX_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">);</span>
-    <span class="n">EVP_DigestInit_ex</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">md</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span> <span class="c1">// insert digest module.
-</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">rc</span> <span class="o">=</span> <span class="n">BIO_read</span><span class="p">(</span><span class="n">bin</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">EVP_DigestUpdate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">rc</span><span class="p">);</span>
-    <span class="p">}</span>
+    EVP_MD_CTX ctx;
 
-    <span class="n">EVP_DigestFinal_ex</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">dest_len</span><span class="p">);</span> <span class="c1">// copy digest to dest.
-</span>    <span class="n">EVP_MD_CTX_cleanup</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">);</span>
+    EVP_MD_CTX_init(&ctx);
+    EVP_DigestInit_ex(&ctx, md, NULL); // insert digest module.
 
-    <span class="k">return</span> <span class="n">dest</span><span class="p">;</span>
-<span class="p">}</span>
+    while ((rc = BIO_read(bin, buf, sizeof(buf))) > 0) {
+        EVP_DigestUpdate(&ctx, buf, rc);
+    }
 
-<span class="c1">// gcc -lcrypto -o evp_digest evp_digest.c
-// program &lt;nid&gt; [input_filepath]
-</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">nid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="n">BIO</span> <span class="o">*</span><span class="n">bin</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">dest</span><span class="p">[</span><span class="n">EVP_MAX_MD_SIZE</span><span class="p">];</span>
-    <span class="kt">int</span> <span class="n">dest_len</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+    EVP_DigestFinal_ex(&ctx, dest, dest_len); // copy digest to dest.
+    EVP_MD_CTX_cleanup(&ctx);
 
-    <span class="c1">// nid: for example NID_md5 = 4, NID_sha256 = 672
-</span>    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="sc">'9'</span><span class="p">)</span>
-            <span class="n">nid</span> <span class="o">=</span> <span class="n">OBJ_sn2nid</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-        <span class="k">else</span>
-            <span class="n">nid</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">nid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="s">"Unknown digest method."</span><span class="p">);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+    return dest;
+}
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">)</span>
-        <span class="n">bin</span> <span class="o">=</span> <span class="n">BIO_new_file</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s">"r"</span><span class="p">);</span>
-    <span class="k">else</span>
-        <span class="n">bin</span> <span class="o">=</span> <span class="n">BIO_new_fp</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">bin</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="s">"Failed to open input file."</span><span class="p">);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+// gcc -lcrypto -o evp_digest evp_digest.c
+// program <nid> [input_filepath]
+int main(int argc, char *argv[]) {
+    int nid = 0;
+    BIO *bin;
+    char dest[EVP_MAX_MD_SIZE];
+    int dest_len, i;
 
-    <span class="n">OpenSSL_add_all_digests</span><span class="p">();</span> <span class="c1">// load all digest modules.
-</span>
-    <span class="n">stream_digest</span><span class="p">(</span><span class="n">nid</span><span class="p">,</span> <span class="n">bin</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dest_len</span><span class="p">);</span>
-    <span class="n">BIO_free_all</span><span class="p">(</span><span class="n">bin</span><span class="p">);</span>
+    // nid: for example NID_md5 = 4, NID_sha256 = 672
+    if (argc >= 2) {
+        if (argv[1][0] > '9')
+            nid = OBJ_sn2nid(argv[1]);
+        else
+            nid = atoi(argv[1]);
+    }
+    if (nid == 0) {
+        puts("Unknown digest method.");
+        return 1;
+    }
 
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%d,"</span><span class="p">,</span> <span class="n">nid</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">dest_len</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"%02X"</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="p">)</span><span class="n">dest</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
-    <span class="n">puts</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
+    if (argc >= 3)
+        bin = BIO_new_file(argv[2], "r");
+    else
+        bin = BIO_new_fp(stdin, BIO_NOCLOSE);
+    if (bin == NULL) {
+        puts("Failed to open input file.");
+        return 1;
+    }
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
+    OpenSSL_add_all_digests(); // load all digest modules.
 
-</code></pre>
+    stream_digest(nid, bin, dest, &dest_len);
+    BIO_free_all(bin);
 
+    printf("%d,", nid);
+    for (i = 0; i < dest_len; ++i)
+        printf("%02X", (unsigned char)dest[i]);
+    puts("");
+
+    return 0;
+}
+{% endhighlight %}
 
 <p>
 執行範例如下:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ gcc -lcrypto -o evp_digest evp_digest.c
 $ ./evp_digest 4 evp_digest
 4,12CAD5A78966FF7809B51FA84711F7DA
@@ -236,7 +234,7 @@ $ ./evp_digest MD5 evp_digest
 4,12CAD5A78966FF7809B51FA84711F7DA
 $ ./evp_digest SHA256 evp_digest
 672,BE7961BDAF58809523B1C16BFAC4A128BAA686AC206F130ED1DE1961BA660817
-</pre>
+</code></pre>
 
 <h4>
 Cipher - 對稱式加密
@@ -255,136 +253,136 @@ evp_cipher.c 是 OpenSSL Cipher 函數的範例程式，提供文件加密與解
 執行時至少需要提供 4 個參數。第一個參數指定演算法(NID或SN)，第二個參數指定鍵值，第三個參數指定額外的演算矢量，第四個參數指示演算行為是加密(encrypt)或解密(decrypt)。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-#include &lt;openssl/bio.h&gt;
-#include &lt;openssl/evp.h&gt;
-</span>
-<span class="cp">#define CIPHER_DECRYPT 0
+{% highlight c %}
+#include <stdio.h>
+#include <string.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
+#define CIPHER_DECRYPT 0
 #define CIPHER_ENCRYPT 1
-</span><span class="cm">/**
+/**
 enc: "1 for encryption, 0 for decryption."
 See also: http://www.openssl.org/docs/crypto/EVP_EncryptInit.html
- */</span>
-<span class="kt">int</span> <span class="nf">stream_cipher</span><span class="p">(</span>
-        <span class="kt">int</span> <span class="n">nid</span><span class="p">,</span>
-        <span class="n">BIO</span> <span class="o">*</span><span class="n">bin</span><span class="p">,</span>
-        <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span>
-        <span class="kt">int</span> <span class="n">key_len</span><span class="p">,</span>
-        <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">iv</span><span class="p">,</span>
-        <span class="kt">int</span> <span class="n">iv_len</span><span class="p">,</span>
-        <span class="kt">int</span> <span class="n">enc</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">raw_buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">],</span> <span class="o">*</span><span class="n">encrypt_buf</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">total_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+ */
+int stream_cipher(
+        int nid,
+        BIO *bin,
+        unsigned char *key,
+        int key_len,
+        unsigned char *iv,
+        int iv_len,
+        int enc)
+{
+    unsigned char raw_buf[1024], *encrypt_buf = NULL;
+    int total_len = 0, out_len = 0;
+    int rc = 0;
 
-    <span class="c1">// select cipher module.
-</span>    <span class="c1">//const EVP_CIPHER *cipher = EVP_get_cipherbybyname("BF-CBC"); // sn
-</span>    <span class="k">const</span> <span class="n">EVP_CIPHER</span> <span class="o">*</span><span class="n">cipher</span> <span class="o">=</span> <span class="n">EVP_get_cipherbynid</span><span class="p">(</span><span class="n">nid</span><span class="p">);</span> <span class="c1">// nid
-</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">cipher</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    // select cipher module.
+    //const EVP_CIPHER *cipher = EVP_get_cipherbybyname("BF-CBC"); // sn
+    const EVP_CIPHER *cipher = EVP_get_cipherbynid(nid); // nid
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">key_len</span> <span class="o">&lt;</span> <span class="n">EVP_CIPHER_key_length</span><span class="p">(</span><span class="n">cipher</span><span class="p">)</span> <span class="o">||</span>
-        <span class="n">iv_len</span> <span class="o">&lt;</span> <span class="n">EVP_CIPHER_iv_length</span><span class="p">(</span><span class="n">cipher</span><span class="p">))</span>
-    <span class="p">{</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="p">}</span>
+    if (cipher == NULL)
+        return 0;
 
-    <span class="kt">int</span> <span class="n">cipher_block_size</span> <span class="o">=</span> <span class="n">EVP_CIPHER_block_size</span><span class="p">(</span><span class="n">cipher</span><span class="p">);</span>
-    <span class="n">encrypt_buf</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">cipher_block_size</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">raw_buf</span><span class="p">));</span>
-    <span class="cm">/* See http://www.openssl.org/docs/crypto/EVP_EncryptInit.html
+    if (key_len < EVP_CIPHER_key_length(cipher) ||
+        iv_len < EVP_CIPHER_iv_length(cipher))
+    {
+        return 0;
+    }
+
+    int cipher_block_size = EVP_CIPHER_block_size(cipher);
+    encrypt_buf = (unsigned char*) malloc(cipher_block_size + sizeof(raw_buf));
+    /* See http://www.openssl.org/docs/crypto/EVP_EncryptInit.html
       "the amount of data written may be anything from zero bytes
        to (inl + cipher_block_size - 1)"
-    */</span>
+    */
 
-    <span class="n">EVP_CIPHER_CTX</span> <span class="n">ctx</span><span class="p">;</span>
-    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ctx</span><span class="p">));</span>
+    EVP_CIPHER_CTX ctx;
+    memset(&ctx, 0, sizeof(ctx));
 
-    <span class="n">EVP_CIPHER_CTX_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">);</span>
-    <span class="n">EVP_CipherInit_ex</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">cipher</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">iv</span><span class="p">,</span> <span class="n">enc</span><span class="p">);</span>
-    <span class="c1">// set cipher module, key, iv and enc.
-</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">rc</span> <span class="o">=</span> <span class="n">BIO_read</span><span class="p">(</span><span class="n">bin</span><span class="p">,</span> <span class="n">raw_buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">raw_buf</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">EVP_CipherUpdate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">encrypt_buf</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out_len</span><span class="p">,</span> <span class="n">raw_buf</span><span class="p">,</span> <span class="n">rc</span><span class="p">))</span> <span class="p">{</span>
-            <span class="n">total_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-            <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="n">encrypt_buf</span><span class="p">,</span> <span class="n">out_len</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
-        <span class="n">total_len</span> <span class="o">+=</span> <span class="n">out_len</span><span class="p">;</span>
-    <span class="p">}</span>
+    EVP_CIPHER_CTX_init(&ctx);
+    EVP_CipherInit_ex(&ctx, cipher, NULL, key, iv, enc);
+    // set cipher module, key, iv and enc.
+
+    while ((rc = BIO_read(bin, raw_buf, sizeof(raw_buf))) > 0) {
+        if (!EVP_CipherUpdate(&ctx, encrypt_buf, &out_len, raw_buf, rc)) {
+            total_len = 0;
+            goto end_func;
+        }
+        fwrite(encrypt_buf, out_len, 1, stdout);
+        total_len += out_len;
+    }
 
 
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">block_ptr</span> <span class="o">=</span> <span class="n">encrypt_buf</span> <span class="o">+</span> <span class="n">out_len</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">EVP_CipherFinal_ex</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">block_ptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out_len</span><span class="p">))</span> <span class="p">{</span>
-        <span class="n">total_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="k">goto</span> <span class="n">end_func</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">fwrite</span><span class="p">(</span><span class="n">block_ptr</span><span class="p">,</span> <span class="n">out_len</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
-    <span class="n">total_len</span> <span class="o">+=</span> <span class="n">out_len</span><span class="p">;</span>
+    unsigned char *block_ptr = encrypt_buf + out_len;
+    if (!EVP_CipherFinal_ex(&ctx, block_ptr, &out_len)) {
+        total_len = 0;
+        goto end_func;
+    }
+    fwrite(block_ptr, out_len, 1, stdout);
+    total_len += out_len;
 
-  <span class="nl">end_func:</span>
-    <span class="n">EVP_CIPHER_CTX_cleanup</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">);</span>
-    <span class="n">free</span><span class="p">(</span><span class="n">encrypt_buf</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">total_len</span><span class="p">;</span>
-<span class="p">}</span>
+  end_func:
+    EVP_CIPHER_CTX_cleanup(&ctx);
+    free(encrypt_buf);
+    return total_len;
+}
 
-<span class="c1">// gcc -lcrypto -o evp_cipher evp_cipher.c
-// program &lt;nid&gt; &lt;key&gt; &lt;iv&gt; &lt;encrypt|decrypt&gt; [input_filepath]
-</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">nid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">enc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">rc</span><span class="p">;</span>
-    <span class="n">BIO</span> <span class="o">*</span><span class="n">bin</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">iv</span><span class="p">;</span>
+// gcc -lcrypto -o evp_cipher evp_cipher.c
+// program <nid> <key> <iv> <encrypt|decrypt> [input_filepath]
+int main(int argc, char *argv[]) {
+    int nid = 0, enc = 0, rc;
+    BIO *bin;
+    unsigned char *key, *iv;
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    if (argc < 5)
+        return 1;
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="sc">'9'</span><span class="p">)</span>
-        <span class="n">nid</span> <span class="o">=</span> <span class="n">OBJ_sn2nid</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-    <span class="k">else</span>
-        <span class="n">nid</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">nid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="s">"Unknown cipher method."</span><span class="p">);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+    if (argv[1][0] > '9')
+        nid = OBJ_sn2nid(argv[1]);
+    else
+        nid = atoi(argv[1]);
+    if (nid == 0) {
+        puts("Unknown cipher method.");
+        return 1;
+    }
 
-    <span class="n">key</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
-    <span class="n">iv</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+    key = argv[2];
+    iv = argv[3];
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'d'</span> <span class="o">||</span> <span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'D'</span><span class="p">)</span>
-        <span class="n">enc</span> <span class="o">=</span> <span class="n">CIPHER_DECRYPT</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="n">enc</span> <span class="o">=</span> <span class="n">CIPHER_ENCRYPT</span><span class="p">;</span>
+    if (argv[4][0] == 'd' || argv[4][0] == 'D')
+        enc = CIPHER_DECRYPT;
+    else
+        enc = CIPHER_ENCRYPT;
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;=</span> <span class="mi">6</span><span class="p">)</span>
-        <span class="n">bin</span> <span class="o">=</span> <span class="n">BIO_new_file</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="s">"r"</span><span class="p">);</span>
-    <span class="k">else</span>
-        <span class="n">bin</span> <span class="o">=</span> <span class="n">BIO_new_fp</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="n">BIO_NOCLOSE</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">bin</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="s">"Failed to open input file."</span><span class="p">);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+    if (argc >= 6)
+        bin = BIO_new_file(argv[5], "r");
+    else
+        bin = BIO_new_fp(stdin, BIO_NOCLOSE);
+    if (bin == NULL) {
+        puts("Failed to open input file.");
+        return 1;
+    }
 
-    <span class="n">OpenSSL_add_all_ciphers</span><span class="p">();</span> <span class="c1">// load all cipher modules.
-</span>    <span class="c1">//OpenSSL_add_all_algorithms(); // load all algorithms.
-</span>
-    <span class="n">rc</span> <span class="o">=</span> <span class="n">stream_cipher</span><span class="p">(</span><span class="n">nid</span><span class="p">,</span> <span class="n">bin</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">iv</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">iv</span><span class="p">),</span> <span class="n">enc</span><span class="p">);</span>
-    <span class="n">BIO_free_all</span><span class="p">(</span><span class="n">bin</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-<span class="p">}</span>
+    OpenSSL_add_all_ciphers(); // load all cipher modules.
+    //OpenSSL_add_all_algorithms(); // load all algorithms.
 
-</code></pre>
+    rc = stream_cipher(nid, bin, key, strlen(key), iv, strlen(iv), enc);
+    BIO_free_all(bin);
+    if (rc > 0)
+        return 0;
+    return 1;
+}
 
+{% endhighlight %}
 
 
 <p>
 執行範例如下:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 # 資料加密，加密後的資料內容儲存於 cipher.bin
 $ ./evp_cipher BF-CBC 0123456789abcdef 12345678 \
   encrypt evp_sn-nid.c > cipher.bin
@@ -396,7 +394,7 @@ $ ./evp_cipher BF-CBC 0123456789abcdef 12345678 decrypt cipher.bin
 $ openssl bf-cbc -k 30313233343536373839616263646566 -v 3132333435363738 \
   -d -in cipher.bin
 
-</pre>
+</code></pre>
 
 <p>
 鍵值與矢量可以使用任何資料，不一定要用可讀字元，使用限制主要在其長度(以位元數計算)。不同演算法要求的資料位元數亦有所不同。evp_cipher.c 第32到33行便是在判斷演算法的最適或最短的鍵值與矢量資料長度。
