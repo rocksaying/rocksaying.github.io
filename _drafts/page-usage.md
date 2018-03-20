@@ -93,7 +93,10 @@ link CSS <a href="http://www.google.com/">external link</a> link, <a href="http:
 
 This is \[an example\](http://example.com/ "Title") inline link. \[This link\](http://example.net/) has no title attribute. Or wrapped with \<a\> tag.
 
-In jekylle, using &lcub;% post_url post_file_name %&rcub; to get link.
+post link: {% post_url post_file_name %}
+site link: {{ site.baseurl }}
+
+see https://jekyllrb.com/docs/templates/
 
 Markdown supports a shortcut style for creating “automatic” links for URLs and email addresses: simply surround the URL or email address with angle brackets.
 
@@ -119,11 +122,11 @@ image 2:
 
 code blocks and highlight.
 
-<pre>
-&lcub;&percnt; highlight lexer linenos=table &percnt;&rcub;
+{% highlight lexer linenos=table %}
 code
-&lcub;&percnt; endhighlight &percnt;&rcub;
-</pre>
+{% endhighlight %}
+
+lexer: php, ruby, python, javascript, c, c++ ...
 
 {% highlight php linenos=table %}
 <?php
@@ -151,19 +154,7 @@ This is `online code`. &#96;inline code&#96; or wrapped with \<code\> tag.
 
 simple code block wrapped with &#96;&#96;&#96;. append lexer name in the first &#96;&#96;&#96;:
 
-<pre>
-```lexer
-code
-```
-</pre>
-
-lexer text for plain text. CSS:
-
-<pre>
-```text
-plain text
-```
-</pre>
+lexer text for plain text:
 
 ```text
 plain text
@@ -172,7 +163,7 @@ plain text
 
 ```
 
-lexer term for terminal, console window. CSS:
+lexer term for terminal, console window:
 
 ~~~term
 $ ls
@@ -180,27 +171,24 @@ $ ps ax |grep abc > cc
 
 ~~~
 
+or
+
+<pre><code class="language-term">
+term block
+</code></pre>
+
 Raw data
 
-<pre>
-&lcub;% raw %&rcub;
+{% raw %}
 Raw data. Also escape cub characters
 {{ page.title }}
-&lcub;% endraw %&rcub;
-</pre>
+{% endraw %}
 
 blockquote
 
 Markdown uses email-style \> characters for blockquoting. It looks best if you hard wrap the text and put a \> before every line.
 
 Blockquotes can be nested (i.e. a blockquote-in-a-blockquote) by adding additional levels of \>.
-
-<pre>
-&gt; blockquote
-&gt; &lt;cite&gt;cite&lt;/cite&gt;
-</pre>
-
-CSS:
 
 > blockquote
 > <cite>cite</cite>
@@ -218,3 +206,4 @@ inline note (<span class="note">span class=note</span>) inline note.
 中文。 中文(<span class="note">側註</span>)。 中文。
 text. text. text. text. text. text. text. text. text.
 中文。 中文。 中文。
+
