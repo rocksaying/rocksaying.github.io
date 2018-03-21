@@ -1,0 +1,90 @@
+---
+title: Python - GObject event, Threading, and Signal
+category: programming
+old-category: Python
+tags: [python,signal,gobject,dbus]
+permalink: /archives/20178742.html
+---
+<p>
+示範如何在 Python 中使用 GObject event 、Python threading 與 Signal 進行非同步工作。
+</p>
+
+<!--more-->
+
+{% highlight python %}
+#!/usr/bin/python
+# coding: utf-8
+import os, sys, time
+import gobject      # need for gobject event timeout
+import signal       # need for system signal.
+import threading    # need for python thread.
+#from dbus.mainloop.glib import DBusGMainLoop
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+def g_event_timer(*args):
+    # for gobject.timeout_add(). it's gobject-style thread.
+    # note: there are three kind of basic event source.
+    print("1. g_event_timer tick.")
+    return True  # keep interval
+
+def sys_signal_timer(*args):
+    # for system Signal
+    print("2. sys_signal_timer tick.")
+
+def thread_timer_func(*args):
+    # for threading.Timer
+    while True:
+        print("3. thread_timer tick.")
+        time.sleep(2)
+
+def terminate_gobject_loop(signum, func):
+    loop.quit()
+
+signal.signal(signal.SIGINT,  terminate_gobject_loop)
+
+gobject.threads_init()            # required for gobject collaborate with python thread.
+#DBusGMainLoop(set_as_default=True) # if you use DBus.
+#dbus.mainloop.glib.threads_init() # required for dbus collaborate with python thread.
+loop = gobject.MainLoop()
+
+# enable g_event_timer tick.
+gobject.timeout_add(2000, g_event_timer)
+
+# enable sys_signal_timer tick.
+signal.signal(signal.SIGALRM, sys_signal_timer)
+signal.setitimer(signal.ITIMER_REAL, 2, 2)
+signal.siginterrupt(signal.SIGALRM, False)  # not really work.
+
+# enable thread_timer tick.
+thread_timer = threading.Timer(2, thread_timer_func)
+thread_timer.start()
+
+print("PID: %d" % os.getpid())
+print("Press Ctrl+C will quit g_event_timer.")
+try:
+    loop.run()
+except:
+    print("Unknown error. It breaks eventloop.")
+
+signal.signal(signal.SIGALRM, signal.SIG_IGN)  # cancel signal_timer.
+
+print("Wait 5 seconds.")
+print("Quit g_event_timer.")
+print("Ignore signal_timer.")
+print("Only thread_timer tick.")
+time.sleep(5)
+# 1. g_event_timer will not tick.
+# 2. if I don't cancel signal_timer, signal_timer will tick and interrupt sleep.
+# 3. thread_timer will still tick.
+
+print("End")
+os._exit(0)
+{% endhighlight %}
+
+
+<p>
+基於 GObject 事件機制的程式類型，例如 GTK 或 DBus ，若要配合 Python 內部的 threading 機制，則必須在使用前先調用 <code>gobject.threads_init()</code> 。
+而 DBus 程式則還要再調用 <code>dbus.mainloop.glib.threads_init()</code>。
+才可以讓 Python threading 正常運作。
+</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/20178742.html</div>

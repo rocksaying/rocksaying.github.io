@@ -1,0 +1,418 @@
+---
+title: Python DBus 教學精要
+category: programming
+old-category: Programming
+tags: [python,dbus]
+permalink: /archives/15534603.html
+---
+<p>
+Python DBus 官方教學文件請閱讀下列三處內容:
+</p>
+<ul>
+    <li><a href="http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html">
+    Python DBus Tutorial</a></li>
+
+    <li><a href="http://dbus.freedesktop.org/doc/dbus-python/api/">
+    Python DBus API</a></li>
+
+    <li><a href="http://dbus.freedesktop.org/releases/dbus-python/">
+    Python DBus Source</a></li>
+</ul>
+
+<p>
+不幸的是，這份官方文件有許多疏漏。你必須參考 Python DBus Source 中的程式碼才能得到正確的資訊。
+Tutorial 中的範例程式，放在 Source 中。需下載 Source 以閱讀官方教學文件的完整範例程式。
+</p>
+
+<!--more-->
+<h4>
+Hello DBus Service
+</h4>
+<p>
+以下是一份摘要自 Python DBus Source 的範例程式，示範最基礎的 DBus Service 寫法。
+</p>
+
+
+{% highlight python %}
+#!/usr/bin/env python
+
+# Copyright (C) 2004-2006 Red Hat Inc. <http://www.redhat.com/>
+
+# Copyright (C) 2005-2007 Collabora Ltd. <http://www.collabora.co.uk/>
+
+#
+
+# Permission is hereby granted, free of charge, to any person
+
+# obtaining a copy of this software and associated documentation
+
+# files (the "Software"), to deal in the Software without
+
+# restriction, including without limitation the rights to use, copy,
+
+# modify, merge, publish, distribute, sublicense, and/or sell copies
+
+# of the Software, and to permit persons to whom the Software is
+
+# furnished to do so, subject to the following conditions:
+
+#
+
+
+import gobject
+import dbus
+import dbus.service
+import dbus.mainloop.glib
+
+class DemoException(dbus.DBusException):
+    _dbus_error_name = 'com.example.DemoException'
+
+class SomeObject(dbus.service.Object):
+
+    @dbus.service.method("com.example.SampleInterface",
+                         in_signature='s', out_signature='as')
+    def HelloWorld(self, hello_message):
+        print (str(hello_message))
+        return ["Hello", " from example-service.py", "with unique name",
+                session_bus.get_unique_name()]
+
+    @dbus.service.method("com.example.SampleInterface",
+                         in_signature='', out_signature='')
+    def Exit(self):
+        mainloop.quit()
+
+
+if __name__ == '__main__':
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+    session_bus = dbus.SessionBus()
+    name = dbus.service.BusName("com.example.SampleService", session_bus)
+    object = SomeObject(session_bus, '/SomeObject')
+
+    mainloop = gobject.MainLoop()
+    print "Running example service."
+    mainloop.run()
+{% endhighlight %}
+
+
+<p>
+當我們要實作一個連接 DBus 供遠端調用的服務時，我們需要先衍生一個 <dfn>dbus.service.Object</dfn> 的類別，並使用 <dfn>@dbus.service.method</dfn> 註記(annotation)哪些方法可供 DBus 調用。另外還有 <dfn>@dbus.service.signal</dfn> 可註記 DBus 訊號。
+</p>
+
+<p>
+在 Python DBus binding 中，方法所歸屬的 DBus 介面在註記的第一個欄位寫出。註記中同時也要說明輸入參數與輸出參數的 DBus 型態簽名。DBus 型態簽名是由一個字母所表示，例如 s 代表字串(string)、 i 代表有號整數、a 代表陣列(array)。
+詳細內容請參考《<a href="http://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-signatures">D-Bus Type Signatures</a>》。
+</p>
+
+<p>
+在主程式中，我們要準備二個東西。其一，是我們想要接上的 DBus 種類的參考體，此參考體將傳遞給 DBus 服務個體的建構方法。其二、配置一個符合 GObject 系統的事件處理迴圈。這個事件處理迴圈，可由 <dfn>dbus.mainloop.glib.DBusGMainLoop()</dfn> 建立。最後，我們要啟動此事件處理迴圈，讓迴圈接受與分派事件給 DBus 服務個體處理。
+</p>
+
+<h4>
+進階範例
+</h4>
+
+<p>
+範例內容中包含:
+</p>
+
+<ul>
+    <li>
+    實作並建立一個 DBus 服務 (接在 Session bus 上):<br/>
+        <ul>
+            <li>
+            export method: Say, Stop
+            </li>
+            <li>
+            export signal: SignalSay
+            </li>
+            <li>
+            emmit signal
+            </li>
+            <li>
+            recevie signal: SignalRecipient
+            </li>
+        </ul>
+    </li>
+    <li>
+    調用其他 DBus 服務的方法 (撰寫一個 DBus 客戶端):<br/>
+        調用 org.freedesktop.DBus.Notifications.Notify 。
+    </li>
+</ul>
+
+
+{% highlight python %}
+#!/usr/bin/python
+
+# coding: utf-8
+
+"""
+Python DBus example
+"""
+import os,sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+import gobject, dbus, dbus.service
+from dbus.mainloop.glib import DBusGMainLoop
+
+class Hello(dbus.service.Object):
+    """
+    Hello service. Inheriting from dbus.service.Object
+    Service name: blog.rock.sample.Hello
+    http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service.Object-class.html
+    API文件範例打錯了，此類別的名稱是首字大寫 dbus.service.Object ，不是 dbus.service.object
+    """
+    name = "blog.rock.sample.Hello"
+    path = '/' + name.replace('.', '/')
+    interface = name
+
+    def __init__(self, event_loop):
+        """
+        http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#inheriting-from-dbus-service-object
+        教學文件打錯了，第三行的 path 應該是 object_path。同時，它漏了 BusName 。
+        若按照教學文件的寫法，因為沒有指定 bus name ，故實際上是無用的。
+        """
+        self.bus = dbus.SessionBus()
+        self.event_loop = event_loop
+
+        bus_name = dbus.service.BusName(Hello.name, bus=self.bus)
+        dbus.service.Object.__init__(self, bus_name, Hello.path)
+
+        self._init_notifier()
+
+    def _init_notifier(self):
+        notifications_service = 'org.freedesktop.Notifications'
+        notifications_object = '/' + notifications_service.replace('.', '/')
+        notifications_interface = notifications_service
+        self.notifier = dbus.Interface(
+            self.bus.get_object(notifications_service, notifications_object),
+            notifications_interface)
+
+    def _notify(self, title="", message="", icon="icon", timeout=0):
+        self.notifier.Notify('Hello', 0, icon, title, message, [], {}, timeout*1000)
+
+####
+
+# Exporting method
+
+# http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#exporting-methods-with-dbus-service-method
+
+# API: http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service-module.html#method
+
+# Signature of arguments: http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#data-types
+
+####
+
+    @dbus.service.method('blog.rock.sample.Hello',
+                         in_signature='s', out_signature='s')
+    def Say(self, message):
+        """
+        教學與範例文件打錯了，API 文件寫明 dbus.service.method 的第一個參數是位
+        置參數，不是關鍵字參數，所以不能寫成 interface="..."
+        """
+        self._notify(title="say", message=message, timeout=3)
+
+        self.SignalSay(message, 3) # emmit signal
+
+        return "I say " + message
+
+    @dbus.service.method('blog.rock.sample.Hello')
+    def Stop(self):
+        self.event_loop.quit()
+
+####
+
+# Exporting signal
+
+# http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#emitting-signals-with-dbus-service-signal
+
+# API: http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service-module.html#signal
+
+####
+
+    @dbus.service.signal('blog.rock.sample.Hello', signature='su')
+    def SignalSay(self, message, timeout):
+        print message
+        pass
+
+class SignalRecipient:
+    def __init__(self):
+        """
+        DBus Signal 是廣播訊息。向 DBus 註冊訊號接收者時，通常會設定訊號過濾
+        條件，否則所有訊號都會灌過來。
+        一般指定 signal of service (by dbus_interface and signal_name) 為
+        過濾條件。
+        """
+        #self.dbus_object.connect_to_signal("SignalSay", self._ss,
+
+        #                dbus_interface=Hello.interface, arg0="Hello")
+
+        self.bus = dbus.SessionBus()
+        self.bus.add_signal_receiver(self.handler,
+                                dbus_interface=Hello.interface,
+                                signal_name = "SignalSay")
+
+    def handler(self, message, timeout):
+        print "Signal recivied: %s, %d" % (message, timeout)
+
+
+if __name__ == "__main__":
+    # You must do this before connecting to the bus.
+
+    # http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#setting-up-an-event-loop
+
+    DBusGMainLoop(set_as_default=True)
+    loop = gobject.MainLoop()
+
+    service = Hello(loop)
+    recipient = SignalRecipient()
+
+    print "Working..."
+    loop.run()  # startup event loop
+{% endhighlight %}
+
+
+<p>
+執行上述的範例程式後，你可以先用 dbus-send 工具測試此服務是否正常運作。
+</p>
+<pre><code class="language-term">
+# 查詢 Hello service:
+dbus-send --session --print-reply \
+  --dest=blog.rock.sample.Hello \
+  /blog/rock/sample/Hello \
+  org.freedesktop.DBus.Introspectable.Introspect
+
+# 調用 Say method:
+dbus-send --session --print-reply --dest=blog.rock.sample.Hello \
+    /blog/rock/sample/Hello \
+    blog.rock.sample.Hello.Say \
+    string:"Hello"
+
+# 觸發 SignalSay signal (執行後可按 Ctrl-C 中斷):
+dbus-send --session --print-reply --dest=blog.rock.sample.Hello \
+    --type=signal /blog/rock/sample/Hello \
+    blog.rock.sample.Hello.SignalSay \
+    string:"Hello" uint32:5
+
+# 調用 Stop method:
+dbus-send --session --print-reply --dest=blog.rock.sample.Hello \
+    /blog/rock/sample/Hello \
+    blog.rock.sample.Hello.Stop
+
+</code></pre>
+
+<h4>
+服務個體的連接與中斷
+</h4>
+
+<p>
+當你配置一個衍生自 <dfn>dbus.service.Object</dfn> 類的實體，且你想允許它被 DBus 遠端調用時，你可以呼叫它的 <dfn>add_to_connection()</dfn> 方法，要它連上 DBus。
+通常這個行為可以在 <dfn>dbus.service.Object</dfn> 類別在實體化時一併完成，但也可以分開進行。
+</p>
+
+<p>
+如果你在調用 <dfn>dbus.service.Object.__init__()</dfn> 時有給予路徑名稱，則它會在實體化後順便連上 DBus，你就不需再調用 <dfn>add_to_connection()</dfn>。
+若你調用 <dfn>dbus.service.Object.__init__()</dfn> 時並未給予路徑名稱，則它在實體化後不會連上 DBus。此時你要自己調用 <dfn>add_to_connection()</dfn>。
+</p>
+
+<p>
+若這個服務實體不再需要被遠端調用時，使用它的 <dfn>remove_from_connection()</dfn> 方法中斷它與 DBus 的連結。
+</p>
+
+
+{% highlight python %}
+class Foo(dbus.service.Object):
+    def __init__(self):
+        # we don't assign path.
+
+        dbus.service.Object.__init__(self, dbus.SessionBus())
+
+bus = dbus.SessionBus()
+
+foo = Foo()
+
+foo.add_to_connection(bus, "/your/object/path") # we need to connect to DBus.
+
+
+foo.remove_from_connection(bus, "/your/object/path")
+{% endhighlight %}
+
+
+<h4>
+屬性(Properties)
+</h4>
+
+<p>
+Python DBus binding 尚未實作對應 <dfn>org.freedesktop.DBus.Properties</dfn> 的註記。
+所以它不會自動將服務個體的屬性(property)對應到 DBus 屬性。故當我們調用 <dfn>Introspect()</dfn> 內觀時，看不到屬性資訊。
+</p>
+<p>
+儘管如此，我們仍然可以自己實作 <dfn>org.freedesktop.DBus.Properties</dfn> 介面所需的三個方法: <dfn>GetAll(), Get(), Set()</dfn>。
+</p>
+
+
+{% highlight python %}
+class Foo(dbus.service.Object):
+    def __init__(self, path):
+        self.name = "foo"
+        dbus.service.Object.__init__(self, dbus.SessionBus(), path)
+
+    @dbus.service.method('org.freedesktop.DBus.Properties',
+                            in_signature='s', out_signature='a{sv}')
+    def GetAll(self, interface):
+        props = {'Name': self.name}
+        return props
+
+    @dbus.service.method('org.freedesktop.DBus.Properties',
+                            in_signature='ss', out_signature='v')
+    def Get(self, interface, propname):
+        # DBus名稱慣例是首字母大寫, 此處轉成 Python 慣例。
+
+        propname = propname[0].lower() + propname[1:]
+        return getattr(self, propname, False)
+
+    @dbus.service.method('org.freedesktop.DBus.Properties',
+                            in_signature='ssv')
+    def Set(self, interface, propname, value):
+        propname = propname[0].lower() + propname[1:]
+        try:
+            setattr(self, propname, value)
+        except:
+            pass
+{% endhighlight %}
+
+
+<h4>
+參考文件
+</h4>
+
+<p>
+我先前也整理了其他的 D-Bus 文件。列於下:
+</p>
+
+<ul>
+    <li>
+      <a href="{{ site.baseurl }}/archives/12988053.html">D-Bus 用途說明</a>.
+    </li>
+
+    <li>
+      <a href="{{ site.baseurl }}/archives/12318427.html">D-Bus service activation</a>.
+    </li>
+
+    <li>
+      <a href="{{ site.baseurl }}/archives/12976701.html">dbus-glib bindings 入門磚</a>.
+    </li>
+
+    <li>
+      <a href="{{ site.baseurl }}/archives/13799073.html">php-dbus 0.1.0 撰寫 DBus service 的使用經驗</a>.
+    </li>
+
+    <li>
+      <a href="{{ site.baseurl }}/archives/11949071.html">Write a D-Bus service by Ruby</a>.
+    </li>
+
+</ul>
+
+<p>
+關於 D-Bus 的基本觀念，本文就不再說明。請自行閱讀《<a href="http://dbus.freedesktop.org/doc/dbus-tutorial.html">D-Bus Tutorial</a>》。
+</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/15534603.html</div>

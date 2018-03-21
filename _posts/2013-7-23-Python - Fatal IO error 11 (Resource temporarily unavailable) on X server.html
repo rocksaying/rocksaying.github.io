@@ -1,0 +1,89 @@
+---
+title: Python - Fatal IO error 11 (Resource temporarily unavailable) on X server
+category: programming
+old-category: Python
+tags: [gtk,python]
+permalink: /archives/25401068.html
+---
+<p>
+日前在設計一個使用 GTK 的 Python 程式時，碰到了 <q>Fatal IO error 11 (Resource temporarily unavailable) on X server</q> 的錯誤。
+這問題不算希罕，在下列文章中就討論了原因。
+</p>
+<ul>
+    <li><a href="http://stackoverflow.com/questions/13755366/xio-fatal-io-error-11-resource-temporarily-unavailable-on-x-server-0-after">XIO: Fatal IO error 11 (Resource temporarily unavailable) on X server</a>
+    <li><a href="http://stackoverflow.com/questions/9989475/python-multiprocessing-with-2-gtk-windows">python multiprocessing with 2 gtk windows</a>
+</ul>
+
+<p>
+我的結論是，此為 Python gtk 模組和 multiprocessing 模組搭配使用時的潛在 bug 。
+</p>
+
+<!--more-->
+<p>
+首先看看會引發 <q>Fatal IO error 11</q> 的設計方式。
+</p>
+
+
+{% highlight python %}
+import os, multiprocessing
+import gtk
+
+sub_proc = multiprocessing.Process(target=sub_proc_func)
+
+sub_proc_func():
+    # some gtk code.
+    gtk.main()
+    os._exit(0) # it also close X's sockets.
+{% endhighlight %}
+
+
+<p>
+在上面的設計中，只要第一個子行程結束了，那麼隨後任何操作 GTK 個體的動作就會觸發 Fatal IO error 11 錯誤。原因牽涉到 X Window 的系統架構與 Python gtk 模組的設計。
+</p>
+
+<p>
+X Window 架構實際上是 client/server 架構，在螢幕上看到的任何 GUI 元件，都是由 X server 負責管理。而我們的 GTK 程式便是 X client ，它必須開啟和 X server 互動的 IPC socket 管線，再利用這個管線讀寫 GUI 元件的操作指令。
+Python 的 gtk 模組，在引入時就會順帶開啟這個 X server socket 。
+</p>
+
+<p>
+進一步，當我們使用 multiprocessing 模組建立子行程時，multiprocessing 用 fork() 複製了一個新的行程內容，又 gtk 函數的內部設計是以共用的方式開啟 X server socket ，故連帶著讓子行程繼承了原先開啟的 X server socket 。此時父子行程實際上共用同一份 X server socket 。
+</p>
+
+<p>
+最後，當子行程結束時，會關閉它和父行程共用的 X server socket 。
+使父行程或接下來新建的子行程都失去可用的 X server socket 。
+於是接下來的 GTK 操作就引發 Fatal IO Error 11 on X server 錯誤。
+</p>
+
+<h5>
+解決方法
+</h5>
+
+<p>
+以 Python gtk 的設計方式來看，解答關鍵點就引入 gtk 模組的時機。如下列所示:
+</p>
+
+
+{% highlight python %}
+import os, multiprocessing
+sub_proc = multiprocessing.Process(target=sub_proc_func)
+
+sub_proc_func():
+    import gtk
+    # some gtk code.
+    gtk.main()
+    os._exit(0) # it also close X's sockets.
+{% endhighlight %}
+
+
+<p>
+主行程不要 import gtk 。
+改在子行程的初始程式碼中加上 <code>import gtk</code> ，讓每個子行程配置自己的 GTK 內容。
+如此一來，每個子行程活動空間就都有獨立的 X server socket ，而不是父子行程共用。
+就不會發生其中一個子行程結束，導致其他親屬行程一併失去 X server socket 的錯誤。
+</p>
+
+<p>
+註: Python 使用 gtk 模組時，若有多工作業的需求，建議搭配 gtk 自帶的 gthread 機制，或者用 Python 的 threading 模組。 multiprocessing 模組為最後一招。傳統上， Multi-processing 模式的設計難度就比 Multi-threading 模式高。
+</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/25401068.html</div>

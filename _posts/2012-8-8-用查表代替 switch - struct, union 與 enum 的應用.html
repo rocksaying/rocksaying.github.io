@@ -1,0 +1,334 @@
+---
+title: 用查表代替 switch - struct, union 與 enum 的應用
+category: programming
+old-category: C/C++/C#/Java
+tags: [refactor,重構,資料結構]
+permalink: /archives/20220500.html
+---
+<p>
+很久以前，我已忘了是在哪本書看到的事(或許不只一本書)。書中說使用 switch..case.. 的場合，大部份都可以也應該改用查表方式代替。
+這句話的意義也含括了一句程式設計領域的名言，即「資料結構 + 演算法 = 程式」。
+</p>
+<p>
+大多數場合，連續的 switch..case.. 或 if..elseif.. 只是不斷複製類似的程式片段。
+這種文章結構，沒有運用資料結構觀念，就連演算法的部份也很粗糙，是很糟糕的程式碼。
+而在改用查表方式的重構過程中，規劃資料結構建「表」，並設計「查」的演算法，
+就自然而然地實踐了「資料結構 + 演算法 = 程式」這句話，也提高了程式碼的品質。
+</p>
+
+<!--more-->
+<p>
+我日前就專案需求，用 C 語言寫了一個程式。程式中有一段載入組態設置文件的動作。
+這個動作的設計過程，符合查表法代替switch..case..的目標。
+而且這段程式碼用了些少見的表述方式(但仍是 ANSI C 規範)，可以展現 C 語言語法的理解程度。
+故本文以此例演示。
+</p>
+
+<p>
+首先，來看看只用 if..elseif.. (switch..case..的變形) 的程式碼長什麼樣。
+</p>
+
+
+{% highlight c %}
+// gcc -o config-load1 config-load1.c parse_conf_line.c
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+int parse_conf_line(const char *line, char *buf, char **out_key, char **out_value);
+
+// defs.h
+#define CONFIG_PATH "/tmp/test.conf"
+#define DEFAULT_SERVER "localhost"
+#define LISTEN_PORT 5000
+#define TIMEOUT 10
+
+#define BUFLEN 1024
+// end defs.h
+
+// Global config variables.
+const char *Server = DEFAULT_SERVER;
+int Port = LISTEN_PORT;
+time_t Timeout = TIMEOUT;
+
+void load_config()
+{
+    char buf[BUFLEN], buf2[BUFLEN];
+    char *key, *value;
+    FILE *fp = fopen(CONFIG_PATH, "r");
+    if ( fp ) {
+        while (fgets(buf, BUFLEN, fp)) {
+            if (parse_conf_line(buf, buf2, &key, &value) < 1)
+                continue;
+            if (!key || value[0] == 0)
+                continue;
+
+            if (strcmp("server", key) == 0) {
+                Server = strcpy(
+                    (char*)malloc(strlen(value)+1), value);
+                printf("Set %s as %s\n", key, Server);
+            }
+            else if (strcmp("port", key) == 0) {
+                Port = atoi(value);
+                printf("Set %s as %d\n", key, Port);
+            }
+            else if (strcmp("timeout", key) == 0) {
+                Timeout = atoi(value);
+                printf("Set %s as %d\n", key, Timeout);
+            }
+            /*
+            more duplicate codes.
+            .
+            .
+            .
+            */
+        }
+        fclose(fp);
+    }
+    else {
+        printf("%s not found. Use default settings.\n", CONFIG_PATH);
+    }
+}
+
+int main()
+{
+    load_config();
+    
+    printf("Server  : %s\n", Server);
+    printf("Port    : %d\n", Port);
+    printf("Timeout : %d\n", Timeout);
+    return 0;
+}
+{% endhighlight %}
+
+
+<div class="note">
+我省掉了 parse_conf_line.c 的內容，因為那不是本文重點。
+各位只需要知道它包含了一個函數，可分析一份以 <code>key = value</code> 形式存在的文件即可。
+</div>
+
+<p>
+config-load1.c 最大的問題就在 if..elseif.. 這一段。
+每一段 if 只是決定組態名稱，並重複類似的變數值指派動作。
+隨著可組態項目陸續增加，這一段程式碼就會被複製地愈來愈長，重複的程式片段也就愈來愈多。
+</p>
+
+<p>
+接著再看用查表方式重構後的 config-load.c 。
+</p>
+
+
+{% highlight c %}
+// gcc -o config-load config-load.c parse_conf_line.c
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+int parse_conf_line(const char *line, char *buf, char **out_key, char **out_value);
+
+// defs.h
+#define CONFIG_PATH "/tmp/test.conf"
+#define DEFAULT_SERVER "localhost"
+#define DEFAULT_PATH   "/local"
+#define LISTEN_PORT 5000
+#define TIMEOUT 10
+#define PROCESS_UID 1000
+#define PROCESS_GID 1000
+
+#define BUFLEN 1024
+// end defs.h
+
+// Global config variables.
+const char *Server = DEFAULT_SERVER;
+const char *Path = DEFAULT_PATH;
+int Port = LISTEN_PORT;
+time_t Timeout = TIMEOUT;
+uid_t ProcessUid = PROCESS_UID;
+gid_t ProcessGid = PROCESS_GID;
+int LogLevel = 5;
+
+struct {
+    char *key;
+    enum {
+        STR,
+        INT
+    } value_type;
+    union {
+        const char **str_var;
+        int *int_var;
+    };
+}
+config_table[] = {
+    {"server",          STR, {.str_var = &Server}},
+    {"path",            STR, {.str_var = &Path}},
+    {"port",            INT, {.int_var = &Port}},
+    {"timeout",         INT, {.int_var = (int*) &Timeout}},
+    {"process_uid",     INT, {.int_var = (int*) &ProcessUid}},
+    {"process_gid",     INT, {.int_var = (int*) &ProcessGid}},
+    {"log_level",       INT, {.int_var = &LogLevel}},
+    {NULL,              STR, {NULL}} // end
+},
+*conf_item = config_table;
+
+void load_config()
+{
+    char buf[BUFLEN], buf2[BUFLEN];
+    char *key, *value;
+    FILE *fp = fopen(CONFIG_PATH, "r");
+    if ( fp ) {
+        while (fgets(buf, BUFLEN, fp)) {
+            if (parse_conf_line(buf, buf2, &key, &value) < 1)
+                continue;
+            if (!key || value[0] == 0)
+                continue;
+            
+            for (conf_item = config_table; 
+                  conf_item->key;
+                  ++conf_item)
+            {
+                if (strcmp(conf_item->key, key) != 0) 
+                    continue;
+                if (conf_item->value_type == STR) {
+                    *conf_item->str_var = strcpy(
+                        (char*)malloc(strlen(value)+1), value);
+                    printf("Set %s as %s\n", key, *conf_item->str_var);
+                }
+                else {
+                    *conf_item->int_var = atoi(value);
+                    printf("Set %s as %d\n", key, *conf_item->int_var);
+                }
+            }
+        }
+        fclose(fp);
+    }
+    else {
+        printf("%s not found. Use default settings.\n", CONFIG_PATH);
+    }
+}
+
+int main()
+{
+    load_config();
+    
+    printf("Server  : %s\n", Server);
+    printf("Path    : %s\n", Path);
+    printf("Port    : %d\n", Port);
+    printf("Timeout : %d\n", Timeout);
+    printf("Uid     : %d\n", ProcessUid);
+    printf("Gid     : %d\n", ProcessGid);
+    printf("LogLevel: %d\n", LogLevel);
+    return 0;
+}
+{% endhighlight %}
+
+
+<p>
+config-load.c 比較難理解的應該是下列這一段內容。
+</p>
+
+
+{% highlight c %}
+struct {
+    char *key;
+    enum {
+        STR,
+        INT
+    } value_type;
+    union {
+        const char **str_var;
+        int *int_var;
+    };
+}
+{% endhighlight %}
+
+
+<p>
+簡單地說，我宣告了一個匿名結構(<dfn>struct</dfn>)。
+這個結構包含了三個欄位，分別是字元指標的 <dfn>key</dfn>，<dfn>enum</dfn> 型別的 <dfn>value_type</dfn>，以及匿名<dfn>union</dfn>的 var 指標。var 指標指向一個實際儲存組態值的全域變數。雖然也可以用 void* 含混帶過，但編譯器會抱怨，且使用時也經常要帶上強迫轉型行為。故不如以 union 的形式明確表述。
+</p>
+<p>
+緊接著這個匿名結構宣告語法後的符號 config_table 與 conf_item ，表示套用此匿名結構定義的變數。其中的 conf_item 還是指標型態，指向 config_table 。
+</p>
+<p>
+不熟悉匿名表達形式的人，可以按照自己的理解，嘗試把名稱補上去，應該就會看懂了。
+</p>
+<p>
+至於 <code>{.str_var = &Server}</code> 的 <code>.str_var</code>、<code>.int_var</code> 表述方式，則是在設定變數初值時，不採位置順序而是明確指定欄位的語法。
+</p>
+<p>
+看懂這張表後，再去看演算法就不難理解了。
+一個簡單的 for 迴圈找出符合的組態項目，然後判斷型別，調用適合的存值方法。
+</p>
+
+<p>
+這個範例還有進一步的改善空間。
+例如把分散的各個組態變數全部彙集成一張組態鍵值表，就更具使用彈性，只是會犧牲一些執行效率。
+</p>
+
+<p>
+另一方面，在此也可以看出提供動態型別系統的程式語言如何提高程式開發生產力。
+上述用 C 語言設計的表與演算法，在動態型別系統中，以 PHP 為例，能以下列形式簡單做到。
+</p>
+
+
+{% highlight php %}
+<?php
+function load_config(&$config_table)
+{
+    $fh = fopen(CONFIG_PATH, "r");
+    if ( $fh ) {
+        while (fgets($buf, $fh)) {
+            if ( !($kv = parse_conf_line($buf)))
+                continue;
+            list($key, $value) = $kv;
+            $config_table[$key] = $value;
+        }
+        fclose($fh);
+    }
+}
+?>
+{% endhighlight %}
+
+
+<p>
+多數動態型別程式語言皆內建鍵值表或關聯式陣列的資料型態，令程式人員可以很簡單地建表。
+</p>
+<p>
+再者，像本文的 C 語言範例所建的表中，包含了一個 <dfn>value_type</dfn> 欄位，用以判斷該用什麼方法儲存組態值。
+而動態型別語言則不必如此麻煩，一個泛用的指派行為(=)就可以實現。
+這些都是動態型別語言的長處，程式人員應積極運用。
+</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/20220500.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">reborn2266@gmail.com(小鄭) (#comment-22578054)</div>
+<div class="roodo-comment-date">Thu, 09 Aug 2012 09:00:11 +0800</div>
+<div class="roodo-comment-text">另一個常見的 switch case 場合是實作 nontrivial state machine 的機制，善用 state function 可以很漂亮的解決。<br/>FYI.<br/><a href='http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide' rel='nofollow'><a href='http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide' rel='nofollow'><a href='http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide' rel='nofollow'>http://cuddle.googlecode.com/hg/talk/lex.html#landing-slide</a></a></a><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22578620)</div>
+<div class="roodo-comment-date">Thu, 09 Aug 2012 17:35:52 +0800</div>
+<div class="roodo-comment-text">In the same way, you can create a callback function table to finish different type assignment without if/else.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22579860)</div>
+<div class="roodo-comment-date">Fri, 10 Aug 2012 16:54:06 +0800</div>
+<div class="roodo-comment-text">Callback example:<br/>--------<br/>void str_set_value(char **var, char *v) {<br/>    *var = strcpy((char*)malloc(strlen(v)+1), v);<br/>}<br/><br/>void int_set_value(int *var, char *v) {<br/>    *var = atoi(v);<br/>}<br/> <br/>struct {<br/>    char *key;<br/>    void *var;<br/>    void (*set_value)(void*, char*);<br/>}<br/>config_table[] = {<br/>    {"server",      &Server,    (void(*)(void*,char*)) str_set_value},<br/>    {"timeout",     &Timeout,   (void(*)(void*,char*)) int_set_value},<br/>    {NULL,          NULL,       NULL} // end<br/>};<br/><br/>.<br/>.<br/>.<br/>            for (conf_item = config_table; <br/>                  conf_item->key;<br/>                  ++conf_item)<br/>            {<br/>                if (strcmp(conf_item->key, key) == 0) <br/>                    conf_item->set_value(conf_item->var, value);<br/>            }<br/>.<br/>.<br/>.<br/>--------<br/><br/>However 'void*' and explicit type casting are weak.<br/>To resolve those weak, I need to design more struct.<br/>I may do that in complex case.<br/>But in simple case, I just avoid them.<br/><br/>Using callback is good if the language supports dynamic and strong type system.<br/>Callback will be applied implicitly via assign operator.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22846748)</div>
+<div class="roodo-comment-date">Fri, 19 Apr 2013 20:10:24 +0800</div>
+<div class="roodo-comment-text">switch case 和 if else 在很多方面來講還是存在很大的差別; 另外我記得 switch case在編輯最佳化時會轉成 jump table, 所以不太需要自己實作table, 除非在switch不支援的型別或是特殊的比對情境下才需要實作table.<br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22853244)</div>
+<div class="roodo-comment-date">Mon, 22 Apr 2013 10:22:41 +0800</div>
+<div class="roodo-comment-text">正文範例要 switch 的對象是字串，但 C 語言的 switch case 不支持字串對象，所以我變形用 if elseif 去表示 switch case 。再者，所有用 swich case 寫出來的程式碼，都可以改成 if elseif 形式(只是程式碼重複更多)，沒錯吧。<br/><br/>用查表代替 switch 是一個通用的設計模式。它的其中目的是消除程式碼撰寫時的重複內容。重點是消除眾多 case 後面重複或相似的程式碼內容，不只是建一個 jump table 而已。<br/><br/>如果 case 後面的程式碼各不相同的話，那 switch case 的工作還真的就只是建立一個 jump table ，要不要自己轉成查表，或許見仁見智。<br/><br/>另外再就程式架構的角度來看，查表法比較容易改寫成執行時期判斷的動態架構，也就是說可透過組態設定等外部參數就改變程式行為，彈性較大。 switch case 通常就要改寫程式碼並重編譯，彈性小。<br/><br/>	</div>
+</blockquote>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-22858882)</div>
+<div class="roodo-comment-date">Sun, 28 Apr 2013 04:33:15 +0800</div>
+<div class="roodo-comment-text">ok, 其實我的意思並沒有反對要用查表, 事實上在我使用多種語言的情況中查表用得比switch還多, 但我只是想說 switch case在編譯最佳化時會轉成 jump table. switch 最適合用到的時機是 case block 內的工作很不一致, 單一的switch rule 和 target, 我只是想補充說 在這些情況下直接使用switch即可. 當然我也有提到 在switch不支援的比對型別, 使用查表會比較適合, 這剛好也是你的情況. 再來想說 if elseif 和 switch 不一樣, 因為 switch 的比較對象只有一個, 而且比對 rule 很固定; 一般書上都會提到 switch 可以由多個elseif 做到, 但elseif不見得能由switch適當地完成; 再來以效能來看, 如果某工作能以switch和elseif完成, 我還是會用switch, 因為效能的原因. 最後, 程式架構的角度要依不同情況需求而定, 您說透過config來改變程式行為, 我想懂injection的人應該都清楚這點, 但在讀入字串後仍需要比對, 比對用查表或switch依情況, 我看不出哪裡彈性比較大？如果多了個表中沒有的字串, 不需要更新表嗎？ 另外, 查表也需要有建表的成本, 尤其是對一些OO的語言.<br/>	</div>
+</blockquote>
+</div>

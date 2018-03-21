@@ -1,0 +1,51 @@
+---
+title: PHPUnit3 和 Makefile
+category: programming
+old-category: PHP
+tags: [tdd,phpunit,make]
+permalink: /archives/3652965.html
+---
+<div class="tags" style="display:none">Tags: TDD phpunit make</div>
+<p>
+在測試驅動開發的方式下，一個源碼 .php 搭一個測試案例碼 Test.php 的情形愈來愈常見了。而隨著軟體規模的擴大，源碼及對應的測試碼數量也愈來愈多。如果每次 commit 前都要一個不漏地跑完每個單元測試，未免太浪費時間了。畢竟沒有修改過的源碼，並不需要再跑一次單元測試。這時候就要藉助自動建置工具來幫我們簡化測試動作和時間。
+</p>
+<p>
+本文利用 <a href="{{ site.baseurl }}/archives/2006/Make%20%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E7%B0%A1%E4%BB%8B.html">Make</a> 這個傳統的軟體建置工具，提供一個簡單的 Makefile ，用於自動測試專案中相關項目。搭配的單元測試工具是 <a href="http://www.phpunit.de/">PHPUnit3</a> 。
+</p>
+
+<!--more-->
+
+<pre><code>
+ALLTESTLOG = alltest.log
+
+SRCS = Abc.php Xyz.php
+
+PHP = C:\progra~1\php5\php.exe
+PHPUNIT = C:\progra~1\php5\phpunit.bat
+PHPUNIT_LOGTYPE = --log-tap
+
+### make command ###
+
+$(ALLTESTLOG): $(patsubst %.php,%.testlog, $(SRCS))
+	type $(patsubst %.php,%.testlog, $(SRCS)) > $(ALLTESTLOG)
+	type $(ALLTESTLOG)
+
+%.testlog: %.php %Test.php
+	$(PHPUNIT) $(PHPUNIT_LOGTYPE) $*.testlog $*Test
+</code></pre>
+
+<p>
+上列 Makefile 中，使用了 GNU make 獨有的樣式規則。其他的 make 工具可能不適用。
+</p>
+<p>
+我的依存規則是，每一個源碼 (%.php) 都有一個對應的測試碼 (%Test.php) 。而每個測試碼的結果都會記錄在單獨的記錄檔 (%.testlog)。最後把所有的測試記錄檔彙整到 <var>ALLTESTLOG</var> ，作為最終產出。
+</p>
+<p>
+例如，專案中有兩個成員，即 Abc.php 和 Xyz.php 。將這兩個源碼填入 SRCS 中， make 就會根據建置規則，尋找 AbcTest.php 和 XyzTest.php 。接著比對 Abc.php, Xyz.php, AbcTest.php, XyzTest.php, Abc.testlog, Xyz.testlog, alltest.log 等檔案的新舊，只針對有修改的內容調用 PHPUnit 進行測試。
+</p>
+<p>
+Make 是傳統的自動建置工具。現在常見的則有 <a href="http://ant.apache.org/">ant</a>。還有一套 <a href="http://phing.info/">Phing</a> 專門因應 PHP 的開發環境。
+</p>
+<p>
+除了自動測試之外，我們也可以視需要將 commit 、 build 等動作寫進 Makefile 的建置規則中。如此一來，每次修改程式後只需要鍵入 <code>make; make commit</code> 就可將工作交給 make 處理，程序員可以去喝杯茶休息休息。
+</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3652965.html</div>

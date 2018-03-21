@@ -1,0 +1,186 @@
+---
+title: 利用 NullObject 改善程式可讀性，No more if, no more try
+category: programming
+old-category: Programming
+tags: [php5,refactoring,nullobject]
+permalink: /archives/6028145.html
+---
+<div class="tags" style="display:none">Tags: php5 refactoring nullobject</div>
+<p>
+剛在重構一組類別的程式碼時，突然想到 Martin 在《敏捷軟體開發原則、樣式與實務》一書中提到的一個編程技巧，就是在失敗狀況時回傳 <var>NullObject</var> ，避免行為調用者用 <code>if</code> 或 <code>try</code> 處理失敗狀況，影響程式可讀性。
+</p>
+<p>
+我重構中的類別程式碼，基本上是一個聚合類別，它包含了其他類別的個體。此聚合類別提供一個方法 <code>get()</code> ，以取得它所包含的個體。外部調用 <code>get()</code> 後取得內容個體後，立即呼叫該個體的一個方法。
+</p>
+
+<!--more-->
+<p>
+原本的程式碼，其架構大略如下所示。
+</p>
+
+{% highlight php %}
+<?php
+class A {
+    function output() {
+        echo 'hello world';
+        return $this;
+    }
+}
+
+class C {
+    var $objects;
+
+    function __construct() {
+        $this->objects['a'] = new A;
+    }
+
+    function get($name) {
+        return (isset($this->objects[$name])
+            ? $this->objects[$name]
+            : false
+        );
+    }
+}
+
+$c = new C;
+
+$c->get('a')->output();
+$c->get('b')->output();
+
+//=========
+if ($o = $c->get('a'))
+    $o->output();
+if ($o = $c->get('b'))
+    $o->output();
+//=========
+?>
+{% endhighlight %}
+
+
+<p>
+程式碼的語意是調用 <code>$c->get()</code> 取得內容個體，接著調用取出物的 <code>output()</code> 行為。問題在於這段程式碼並未考慮找不到指定內容個體的情形，故第27行的 <code>$c->get('b')->output()</code> 將會引發調用不存在個體之方法的執行錯誤。直覺上，我們的解決的方式就是修改調用行為的這一段程式碼，加上 <code>if</code> 或 <code>try</code> 的錯誤處理流程。
+</p>
+<p>
+但這在大型專案或分工團隊中可能會有副作用。例如甲是負責基礎類別的程序員，也就是負責寫上例第1到23行程式碼的人；乙是負責應用流程的程序員，也就是寫第24到27行程式碼的人。現在甲要重構基礎類別，並可能改變行為回傳結果時，按直覺的方式，我們將牽連乙去修改他的程式碼。這就是一種不良副作用。
+</p>
+
+<p>
+而 Martin 所說的編程技巧，則是在碰到找不到指定個體時就回傳一個 <var>NullObject</var>，使得調用者可以不用修改程式碼。這個編程技巧用 PHP 實作很簡單，只要利用 PHP5 的 magic method 就能輕鬆實現。如下所示。
+</p>
+<h5>NullObject and magic method</h5>
+
+{% highlight php %}
+<?php
+// PHP5 magic style
+class NullObject {
+    function __call($name, $args) {
+        //do nothing
+        return $this;
+    }
+}
+
+class A {
+    function output() {
+        echo 'hello world';
+        return $this;
+    }
+}
+
+class C {
+    var $objects;
+
+    function __construct() {
+        $this->objects['a'] = new A;
+    }
+
+    function get($name) {
+        return (isset($this->objects[$name])
+            ? $this->objects[$name]
+            : new NullObject
+        );
+    }
+}
+
+
+$c = new C;
+
+$c->get('a')->output();
+$c->get('b')->output();
+
+?>
+{% endhighlight %}
+
+<p>
+我們重構時，增加一個 <var>NullObject</var> 類別，這類別就是什麼事都不做。所以我們再利用 magic method 的 <code>__call()</code> 實作一個什麼都不做的泛用行為。這可以免除 PHP 發出找不到指定行為的執行錯誤。最後，我們只要再把 <code>get()</code> 回傳 <var>false</var> 的動作改成回傳 <var>NullObject</var> 即可。
+</p>
+<p>
+就這樣，我們完成了重構動作。而調用者的程式碼不必進行任何修改，就無聲無息地略過了錯誤處理流程並保持程式碼簡潔的語意。
+</p>
+
+<h5>Java style</h5>
+<p>
+附帶一提。這個編程技巧也可以用來檢視程式語言的動態性對我們的影響。假如我們不用 PHP5 提供的 magic method ，那麼我們就要採用類似 Java 的編程風格來重構，範例如下。
+</p>
+<div class="note">
+昨天寫下這一段話，第二天就後悔了。因為我想到 Ruby, JavaScript 並沒有 PHP5 __call 的 magic method 機制。而 Ruby, JavaScript 的動態性卻又比 PHP 還優秀。所以用 magic method 機制評定程式語言的動態能力，似乎不太適當。Magic method 果然 magic...
+</div>
+
+
+{% highlight php %}
+<?php
+// Java style. (Are you sure that you are using PHP5?)
+interface I {
+    function output();
+}
+
+class CNullObject implements I {
+    function output() {
+        //do nothing
+        return $this;
+    }
+}
+
+class A implements I {
+    function output() {
+        echo 'hello world';
+        return $this;
+    }
+}
+
+class C {
+    var $objects;
+
+    function __construct() {
+        $this->objects['a'] = new A;
+    }
+
+    function get($name) {
+        return (isset($this->objects[$name])
+            ? $this->objects[$name]
+            : new CNullObject
+        );
+    }
+}
+
+
+$c = new C;
+
+$c->get('a')->output();
+$c->get('b')->output();
+
+?>
+{% endhighlight %}
+
+<p>
+在 Java 編程風格下，我們需要先定義一個具有 <code>output()</code> 行為的介面<var>I</var>。再為 <var>C</var> 類別專門定義一個實作了介面<var>I</var> 的 <var>CNullObject</var> 類別。
+</p>
+<p>
+這種受限於程式語言動態能力所帶來的編程風格，最顯而易見的累贅就是要定義許多 <var>xNullObject</var>，而它們所作事都一樣: <em>不做任何事</em>。結果我們為了<em>不做任何事</em>的類別複製了許多重複的程式碼。
+</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/6028145.html</div>
+<div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
+<blockquote class="roodo-comment">
+<div class="roodo-comment-author">未留名 (#comment-16857883)</div>
+<div class="roodo-comment-date">Mon, 14 Jul 2008 18:18:59 +0800</div>
+<div class="roodo-comment-text">Ruby 不是有 method_missing 這個 method 的嗎？<br/>	</div>
+</blockquote>
+</div>
