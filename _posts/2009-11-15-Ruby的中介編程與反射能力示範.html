@@ -24,37 +24,38 @@ PHP的中介編程與反射能力示範</a> 相同。
 <p>
 程式第一段，先定義 <code>MyData</code> 的基本需求: 儲存資料欄位與內容。
 </p>
-<pre class="highlight"><code><span class="k">class</span> <span class="nc">MyData</span>
-    <span class="c1"># Ruby 將所有資料成員視為私有的。</span>
-    <span class="c1"># 此外，當任何方法想賦值的資料成員不存在時，Ruby會自動建立。</span>
-    <span class="c1"># 所以不需要顯著地列出資料成員宣告。</span>
 
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-        <span class="n">args</span><span class="p">.</span><span class="nf">each_pair</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">value</span><span class="o">|</span>
-            <span class="nb">instance_variable_set</span><span class="p">(</span><span class="s2">"@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="k">end</span>
-<span class="k">end</span>
+{% highlight ruby %}
+class MyData
+    # Ruby 將所有資料成員視為私有的。
+    # 此外，當任何方法想賦值的資料成員不存在時，Ruby會自動建立。
+    # 所以不需要顯著地列出資料成員宣告。
 
-<span class="c1"># Ruby 1.9, 方法的最後一個參數為 hash 時，可以省略 { }</span>
-<span class="n">d</span> <span class="o">=</span> <span class="no">MyData</span><span class="p">.</span><span class="nf">new</span> <span class="ss">id: </span><span class="mi">1</span><span class="p">,</span>
-    <span class="ss">title: </span><span class="s2">"rock"</span><span class="p">,</span>
-    <span class="ss">content: </span><span class="s2">"hello world"</span><span class="p">,</span>
-    <span class="ss">timestamp: </span><span class="no">Time</span><span class="p">.</span><span class="nf">now</span><span class="p">.</span><span class="nf">to_s</span>
+    def initialize(args)
+        args.each_pair {|name, value|
+            instance_variable_set("@#{name}", value)
+        }
+    end
+end
 
-<span class="nb">puts</span> <span class="s2">"Properties of d</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="n">d</span><span class="p">.</span><span class="nf">instance_variables</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span>
-    <span class="nb">print</span> <span class="s2">"  </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">: "</span><span class="p">,</span> <span class="n">d</span><span class="p">.</span><span class="nf">instance_variable_get</span><span class="p">(</span><span class="nb">name</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
-<span class="k">end</span>
+# Ruby 1.9, 方法的最後一個參數為 hash 時，可以省略 { }
+d = MyData.new id: 1,
+    title: "rock",
+    content: "hello world",
+    timestamp: Time.now.to_s
 
-<span class="k">begin</span>
-    <span class="n">d</span><span class="p">.</span><span class="nf">title</span>
-<span class="k">rescue</span>
-    <span class="nb">puts</span> <span class="s2">"我現在還沒添加 title 的取值方法。"</span>
-<span class="k">end</span>
-<span class="nb">puts</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+puts "Properties of d\n";
+d.instance_variables.each do |name|
+    print "  #{name}: ", d.instance_variable_get(name), "\n"
+end
 
-</code></pre>
+begin
+    d.title
+rescue
+    puts "我現在還沒添加 title 的取值方法。"
+end
+puts "\n"
+{% endhighlight %}
 
 
 <p>
@@ -79,49 +80,50 @@ JavaScript 可以透過 prototype chains 隱蔽地實現 open class 的目的。
 在 C++, Java, PHP 中，這種動作會擲出類別已定義的錯誤，它們不允許這麼做。
 </p>
 
-<pre class="highlight"><code><span class="c1"># Ruby 允許再度添加定義內容到已存在類別，這種動作稱為 open class 。</span>
-<span class="c1"># JavaScript 可以透過 prototype chains 隱蔽地實現 open class 的目的。</span>
-<span class="c1"># 在 C++, Java, PHP 中，這種動作會擲出類別已定義的錯誤 (不允許)</span>
-<span class="k">class</span> <span class="nc">MyData</span>
-    <span class="k">alias</span> <span class="n">initialize1</span> <span class="kp">initialize</span>
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-        <span class="n">initialize1</span> <span class="n">args</span>
 
-        <span class="n">args</span><span class="p">.</span><span class="nf">each_pair</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">value</span><span class="o">|</span>
-            <span class="c1"># 添加資料成員的 getter 與 setter</span>
-            <span class="no">MyData</span><span class="p">.</span><span class="nf">class_eval</span> <span class="o">&lt;&lt;-</span><span class="no">DEFINE_GETTER_AND_SETTER</span><span class="sh">
-                def </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="sh">
-                    return @</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="sh">
+{% highlight ruby %}
+# Ruby 允許再度添加定義內容到已存在類別，這種動作稱為 open class 。
+# JavaScript 可以透過 prototype chains 隱蔽地實現 open class 的目的。
+# 在 C++, Java, PHP 中，這種動作會擲出類別已定義的錯誤 (不允許)
+class MyData
+    alias initialize1 initialize
+    def initialize(args)
+        initialize1 args
+
+        args.each_pair {|name, value|
+            # 添加資料成員的 getter 與 setter
+            MyData.class_eval <<-DEFINE_GETTER_AND_SETTER
+                def #{name}
+                    return @#{name}
                 end
-                def </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="sh">=(value)
-                    @</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="sh"> = value
+                def #{name}=(value)
+                    @#{name} = value
                 end
-</span><span class="no">            DEFINE_GETTER_AND_SETTER</span>
-        <span class="p">}</span>
-    <span class="k">end</span>
+            DEFINE_GETTER_AND_SETTER
+        }
+    end
 
-    <span class="k">def</span> <span class="nf">each</span>
-        <span class="nb">self</span><span class="p">.</span><span class="nf">instance_variables</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span>
-            <span class="k">yield</span> <span class="nb">name</span><span class="p">,</span> <span class="nb">self</span><span class="p">.</span><span class="nf">instance_variable_get</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="k">end</span>
-<span class="k">end</span>
+    def each
+        self.instance_variables.each { |name|
+            yield name, self.instance_variable_get(name)
+        }
+    end
+end
 
-<span class="n">d2</span> <span class="o">=</span> <span class="no">MyData</span><span class="p">.</span><span class="nf">new</span> <span class="ss">id: </span><span class="mi">1</span><span class="p">,</span>
-    <span class="ss">title: </span><span class="s2">"rock"</span><span class="p">,</span>
-    <span class="ss">content: </span><span class="s2">"hello world"</span><span class="p">,</span>
-    <span class="ss">timestamp: </span><span class="no">Time</span><span class="p">.</span><span class="nf">now</span><span class="p">.</span><span class="nf">to_s</span><span class="p">,</span>
-    <span class="ss">table: </span><span class="s2">"Data"</span>
+d2 = MyData.new id: 1,
+    title: "rock",
+    content: "hello world",
+    timestamp: Time.now.to_s,
+    table: "Data"
 
-<span class="nb">puts</span> <span class="s2">"Properties of d2</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="n">d2</span><span class="p">.</span><span class="nf">content</span> <span class="o">=</span> <span class="s2">" hello ruby"</span>
-<span class="nb">puts</span> <span class="n">d2</span><span class="p">.</span><span class="nf">content</span>
+puts "Properties of d2\n";
+d2.content = " hello ruby"
+puts d2.content
 
-<span class="n">d2</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">value</span><span class="o">|</span>
-    <span class="nb">print</span> <span class="s2">"  </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">: </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-
-</code></pre>
+d2.each {|name, value|
+    print "  #{name}: #{value}\n";
+}
+{% endhighlight %}
 
 
 <p>
@@ -132,7 +134,6 @@ JavaScript 可以透過 prototype chains 隱蔽地實現 open class 的目的。
 事實上，在本系列文章中， Ruby 的程式是我第一個寫好的。我寫好後，才回頭去完成 JavaScript 與 PHP 的部份。
 就我的範例需求功能來看， Ruby 的實作方式最順暢，效果也最好。例如資訊隱藏的部份， JavaScript 基於本身的特性，無法作到資料保護。程序員仍然可以跳過 setter ，直接改變 <var>props</var> 中的資料欄位內容。JavaScript 的 <dfn>Prototype</dfn> 特性略嫌晦澀，就算是老手也偶爾會碰觸到 prototype chains 陷阱。
 </p>
-<p>
 <p>
 PHP 則不支援 <em>open class</em> 能力，因此我們要擴充功能時(例如增加 <code>Iterator</code> 的功能)，便不能在外面實作，而要進入類別的原始定義處重構。說白話些，就是我們不能分成好幾段源碼文件來寫，而要打開類別第一次定義的源碼檔，修改即有的類別定義源碼。
 而且在實作迭代功能時的限制也比較多。

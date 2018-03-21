@@ -24,38 +24,40 @@ Static 範例
 <p>
 <a href="http://tw2.php.net/manual/en/function.get-called-class.php">get_called_class()</a> 是 PHP 5.3 新增的函數，配合此函數更容易看出 self 與 static 的差異。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Class1</span> <span class="p">{</span>
-    <span class="c1">// fullname: Class1::$text
-</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class1'</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="nx">self</span><span class="o">::</span><span class="nv">$text</span> <span class="o">.</span> <span class="s2">", "</span> <span class="o">.</span> <span class="nb">get_called_class</span><span class="p">()</span> <span class="o">.</span> <span class="s2">" called in</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">Class2</span> <span class="k">extends</span> <span class="nx">Class1</span> <span class="p">{</span>
-    <span class="c1">// fullname: Class2::$text
-</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class2'</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+class Class1 {
+    // fullname: Class1::$text
+    protected static $text = 'text in class1';
+    public static function foo() {
+        echo self::$text . ", " . get_called_class() . " called in\n";
+    }
+}
 
-<span class="nx">Class2</span><span class="o">::</span><span class="na">foo</span><span class="p">();</span>
+class Class2 extends Class1 {
+    // fullname: Class2::$text
+    protected static $text = 'text in class2';
+}
 
-<span class="k">class</span> <span class="nc">Class3</span> <span class="p">{</span>
-    <span class="c1">// fullname: Class3::$text
-</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class3'</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="k">static</span><span class="o">::</span><span class="nv">$text</span> <span class="o">.</span> <span class="s2">", "</span> <span class="o">.</span> <span class="nb">get_called_class</span><span class="p">()</span> <span class="o">.</span> <span class="s2">" called in</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+Class2::foo();
 
-<span class="k">class</span> <span class="nc">Class4</span> <span class="k">extends</span> <span class="nx">Class3</span> <span class="p">{</span>
-    <span class="c1">// fullname: Class4::$text
-</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class4'</span><span class="p">;</span>
-<span class="p">}</span>
+class Class3 {
+    // fullname: Class3::$text
+    protected static $text = 'text in class3';
+    public static function foo() {
+        echo static::$text . ", " . get_called_class() . " called in\n";
+    }
+}
 
-<span class="nx">Class4</span><span class="o">::</span><span class="na">foo</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+class Class4 extends Class3 {
+    // fullname: Class4::$text
+    protected static $text = 'text in class4';
+}
+
+Class4::foo();
+?>
+{% endhighlight %}
 
 <p>
 請注意第6行是用 self ；第21行則是用 static 。
@@ -83,25 +85,27 @@ forward_static_call()
 在此情形下， PHP 總是把 <code>static</code> 繫結到 <code>call_user_func()</code> 所調用的類別上。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Class3</span> <span class="p">{</span>
-    <span class="c1">// fullname: Class3::$text
-</span>    <span class="k">protected</span> <span class="k">static</span> <span class="nv">$text</span> <span class="o">=</span> <span class="s1">'text in class3'</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="k">static</span><span class="o">::</span><span class="nv">$text</span> <span class="o">.</span> <span class="s2">", "</span> <span class="o">.</span> <span class="nb">get_called_class</span><span class="p">()</span> <span class="o">.</span> <span class="s2">" called in</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">Class5</span> <span class="k">extends</span> <span class="nx">Class3</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">callFoo</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nb">forward_static_call</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'Class3'</span><span class="p">,</span> <span class="s1">'foo'</span><span class="p">));</span> <span class="c1">//Class5 called.
-</span>        <span class="nb">call_user_func</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'Class3'</span><span class="p">,</span> <span class="s1">'foo'</span><span class="p">));</span> <span class="c1">//Class3 called.
-</span>    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+class Class3 {
+    // fullname: Class3::$text
+    protected static $text = 'text in class3';
+    public static function foo() {
+        echo static::$text . ", " . get_called_class() . " called in\n";
+    }
+}
 
-<span class="nx">Class5</span><span class="o">::</span><span class="na">callFoo</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+class Class5 extends Class3 {
+    public static function callFoo() {
+        forward_static_call(array('Class3', 'foo')); //Class5 called.
+        call_user_func(array('Class3', 'foo')); //Class3 called.
+    }
+}
+
+Class5::callFoo();
+?>
+{% endhighlight %}
 
 
 <pre class="language-text">

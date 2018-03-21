@@ -26,34 +26,36 @@ PHP5.3 新增了魔術方法 <a href="http://tw2.php.net/manual/en/language.oop5
 請看<a href="{{ site.baseurl }}/archives/10700785.html" class="bookname_notation">從函數指標到函數個體</a>，大致了解函數與函數個體的區別。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">func</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"pure function</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">Func</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$count</span><span class="p">;</span>
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-      <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+function func() {
+    echo "pure function\n";
+}
 
-    <span class="k">function</span> <span class="nf">__invoke</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">count</span><span class="o">++</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="s2">"invoke function object (count: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">count</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+class Func {
+    private $count;
+    function __construct() {
+      $this->count = 0;
+    }
 
-<span class="nv">$funcObj</span> <span class="o">=</span> <span class="s1">'func'</span><span class="p">;</span>
-<span class="nv">$funcObj</span><span class="p">();</span> <span class="c1">// call func()
-</span>
-<span class="nv">$funcObj</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Func</span><span class="p">;</span>
-<span class="nv">$funcObj2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Func</span><span class="p">;</span>
-<span class="nv">$funcObj</span><span class="p">();</span>
-<span class="nv">$funcObj</span><span class="p">();</span>
-<span class="nv">$funcObj2</span><span class="p">();</span>
+    function __invoke() {
+        $this->count++;
+        echo "invoke function object (count: {$this->count})\n";
+    }
+}
 
-<span class="cp">?&gt;</span>
-</code></pre>
+$funcObj = 'func';
+$funcObj(); // call func()
+
+$funcObj = new Func;
+$funcObj2 = new Func;
+$funcObj();
+$funcObj();
+$funcObj2();
+
+?>
+{% endhighlight %}
 
 <pre class="language-text">
 pure function
@@ -74,17 +76,19 @@ PHP 還新增了魔術方法 <a href="http://tw2.php.net/manual/en/language.oop5
 </p>
 <p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Class6</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">__callStatic</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"You try to call static method </span><span class="nv">$name</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="nx">Class6</span><span class="o">::</span><span class="na">foo</span><span class="p">();</span>
+{% highlight php %}
+<?php
+class Class6 {
+    public static function __callStatic($name, $args) {
+        echo "You try to call static method $name\n");
+    }
+}
 
-<span class="cp">?&gt;</span>
-</code></pre>
+Class6::foo();
+
+?>
+{% endhighlight %}
 
 
 <pre class="language-text">
