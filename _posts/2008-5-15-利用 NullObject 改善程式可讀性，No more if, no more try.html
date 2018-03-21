@@ -17,42 +17,44 @@ permalink: /archives/6028145.html
 <p>
 原本的程式碼，其架構大略如下所示。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">output</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'hello world'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">C</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$objects</span><span class="p">;</span>
+{% highlight php %}
+<?php
+class A {
+    function output() {
+        echo 'hello world';
+        return $this;
+    }
+}
 
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="s1">'a'</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">;</span>
-    <span class="p">}</span>
+class C {
+    var $objects;
 
-    <span class="k">function</span> <span class="nf">get</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="nv">$name</span><span class="p">])</span>
-            <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span>
-            <span class="o">:</span> <span class="kc">false</span>
-        <span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    function __construct() {
+        $this->objects['a'] = new A;
+    }
 
-<span class="nv">$c</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">C</span><span class="p">;</span>
+    function get($name) {
+        return (isset($this->objects[$name])
+            ? $this->objects[$name]
+            : false
+        );
+    }
+}
 
-<span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'a'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
-<span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'b'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
+$c = new C;
 
-<span class="c1">//=========
-</span><span class="k">if</span> <span class="p">(</span><span class="nv">$o</span> <span class="o">=</span> <span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'a'</span><span class="p">))</span>
-    <span class="nv">$o</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
-<span class="k">if</span> <span class="p">(</span><span class="nv">$o</span> <span class="o">=</span> <span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'b'</span><span class="p">))</span>
-    <span class="nv">$o</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
-<span class="c1">//=========
-</span><span class="cp">?&gt;</span>
-</code></pre>
+$c->get('a')->output();
+$c->get('b')->output();
+
+//=========
+if ($o = $c->get('a'))
+    $o->output();
+if ($o = $c->get('b'))
+    $o->output();
+//=========
+?>
+{% endhighlight %}
 
 
 <p>
@@ -66,45 +68,47 @@ permalink: /archives/6028145.html
 而 Martin 所說的編程技巧，則是在碰到找不到指定個體時就回傳一個 <var>NullObject</var>，使得調用者可以不用修改程式碼。這個編程技巧用 PHP 實作很簡單，只要利用 PHP5 的 magic method 就能輕鬆實現。如下所示。
 </p>
 <h5>NullObject and magic method</h5>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// PHP5 magic style
-</span><span class="k">class</span> <span class="nc">NullObject</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//do nothing
-</span>        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">output</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'hello world'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+// PHP5 magic style
+class NullObject {
+    function __call($name, $args) {
+        //do nothing
+        return $this;
+    }
+}
 
-<span class="k">class</span> <span class="nc">C</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$objects</span><span class="p">;</span>
+class A {
+    function output() {
+        echo 'hello world';
+        return $this;
+    }
+}
 
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="s1">'a'</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">;</span>
-    <span class="p">}</span>
+class C {
+    var $objects;
 
-    <span class="k">function</span> <span class="nf">get</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="nv">$name</span><span class="p">])</span>
-            <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span>
-            <span class="o">:</span> <span class="k">new</span> <span class="nx">NullObject</span>
-        <span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    function __construct() {
+        $this->objects['a'] = new A;
+    }
+
+    function get($name) {
+        return (isset($this->objects[$name])
+            ? $this->objects[$name]
+            : new NullObject
+        );
+    }
+}
 
 
-<span class="nv">$c</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">C</span><span class="p">;</span>
+$c = new C;
 
-<span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'a'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
-<span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'b'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
+$c->get('a')->output();
+$c->get('b')->output();
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 <p>
 我們重構時，增加一個 <var>NullObject</var> 類別，這類別就是什麼事都不做。所以我們再利用 magic method 的 <code>__call()</code> 實作一個什麼都不做的泛用行為。這可以免除 PHP 發出找不到指定行為的執行錯誤。最後，我們只要再把 <code>get()</code> 回傳 <var>false</var> 的動作改成回傳 <var>NullObject</var> 即可。
@@ -121,49 +125,51 @@ permalink: /archives/6028145.html
 昨天寫下這一段話，第二天就後悔了。因為我想到 Ruby, JavaScript 並沒有 PHP5 __call 的 magic method 機制。而 Ruby, JavaScript 的動態性卻又比 PHP 還優秀。所以用 magic method 機制評定程式語言的動態能力，似乎不太適當。Magic method 果然 magic...
 </div>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// Java style. (Are you sure that you are using PHP5?)
-</span><span class="k">interface</span> <span class="nx">I</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">output</span><span class="p">();</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">CNullObject</span> <span class="k">implements</span> <span class="nx">I</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">output</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">//do nothing
-</span>        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+// Java style. (Are you sure that you are using PHP5?)
+interface I {
+    function output();
+}
 
-<span class="k">class</span> <span class="nc">A</span> <span class="k">implements</span> <span class="nx">I</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">output</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'hello world'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+class CNullObject implements I {
+    function output() {
+        //do nothing
+        return $this;
+    }
+}
 
-<span class="k">class</span> <span class="nc">C</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$objects</span><span class="p">;</span>
+class A implements I {
+    function output() {
+        echo 'hello world';
+        return $this;
+    }
+}
 
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="s1">'a'</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">;</span>
-    <span class="p">}</span>
+class C {
+    var $objects;
 
-    <span class="k">function</span> <span class="nf">get</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="nv">$name</span><span class="p">])</span>
-            <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">objects</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span>
-            <span class="o">:</span> <span class="k">new</span> <span class="nx">CNullObject</span>
-        <span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    function __construct() {
+        $this->objects['a'] = new A;
+    }
+
+    function get($name) {
+        return (isset($this->objects[$name])
+            ? $this->objects[$name]
+            : new CNullObject
+        );
+    }
+}
 
 
-<span class="nv">$c</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">C</span><span class="p">;</span>
+$c = new C;
 
-<span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'a'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
-<span class="nv">$c</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'b'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">output</span><span class="p">();</span>
+$c->get('a')->output();
+$c->get('b')->output();
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 <p>
 在 Java 編程風格下，我們需要先定義一個具有 <code>output()</code> 行為的介面<var>I</var>。再為 <var>C</var> 類別專門定義一個實作了介面<var>I</var> 的 <var>CNullObject</var> 類別。

@@ -105,7 +105,7 @@ omxplayer 在播放時，預設會將影像擴展至填滿整個指定區域，�
 以簡單的 dbus-send 示範操作。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ dbus-send --system --print-reply --dest=raspberry.pi.OMXPlayer \
     /raspberry/pi/OMXPlayer \
     raspberry.pi.OMXPlayerList.Play \
@@ -135,41 +135,43 @@ $ dbus-send --system --print-reply --dest=raspberry.pi.OMXPlayer \
     /raspberry/pi/OMXPlayer/2809 \
     raspberry.pi.OMXPlayer.Stop
 
-</pre>
+</code></pre>
 
 <p>
 下列則是 PHP 的範例。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$service</span> <span class="o">=</span> <span class="s1">'raspberry.pi.OMXPlayer'</span><span class="p">;</span>
-<span class="nv">$object_path</span> <span class="o">=</span> <span class="s1">'/raspberry/pi/OMXPlayer'</span><span class="p">;</span>
-<span class="nv">$list_interface</span> <span class="o">=</span> <span class="s1">'raspberry.pi.OMXPlayerList'</span><span class="p">;</span>
-<span class="nv">$player_interface</span> <span class="o">=</span> <span class="s1">'raspberry.pi.OMXPlayer'</span><span class="p">;</span>
 
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SYSTEM</span><span class="p">);</span>
+{% highlight php %}
+<?php
+$service = 'raspberry.pi.OMXPlayer';
+$object_path = '/raspberry/pi/OMXPlayer';
+$list_interface = 'raspberry.pi.OMXPlayerList';
+$player_interface = 'raspberry.pi.OMXPlayer';
 
-<span class="nv">$proxy</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
-    <span class="nv">$service</span><span class="p">,</span> <span class="nv">$object_path</span><span class="p">,</span> <span class="nv">$list_interface</span><span class="p">);</span>
+$d = new Dbus(Dbus::BUS_SYSTEM);
 
-<span class="nv">$player_path</span> <span class="o">=</span> <span class="nv">$proxy</span><span class="o">-&gt;</span><span class="na">Play</span><span class="p">(</span><span class="s1">'/home/pi/demo.mp4'</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">720</span><span class="p">,</span> <span class="mi">480</span><span class="p">,</span> <span class="nx">True</span><span class="p">,</span> <span class="s1">''</span><span class="p">);</span>
+$proxy = $d->createProxy(
+    $service, $object_path, $list_interface);
 
-<span class="nv">$player</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span><span class="nv">$service</span><span class="p">,</span> <span class="nv">$player_path</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">(),</span> <span class="nv">$player_interface</span><span class="p">);</span>
+$player_path = $proxy->Play('/home/pi/demo.mp4', 10, 10, 720, 480, True, '');
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-<span class="nv">$player</span><span class="o">-&gt;</span><span class="na">Pause</span><span class="p">();</span>
+$player = $d->createProxy($service, $player_path->getData(), $player_interface);
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-<span class="nv">$player</span><span class="o">-&gt;</span><span class="na">Resume</span><span class="p">();</span>
+sleep(10);
+$player->Pause();
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-<span class="nv">$player</span><span class="o">-&gt;</span><span class="na">Volumn</span><span class="p">(</span><span class="s1">'++'</span><span class="p">);</span>
+sleep(10);
+$player->Resume();
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-<span class="nv">$player</span><span class="o">-&gt;</span><span class="na">Stop</span><span class="p">();</span>
+sleep(10);
+$player->Volumn('++');
 
-<span class="cp">?&gt;</span>
-</code></pre>
+sleep(10);
+$player->Stop();
+
+?>
+{% endhighlight %}
 
 
 <div class="note">

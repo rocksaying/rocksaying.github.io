@@ -32,65 +32,67 @@ Hello DBus Service
 以下是一份摘要自 Python DBus Source 的範例程式，示範最基礎的 DBus Service 寫法。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/env python
-</span>
-<span class="c"># Copyright (C) 2004-2006 Red Hat Inc. &lt;http://www.redhat.com/&gt;
-</span>
-<span class="c"># Copyright (C) 2005-2007 Collabora Ltd. &lt;http://www.collabora.co.uk/&gt;
-</span>
-<span class="c">#
-</span>
-<span class="c"># Permission is hereby granted, free of charge, to any person
-</span>
-<span class="c"># obtaining a copy of this software and associated documentation
-</span>
-<span class="c"># files (the "Software"), to deal in the Software without
-</span>
-<span class="c"># restriction, including without limitation the rights to use, copy,
-</span>
-<span class="c"># modify, merge, publish, distribute, sublicense, and/or sell copies
-</span>
-<span class="c"># of the Software, and to permit persons to whom the Software is
-</span>
-<span class="c"># furnished to do so, subject to the following conditions:
-</span>
-<span class="c">#
-</span>
 
-<span class="kn">import</span> <span class="nn">gobject</span>
-<span class="kn">import</span> <span class="nn">dbus</span>
-<span class="kn">import</span> <span class="nn">dbus.service</span>
-<span class="kn">import</span> <span class="nn">dbus.mainloop.glib</span>
+{% highlight python %}
+#!/usr/bin/env python
 
-<span class="k">class</span> <span class="nc">DemoException</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">DBusException</span><span class="p">):</span>
-    <span class="n">_dbus_error_name</span> <span class="o">=</span> <span class="s">'com.example.DemoException'</span>
+# Copyright (C) 2004-2006 Red Hat Inc. <http://www.redhat.com/>
 
-<span class="k">class</span> <span class="nc">SomeObject</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
+# Copyright (C) 2005-2007 Collabora Ltd. <http://www.collabora.co.uk/>
 
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">"com.example.SampleInterface"</span><span class="p">,</span>
-                         <span class="n">in_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">'as'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">HelloWorld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hello_message</span><span class="p">):</span>
-        <span class="k">print</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">hello_message</span><span class="p">))</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s">"Hello"</span><span class="p">,</span> <span class="s">" from example-service.py"</span><span class="p">,</span> <span class="s">"with unique name"</span><span class="p">,</span>
-                <span class="n">session_bus</span><span class="o">.</span><span class="n">get_unique_name</span><span class="p">()]</span>
+#
 
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">"com.example.SampleInterface"</span><span class="p">,</span>
-                         <span class="n">in_signature</span><span class="o">=</span><span class="s">''</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">''</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">Exit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">mainloop</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+# Permission is hereby granted, free of charge, to any person
+
+# obtaining a copy of this software and associated documentation
+
+# files (the "Software"), to deal in the Software without
+
+# restriction, including without limitation the rights to use, copy,
+
+# modify, merge, publish, distribute, sublicense, and/or sell copies
+
+# of the Software, and to permit persons to whom the Software is
+
+# furnished to do so, subject to the following conditions:
+
+#
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">'__main__'</span><span class="p">:</span>
-    <span class="n">dbus</span><span class="o">.</span><span class="n">mainloop</span><span class="o">.</span><span class="n">glib</span><span class="o">.</span><span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+import gobject
+import dbus
+import dbus.service
+import dbus.mainloop.glib
 
-    <span class="n">session_bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">()</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BusName</span><span class="p">(</span><span class="s">"com.example.SampleService"</span><span class="p">,</span> <span class="n">session_bus</span><span class="p">)</span>
-    <span class="nb">object</span> <span class="o">=</span> <span class="n">SomeObject</span><span class="p">(</span><span class="n">session_bus</span><span class="p">,</span> <span class="s">'/SomeObject'</span><span class="p">)</span>
+class DemoException(dbus.DBusException):
+    _dbus_error_name = 'com.example.DemoException'
 
-    <span class="n">mainloop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
-    <span class="k">print</span> <span class="s">"Running example service."</span>
-    <span class="n">mainloop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-</code></pre>
+class SomeObject(dbus.service.Object):
+
+    @dbus.service.method("com.example.SampleInterface",
+                         in_signature='s', out_signature='as')
+    def HelloWorld(self, hello_message):
+        print (str(hello_message))
+        return ["Hello", " from example-service.py", "with unique name",
+                session_bus.get_unique_name()]
+
+    @dbus.service.method("com.example.SampleInterface",
+                         in_signature='', out_signature='')
+    def Exit(self):
+        mainloop.quit()
+
+
+if __name__ == '__main__':
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+    session_bus = dbus.SessionBus()
+    name = dbus.service.BusName("com.example.SampleService", session_bus)
+    object = SomeObject(session_bus, '/SomeObject')
+
+    mainloop = gobject.MainLoop()
+    print "Running example service."
+    mainloop.run()
+{% endhighlight %}
 
 
 <p>
@@ -138,142 +140,142 @@ Hello DBus Service
     </li>
 </ul>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python
-</span>
-<span class="c"># coding: utf-8
-</span>
-<span class="s">"""
-Python DBus example
-"""</span>
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
-<span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">gobject</span><span class="o">,</span> <span class="nn">dbus</span><span class="o">,</span> <span class="nn">dbus.service</span>
-<span class="kn">from</span> <span class="nn">dbus.mainloop.glib</span> <span class="kn">import</span> <span class="n">DBusGMainLoop</span>
 
-<span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
-    <span class="s">"""
+{% highlight python %}
+#!/usr/bin/python
+
+# coding: utf-8
+
+"""
+Python DBus example
+"""
+import os,sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+import gobject, dbus, dbus.service
+from dbus.mainloop.glib import DBusGMainLoop
+
+class Hello(dbus.service.Object):
+    """
     Hello service. Inheriting from dbus.service.Object
     Service name: blog.rock.sample.Hello
     http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service.Object-class.html
     API文件範例打錯了，此類別的名稱是首字大寫 dbus.service.Object ，不是 dbus.service.object
-    """</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">"blog.rock.sample.Hello"</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="s">'/'</span> <span class="o">+</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'.'</span><span class="p">,</span> <span class="s">'/'</span><span class="p">)</span>
-    <span class="n">interface</span> <span class="o">=</span> <span class="n">name</span>
+    """
+    name = "blog.rock.sample.Hello"
+    path = '/' + name.replace('.', '/')
+    interface = name
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">):</span>
-        <span class="s">"""
+    def __init__(self, event_loop):
+        """
         http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#inheriting-from-dbus-service-object
         教學文件打錯了，第三行的 path 應該是 object_path。同時，它漏了 BusName 。
         若按照教學文件的寫法，因為沒有指定 bus name ，故實際上是無用的。
-        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">event_loop</span> <span class="o">=</span> <span class="n">event_loop</span>
+        """
+        self.bus = dbus.SessionBus()
+        self.event_loop = event_loop
 
-        <span class="n">bus_name</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">BusName</span><span class="p">(</span><span class="n">Hello</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">bus</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="p">)</span>
-        <span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bus_name</span><span class="p">,</span> <span class="n">Hello</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        bus_name = dbus.service.BusName(Hello.name, bus=self.bus)
+        dbus.service.Object.__init__(self, bus_name, Hello.path)
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_notifier</span><span class="p">()</span>
+        self._init_notifier()
 
-    <span class="k">def</span> <span class="nf">_init_notifier</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">notifications_service</span> <span class="o">=</span> <span class="s">'org.freedesktop.Notifications'</span>
-        <span class="n">notifications_object</span> <span class="o">=</span> <span class="s">'/'</span> <span class="o">+</span> <span class="n">notifications_service</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'.'</span><span class="p">,</span> <span class="s">'/'</span><span class="p">)</span>
-        <span class="n">notifications_interface</span> <span class="o">=</span> <span class="n">notifications_service</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">notifier</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">notifications_service</span><span class="p">,</span> <span class="n">notifications_object</span><span class="p">),</span>
-            <span class="n">notifications_interface</span><span class="p">)</span>
+    def _init_notifier(self):
+        notifications_service = 'org.freedesktop.Notifications'
+        notifications_object = '/' + notifications_service.replace('.', '/')
+        notifications_interface = notifications_service
+        self.notifier = dbus.Interface(
+            self.bus.get_object(notifications_service, notifications_object),
+            notifications_interface)
 
-    <span class="k">def</span> <span class="nf">_notify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">""</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s">""</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s">"icon"</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">notifier</span><span class="o">.</span><span class="n">Notify</span><span class="p">(</span><span class="s">'Hello'</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="p">[],</span> <span class="p">{},</span> <span class="n">timeout</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span>
+    def _notify(self, title="", message="", icon="icon", timeout=0):
+        self.notifier.Notify('Hello', 0, icon, title, message, [], {}, timeout*1000)
 
-<span class="c">####
-</span>
-<span class="c"># Exporting method
-</span>
-<span class="c"># http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#exporting-methods-with-dbus-service-method
-</span>
-<span class="c"># API: http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service-module.html#method
-</span>
-<span class="c"># Signature of arguments: http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#data-types
-</span>
-<span class="c">####
-</span>
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'blog.rock.sample.Hello'</span><span class="p">,</span>
-                         <span class="n">in_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">Say</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="s">"""
+####
+
+# Exporting method
+
+# http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#exporting-methods-with-dbus-service-method
+
+# API: http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service-module.html#method
+
+# Signature of arguments: http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#data-types
+
+####
+
+    @dbus.service.method('blog.rock.sample.Hello',
+                         in_signature='s', out_signature='s')
+    def Say(self, message):
+        """
         教學與範例文件打錯了，API 文件寫明 dbus.service.method 的第一個參數是位
         置參數，不是關鍵字參數，所以不能寫成 interface="..."
-        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_notify</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">"say"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        """
+        self._notify(title="say", message=message, timeout=3)
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">SignalSay</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="c"># emmit signal
-</span>
-        <span class="k">return</span> <span class="s">"I say "</span> <span class="o">+</span> <span class="n">message</span>
+        self.SignalSay(message, 3) # emmit signal
 
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'blog.rock.sample.Hello'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">Stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+        return "I say " + message
 
-<span class="c">####
-</span>
-<span class="c"># Exporting signal
-</span>
-<span class="c"># http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#emitting-signals-with-dbus-service-signal
-</span>
-<span class="c"># API: http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service-module.html#signal
-</span>
-<span class="c">####
-</span>
-    <span class="nd">@dbus.service.signal</span><span class="p">(</span><span class="s">'blog.rock.sample.Hello'</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="s">'su'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">SignalSay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-        <span class="k">print</span> <span class="n">message</span>
-        <span class="k">pass</span>
+    @dbus.service.method('blog.rock.sample.Hello')
+    def Stop(self):
+        self.event_loop.quit()
 
-<span class="k">class</span> <span class="nc">SignalRecipient</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="s">"""
+####
+
+# Exporting signal
+
+# http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#emitting-signals-with-dbus-service-signal
+
+# API: http://dbus.freedesktop.org/doc/dbus-python/api/dbus.service-module.html#signal
+
+####
+
+    @dbus.service.signal('blog.rock.sample.Hello', signature='su')
+    def SignalSay(self, message, timeout):
+        print message
+        pass
+
+class SignalRecipient:
+    def __init__(self):
+        """
         DBus Signal 是廣播訊息。向 DBus 註冊訊號接收者時，通常會設定訊號過濾
         條件，否則所有訊號都會灌過來。
         一般指定 signal of service (by dbus_interface and signal_name) 為
         過濾條件。
-        """</span>
-        <span class="c">#self.dbus_object.connect_to_signal("SignalSay", self._ss,
-</span>
-        <span class="c">#                dbus_interface=Hello.interface, arg0="Hello")
-</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">add_signal_receiver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">,</span>
-                                <span class="n">dbus_interface</span><span class="o">=</span><span class="n">Hello</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
-                                <span class="n">signal_name</span> <span class="o">=</span> <span class="s">"SignalSay"</span><span class="p">)</span>
+        """
+        #self.dbus_object.connect_to_signal("SignalSay", self._ss,
 
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-        <span class="k">print</span> <span class="s">"Signal recivied: </span><span class="si">%</span><span class="s">s, </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        #                dbus_interface=Hello.interface, arg0="Hello")
+
+        self.bus = dbus.SessionBus()
+        self.bus.add_signal_receiver(self.handler,
+                                dbus_interface=Hello.interface,
+                                signal_name = "SignalSay")
+
+    def handler(self, message, timeout):
+        print "Signal recivied: %s, %d" % (message, timeout)
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="c"># You must do this before connecting to the bus.
-</span>
-    <span class="c"># http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#setting-up-an-event-loop
-</span>
-    <span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+if __name__ == "__main__":
+    # You must do this before connecting to the bus.
 
-    <span class="n">service</span> <span class="o">=</span> <span class="n">Hello</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
-    <span class="n">recipient</span> <span class="o">=</span> <span class="n">SignalRecipient</span><span class="p">()</span>
+    # http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#setting-up-an-event-loop
 
-    <span class="k">print</span> <span class="s">"Working..."</span>
-    <span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c"># startup event loop
-</span>
+    DBusGMainLoop(set_as_default=True)
+    loop = gobject.MainLoop()
 
-</code></pre>
+    service = Hello(loop)
+    recipient = SignalRecipient()
+
+    print "Working..."
+    loop.run()  # startup event loop
+{% endhighlight %}
 
 
 <p>
 執行上述的範例程式後，你可以先用 dbus-send 工具測試此服務是否正常運作。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 # 查詢 Hello service:
 dbus-send --session --print-reply \
   --dest=blog.rock.sample.Hello \
@@ -297,7 +299,7 @@ dbus-send --session --print-reply --dest=blog.rock.sample.Hello \
     /blog/rock/sample/Hello \
     blog.rock.sample.Hello.Stop
 
-</pre>
+</code></pre>
 
 <h4>
 服務個體的連接與中斷
@@ -317,22 +319,23 @@ dbus-send --session --print-reply --dest=blog.rock.sample.Hello \
 若這個服務實體不再需要被遠端調用時，使用它的 <dfn>remove_from_connection()</dfn> 方法中斷它與 DBus 的連結。
 </p>
 
-<pre class="highlight"><code><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c"># we don't assign path.
-</span>
-        <span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">())</span>
 
-<span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">()</span>
+{% highlight python %}
+class Foo(dbus.service.Object):
+    def __init__(self):
+        # we don't assign path.
 
-<span class="n">foo</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+        dbus.service.Object.__init__(self, dbus.SessionBus())
 
-<span class="n">foo</span><span class="o">.</span><span class="n">add_to_connection</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="s">"/your/object/path"</span><span class="p">)</span> <span class="c"># we need to connect to DBus.
-</span>
+bus = dbus.SessionBus()
 
-<span class="n">foo</span><span class="o">.</span><span class="n">remove_from_connection</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="s">"/your/object/path"</span><span class="p">)</span>
+foo = Foo()
 
-</code></pre>
+foo.add_to_connection(bus, "/your/object/path") # we need to connect to DBus.
+
+
+foo.remove_from_connection(bus, "/your/object/path")
+{% endhighlight %}
 
 
 <h4>
@@ -347,34 +350,36 @@ Python DBus binding 尚未實作對應 <dfn>org.freedesktop.DBus.Properties</dfn
 儘管如此，我們仍然可以自己實作 <dfn>org.freedesktop.DBus.Properties</dfn> 介面所需的三個方法: <dfn>GetAll(), Get(), Set()</dfn>。
 </p>
 
-<pre class="highlight"><code><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">"foo"</span>
-        <span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">(),</span> <span class="n">path</span><span class="p">)</span>
 
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'org.freedesktop.DBus.Properties'</span><span class="p">,</span>
-                            <span class="n">in_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">'a{sv}'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">GetAll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
-        <span class="n">props</span> <span class="o">=</span> <span class="p">{</span><span class="s">'Name'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
-        <span class="k">return</span> <span class="n">props</span>
+{% highlight python %}
+class Foo(dbus.service.Object):
+    def __init__(self, path):
+        self.name = "foo"
+        dbus.service.Object.__init__(self, dbus.SessionBus(), path)
 
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'org.freedesktop.DBus.Properties'</span><span class="p">,</span>
-                            <span class="n">in_signature</span><span class="o">=</span><span class="s">'ss'</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">'v'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">Get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">propname</span><span class="p">):</span>
-        <span class="c"># DBus名稱慣例是首字母大寫, 此處轉成 Python 慣例。
-</span>
-        <span class="n">propname</span> <span class="o">=</span> <span class="n">propname</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="n">propname</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">propname</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+    @dbus.service.method('org.freedesktop.DBus.Properties',
+                            in_signature='s', out_signature='a{sv}')
+    def GetAll(self, interface):
+        props = {'Name': self.name}
+        return props
 
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'org.freedesktop.DBus.Properties'</span><span class="p">,</span>
-                            <span class="n">in_signature</span><span class="o">=</span><span class="s">'ssv'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">Set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">propname</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">propname</span> <span class="o">=</span> <span class="n">propname</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="n">propname</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">propname</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">pass</span>
-</code></pre>
+    @dbus.service.method('org.freedesktop.DBus.Properties',
+                            in_signature='ss', out_signature='v')
+    def Get(self, interface, propname):
+        # DBus名稱慣例是首字母大寫, 此處轉成 Python 慣例。
+
+        propname = propname[0].lower() + propname[1:]
+        return getattr(self, propname, False)
+
+    @dbus.service.method('org.freedesktop.DBus.Properties',
+                            in_signature='ssv')
+    def Set(self, interface, propname, value):
+        propname = propname[0].lower() + propname[1:]
+        try:
+            setattr(self, propname, value)
+        except:
+            pass
+{% endhighlight %}
 
 
 <h4>

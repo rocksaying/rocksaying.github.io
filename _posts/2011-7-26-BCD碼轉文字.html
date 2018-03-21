@@ -57,72 +57,74 @@ echo $s, "\n";
 第一個是 PHP 的轉碼程式。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// BCD碼轉文字第一種解法: 推算法。
-</span><span class="k">function</span> <span class="nf">bcd_to_ascii_calculate</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$result</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-    <span class="nv">$len</span> <span class="o">=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$len</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$code</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="nv">$s</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$code</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span>
-            <span class="nv">$result</span><span class="p">[]</span> <span class="o">=</span> <span class="s1">'0'</span> <span class="o">.</span> <span class="nb">strval</span><span class="p">(</span><span class="nv">$code</span><span class="p">);</span>
-        <span class="k">else</span>
-            <span class="nv">$result</span><span class="p">[]</span> <span class="o">=</span> <span class="nb">dechex</span><span class="p">(</span><span class="nv">$code</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nb">implode</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="nv">$result</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="c1">// BCD碼轉文字第二種解法: 查表法。速度比較快。
+{% highlight php %}
+<?php
+// BCD碼轉文字第一種解法: 推算法。
+function bcd_to_ascii_calculate($s) {
+    $result = array();
+    $len = strlen($s);
+    for ($i = 0; $i < $len; ++$i) {
+        $code = ord($s[$i]);
+        if ($code < 10)
+            $result[] = '0' . strval($code);
+        else
+            $result[] = dechex($code);
+    }
+    return implode('', $result);
+}
+
+// BCD碼轉文字第二種解法: 查表法。速度比較快。
 // 開始定義全域變數 asc_table
 // 只需要定義一次。
-</span><span class="nv">$asc_table</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'00'</span><span class="p">,</span> <span class="s1">'01'</span><span class="p">,</span> <span class="s1">'02'</span><span class="p">,</span> <span class="s1">'03'</span><span class="p">,</span> <span class="s1">'04'</span><span class="p">,</span> <span class="s1">'05'</span><span class="p">,</span> <span class="s1">'06'</span><span class="p">,</span> <span class="s1">'07'</span><span class="p">,</span> <span class="s1">'08'</span><span class="p">,</span> <span class="s1">'09'</span><span class="p">,</span>
-      <span class="s1">'0a'</span><span class="p">,</span> <span class="s1">'0b'</span><span class="p">,</span> <span class="s1">'0c'</span><span class="p">,</span> <span class="s1">'0d'</span><span class="p">,</span> <span class="s1">'0e'</span><span class="p">,</span> <span class="s1">'0f'</span><span class="p">);</span>
-<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span>
-    <span class="nv">$asc_table</span><span class="p">[]</span> <span class="o">=</span> <span class="nb">dechex</span><span class="p">(</span><span class="nv">$i</span><span class="p">);</span>
-<span class="c1">//echo implode(',', $asc_table);
+$asc_table = array('00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
+      '0a', '0b', '0c', '0d', '0e', '0f');
+for ($i = 16; $i < 256; ++$i)
+    $asc_table[] = dechex($i);
+//echo implode(',', $asc_table);
 // 結束
-</span>
-<span class="k">function</span> <span class="nf">bcd_to_ascii_search_table</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">global</span> <span class="nv">$asc_table</span><span class="p">;</span>
-    <span class="nv">$result</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-    <span class="nv">$len</span> <span class="o">=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$len</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$code</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="nv">$s</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
-        <span class="nv">$result</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$asc_table</span><span class="p">[</span><span class="nv">$code</span><span class="p">];</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nb">implode</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="nv">$result</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">function</span> <span class="nf">ascii_to_bcd</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$len</span> <span class="o">=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$s</span><span class="p">);</span>
-    <span class="nv">$result</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="nv">$b</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">$h</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$len</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$h</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// high bits
-</span>            <span class="nv">$b</span> <span class="o">=</span> <span class="nb">hexdec</span><span class="p">(</span><span class="nv">$s</span><span class="p">[</span><span class="nv">$i</span><span class="p">])</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">;</span>
-            <span class="nv">$h</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">// 我不想用運算方式判斷高低順序
-</span>        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="nv">$b</span> <span class="o">|=</span> <span class="nb">hexdec</span><span class="p">(</span><span class="nv">$s</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
-            <span class="nv">$result</span><span class="p">[]</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="nv">$b</span><span class="p">);</span>
-            <span class="nv">$h</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nb">implode</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
-<span class="p">}</span>
+function bcd_to_ascii_search_table($s) {
+    global $asc_table;
+    $result = array();
+    $len = strlen($s);
+    for ($i = 0; $i < $len; ++$i) {
+        $code = ord($s[$i]);
+        $result[] = $asc_table[$code];
+    }
+    return implode('', $result);
+}
 
-<span class="nv">$s</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\x00\x12\x34\x56\x78\x90\xab</span><span class="s2">"</span><span class="p">;</span>
-<span class="c1">// in memory: [00, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab]
-</span><span class="k">echo</span> <span class="nv">$s</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// you will see ??4Vx??
-</span>
-<span class="k">echo</span> <span class="nx">bcd_to_ascii_calculate</span><span class="p">(</span><span class="nv">$s</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+function ascii_to_bcd($s) {
+    $len = strlen($s);
+    $result = array();
+    for ($i = $b = 0, $h = true; $i < $len; ++$i) {
+        if ($h) { // high bits
+            $b = hexdec($s[$i]) << 4;
+            $h = false; // 我不想用運算方式判斷高低順序
+        }
+        else {
+            $b |= hexdec($s[$i]);
+            $result[] = chr($b);
+            $h = true;
+        }
+    }
+    return implode($result);
+}
 
-<span class="k">echo</span> <span class="nx">bcd_to_ascii_search_table</span><span class="p">(</span><span class="nv">$s</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+$s = "\x00\x12\x34\x56\x78\x90\xab";
+// in memory: [00, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab]
+echo $s, "\n"; // you will see ??4Vx??
 
-<span class="nv">$as</span> <span class="o">=</span> <span class="nx">bcd_to_ascii_search_table</span><span class="p">(</span><span class="nv">$s</span><span class="p">);</span>
+echo bcd_to_ascii_calculate($s), "\n";
 
-<span class="k">echo</span> <span class="nx">ascii_to_bcd</span><span class="p">(</span><span class="nv">$as</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+echo bcd_to_ascii_search_table($s), "\n";
+
+$as = bcd_to_ascii_search_table($s);
+
+echo ascii_to_bcd($as), "\n";
+?>
+{% endhighlight %}
 
 
 
@@ -130,67 +132,69 @@ echo $s, "\n";
 第二個是 Python 的轉碼程式。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
-<span class="c"># coding: utf-8</span>
 
-<span class="c"># BCD碼轉文字第一種解法: 推算法。</span>
-<span class="k">def</span> <span class="nf">bcd_to_ascii_calculate</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-        <span class="n">code</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">code</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">'0'</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">code</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">code</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span>
+{% highlight python %}
+#!/usr/bin/python
+# coding: utf-8
 
-    <span class="k">return</span> <span class="s">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+# BCD碼轉文字第一種解法: 推算法。
+def bcd_to_ascii_calculate(s):
+    result = []
+    for ch in s:
+        code = ord(ch)
+        if code < 10:
+            result.append('0' + str(code))
+        else:
+            result.append(hex(code)[2:])
 
-<span class="c">## BCD碼轉文字第二種解法: 查表法。速度比較快。</span>
-<span class="c"># 開始定義全域變數 asc_table</span>
-<span class="c"># 只需要定義一次。</span>
-<span class="n">asc_table</span> <span class="o">=</span> <span class="p">[</span><span class="s">'00'</span><span class="p">,</span> <span class="s">'01'</span><span class="p">,</span> <span class="s">'02'</span><span class="p">,</span> <span class="s">'03'</span><span class="p">,</span> <span class="s">'04'</span><span class="p">,</span> <span class="s">'05'</span><span class="p">,</span> <span class="s">'06'</span><span class="p">,</span> <span class="s">'07'</span><span class="p">,</span> <span class="s">'08'</span><span class="p">,</span> <span class="s">'09'</span><span class="p">,</span>
-      <span class="s">'0a'</span><span class="p">,</span> <span class="s">'0b'</span><span class="p">,</span> <span class="s">'0c'</span><span class="p">,</span> <span class="s">'0d'</span><span class="p">,</span> <span class="s">'0e'</span><span class="p">,</span> <span class="s">'0f'</span><span class="p">]</span>
-<span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">256</span><span class="p">):</span>
-    <span class="n">asc_table</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">code</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span>
-<span class="c">#asc_tuple = tuple(asc_table)</span>
-<span class="c">#print(asc_table)</span>
-<span class="c"># 結束</span>
+    return ''.join(result)
 
-<span class="k">def</span> <span class="nf">bcd_to_ascii_search_table</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-        <span class="n">code</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
-        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asc_table</span><span class="p">[</span><span class="n">code</span><span class="p">])</span>
-    <span class="k">return</span> <span class="s">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+## BCD碼轉文字第二種解法: 查表法。速度比較快。
+# 開始定義全域變數 asc_table
+# 只需要定義一次。
+asc_table = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
+      '0a', '0b', '0c', '0d', '0e', '0f']
+for code in xrange(16, 256):
+    asc_table.append(hex(code)[2:])
+#asc_tuple = tuple(asc_table)
+#print(asc_table)
+# 結束
 
-<span class="k">def</span> <span class="nf">ascii_to_bcd</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">h</span><span class="p">:</span> <span class="c"># high bits
-</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span>
-            <span class="n">h</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">b</span> <span class="o">|=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-            <span class="n">h</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="k">return</span> <span class="n">result</span>
+def bcd_to_ascii_search_table(s):
+    result = []
+    for ch in s:
+        code = ord(ch)
+        result.append(asc_table[code])
+    return ''.join(result)
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="s">"</span><span class="se">\x00\x12\x34\x56\x78\x90\xab</span><span class="s">"</span>
-    <span class="c"># in memory: [ 00, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab ]
-</span>
-    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>  <span class="c"># you will see '\x00\x124Vx\x90\xab'</span>
+def ascii_to_bcd(s):
+    result = bytearray()
+    b = 0
+    h = True
+    for ch in s:
+        if h: # high bits
 
-    <span class="k">print</span><span class="p">(</span><span class="n">bcd_to_ascii_calculate</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+            b = int(ch, 16) << 4
+            h = False
+        else:
+            b |= int(ch, 16)
+            result.append(b)
+            h = True
+    return result
 
-    <span class="k">print</span><span class="p">(</span><span class="n">bcd_to_ascii_search_table</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+if __name__ == "__main__":
+    s = "\x00\x12\x34\x56\x78\x90\xab"
+    # in memory: [ 00, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab ]
 
-    <span class="n">s2</span> <span class="o">=</span> <span class="n">bcd_to_ascii_search_table</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">ascii_to_bcd</span><span class="p">(</span><span class="n">s2</span><span class="p">))</span>
-</code></pre>
+    print(repr(s))  # you will see '\x00\x124Vx\x90\xab'
+
+    print(bcd_to_ascii_calculate(s))
+
+    print(bcd_to_ascii_search_table(s))
+
+    s2 = bcd_to_ascii_search_table(s)
+    print(ascii_to_bcd(s2))
+{% endhighlight %}
 
 
 <p>

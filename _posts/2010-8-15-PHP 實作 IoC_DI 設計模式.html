@@ -21,45 +21,49 @@ permalink: /archives/13454601.html
 <p>
 在開始實作 IoC 類別之前，我先寫兩個很簡單的類別 <dfn>MyClass1, MyClass2</dfn>，就像 Java 的 POJO 一樣很普通的類別。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// lib.php
-// Somebody designs those classes.
-</span><span class="k">class</span> <span class="nc">MyClass1</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">getValue</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">MyClass2</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">getValue</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="s1">'2'</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?php
+// lib.php
+// Somebody designs those classes.
+class MyClass1 {
+    function getValue() {
+        return 1;
+    }
+}
+
+class MyClass2 {
+    function getValue() {
+        return '2';
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>
 接著，假設我要用 MyClass1 與 MyClass2 組合一個新的類別 MyClass3 。在一般的設計模式中，我可能會寫出下列的程式碼。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">MyClass3</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$c1</span><span class="p">;</span>
-    <span class="k">var</span> <span class="nv">$c2</span><span class="p">;</span>
 
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">//你需要在類別內指出 c1,c2 是怎麼來的。
-</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass1</span><span class="p">();</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass2</span><span class="p">();</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+class MyClass3 {
+    var $c1;
+    var $c2;
 
-    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c2</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    function __construct() {
+        //你需要在類別內指出 c1,c2 是怎麼來的。
+        $this->c1 = new MyClass1();
+        $this->c2 = new MyClass2();
+    }
+
+    function dump() {
+        echo $this->c1->getValue(), "\n";
+        echo $this->c2->getValue(), "\n";
+    }
+}
+?>
+{% endhighlight %}
 
 <p>
 上列程式碼的建構行為中，明確地描述了屬性 <var>c1, c2</var> 之來源為新建的 MyClass1, MyClass2 實體。這就是在新個體與其依賴元件之間的耦合。而 IoC 則要將這個控制行為反轉，移到外部進行。
@@ -68,29 +72,31 @@ permalink: /archives/13454601.html
 <p>
 按照 IoC 設計模式改寫 MyClass3 ，結果為下列程式碼。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// MyClass3.php
+
+{% highlight php %}
+<?php
+// MyClass3.php
 //You design this class which contains two items, but you don't need to know
 //what those items exactly are.
-</span><span class="k">class</span> <span class="nc">MyClass3</span> <span class="p">{</span>
-    <span class="cm">/*
+class MyClass3 {
+    /*
     @Autowired
     MyClass1 c1;
-    */</span>
-    <span class="k">static</span> <span class="nv">$Autowired</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'myClass1'</span><span class="p">,</span> <span class="c1">// 為 bean 名稱，且令屬性為同名。
-</span>            <span class="s1">'a1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass1'</span><span class="p">)</span>
-        <span class="p">);</span>
-    <span class="k">var</span> <span class="nv">$c1</span><span class="p">;</span>
-    <span class="k">var</span> <span class="nv">$c2</span><span class="p">;</span>
+    */
+    static $Autowired = array(
+            'myClass1', // 為 bean 名稱，且令屬性為同名。
+            'a1' => array('ref' => 'myClass1')
+        );
+    var $c1;
+    var $c2;
 
-    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">c2</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    function dump() {
+        echo $this->c1->getValue(), "\n";
+        echo $this->c2->getValue(), "\n";
+    }
+}
+?>
+{% endhighlight %}
 
 <p>
 改寫後的 MyClass3 程式碼，最明顯的差異就是配置 c1, c2 的程式碼消失了。因為我們把它移到外部了。我們現在不必知道那兩個屬性實際上到底是什麼。至於 <var>$Autowired</var> 則是我待會要實作的另一種屬性注入方式所需的關鍵。
@@ -115,54 +121,56 @@ permalink: /archives/13454601.html
     </li>
 </ul>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// BeanFactory.php
-</span><span class="k">class</span> <span class="nc">BeanFactory</span> <span class="p">{</span>
-    <span class="k">static</span> <span class="nv">$context</span> <span class="o">=</span> <span class="nx">False</span><span class="p">;</span>
 
-    <span class="k">function</span> <span class="nf">LoadContext</span><span class="p">(</span><span class="nv">$context</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">self</span><span class="o">::</span><span class="nv">$context</span> <span class="o">=</span> <span class="nv">$context</span><span class="p">;</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+// BeanFactory.php
+class BeanFactory {
+    static $context = False;
 
-    <span class="c1">// New is keyword, using Alloc to instead.
-</span>    <span class="k">function</span> <span class="nf">Alloc</span><span class="p">(</span><span class="nv">$beanName</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="nv">$context</span> <span class="k">or</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nx">self</span><span class="o">::</span><span class="nv">$context</span><span class="p">[</span><span class="nv">$beanName</span><span class="p">][</span><span class="s1">'class'</span><span class="p">]))</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">ErrorException</span><span class="p">(</span><span class="s2">"Bean '</span><span class="nv">$beanName</span><span class="s2">' not found."</span><span class="p">);</span>
-        <span class="nv">$beanContext</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nx">self</span><span class="o">::</span><span class="nv">$context</span><span class="p">[</span><span class="nv">$beanName</span><span class="p">];</span>
+    function LoadContext($context) {
+        self::$context = $context;
+    }
 
-        <span class="nv">$class</span> <span class="o">=</span> <span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'class'</span><span class="p">];</span>
-        <span class="nv">$instance</span> <span class="o">=</span> <span class="k">new</span> <span class="nv">$class</span><span class="p">();</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'property'</span><span class="p">])</span>
-          <span class="k">and</span> <span class="nb">is_array</span><span class="p">(</span><span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]))</span>
-        <span class="p">{</span>
-            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$beanContext</span><span class="p">[</span><span class="s1">'property'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nv">$instance</span><span class="o">-&gt;</span><span class="nv">$name</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">Wire</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">property_exists</span><span class="p">(</span><span class="nv">$class</span><span class="p">,</span> <span class="s1">'Autowired'</span><span class="p">))</span> <span class="p">{</span>
-            <span class="c1">//foreach ($class::$Autowired as $name =&gt; $value) {
-</span>            <span class="c1">//PHP 5.3 才支援上一列的寫法，PHP 5.2 要用下兩列。
-</span>            <span class="nv">$class_vars</span> <span class="o">=</span> <span class="nb">get_class_vars</span><span class="p">(</span><span class="nv">$class</span><span class="p">);</span>
-            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$class_vars</span><span class="p">[</span><span class="s1">'Autowired'</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">is_int</span><span class="p">(</span><span class="nv">$name</span><span class="p">))</span>
-                    <span class="c1">// $value 即為 bean 名稱，且令屬性為同名。
-</span>                    <span class="nv">$instance</span><span class="o">-&gt;</span><span class="nv">$value</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">Alloc</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
-                <span class="k">else</span>
-                    <span class="nv">$instance</span><span class="o">-&gt;</span><span class="nv">$name</span> <span class="o">=</span> <span class="nx">self</span><span class="o">::</span><span class="na">Wire</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nv">$instance</span><span class="p">;</span>
-    <span class="p">}</span>
+    // New is keyword, using Alloc to instead.
+    function Alloc($beanName) {
+        if ( !self::$context or !isset(self::$context[$beanName]['class']))
+            throw new ErrorException("Bean '$beanName' not found.");
+        $beanContext = &self::$context[$beanName];
 
-    <span class="k">function</span> <span class="nf">Wire</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$value</span><span class="p">)</span> <span class="k">and</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">'ref'</span><span class="p">]))</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nx">self</span><span class="o">::</span><span class="na">Alloc</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">'ref'</span><span class="p">]);</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nv">$value</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+        $class = $beanContext['class'];
+        $instance = new $class();
+        if (isset($beanContext['property'])
+          and is_array($beanContext['property']))
+        {
+            foreach ($beanContext['property'] as $name => $value) {
+                $instance->$name = self::Wire($value);
+            }
+        }
+        if (property_exists($class, 'Autowired')) {
+            //foreach ($class::$Autowired as $name => $value) {
+            //PHP 5.3 才支援上一列的寫法，PHP 5.2 要用下兩列。
+            $class_vars = get_class_vars($class);
+            foreach ($class_vars['Autowired'] as $name => $value) {
+                if (is_int($name))
+                    // $value 即為 bean 名稱，且令屬性為同名。
+                    $instance->$value = self::Alloc($value);
+                else
+                    $instance->$name = self::Wire($value);
+            }
+        }
+        return $instance;
+    }
+
+    function Wire(&$value) {
+        if (is_array($value) and isset($value['ref'])) {
+            return self::Alloc($value['ref']);
+        }
+        return $value;
+    }
+}
+?>
+{% endhighlight %}
 
 
 <h5>
@@ -173,39 +181,41 @@ permalink: /archives/13454601.html
 下列內容定義了 bean 與類別的關係，這份內容將會提供給 <dfn>BeanFactory</dfn> 使用。其組織方式模仿了 Spring framework ，請參考《<a href="http://static.springsource.org/spring/docs/3.0.x/spring-framework-reference/html/beans.html">Introduction to the Spring IoC container and beans</a>》。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// bean-config
-</span><span class="cm">/*
-&lt;beans&gt;
-    &lt;bean id="myClass1" class="MyClass1"&gt;
-    &lt;/bean&gt;
-    &lt;bean id="myClass2" class="MyClass2"&gt;
-    &lt;/bean&gt;
-    &lt;bean id="myClass3" class="MyClass3"&gt;
-        &lt;property name="c1"&gt;&lt;ref bean="myClass1"/&gt;&lt;/property&gt;
-        &lt;property name="c2"&gt;&lt;ref bean="myClass2"/&gt;&lt;/property&gt;
-        &lt;property name="c3"&gt;&lt;value&gt;hello&lt;/value&gt;&lt;/property&gt;
-    &lt;/bean&gt;
-&lt;/beans&gt;
-*/</span>
-<span class="nv">$myContext</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'myClass1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass1'</span>
-        <span class="p">),</span>
-    <span class="s1">'myClass2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass2'</span>
-        <span class="p">),</span>
-    <span class="s1">'myClass3'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass3'</span><span class="p">,</span>
-        <span class="s1">'property'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'c1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass1'</span><span class="p">),</span>
-            <span class="s1">'c2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass2'</span><span class="p">),</span>
-            <span class="s1">'c3'</span> <span class="o">=&gt;</span> <span class="s1">'hello'</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-    <span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?php
+// bean-config
+/*
+<beans>
+    <bean id="myClass1" class="MyClass1">
+    </bean>
+    <bean id="myClass2" class="MyClass2">
+    </bean>
+    <bean id="myClass3" class="MyClass3">
+        <property name="c1"><ref bean="myClass1"/></property>
+        <property name="c2"><ref bean="myClass2"/></property>
+        <property name="c3"><value>hello</value></property>
+    </bean>
+</beans>
+*/
+$myContext = array(
+    'myClass1' => array(
+        'class' => 'MyClass1'
+        ),
+    'myClass2' => array(
+        'class' => 'MyClass2'
+        ),
+    'myClass3' => array(
+        'class' => 'MyClass3',
+        'property' => array(
+            'c1' => array('ref' => 'myClass1'),
+            'c2' => array('ref' => 'myClass2'),
+            'c3' => 'hello'
+            )
+        )
+    );
+?>
+{% endhighlight %}
 
 <p>
 實務上，我們會選擇將此設定內容以 JSON 表達與儲存。使用時再從文件內讀取。
@@ -221,37 +231,39 @@ permalink: /archives/13454601.html
 <p>
 以下是一個應用上述實作的 IoC 模式的範例，它將透過 BeanFactory 配置一個 myClass3 bean (按組態文件，它關聯到 MyClass3 類別) 的實體，傾印它的內部結構，呼叫它的 dump() 及其屬性的 getValue()。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// main.php
-</span><span class="k">require_once</span> <span class="s1">'lib.php'</span><span class="p">;</span>
-<span class="k">function</span> <span class="nf">__autoload</span><span class="p">(</span><span class="nv">$className</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">require_once</span> <span class="nv">$className</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
-    <span class="c1">//echo "load ", $className, "\n";
-</span><span class="p">}</span>
-<span class="k">require_once</span> <span class="s1">'BeanFactory.php'</span><span class="p">;</span>
 
-<span class="k">require_once</span> <span class="s1">'bean-config.ini'</span><span class="p">;</span>
-<span class="c1">//$myContext = json_decode(file_get_contents('bean-config.json'));
-</span><span class="nx">BeanFactory</span><span class="o">::</span><span class="na">LoadContext</span><span class="p">(</span><span class="nv">$myContext</span><span class="p">);</span>
+{% highlight php %}
+<?php
+// main.php
+require_once 'lib.php';
+function __autoload($className) {
+    require_once $className . '.php';
+    //echo "load ", $className, "\n";
+}
+require_once 'BeanFactory.php';
 
-<span class="nv">$obj</span> <span class="o">=</span> <span class="nx">BeanFactory</span><span class="o">::</span><span class="na">Alloc</span><span class="p">(</span><span class="s1">'myClass3'</span><span class="p">);</span>
+require_once 'bean-config.ini';
+//$myContext = json_decode(file_get_contents('bean-config.json'));
+BeanFactory::LoadContext($myContext);
 
-<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$obj</span><span class="p">);</span>
+$obj = BeanFactory::Alloc('myClass3');
 
-<span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">dump</span><span class="p">();</span>
-<span class="k">echo</span> <span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">c3</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+var_dump($obj);
 
-<span class="c1">// Autowired
-</span><span class="k">echo</span> <span class="s1">'$obj-&gt;a1-&gt;getValue(): '</span><span class="p">,</span> <span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">a1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'$obj-&gt;myClass1-&gt;getValue(): '</span><span class="p">,</span> <span class="nv">$obj</span><span class="o">-&gt;</span><span class="na">myClass1</span><span class="o">-&gt;</span><span class="na">getValue</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$obj->dump();
+echo $obj->c3, "\n";
+
+// Autowired
+echo '$obj->a1->getValue(): ', $obj->a1->getValue(), "\n";
+echo '$obj->myClass1->getValue(): ', $obj->myClass1->getValue(), "\n";
+?>
+{% endhighlight %}
 
 
 <p>
 執行結果如下所示。BeanFactory 確實根據組態文件的內容，將 <var>c1, c2</var>兩個屬性注入指定的 bean 實體；根據 <var>$Autowired</var> 的指示，注入 <var>myClass1, a1</var> 兩個屬性。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 object(MyClass3)#1 (5) {
   ["c1"]=>
   object(MyClass1)#2 (0) {
@@ -272,7 +284,7 @@ object(MyClass3)#1 (5) {
 2
 hello
 
-</pre>
+</code></pre>
 <p>
 有經驗的程序人員將注意到，在 MyClass3 中完全不知道 c1, c2 實際上是什麼東西，所以從程式碼來看，不能保證這兩個屬性具有 getValue() 方法。
 實務上，我們有兩條路可以確保 c1, c2 兩個屬性都擁有這裡用到的行為:
@@ -306,49 +318,53 @@ hello
 第二個應用，我將新增一個 <dfn>MyClass22</dfn> 。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// MyClass22.php
-</span><span class="k">class</span> <span class="nc">MyClass22</span> <span class="k">extends</span> <span class="nx">MyClass2</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">getValue</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="s1">'ext'</span> <span class="o">.</span> <span class="k">parent</span><span class="o">::</span><span class="na">getValue</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?php
+// MyClass22.php
+class MyClass22 extends MyClass2 {
+    function getValue() {
+        return 'ext' . parent::getValue();
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>
 修改組態文件 bean-config.ini ，將 myClass2 bean 的關聯類別改為 MyClass22。其他的程式碼，包含 main.php 都不更動任何地方。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// bean-config
-</span><span class="nv">$myContext</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'myClass1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass1'</span>
-        <span class="p">),</span>
-    <span class="s1">'myClass2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass22'</span> <span class="c1">//我修改了這個bean實際關聯的類別為 MyClass22
-</span>        <span class="p">),</span>
-    <span class="s1">'myClass3'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'class'</span> <span class="o">=&gt;</span> <span class="s1">'MyClass3'</span><span class="p">,</span>
-        <span class="s1">'property'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-            <span class="s1">'c1'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass1'</span><span class="p">),</span>
-            <span class="s1">'c2'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'ref'</span> <span class="o">=&gt;</span> <span class="s1">'myClass2'</span><span class="p">),</span>
-                <span class="c1">//屬性的依賴對象是 bean，而不是類別，所以這裡不動。
-</span>            <span class="s1">'c3'</span> <span class="o">=&gt;</span> <span class="s1">'hello'</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-    <span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?php
+// bean-config
+$myContext = array(
+    'myClass1' => array(
+        'class' => 'MyClass1'
+        ),
+    'myClass2' => array(
+        'class' => 'MyClass22' //我修改了這個bean實際關聯的類別為 MyClass22
+        ),
+    'myClass3' => array(
+        'class' => 'MyClass3',
+        'property' => array(
+            'c1' => array('ref' => 'myClass1'),
+            'c2' => array('ref' => 'myClass2'),
+                //屬性的依賴對象是 bean，而不是類別，所以這裡不動。
+            'c3' => 'hello'
+            )
+        )
+    );
+?>
+{% endhighlight %}
 
 
 
 <p>
 在其他程式碼不變的情形下，再次執行 main.php 的結果如下:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 object(MyClass3)#1 (5) {
   ["c1"]=>
   object(MyClass1)#2 (0) {
@@ -369,7 +385,7 @@ object(MyClass3)#1 (5) {
 ext2
 hello
 
-</pre>
+</code></pre>
 <p>
 myClass2 bean 關聯的類別改變了，而原本由 c2 的 getValue() 輸出的結果也從 2 變為 ext2 。
 </p>

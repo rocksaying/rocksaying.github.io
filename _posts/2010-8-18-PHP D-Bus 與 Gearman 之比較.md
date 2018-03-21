@@ -156,7 +156,7 @@ D-Bus 將訊息匯流排分為兩種，即 System Bus 與 Session Bus ，分別�
 
 先執行 t_worker.php ，它會開始等待客戶端的要求。執行前，請先注意是否已經按上述要求，準備好 blog.rock.conf 文件了。
 
-<pre class="language-term">
+<pre><code class="language-term">
 rock@desktop:~$ php t_worker.php
 Name: rock
 EMail: web@example.com
@@ -169,12 +169,12 @@ rock
 I am resizing image /home/rock/test.png to 300x200.
 emit signal
 
-</pre>
+</code></pre>
 
 
 再執行 t_client.php ，調用 t_worker 提供的方法，並等待它的完成信號(ResizeDone)。
 
-<pre class="language-term">
+<pre><code class="language-term">
 rock@desktop:~$ php t_client.php
 Email sending is done.
 Image resizing is doning...
@@ -185,7 +185,7 @@ I could do something else.
 I could do something else.
 Resize really done
 rock@desktop:~$
-</pre>
+</code></pre>
 
 
 其實在你執行 t_client.php 前，並不需要自己先啟動 t_worker.php 。只要設定好下列內容，說明如何執行你的 worker 程式，並將下列內容儲存在 <dfn>/usr/share/dbus-1/system-services/blog.rock.service</dfn> ，DBus daemon 就會幫你啟動 t_worker.php。

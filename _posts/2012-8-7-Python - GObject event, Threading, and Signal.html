@@ -10,75 +10,77 @@ permalink: /archives/20178742.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
-<span class="c"># coding: utf-8</span>
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">gobject</span>      <span class="c"># need for gobject event timeout</span>
-<span class="kn">import</span> <span class="nn">signal</span>       <span class="c"># need for system signal.</span>
-<span class="kn">import</span> <span class="nn">threading</span>    <span class="c"># need for python thread.</span>
-<span class="c">#from dbus.mainloop.glib import DBusGMainLoop</span>
-<span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">g_event_timer</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="c"># for gobject.timeout_add(). it's gobject-style thread.</span>
-    <span class="c"># note: there are three kind of basic event source.</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"1. g_event_timer tick."</span><span class="p">)</span>
-    <span class="k">return</span> <span class="bp">True</span>  <span class="c"># keep interval</span>
+{% highlight python %}
+#!/usr/bin/python
+# coding: utf-8
+import os, sys, time
+import gobject      # need for gobject event timeout
+import signal       # need for system signal.
+import threading    # need for python thread.
+#from dbus.mainloop.glib import DBusGMainLoop
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
-<span class="k">def</span> <span class="nf">sys_signal_timer</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="c"># for system Signal</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"2. sys_signal_timer tick."</span><span class="p">)</span>
+def g_event_timer(*args):
+    # for gobject.timeout_add(). it's gobject-style thread.
+    # note: there are three kind of basic event source.
+    print("1. g_event_timer tick.")
+    return True  # keep interval
 
-<span class="k">def</span> <span class="nf">thread_timer_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="c"># for threading.Timer</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"3. thread_timer tick."</span><span class="p">)</span>
-        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+def sys_signal_timer(*args):
+    # for system Signal
+    print("2. sys_signal_timer tick.")
 
-<span class="k">def</span> <span class="nf">terminate_gobject_loop</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
-    <span class="n">loop</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+def thread_timer_func(*args):
+    # for threading.Timer
+    while True:
+        print("3. thread_timer tick.")
+        time.sleep(2)
 
-<span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span>  <span class="n">terminate_gobject_loop</span><span class="p">)</span>
+def terminate_gobject_loop(signum, func):
+    loop.quit()
 
-<span class="n">gobject</span><span class="o">.</span><span class="n">threads_init</span><span class="p">()</span>            <span class="c"># required for gobject collaborate with python thread.</span>
-<span class="c">#DBusGMainLoop(set_as_default=True) # if you use DBus.</span>
-<span class="c">#dbus.mainloop.glib.threads_init() # required for dbus collaborate with python thread.</span>
-<span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+signal.signal(signal.SIGINT,  terminate_gobject_loop)
 
-<span class="c"># enable g_event_timer tick.</span>
-<span class="n">gobject</span><span class="o">.</span><span class="n">timeout_add</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="n">g_event_timer</span><span class="p">)</span>
+gobject.threads_init()            # required for gobject collaborate with python thread.
+#DBusGMainLoop(set_as_default=True) # if you use DBus.
+#dbus.mainloop.glib.threads_init() # required for dbus collaborate with python thread.
+loop = gobject.MainLoop()
 
-<span class="c"># enable sys_signal_timer tick.</span>
-<span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">sys_signal_timer</span><span class="p">)</span>
-<span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">signal</span><span class="o">.</span><span class="n">siginterrupt</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>  <span class="c"># not really work.</span>
+# enable g_event_timer tick.
+gobject.timeout_add(2000, g_event_timer)
 
-<span class="c"># enable thread_timer tick.</span>
-<span class="n">thread_timer</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">thread_timer_func</span><span class="p">)</span>
-<span class="n">thread_timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+# enable sys_signal_timer tick.
+signal.signal(signal.SIGALRM, sys_signal_timer)
+signal.setitimer(signal.ITIMER_REAL, 2, 2)
+signal.siginterrupt(signal.SIGALRM, False)  # not really work.
 
-<span class="k">print</span><span class="p">(</span><span class="s">"PID: </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">())</span>
-<span class="k">print</span><span class="p">(</span><span class="s">"Press Ctrl+C will quit g_event_timer."</span><span class="p">)</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<span class="k">except</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"Unknown error. It breaks eventloop."</span><span class="p">)</span>
+# enable thread_timer tick.
+thread_timer = threading.Timer(2, thread_timer_func)
+thread_timer.start()
 
-<span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIG_IGN</span><span class="p">)</span>  <span class="c"># cancel signal_timer.</span>
+print("PID: %d" % os.getpid())
+print("Press Ctrl+C will quit g_event_timer.")
+try:
+    loop.run()
+except:
+    print("Unknown error. It breaks eventloop.")
 
-<span class="k">print</span><span class="p">(</span><span class="s">"Wait 5 seconds."</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">"Quit g_event_timer."</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">"Ignore signal_timer."</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">"Only thread_timer tick."</span><span class="p">)</span>
-<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-<span class="c"># 1. g_event_timer will not tick.</span>
-<span class="c"># 2. if I don't cancel signal_timer, signal_timer will tick and interrupt sleep.</span>
-<span class="c"># 3. thread_timer will still tick.</span>
+signal.signal(signal.SIGALRM, signal.SIG_IGN)  # cancel signal_timer.
 
-<span class="k">print</span><span class="p">(</span><span class="s">"End"</span><span class="p">)</span>
-<span class="n">os</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</code></pre>
+print("Wait 5 seconds.")
+print("Quit g_event_timer.")
+print("Ignore signal_timer.")
+print("Only thread_timer tick.")
+time.sleep(5)
+# 1. g_event_timer will not tick.
+# 2. if I don't cancel signal_timer, signal_timer will tick and interrupt sleep.
+# 3. thread_timer will still tick.
+
+print("End")
+os._exit(0)
+{% endhighlight %}
 
 
 <p>

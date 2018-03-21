@@ -28,78 +28,79 @@ permalink: /archives/20220500.html
 首先，來看看只用 if..elseif.. (switch..case..的變形) 的程式碼長什麼樣。
 </p>
 
-<pre class="highlight"><code><span class="c1">// gcc -o config-load1 config-load1.c parse_conf_line.c
-</span><span class="cp">#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-#include &lt;unistd.h&gt;
-</span>
-<span class="kt">int</span> <span class="n">parse_conf_line</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">line</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_key</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_value</span><span class="p">);</span>
 
-<span class="c1">// defs.h
-</span><span class="cp">#define CONFIG_PATH "/tmp/test.conf"
+{% highlight c %}
+// gcc -o config-load1 config-load1.c parse_conf_line.c
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+int parse_conf_line(const char *line, char *buf, char **out_key, char **out_value);
+
+// defs.h
+#define CONFIG_PATH "/tmp/test.conf"
 #define DEFAULT_SERVER "localhost"
 #define LISTEN_PORT 5000
 #define TIMEOUT 10
-</span>
-<span class="cp">#define BUFLEN 1024
-</span><span class="c1">// end defs.h
-</span>
-<span class="c1">// Global config variables.
-</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Server</span> <span class="o">=</span> <span class="n">DEFAULT_SERVER</span><span class="p">;</span>
-<span class="kt">int</span> <span class="n">Port</span> <span class="o">=</span> <span class="n">LISTEN_PORT</span><span class="p">;</span>
-<span class="kt">time_t</span> <span class="n">Timeout</span> <span class="o">=</span> <span class="n">TIMEOUT</span><span class="p">;</span>
 
-<span class="kt">void</span> <span class="nf">load_config</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">],</span> <span class="n">buf2</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">];</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
-    <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">CONFIG_PATH</span><span class="p">,</span> <span class="s">"r"</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="n">fp</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="k">while</span> <span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">BUFLEN</span><span class="p">,</span> <span class="n">fp</span><span class="p">))</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">parse_conf_line</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="k">continue</span><span class="p">;</span>
-            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span> <span class="o">||</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="k">continue</span><span class="p">;</span>
+#define BUFLEN 1024
+// end defs.h
 
-            <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="s">"server"</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">Server</span> <span class="o">=</span> <span class="n">strcpy</span><span class="p">(</span>
-                    <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="p">);</span>
-                <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Server</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="s">"port"</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">Port</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-                <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Port</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="s">"timeout"</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">Timeout</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-                <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="cm">/*
+// Global config variables.
+const char *Server = DEFAULT_SERVER;
+int Port = LISTEN_PORT;
+time_t Timeout = TIMEOUT;
+
+void load_config()
+{
+    char buf[BUFLEN], buf2[BUFLEN];
+    char *key, *value;
+    FILE *fp = fopen(CONFIG_PATH, "r");
+    if ( fp ) {
+        while (fgets(buf, BUFLEN, fp)) {
+            if (parse_conf_line(buf, buf2, &key, &value) < 1)
+                continue;
+            if (!key || value[0] == 0)
+                continue;
+
+            if (strcmp("server", key) == 0) {
+                Server = strcpy(
+                    (char*)malloc(strlen(value)+1), value);
+                printf("Set %s as %s\n", key, Server);
+            }
+            else if (strcmp("port", key) == 0) {
+                Port = atoi(value);
+                printf("Set %s as %d\n", key, Port);
+            }
+            else if (strcmp("timeout", key) == 0) {
+                Timeout = atoi(value);
+                printf("Set %s as %d\n", key, Timeout);
+            }
+            /*
             more duplicate codes.
             .
             .
             .
-            */</span>
-        <span class="p">}</span>
-        <span class="n">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"%s not found. Use default settings.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">CONFIG_PATH</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+            */
+        }
+        fclose(fp);
+    }
+    else {
+        printf("%s not found. Use default settings.\n", CONFIG_PATH);
+    }
+}
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">load_config</span><span class="p">();</span>
+int main()
+{
+    load_config();
     
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Server  : %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Server</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Port    : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Port</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Timeout : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-
-</code></pre>
+    printf("Server  : %s\n", Server);
+    printf("Port    : %d\n", Port);
+    printf("Timeout : %d\n", Timeout);
+    return 0;
+}
+{% endhighlight %}
 
 
 <div class="note">
@@ -117,126 +118,130 @@ config-load1.c 最大的問題就在 if..elseif.. 這一段。
 接著再看用查表方式重構後的 config-load.c 。
 </p>
 
-<pre class="highlight"><code><span class="c1">// gcc -o config-load config-load.c parse_conf_line.c
-</span><span class="cp">#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-#include &lt;unistd.h&gt;
-</span>
-<span class="kt">int</span> <span class="n">parse_conf_line</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">line</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_key</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">out_value</span><span class="p">);</span>
 
-<span class="c1">// defs.h
-</span><span class="cp">#define CONFIG_PATH "/tmp/test.conf"
+{% highlight c %}
+// gcc -o config-load config-load.c parse_conf_line.c
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+int parse_conf_line(const char *line, char *buf, char **out_key, char **out_value);
+
+// defs.h
+#define CONFIG_PATH "/tmp/test.conf"
 #define DEFAULT_SERVER "localhost"
 #define DEFAULT_PATH   "/local"
 #define LISTEN_PORT 5000
 #define TIMEOUT 10
 #define PROCESS_UID 1000
 #define PROCESS_GID 1000
-</span>
-<span class="cp">#define BUFLEN 1024
-</span><span class="c1">// end defs.h
-</span>
-<span class="c1">// Global config variables.
-</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Server</span> <span class="o">=</span> <span class="n">DEFAULT_SERVER</span><span class="p">;</span>
-<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_PATH</span><span class="p">;</span>
-<span class="kt">int</span> <span class="n">Port</span> <span class="o">=</span> <span class="n">LISTEN_PORT</span><span class="p">;</span>
-<span class="kt">time_t</span> <span class="n">Timeout</span> <span class="o">=</span> <span class="n">TIMEOUT</span><span class="p">;</span>
-<span class="n">uid_t</span> <span class="n">ProcessUid</span> <span class="o">=</span> <span class="n">PROCESS_UID</span><span class="p">;</span>
-<span class="n">gid_t</span> <span class="n">ProcessGid</span> <span class="o">=</span> <span class="n">PROCESS_GID</span><span class="p">;</span>
-<span class="kt">int</span> <span class="n">LogLevel</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
 
-<span class="k">struct</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
-    <span class="k">enum</span> <span class="p">{</span>
-        <span class="n">STR</span><span class="p">,</span>
-        <span class="n">INT</span>
-    <span class="p">}</span> <span class="n">value_type</span><span class="p">;</span>
-    <span class="k">union</span> <span class="p">{</span>
-        <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">str_var</span><span class="p">;</span>
-        <span class="kt">int</span> <span class="o">*</span><span class="n">int_var</span><span class="p">;</span>
-    <span class="p">};</span>
-<span class="p">}</span>
-<span class="n">config_table</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="p">{</span><span class="s">"server"</span><span class="p">,</span>          <span class="n">STR</span><span class="p">,</span> <span class="p">{.</span><span class="n">str_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Server</span><span class="p">}},</span>
-    <span class="p">{</span><span class="s">"path"</span><span class="p">,</span>            <span class="n">STR</span><span class="p">,</span> <span class="p">{.</span><span class="n">str_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Path</span><span class="p">}},</span>
-    <span class="p">{</span><span class="s">"port"</span><span class="p">,</span>            <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Port</span><span class="p">}},</span>
-    <span class="p">{</span><span class="s">"timeout"</span><span class="p">,</span>         <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">Timeout</span><span class="p">}},</span>
-    <span class="p">{</span><span class="s">"process_uid"</span><span class="p">,</span>     <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">ProcessUid</span><span class="p">}},</span>
-    <span class="p">{</span><span class="s">"process_gid"</span><span class="p">,</span>     <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">ProcessGid</span><span class="p">}},</span>
-    <span class="p">{</span><span class="s">"log_level"</span><span class="p">,</span>       <span class="n">INT</span><span class="p">,</span> <span class="p">{.</span><span class="n">int_var</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">LogLevel</span><span class="p">}},</span>
-    <span class="p">{</span><span class="nb">NULL</span><span class="p">,</span>              <span class="n">STR</span><span class="p">,</span> <span class="p">{</span><span class="nb">NULL</span><span class="p">}}</span> <span class="c1">// end
-</span><span class="p">},</span>
-<span class="o">*</span><span class="n">conf_item</span> <span class="o">=</span> <span class="n">config_table</span><span class="p">;</span>
+#define BUFLEN 1024
+// end defs.h
 
-<span class="kt">void</span> <span class="nf">load_config</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">],</span> <span class="n">buf2</span><span class="p">[</span><span class="n">BUFLEN</span><span class="p">];</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
-    <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">CONFIG_PATH</span><span class="p">,</span> <span class="s">"r"</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="n">fp</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="k">while</span> <span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">BUFLEN</span><span class="p">,</span> <span class="n">fp</span><span class="p">))</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">parse_conf_line</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="k">continue</span><span class="p">;</span>
-            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span> <span class="o">||</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="k">continue</span><span class="p">;</span>
+// Global config variables.
+const char *Server = DEFAULT_SERVER;
+const char *Path = DEFAULT_PATH;
+int Port = LISTEN_PORT;
+time_t Timeout = TIMEOUT;
+uid_t ProcessUid = PROCESS_UID;
+gid_t ProcessGid = PROCESS_GID;
+int LogLevel = 5;
+
+struct {
+    char *key;
+    enum {
+        STR,
+        INT
+    } value_type;
+    union {
+        const char **str_var;
+        int *int_var;
+    };
+}
+config_table[] = {
+    {"server",          STR, {.str_var = &Server}},
+    {"path",            STR, {.str_var = &Path}},
+    {"port",            INT, {.int_var = &Port}},
+    {"timeout",         INT, {.int_var = (int*) &Timeout}},
+    {"process_uid",     INT, {.int_var = (int*) &ProcessUid}},
+    {"process_gid",     INT, {.int_var = (int*) &ProcessGid}},
+    {"log_level",       INT, {.int_var = &LogLevel}},
+    {NULL,              STR, {NULL}} // end
+},
+*conf_item = config_table;
+
+void load_config()
+{
+    char buf[BUFLEN], buf2[BUFLEN];
+    char *key, *value;
+    FILE *fp = fopen(CONFIG_PATH, "r");
+    if ( fp ) {
+        while (fgets(buf, BUFLEN, fp)) {
+            if (parse_conf_line(buf, buf2, &key, &value) < 1)
+                continue;
+            if (!key || value[0] == 0)
+                continue;
             
-            <span class="k">for</span> <span class="p">(</span><span class="n">conf_item</span> <span class="o">=</span> <span class="n">config_table</span><span class="p">;</span> 
-                  <span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">;</span>
-                  <span class="o">++</span><span class="n">conf_item</span><span class="p">)</span>
-            <span class="p">{</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> 
-                    <span class="k">continue</span><span class="p">;</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">value_type</span> <span class="o">==</span> <span class="n">STR</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">str_var</span> <span class="o">=</span> <span class="n">strcpy</span><span class="p">(</span>
-                        <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="p">);</span>
-                    <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">str_var</span><span class="p">);</span>
-                <span class="p">}</span>
-                <span class="k">else</span> <span class="p">{</span>
-                    <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">int_var</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-                    <span class="n">printf</span><span class="p">(</span><span class="s">"Set %s as %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">conf_item</span><span class="o">-&gt;</span><span class="n">int_var</span><span class="p">);</span>
-                <span class="p">}</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="n">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"%s not found. Use default settings.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">CONFIG_PATH</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+            for (conf_item = config_table; 
+                  conf_item->key;
+                  ++conf_item)
+            {
+                if (strcmp(conf_item->key, key) != 0) 
+                    continue;
+                if (conf_item->value_type == STR) {
+                    *conf_item->str_var = strcpy(
+                        (char*)malloc(strlen(value)+1), value);
+                    printf("Set %s as %s\n", key, *conf_item->str_var);
+                }
+                else {
+                    *conf_item->int_var = atoi(value);
+                    printf("Set %s as %d\n", key, *conf_item->int_var);
+                }
+            }
+        }
+        fclose(fp);
+    }
+    else {
+        printf("%s not found. Use default settings.\n", CONFIG_PATH);
+    }
+}
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">load_config</span><span class="p">();</span>
+int main()
+{
+    load_config();
     
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Server  : %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Server</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Path    : %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Path</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Port    : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Port</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Timeout : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Timeout</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Uid     : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">ProcessUid</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Gid     : %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">ProcessGid</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"LogLevel: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">LogLevel</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    printf("Server  : %s\n", Server);
+    printf("Path    : %s\n", Path);
+    printf("Port    : %d\n", Port);
+    printf("Timeout : %d\n", Timeout);
+    printf("Uid     : %d\n", ProcessUid);
+    printf("Gid     : %d\n", ProcessGid);
+    printf("LogLevel: %d\n", LogLevel);
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>
 config-load.c 比較難理解的應該是下列這一段內容。
 </p>
 
-<pre class="highlight"><code><span class="k">struct</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
-    <span class="k">enum</span> <span class="p">{</span>
-        <span class="n">STR</span><span class="p">,</span>
-        <span class="n">INT</span>
-    <span class="p">}</span> <span class="n">value_type</span><span class="p">;</span>
-    <span class="k">union</span> <span class="p">{</span>
-        <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">str_var</span><span class="p">;</span>
-        <span class="kt">int</span> <span class="o">*</span><span class="n">int_var</span><span class="p">;</span>
-    <span class="p">};</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c %}
+struct {
+    char *key;
+    enum {
+        STR,
+        INT
+    } value_type;
+    union {
+        const char **str_var;
+        int *int_var;
+    };
+}
+{% endhighlight %}
 
 
 <p>
@@ -267,22 +272,24 @@ config-load.c 比較難理解的應該是下列這一段內容。
 上述用 C 語言設計的表與演算法，在動態型別系統中，以 PHP 為例，能以下列形式簡單做到。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">load_config</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$config_table</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="nv">$fh</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="nx">CONFIG_PATH</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="nv">$fh</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="k">while</span> <span class="p">(</span><span class="nb">fgets</span><span class="p">(</span><span class="nv">$buf</span><span class="p">,</span> <span class="nv">$fh</span><span class="p">))</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="p">(</span><span class="nv">$kv</span> <span class="o">=</span> <span class="nx">parse_conf_line</span><span class="p">(</span><span class="nv">$buf</span><span class="p">)))</span>
-                <span class="k">continue</span><span class="p">;</span>
-            <span class="k">list</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="nv">$value</span><span class="p">)</span> <span class="o">=</span> <span class="nv">$kv</span><span class="p">;</span>
-            <span class="nv">$config_table</span><span class="p">[</span><span class="nv">$key</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="nb">fclose</span><span class="p">(</span><span class="nv">$fh</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?php
+function load_config(&$config_table)
+{
+    $fh = fopen(CONFIG_PATH, "r");
+    if ( $fh ) {
+        while (fgets($buf, $fh)) {
+            if ( !($kv = parse_conf_line($buf)))
+                continue;
+            list($key, $value) = $kv;
+            $config_table[$key] = $value;
+        }
+        fclose($fh);
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>

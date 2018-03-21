@@ -23,16 +23,18 @@ permalink: /archives/25401068.html
 首先看看會引發 <q>Fatal IO error 11</q> 的設計方式。
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">multiprocessing</span>
-<span class="kn">import</span> <span class="nn">gtk</span>
 
-<span class="n">sub_proc</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_proc_func</span><span class="p">)</span>
+{% highlight python %}
+import os, multiprocessing
+import gtk
 
-<span class="n">sub_proc_func</span><span class="p">():</span>
-    <span class="c"># some gtk code.</span>
-    <span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c"># it also close X's sockets.</span>
-</code></pre>
+sub_proc = multiprocessing.Process(target=sub_proc_func)
+
+sub_proc_func():
+    # some gtk code.
+    gtk.main()
+    os._exit(0) # it also close X's sockets.
+{% endhighlight %}
 
 
 <p>
@@ -62,15 +64,17 @@ Python 的 gtk 模組，在引入時就會順帶開啟這個 X server socket 。
 以 Python gtk 的設計方式來看，解答關鍵點就引入 gtk 模組的時機。如下列所示:
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">multiprocessing</span>
-<span class="n">sub_proc</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_proc_func</span><span class="p">)</span>
 
-<span class="n">sub_proc_func</span><span class="p">():</span>
-    <span class="kn">import</span> <span class="nn">gtk</span>
-    <span class="c"># some gtk code.</span>
-    <span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c"># it also close X's sockets.</span>
-</code></pre>
+{% highlight python %}
+import os, multiprocessing
+sub_proc = multiprocessing.Process(target=sub_proc_func)
+
+sub_proc_func():
+    import gtk
+    # some gtk code.
+    gtk.main()
+    os._exit(0) # it also close X's sockets.
+{% endhighlight %}
 
 
 <p>

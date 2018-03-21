@@ -14,29 +14,30 @@ PHP 5.4 版起，移除了 <var>default_properties</var> 項目。依「<a href=
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="cp">#if PHP_MINOR_VERSION &gt; 3
-# define INIT_OBJ_PROP	object_properties_init(&amp;intern-&gt;std, class_type);
+
+{% highlight  %}
+#if PHP_MINOR_VERSION > 3
+# define INIT_OBJ_PROP	object_properties_init(&intern->std, class_type);
 #else
-# define INIT_OBJ_PROP	zend_hash_copy(intern-&gt;std.properties, \
-</span>  <span class="o">&amp;</span><span class="n">class_type</span><span class="o">-&gt;</span><span class="n">default_properties</span><span class="p">,</span> <span class="p">(</span><span class="n">copy_ctor_func_t</span><span class="p">)</span> <span class="n">zval_add_ref</span><span class="p">,</span> <span class="err">\</span>
-  <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">zval</span> <span class="o">*</span><span class="p">));</span>
-<span class="cp">#endif
-</span>
-<span class="c1">// r108
-</span><span class="kt">void</span> <span class="nf">bytearray_free_storage</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">object</span> <span class="n">TSRMLS_DC</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">bytearray_object</span> <span class="o">*</span><span class="n">this</span> <span class="o">=</span> <span class="p">(</span><span class="n">bytearray_object</span> <span class="o">*</span><span class="p">)</span><span class="n">object</span><span class="p">;</span>
-    <span class="n">efree</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+# define INIT_OBJ_PROP	zend_hash_copy(intern->std.properties, \
+  &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, \
+  (void *) &tmp, sizeof(zval *));
+#endif
 
-    <span class="n">zend_object_std_dtor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">std</span> <span class="n">TSRMLS_CC</span><span class="p">);</span>
-    <span class="c1">//zend_hash_destroy(this-&gt;std.properties);
-</span>    <span class="c1">//FREE_HASHTABLE(this-&gt;std.properties);
-</span>
-    <span class="n">efree</span><span class="p">(</span><span class="n">this</span><span class="p">);</span>
-<span class="p">}</span>
+// r108
+void bytearray_free_storage(void *object TSRMLS_DC)
+{
+    bytearray_object *this = (bytearray_object *)object;
+    efree(this->data);
+    this->len = 0;
 
-</code></pre>
+    zend_object_std_dtor(&this->std TSRMLS_CC);
+    //zend_hash_destroy(this->std.properties);
+    //FREE_HASHTABLE(this->std.properties);
+
+    efree(this);
+}
+{% endhighlight %}
 
 
 <p>
