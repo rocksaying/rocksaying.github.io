@@ -18,7 +18,7 @@ INNER JOIN "Games" ON "Games".id = "Players".game1 OR "Games".id = "Players".gam
 一般這種需求常用多對多關聯處理。首先需要兩個資料庫表格儲存選手及比賽項目的基本資料。其次，建立多對多關聯表格，記錄選手及比賽項目的關聯性。
 </p>
 <h4>選手 (Players) 與比賽項目 (Games) 基本資料表格</h4>
-<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Players"</span> <span class="p">(</span>
+<pre class="highlight"><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"Players"</span> <span class="p">(</span>
     <span class="n">id</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
     <span class="n">name</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
     <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span>
@@ -29,21 +29,21 @@ INNER JOIN "Games" ON "Games".id = "Players".game1 OR "Games".id = "Players".gam
     <span class="n">name</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
     <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span>
 <span class="p">);</span>
-</code></pre>
+</pre>
 
 <h4>選手與比賽項目的關聯表格</h4>
-<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"PlayerOfGame"</span> <span class="p">(</span>
+<pre class="highlight"><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"PlayerOfGame"</span> <span class="p">(</span>
     <span class="nv">"playerId"</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">REFERENCES</span> <span class="nv">"Players"</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span><span class="p">,</span>
     <span class="nv">"gameId"</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">REFERENCES</span> <span class="nv">"Games"</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span>
 <span class="p">);</span>
-</code></pre>
+</pre>
 
 <p>
 此處使用了外部鍵值條件約束，串聯選手和比賽項目的紀錄刪除動作，如此當我們自 Players 或 Games 表格中刪除紀錄時，資料庫系統就會自動刪除 PlayerOfGame 表格中的關聯紀錄。在關聯表格中，常用這種串聯動作以簡化程式碼中的 SQL 操作動作。
 </p>
 
 <h4>查詢句</h4>
-<pre class="highlight"><code><span class="k">SELECT</span> <span class="nv">"PlayerOfGame"</span><span class="p">.</span><span class="o">*</span><span class="p">,</span>
+<pre class="highlight"><span class="k">SELECT</span> <span class="nv">"PlayerOfGame"</span><span class="p">.</span><span class="o">*</span><span class="p">,</span>
     <span class="nv">"Players"</span><span class="p">.</span><span class="n">name</span> <span class="k">AS</span> <span class="nv">"playerName"</span><span class="p">,</span>
     <span class="nv">"Games"</span><span class="p">.</span><span class="n">name</span> <span class="k">AS</span> <span class="nv">"gameName"</span>
 <span class="k">FROM</span> <span class="nv">"Players"</span>
@@ -54,7 +54,7 @@ INNER JOIN "Games" ON "Games".id = "Players".game1 OR "Games".id = "Players".gam
 <span class="k">ON</span> <span class="nv">"PlayerOfGame"</span><span class="p">.</span><span class="nv">"playerId"</span> <span class="o">=</span> <span class="nv">"Players"</span><span class="p">.</span><span class="n">id</span>
 <span class="c1">-- WHERE "Players".id = @id
 -- WHERE "Games".id = @id
-</span></code></pre>
+</span></pre>
 
 <p>
 查詢全部選手與比賽項目的關聯資料。添加 WHERE 條件句便可查詢特定選手參加的比賽項目或是比賽項目中有多少位選手報名參加。
@@ -62,7 +62,7 @@ INNER JOIN "Games" ON "Games".id = "Players".game1 OR "Games".id = "Players".gam
 <p>
 我們還可將全部資料的查詢結果再整理成對照表 (array or map) 。例如在 PHP 中可以處理成兩個關聯陣列，如下例。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
+<pre class="highlight"><span class="cp">&lt;?php</span>
 <span class="nv">$playerOfGames</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
 <span class="nv">$gameWithPlayers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
 <span class="k">while</span><span class="p">(</span><span class="nv">$row</span> <span class="o">=</span> <span class="nv">$stmt</span><span class="o">-&gt;</span><span class="na">fetch</span><span class="p">())</span> <span class="o">:</span>
@@ -97,7 +97,7 @@ INNER JOIN "Games" ON "Games".id = "Players".game1 OR "Games".id = "Players".gam
 <span class="k">endforeach</span><span class="p">;</span>
 
 <span class="cp">?&gt;</span>
-</code></pre>
+</pre>
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2606029.html</div>
 <div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
 <blockquote class="roodo-comment">

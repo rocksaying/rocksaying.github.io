@@ -19,12 +19,12 @@ Magic methods 的概念在動態語言如 Python, Ruby, PHP 之中很普遍，�
 <p>
 於《<a href="http://www-128.ibm.com/developerworks/opensource/library/os-php-flexobj/">Going dynamic with PHP</a>》一文中，作者一開始先用舊式語法實作了一個資料表類別 Book ，接著覆載 <code>__call</code> method ，將資料表成員的存取行為動態化，再覆載 <code>__get, __set</code> methods ，將資料表成員的存取行為內隱化 (implicationalization)。
 </p>
-<pre class="highlight"><code>// Before overloading setter and getter, you write:
+<pre class="highlight">// Before overloading setter and getter, you write:
 book-&gt;setTitle('my book');
 // After overloading setter and getter, you write:
 book-&gt;title = 'my book';
 // The setter and getter have be called implicitly.
-</code></pre>
+</pre>
 
 <p>
 運用 magic methods 重整 (refactor) 程式碼的結果，使我們從一個用途有限的 Book 類別中精煉出一個泛用的 DBObject 類別。這是一個符合 CRUD 典型 (<span class="note">Create, Read, Update, Delete 是四種資料基本存取行為，幾乎所有資料表類別都會實作這四種行為，從中發展出 ORM 的 pattern/form 實踐方式</span>) 的資料表類別，而且它不是一個抽象類別 (abstract class)。這意味著我們可以直接用 DBObject 映射一個新增的資料表，而不需描述其細節 (不用多寫宣告與定義的程式碼)。儘管在引入 magic methods 之前，我們仍然可以實踐 CRUD 樣式，但無法用如此簡潔的程式碼完成這份工作。

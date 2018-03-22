@@ -158,56 +158,58 @@ BSD 家族使用 <dfn>mmap()</dfn> 將檔案內容映射到記憶體，藉此達
 程式是我從我的一個舊軟體 (Firebird BBS library) 中的 bcache.c 中擷取出來的。bcache.c 是一個共享記憶體使用模組，並利用號誌來實作其中的 lock_shm() 功能。舊文的內容已經不能編譯了，故我這次改版時順便改寫了程式碼，並在 Ubuntu 10.04 下編譯實測過。
 </p>
 
-<pre class="highlight"><code><span class="cm">/* Firebird BBS, The TIP Project. 資料快取模組: bcache.c */</span>
-<span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;sys/file.h&gt;
-#include &lt;sys/ipc.h&gt;
-</span><span class="c1">//#include "bbsdefs.h"
+
+{% highlight c linenos %}
+/* Firebird BBS, The TIP Project. 資料快取模組: bcache.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/file.h>
+#include <sys/ipc.h>
+//#include "bbsdefs.h"
 //#include "config.h"
 //#include "struct.h"
-</span><span class="cp">#include &lt;sys/sem.h&gt;
-</span>
-<span class="cp">#if !defined(LOCK_SH)
-</span>    <span class="cp">#define LOCK_SH		1	</span><span class="cm">/* shared lock */</span><span class="cp">
+#include <sys/sem.h>
+
+#if !defined(LOCK_SH)
+    #define LOCK_SH		1	/* shared lock */
 #endif
 #if !defined(LOCK_EX)
-</span>    <span class="cp">#define LOCK_EX		2	</span><span class="cm">/* exclusive lock */</span><span class="cp">
+    #define LOCK_EX		2	/* exclusive lock */
 #endif
 #if !defined(LOCK_NB)
-</span>    <span class="cp">#define LOCK_NB		4	</span><span class="cm">/* don't block when locking */</span><span class="cp">
+    #define LOCK_NB		4	/* don't block when locking */
 #endif
 #if !defined(LOCK_UN)
-</span>    <span class="cp">#define LOCK_UN		8	</span><span class="cm">/* unlock */</span><span class="cp">
+    #define LOCK_UN		8	/* unlock */
 #endif
-</span>
-<span class="cm">/* write by rock
+
+/* write by rock
   求 IPC 鍵值。
   須傳入一檔案名稱，若該檔不存在， IPC_key() 會自動建立。
 
   RC: 成功(鍵值)、失敗(-1)
   See also: stat(), ftok()
-*/</span>
-<span class="k">static</span> <span class="kt">int</span> <span class="nf">IPC_key</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">ipcname</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">struct</span> <span class="n">stat</span> <span class="n">st</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">stat</span><span class="p">(</span><span class="n">ipcname</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">st</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">S_ISREG</span><span class="p">(</span> <span class="n">st</span><span class="p">.</span><span class="n">st_mode</span><span class="p">)</span> <span class="p">)</span>
-        <span class="k">return</span> <span class="n">st</span><span class="p">.</span><span class="n">st_ino</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">((</span><span class="n">fd</span><span class="o">=</span><span class="n">creat</span><span class="p">(</span><span class="n">ipcname</span><span class="p">,</span> <span class="mo">0644</span><span class="p">))</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-    <span class="n">fstat</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">st</span><span class="p">);</span>
-    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">st</span><span class="p">.</span><span class="n">st_ino</span><span class="p">;</span> <span class="c1">// 以 i_node 的值做為 IPC key
-</span>    <span class="c1">//不理會 SYSV 的 ftok() 函數。
-</span>    <span class="c1">// ftok() 是 SVR 所提供的函數，在 POSIX 及 BSD 中沒有。
-</span>    <span class="c1">//return ftok(ipcname,proj);
-</span><span class="p">}</span>
+*/
+static int IPC_key(const char*ipcname) {
+    struct stat st;
+    int fd;
+    if( stat(ipcname, &st) == 0 && S_ISREG( st.st_mode) )
+        return st.st_ino;
+    if((fd=creat(ipcname, 0644))<0)
+        return -1;
+    fstat(fd, &st);
+    close(fd);
+    return st.st_ino; // 以 i_node 的值做為 IPC key
+    //不理會 SYSV 的 ftok() 函數。
+    // ftok() 是 SVR 所提供的函數，在 POSIX 及 BSD 中沒有。
+    //return ftok(ipcname,proj);
+}
 
-<span class="cm">/*
+/*
   NAME: lock_shm() 鎖定共享記憶體。
 
     LOCK_SH 加上共享鎖定(讀取鎖定)
@@ -219,116 +221,116 @@ BSD 家族使用 <dfn>mmap()</dfn> 將檔案內容映射到記憶體，藉此達
 
   RC: 成功(0)、失敗(-1)
   See also: semget(), semctl(),  semop()
-*/</span>
-<span class="kt">int</span> <span class="nf">lock_shm</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">shmname</span><span class="p">,</span><span class="kt">int</span> <span class="n">op</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">enum</span> <span class="p">{</span> <span class="n">EXLOCK</span><span class="p">,</span>  <span class="n">SHLOCK</span><span class="p">}</span> <span class="n">lock</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">sembuf</span> <span class="n">lockop</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SEM_UNDO</span><span class="p">}</span> <span class="cm">/* sem 操作指令*/</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">semkey</span><span class="p">,</span>  <span class="n">semid</span><span class="p">;</span>
-    <span class="n">ushort</span> <span class="n">sem_val</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="mi">1</span> <span class="cm">/*Init value of EXLOCK*/</span><span class="p">,</span>
-        <span class="mi">0</span> <span class="cm">/*Init value of SHLOCK*/</span> <span class="p">};</span>
+*/
+int lock_shm(const char*shmname,int op) {
+    enum { EXLOCK,  SHLOCK} lock;
+    struct sembuf lockop={0, 0, SEM_UNDO} /* sem 操作指令*/;
+    int semkey,  semid;
+    ushort sem_val[] = {
+        1 /*Init value of EXLOCK*/,
+        0 /*Init value of SHLOCK*/ };
 
-    <span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">semkey</span><span class="o">=</span><span class="n">IPC_key</span><span class="p">(</span><span class="n">shmname</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">//嘗試建立 sem
-</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    if( (semkey=IPC_key(shmname)) < 0) //嘗試建立 sem
+        return -1;
 
-    <span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">semid</span><span class="o">=</span><span class="n">semget</span><span class="p">(</span><span class="n">semkey</span><span class="p">,</span>  <span class="mi">2</span><span class="p">,</span> <span class="n">IPC_CREAT</span><span class="o">|</span><span class="n">IPC_EXCL</span><span class="o">|</span><span class="mo">0640</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span> <span class="n">semctl</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SETALL</span><span class="p">,</span> <span class="n">sem_val</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>	<span class="c1">// 初始 sem 的值
-</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="k">if</span><span class="p">((</span><span class="n">semid</span><span class="o">=</span><span class="n">semget</span><span class="p">(</span><span class="n">semkey</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">//sem 可能建立了，取得semid
-</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+    if( (semid=semget(semkey,  2, IPC_CREAT|IPC_EXCL|0640)) >= 0) {
+        if( semctl(semid, 0, SETALL, sem_val) < 0)	// 初始 sem 的值
+            return -1;
+    }
+    else {
+        if((semid=semget(semkey,1,0)) < 0) //sem 可能建立了，取得semid
+            return -1;
+    }
 
-    <span class="cm">/*{
+    /*{
     ushort sval[2];
     semctl(semid,0,GETALL,sval);
     printf("[%d] Value  of EXLOCK:%d, Value of SHLOCK:%d\n",
         semid, sval[EXLOCK], sval[SHLOCK]);
-    }*/</span>
+    }*/
 
-    <span class="cm">/*
+    /*
     non-blocking 鎖定，只要多設一個旗標 IPC_NOWAIT 即達目的。
     連傳回值也一樣：當無法立即取得對 sem 的操作時， semop() 不會被擱置，
     會立即返回(傳回 -1 )，並設定 errno 為 EAGAIN 。
-    */</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">op</span> <span class="o">&amp;</span> <span class="n">LOCK_NB</span> <span class="p">)</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_flg</span> <span class="o">|=</span> <span class="n">IPC_NOWAIT</span><span class="p">;</span>
+    */
+    if( op & LOCK_NB )
+        lockop.sem_flg |= IPC_NOWAIT;
 
-    <span class="k">if</span><span class="p">(</span> <span class="n">op</span> <span class="o">&amp;</span> <span class="n">LOCK_EX</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span> <span class="o">=</span> <span class="n">EXLOCK</span><span class="p">;</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    if( op & LOCK_EX ) {
+        lockop.sem_num = EXLOCK;
+        lockop.sem_op = -1;
 
-        <span class="k">if</span><span class="p">(</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-        <span class="c1">//printf("EXLOCK... wait SHLOCK be zero\n");
-</span>        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span>  <span class="o">=</span> <span class="n">SHLOCK</span><span class="p">;</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="k">return</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">op</span> <span class="o">&amp;</span>  <span class="n">LOCK_SH</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span> <span class="o">=</span> <span class="n">EXLOCK</span><span class="p">;</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-        <span class="k">if</span><span class="p">(</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span>  <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-        <span class="c1">//printf("EXLOCK... wait to get SHLOCK\n");
-</span>        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span>  <span class="o">=</span> <span class="n">SHLOCK</span><span class="p">;</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="k">if</span><span class="p">(</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-        <span class="c1">//printf("SHLOCK  ok\n");
-</span>        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span> <span class="o">=</span> <span class="n">EXLOCK</span><span class="p">;</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="c1">//printf("Release EXLOCK\n");
-</span>        <span class="k">return</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
+        if( semop(semid,  &lockop, 1) < 0 )
+            return -1;
+        //printf("EXLOCK... wait SHLOCK be zero\n");
+        lockop.sem_num  = SHLOCK;
+        lockop.sem_op = 0;
+        return semop(semid, &lockop, 1);
+    }
+    else if( op &  LOCK_SH ) {
+        lockop.sem_num = EXLOCK;
+        lockop.sem_op = -1;
+        if( semop(semid, &lockop,  1) < 0 )
+            return -1;
+        //printf("EXLOCK... wait to get SHLOCK\n");
+        lockop.sem_num  = SHLOCK;
+        lockop.sem_op = 1;
+        if( semop(semid, &lockop, 1) < 0 )
+            return -1;
+        //printf("SHLOCK  ok\n");
+        lockop.sem_num = EXLOCK;
+        lockop.sem_op = 1;
+        //printf("Release EXLOCK\n");
+        return semop(semid, &lockop, 1);
+    }
 
-    <span class="c1">//以下動作皆為 LOCK_UN
-</span>    <span class="k">if</span><span class="p">(</span> <span class="n">semctl</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">GETALL</span><span class="p">,</span>  <span class="n">sem_val</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-    <span class="c1">//printf("LOCK_UN, EXLOCK:%d, SHLOCK:%d\n",sem_val[0],  sem_val[1]);
-</span>
-    <span class="cm">/*
+    //以下動作皆為 LOCK_UN
+    if( semctl(semid, 0, GETALL,  sem_val) < 0 )
+        return -1;
+    //printf("LOCK_UN, EXLOCK:%d, SHLOCK:%d\n",sem_val[0],  sem_val[1]);
+
+    /*
     如果沒有程序在等待取得鎖定的話，那解除鎖定的動作，將會是"刪除 sem "，而不
     是"改變 sem 的值"。
     如果有程序等待取得 LOCK_EX 的話，那就是在等待 SHLOCK 的值變為 0 。
     如果有程序等待取得 LOCK_SH 的話，那就是在等待 EXLOCK 的值增加。
-    */</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">semctl</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="n">SHLOCK</span><span class="p">,</span> <span class="n">GETZCNT</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span>
-        <span class="n">semctl</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="n">EXLOCK</span><span class="p">,</span> <span class="n">GETNCNT</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span>
-    <span class="p">{</span>
-        <span class="c1">//printf("may remove...");
-</span>        <span class="k">if</span><span class="p">(</span> <span class="n">sem_val</span><span class="p">[</span><span class="n">EXLOCK</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">sem_val</span><span class="p">[</span><span class="n">SHLOCK</span><span class="p">]</span>  <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-            <span class="cm">/*printf("remove sem %d,Z:%d,N:%d\n", semid,
+    */
+    if( semctl(semid, SHLOCK, GETZCNT, 0) == 0 &&
+        semctl(semid, EXLOCK, GETNCNT, 0)  == 0 )
+    {
+        //printf("may remove...");
+        if( sem_val[EXLOCK] <= 1 && sem_val[SHLOCK]  == 0) {
+            /*printf("remove sem %d,Z:%d,N:%d\n", semid,
               semctl(semid,SHLOCK,GETZCNT,0),
               semctl(semid,EXLOCK,GETNCNT,0));
-            */</span>
-           <span class="k">return</span> <span class="n">semctl</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">IPC_RMID</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+            */
+           return semctl(semid, 0, IPC_RMID, 0);
+        }
+    }
 
-    <span class="k">if</span><span class="p">(</span> <span class="n">sem_val</span><span class="p">[</span><span class="n">EXLOCK</span><span class="p">]</span> <span class="o">&gt;</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">sem_val</span><span class="p">[</span><span class="n">SHLOCK</span><span class="p">]</span>  <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span> <span class="o">=</span> <span class="n">SHLOCK</span><span class="p">;</span>
-        <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-        <span class="c1">//printf("EXLOCK &gt;0 and SHLOCK  &gt;0: UNLOCK SHLOCK\n");
-</span>        <span class="k">return</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">sem_val</span><span class="p">[</span><span class="n">EXLOCK</span><span class="p">]</span>  <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span> <span class="n">semctl</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="n">SHLOCK</span><span class="p">,</span> <span class="n">GETZCNT</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">&gt;</span><span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span> <span class="o">=</span> <span class="n">SHLOCK</span><span class="p">;</span>
-            <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-            <span class="c1">//printf("UNLOCK SHLOCK\n");
-</span>        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="n">lockop</span><span class="p">.</span><span class="n">sem_num</span> <span class="o">=</span> <span class="n">EXLOCK</span><span class="p">;</span>
-            <span class="n">lockop</span><span class="p">.</span><span class="n">sem_op</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-            <span class="c1">//printf("UNLOCK EXLOCK\n");
-</span>        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">semop</span><span class="p">(</span><span class="n">semid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lockop</span><span class="p">,</span>  <span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    if( sem_val[EXLOCK] >0 && sem_val[SHLOCK]  > 0 ) {
+        lockop.sem_num = SHLOCK;
+        lockop.sem_op = -1;
+        //printf("EXLOCK >0 and SHLOCK  >0: UNLOCK SHLOCK\n");
+        return semop(semid, &lockop, 1);
+    }
+    else if( sem_val[EXLOCK]  <= 0 ) {
+        if( semctl(semid, SHLOCK, GETZCNT, NULL) >0 ) {
+            lockop.sem_num = SHLOCK;
+            lockop.sem_op = -1;
+            //printf("UNLOCK SHLOCK\n");
+        }
+        else {
+            lockop.sem_num = EXLOCK;
+            lockop.sem_op = 1;
+            //printf("UNLOCK EXLOCK\n");
+        }
+        return semop(semid, &lockop,  1);
+    }
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>
@@ -342,56 +344,58 @@ BSD 家族使用 <dfn>mmap()</dfn> 將檔案內容映射到記憶體，藉此達
 以下是測試程式:
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-</span>
-<span class="cp">#if !defined(LOCK_SH)
-</span>    <span class="cp">#define LOCK_SH		1	</span><span class="cm">/* shared lock */</span><span class="cp">
+
+{% highlight c linenos %}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#if !defined(LOCK_SH)
+    #define LOCK_SH		1	/* shared lock */
 #endif
 #if !defined(LOCK_EX)
-</span>    <span class="cp">#define LOCK_EX		2	</span><span class="cm">/* exclusive lock */</span><span class="cp">
+    #define LOCK_EX		2	/* exclusive lock */
 #endif
 #if !defined(LOCK_NB)
-</span>    <span class="cp">#define LOCK_NB		4	</span><span class="cm">/* don't block when locking */</span><span class="cp">
+    #define LOCK_NB		4	/* don't block when locking */
 #endif
 #if !defined(LOCK_UN)
-</span>    <span class="cp">#define LOCK_UN		8	</span><span class="cm">/* unlock */</span><span class="cp">
+    #define LOCK_UN		8	/* unlock */
 #endif
-</span><span class="kt">int</span> <span class="n">lock_shm</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">shmname</span><span class="p">,</span><span class="kt">int</span> <span class="n">op</span><span class="p">);</span>
+int lock_shm(const char*shmname,int op);
 
-<span class="kt">void</span> <span class="nf">dump</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">prog</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">80</span><span class="p">];</span>
-    <span class="n">sprintf</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="s">"dump[%s]."</span><span class="p">,</span><span class="n">prog</span><span class="p">);</span>
-    <span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
-    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+void dump(char *prog) {
+    char buf[80];
+    sprintf(buf,"dump[%s].",prog);
+    write(1, buf, strlen(buf));
+    sleep(1);
+}
 
-<span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="kt">char</span>  <span class="n">shmname</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"TEST_BCACHE"</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">prog</span><span class="p">;</span>
-    <span class="n">prog</span><span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"[%s]LOCK_EX:%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>  <span class="n">prog</span><span class="p">,</span> <span class="n">lock_shm</span><span class="p">(</span><span class="n">shmname</span><span class="p">,</span><span class="n">LOCK_EX</span><span class="p">)</span> <span class="p">);</span>
-    <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-        <span class="n">dump</span><span class="p">(</span><span class="n">prog</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">[%s]LOCK_UN:%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>  <span class="n">prog</span><span class="p">,</span> <span class="n">lock_shm</span><span class="p">(</span><span class="n">shmname</span><span class="p">,</span><span class="n">LOCK_UN</span><span class="p">)</span> <span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"[%s]LOCK_SH:%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">prog</span><span class="p">,</span> <span class="n">lock_shm</span><span class="p">(</span><span class="n">shmname</span><span class="p">,</span><span class="n">LOCK_SH</span><span class="p">)</span>  <span class="p">);</span>
-    <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span><span class="mi">5</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-        <span class="n">dump</span><span class="p">(</span><span class="n">prog</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">[%s]LOCK_UN:%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">prog</span><span class="p">,</span> <span class="n">lock_shm</span><span class="p">(</span><span class="n">shmname</span><span class="p">,</span><span class="n">LOCK_UN</span><span class="p">)</span>  <span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"[%s]LOCK_EX:%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">prog</span><span class="p">,</span> <span class="n">lock_shm</span><span class="p">(</span><span class="n">shmname</span><span class="p">,</span><span class="n">LOCK_EX</span><span class="p">)</span> <span class="p">);</span>
-    <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span><span class="mi">5</span><span class="p">;</span>  <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-        <span class="n">dump</span><span class="p">(</span><span class="n">prog</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">[%s]LOCK_UN:%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">prog</span><span class="p">,</span> <span class="n">lock_shm</span><span class="p">(</span><span class="n">shmname</span><span class="p">,</span><span class="n">LOCK_UN</span><span class="p">)</span>  <span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+void main(int argc, char* argv[]) {
+    char  shmname[] = "TEST_BCACHE";
+    int i;
+    char *prog;
+    prog= argv[1];
+    printf("[%s]LOCK_EX:%d\n",  prog, lock_shm(shmname,LOCK_EX) );
+    for(i = 0; i < 5; i++)
+        dump(prog);
+    printf("\n[%s]LOCK_UN:%d\n",  prog, lock_shm(shmname,LOCK_UN) );
+    printf("[%s]LOCK_SH:%d\n", prog, lock_shm(shmname,LOCK_SH)  );
+    for(i =0; i <5; i++)
+        dump(prog);
+    printf("\n[%s]LOCK_UN:%d\n", prog, lock_shm(shmname,LOCK_UN)  );
+    printf("[%s]LOCK_EX:%d\n", prog, lock_shm(shmname,LOCK_EX) );
+    for(i =0; i <5;  i++)
+        dump(prog);
+    printf("\n[%s]LOCK_UN:%d\n", prog, lock_shm(shmname,LOCK_UN)  );
+}
+{% endhighlight %}
 
 
 <p>
 執行範例:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ gcc -o testlock testlock.c lock_shm.c
 $ ./testlock a & ./testlock b &
 [1] 3285
@@ -418,7 +422,7 @@ dump[b].dump[b].dump[b].dump[b].dump[b].
 [1]-  Done                    ./testlock a
 [2]+  Done                    ./testlock b
 
-</pre>
+</code></pre>
 <p>
 先跑幾隻丟到背景，等執行一部份後，再跑幾隻到背景，就可以觀察數隻程式利用號誌協調執行順序的情形了。以前面的執行範例為例，行程a 先取得了排他鎖，所以一開始只會看到 dump[a] 。接著換行程b 取得排他鎖，所以接著只會看到 dump[b] 。再接著，行程a 與 b 取得共用鎖，所以 dump[a], dump[b] 將交錯出現。
 </p>

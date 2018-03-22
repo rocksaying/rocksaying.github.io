@@ -49,13 +49,15 @@ errno set to EINTR, or it shall return the number of bytes read."
 <div class="note">
 *2 這是 SVR4 中所定義的選項，不在 POSIX 規格中，因此不具移植性。
 </div>
-<pre class="highlight"><code><span class="k">while</span><span class="p">(</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span> <span class="p">)</span>
-    <span class="k">continue</span><span class="p">;</span>
-  <span class="k">else</span>
-    <span class="n">FATAL</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c linenos %}
+while( read(fd, buf, nbytes) < 0 ) {
+  if( errno == EINTR )
+    continue;
+  else
+    FATAL;
+}
+{% endhighlight %}
 
 
 <h3>
@@ -64,90 +66,98 @@ errno set to EINTR, or it shall return the number of bytes read."
 <p>
 當資料並未全部讀取時，則扣掉已讀取的資料數量 (bytes)，再要求 read() 繼續讀取尚未讀取的部份。
 </p>
-<pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
-<span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-<span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbytes</span> <span class="p">)</span> <span class="p">{</span>
-  <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-  <span class="n">nbytes</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c linenos %}
+void* bp;
+bp = buf;
+while( (rc=read(fd, bp, nbytes)) < nbytes ) {
+  bp += rc;
+  nbytes -= rc;
+}
+{% endhighlight %}
 
 
 <h3>
 兼顧兩種規格的安全方法
 </h3>
-<pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
-<span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-<span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbytes</span> <span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-    <span class="n">nbytes</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="k">else</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span> <span class="p">)</span>
-      <span class="k">continue</span><span class="p">;</span>
-    <span class="k">else</span>
-      <span class="n">FATAL</span><span class="p">;</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c linenos %}
+void* bp;
+bp = buf;
+while( (rc=read(fd, bp, nbytes)) < nbytes ) {
+  if( rc > 0 ) {
+    bp += rc;
+    nbytes -= rc;
+  }
+  else {
+    if( errno == EINTR )
+      continue;
+    else
+      FATAL;
+  }
+}
+{% endhighlight %}
 
 
 <p>
 可以再重整如下:
 </p>
-<pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
-<span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-<span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbytes</span> <span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-    <span class="n">nbytes</span> <span class="o">-=</span><span class="n">rc</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span>
-    <span class="n">FATAL</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c linenos %}
+void* bp;
+bp = buf;
+while( (rc=read(fd, bp, nbytes)) < nbytes ) {
+  if( rc > 0 ) {
+    bp += rc;
+    nbytes -=rc;
+  }
+  else if( errno != EINTR )
+    FATAL;
+}
+{% endhighlight %}
 
 
 <p>
 仿造 POSIX 對 read()/write() 的原型，定義一個具有安全性的 (可確保資料被完整處理)的 safe read() 和 safe write() 應寫成:
 </p>
-<pre class="highlight"><code><span class="c1">// The prototype of POSIX of read() is:
-//   ssize_t read(int fd, void *buf, size_t nbyte);
-</span><span class="kt">ssize_t</span> <span class="nf">saferead</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nbyte</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kt">size_t</span> <span class="n">nbr</span><span class="p">;</span>	<span class="cm">/* number of bytes readed */</span>
-  <span class="kt">ssize_t</span> <span class="n">rc</span><span class="p">;</span>	<span class="cm">/* return code of read() */</span>
-  <span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
-  <span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-  <span class="n">nbr</span> <span class="o">=</span> <span class="n">nbyte</span><span class="p">;</span>
-  <span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbr</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbr</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-      <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-      <span class="n">nbr</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span>
-      <span class="n">abort</span><span class="p">();</span>
-  <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="c1">// The prototype of POSIX of write() is:
+{% highlight c linenos %}
+// The prototype of POSIX of read() is:
+//   ssize_t read(int fd, void *buf, size_t nbyte);
+ssize_t saferead(int fd, void *buf, size_t nbyte) {
+  size_t nbr;	/* number of bytes readed */
+  ssize_t rc;	/* return code of read() */
+  void* bp;
+  bp = buf;
+  nbr = nbyte;
+  while( (rc=read(fd, bp, nbr)) < nbr ) {
+    if( rc > 0 ) {
+      bp += rc;
+      nbr -= rc;
+    }
+    else if( errno != EINTR )
+      abort();
+  }
+}
+
+// The prototype of POSIX of write() is:
 //   ssize_t write(int fd, void *buf, size_t nbyte) {
-</span><span class="kt">ssize_t</span> <span class="nf">safewrite</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nbyte</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kt">size_t</span> <span class="n">nbw</span><span class="p">;</span>	<span class="cm">/* number of bytes written */</span>
-  <span class="kt">ssize_t</span> <span class="n">rc</span><span class="p">;</span>	<span class="cm">/* return code of write() */</span>
-  <span class="kt">void</span><span class="o">*</span> <span class="n">bp</span><span class="p">;</span>
-  <span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-  <span class="n">nbw</span> <span class="o">=</span> <span class="n">nbyte</span><span class="p">;</span>
-  <span class="k">while</span><span class="p">(</span> <span class="p">(</span><span class="n">rc</span><span class="o">=</span><span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbw</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbw</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-      <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-      <span class="n">nbw</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span>
-      <span class="n">abort</span><span class="p">();</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+ssize_t safewrite(int fd, void *buf, size_t nbyte) {
+  size_t nbw;	/* number of bytes written */
+  ssize_t rc;	/* return code of write() */
+  void* bp;
+  bp = buf;
+  nbw = nbyte;
+  while( (rc=write(fd, bp, nbw)) < nbw ) {
+    if( rc > 0 ) {
+      bp += rc;
+      nbw -= rc;
+    }
+    else if( errno != EINTR )
+      abort();
+  }
+}
+{% endhighlight %}
 
 <p>
 關於上面的討論，是針對 read() 及 write() 對正規檔案的資料處理方式所應採取的應對措施，如果是對非正規檔案，如 pipe , FIFOs, socket 的話，則上面的應對措施就不適用。
@@ -158,11 +168,12 @@ errno set to EINTR, or it shall return the number of bytes read."
 在美國聯邦政府的政府採構規格 (FIPS) 中，則是明確地要求 read() 或 write() 必須採取第二種規格處理。
 </p>
 <blockquote>
+<p>
 The U.S. Government (in FIPS 151-1) requires that read() return the
 number of bytes read. Since the Federal Government is the world's
 largest buyer of POSIX systems, it is a good bet that most POSIX
 systems will return the number of bytes read.
-<br/>
+</p>
 <cite>FIPS of the U.S. Government</cite>
 </blockquote>
 <p>

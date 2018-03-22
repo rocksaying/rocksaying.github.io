@@ -122,15 +122,15 @@ image 2:
 
 code blocks and highlight.
 
-{% highlight lexer linenos=table %}
+{% highlight lexer linenos %}
 code
 {% endhighlight %}
 
 lexer: php, ruby, python, javascript, c, c++ ...
 
-{% highlight php linenos=table %}
+{% highlight php linenos %}
 <?php
-echo "Hello $name\n";
+echo "Hello $name\n"; // test overflow-x: auto. fsd fadfdsa fdsa fdsa fdsa fdsa
 echo "Hello $name\n";
 echo "Hello $name\n";
 echo "Hello $name\n";

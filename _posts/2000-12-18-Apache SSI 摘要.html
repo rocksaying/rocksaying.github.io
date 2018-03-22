@@ -44,15 +44,15 @@ SSI是Server-Side Inclues的縮寫。 其意為，提供一個可含括(Includes
 <h2><a href="#目錄" name="啟動SSI">啟動SSI</a></h2>
 <p>啟動SSI的控制權在網頁主機管理者的手上，一般使用者請去函詢問。</p>
 <p>網頁主機管理者，可利用下列指令查詢你的httpd server是否支援SSI功能:</p>
-<pre class="language-text"><code># httpd -l</cpde></pre>
+<pre class="language-text"># httpd -l</pre>
 <p>若是組態設定檔(通常是 httpd.conf)中，是否載入了 mod_include 的 module:</p>
-<pre class="language-text"><samp>LoadModule includes_module path_of_your_module/mod_include.so</samp></pre>
+<pre class="language-text">LoadModule includes_module path_of_your_module/mod_include.so</pre>
 <p>若其中包含了 mod_include ，則 httpd server 可支援 SSI 。</p>
 <p>而以下的指令，將影嚮各網頁提供者，對 SSI 功能使用上的限制。</p>
 <h3>AddType/AddHandler</h3>
 <p>Apache 建議在組態設定檔中，加上下列兩項設定指令，以提供 SSI :</p>
-<pre class="language-text"><code>AddType text/html .shtml
-AddHandler server-parsed .shtml</code></pre>
+<pre class="language-text">AddType text/html .shtml
+AddHandler server-parsed .shtml</pre>
 <p>第一行在指示將 .shtml 的文件之 MIME 型態，視為 text/html ，即一般的 HTML文件。 這表示了 SSI
   只能用在 HTML文件中，你無法在非 HTML文件中，如純文字文件中使用，因為只要碰到這種檔案， http server 一律是回傳 text/html型態給瀏覽器。
   而第二行在指示，將 .shtml文件，交給 server-parsed 這個 handler 去處理，這個 handler 將讀取 .shtml文件的內容，將一般的文字直接送給瀏覽器，而碰到
@@ -72,7 +72,7 @@ AddHandler server-parsed .shtml</code></pre>
 <h2><a href="#目錄" name="基本指令">基本指令</a></h2>
 <p>在原文件中，將 SSI 的控制字彙，稱為 Elements ，不過一般來說，我們都把它當指令看待。</p>
 <p>SSI 根據 SGML 文件的說明，使用下列語法:</p>
-<p><code>&lt;!--#element attribute=&quot;value&quot; attribute=&quot;value&quot; ... --&gt;</code></p>
+<pre class="language-text">&lt;!--#element attribute=&quot;value&quot; attribute=&quot;value&quot; ... --&gt;</pre>
 <p>要注意的是，屬性值必須要用雙引號括號，不可省略。 而終端符號 (--&gt;) 前，必須要有一個空格。</p>
 <h3>指令(Elements)列表</h3>
 <h4><a href="#指令(Elements)列表" name="config">config</a></h4>
@@ -88,7 +88,7 @@ AddHandler server-parsed .shtml</code></pre>
     。</li>
 </ul>
 <p>例:</p>
-<pre class="language-text"><code>&lt;!--#config errmsg=&quot;SSI Error&quot; sizefmt=&quot;abbrev&quot; timefmt=&quot;%b %d, %Y&quot; --&gt;</code></pre>
+<pre class="language-text">&lt;!--#config errmsg=&quot;SSI Error&quot; sizefmt=&quot;abbrev&quot; timefmt=&quot;%b %d, %Y&quot; --&gt;</pre>
 <p>以 KB 或 MB 為大小輸出單位。使用美式時間格式(月 日, 年)。</p>
 <h4><a href="#指令(Elements)列表" name="echo">echo</a></h4>
 <p>印出一個變數的值，若變數未設定，則印出 (none) 。 屬性有:</p>
@@ -97,7 +97,7 @@ AddHandler server-parsed .shtml</code></pre>
     屬性值是變數的名稱。 變數名稱前，不加 '$' 符號。</li>
 </ul>
 <p>例:</p>
-<pre class="language-text"><code>&lt;!--#echo var=&quot;QUERY_STRING&quot; var=&quot;REMOTE_HOST&quot;--&gt;</code></pre>
+<pre class="language-text">&lt;!--#echo var=&quot;QUERY_STRING&quot; var=&quot;REMOTE_HOST&quot;--&gt;</pre>
 <h4><a href="#指令(Elements)列表" name="exec">exec</a></h4>
 <p>執行一個 shell 命令或 CGI script。 命令或 script 的輸出將被印出。 屬性有:</p>
 <ul>
@@ -109,7 +109,7 @@ AddHandler server-parsed .shtml</code></pre>
     呼叫 /bin/sh 執行這個字串中的命令。</li>
 </ul>
 <p>SSI所定義的變數，將透過環境變數，傳遞給命令或 script 。例:</p>
-<pre class="language-text"><code>Document loaded on &lt;!--#exec cmd=&quot;/bin/date&quot; --&gt;</code></pre>
+<pre class="language-text">Document loaded on &lt;!--#exec cmd=&quot;/bin/date&quot; --&gt;</pre>
 <h4><a href="#指令(Elements)列表" name="fsize">fsize</a></h4>
 <p>印出指定檔案的大小。 屬性有:</p>
 <ul>
@@ -119,7 +119,7 @@ AddHandler server-parsed .shtml</code></pre>
     一個以 URL 路徑表示的文件，其路徑不可以 '/' 開頭。</li>
 </ul>
 <p>例:</p>
-<pre class="language-text"><code>&lt;!--#fsize file=&quot;download/xyz.tar.gz&quot; --&gt;</code></pre>
+<pre class="language-text">&lt;!--#fsize file=&quot;download/xyz.tar.gz&quot; --&gt;</pre>
 <h4><a href="#指令(Elements)列表" name="flastmod">flastmod</a></h4>
 <p>印出指定文件的最後修改時間。 屬性值跟 fsize 一樣。</p>
 <h4><a href="#指令(Elements)列表" name="include">include</a></h4>
@@ -133,10 +133,10 @@ AddHandler server-parsed .shtml</code></pre>
     插入一個 URL 指示的文件的內容。</li>
 </ul>
 <p>屬性值的注意事項與 exec 相同。例:</p>
-<pre class="language-text"><code>&lt;!--#include file=&quot;my_head.inc&quot; --&gt;</code></pre>
+<pre class="language-text">&lt;!--#include file=&quot;my_head.inc&quot; --&gt;</pre>
 <h4><a href="#指令(Elements)列表" name="printenv">printenv</a></h4>
 <p>印出目前所有變數的值，沒有屬性。 這算是一個純測試用功能，實用性不大。例:</p>
-<pre class="language-text"><code>&lt;!--#printenv --&gt;</code></pre>
+<pre class="language-text">&lt;!--#printenv --&gt;</pre>
 <h4><a href="#指令(Elements)列表" name="set">set</a></h4>
 <p>設定一個變數。</p>
 <p>屬性有:</p>
@@ -147,9 +147,9 @@ AddHandler server-parsed .shtml</code></pre>
     指定該變數的值。</li>
 </ul>
 <p>例:</p>
-<pre class="language-text"><code>&lt;!--#set var=&quot;myvar1&quot; value=&quot;123&quot; --&gt;
+<pre class="language-text">&lt;!--#set var=&quot;myvar1&quot; value=&quot;123&quot; --&gt;
 &lt;!--#set var=&quot;myvar2&quot; value=&quot;${myvar1}.html&quot; --&gt;
-&lt;!--#echo var=&quot;myvar2&quot; --&gt;</code></pre>
+&lt;!--#echo var=&quot;myvar2&quot; --&gt;</pre>
 <h2><a href="#目錄" name="變數">變數</a></h2>
 <p>若要在 value 中引用其他變數的值時，須在變數名稱前加上 '$' 符號，若變數名稱後沒有空格來分隔一般字元的話，請用 '{ }' 括起欲引用的變數名稱。</p>
 <p>環境變數將自動成為 SSI 中可用的變數，亦可使用 #set 自定變數。 SSI 中的變數，也能給被呼叫的程式參用。</p>
@@ -168,10 +168,10 @@ AddHandler server-parsed .shtml</code></pre>
 </ul>
 <h2><a href="#目錄" name="流程控制指令">流程控制指令</a></h2>
 <p>流程控制指令可讓我們選擇性的印出網頁的內容，而不是將所有內容都送往瀏覽器。</p>
-<pre class="language-text"><code>&lt;!--#if expr=&quot;test_condition&quot; --&gt;
+<pre class="language-text">&lt;!--#if expr=&quot;test_condition&quot; --&gt;
 &lt;!--#elif expr=&quot;test_condition&quot; --&gt;
 &lt;!--#else --&gt;
-&lt;!--#endif --&gt;</code></pre>
+&lt;!--#endif --&gt;</pre>
 <p>#if 和 #endif 必須成對表示，不可省略後面的 #endif 。</p>
 <p>流程控制指令中，最麻煩的是 test_condition 的寫法，整個 test_condition 必須被雙引號括起，而要在 test_condition
   中表示一個字串時，該字串也必須用單引號或雙引號括起，這時在字串的雙引號前，就要加上 '\' 符號才行，因此，一個字串比較的 test_condition
@@ -189,7 +189,7 @@ AddHandler server-parsed .shtml</code></pre>
     比較 string1 和 string2 ，若 string2 是以 '/ /' 括起的，則表示使用常規表示法(regex)來比較。</li>
 </ul>
 <p>可以使用 (), !, &amp;&amp;, 和 || 來組來多個 test_condition 。例:</p>
-<pre class="language-text"><code>&lt;!--#if expr=&quot;$QUERY_STRING&quot; --&gt;
+<pre class="language-text">&lt;!--#if expr=&quot;$QUERY_STRING&quot; --&gt;
 I get a query string.
 &lt;!--#if expr=&quot;'$QUERY_STRING' = '/^[0-9]/'&quot; --&gt;
 NUMBER.
@@ -198,7 +198,7 @@ ALPHA.
 &lt;!--#else --&gt;
 SPECIAL.
 &lt;!--#endif --&gt;
-&lt;!--#endif --&gt;</code></pre>
+&lt;!--#endif --&gt;</pre>
 
 <h2><a href="#目錄" name="案例問答">案例問答</a></h2>
 
@@ -226,7 +226,7 @@ router 有專屬的通訊協定可以查詢訊號強度，則強度偵測程式�
 </li>
 <li>
 router 本身亦提供 http 服務，則偵測程式即可以放在 router 上也可放在 webserver 上。但 SSI 語法必須要用 <code>&lt;!--#include virtual=&quot;http://your.server.which.you.put.cgi/cgi-bin/wireless_single_detect.cgi&quot; --&gt;</code>
-<pre class="language-text"><samp>
+<pre class="language-text">
 example:
 
 browser open http://your.webserver.com/welcome.html
@@ -237,7 +237,7 @@ browser open http://your.webserver.com/welcome.html
 &lt;/body&gt;
 &lt;/html&gt;
 --------------------
-</samp></pre>
+</pre>
 <p>
 wireless_single_detect.cgi 查詢訊號強度後，將訊號強度以圖形格式 (image/jpeg or image/gif) 輸出。附帶一提，在這種作法下，使用者也可以用 browser 直接啟動這支 cgi 而得到一張訊號強度圖，請特別注意 cgi 的安全性問題。
 </p>

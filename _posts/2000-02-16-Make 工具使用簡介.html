@@ -34,18 +34,20 @@ O'Reilly 臺灣網站上，提供了「<a href="http://www.oreilly.com.tw/produc
 <p>
 一個依存關係的定義，始於一個新的 label ， label 通常包含目標檔和成員檔兩部份，而且必須寫在同一行中。接下來以 &lt;tab&gt; 字元開頭的每一行，都視為此依存關係的組成動作。在 label 以下第一個不是 &lt;tab&gt; 開頭的內容，如空白行，視為結束此依存關係。而分號 (;) 視為換行。像下面的描述，就是最基本的定義方式。 Make 比較成員檔與目標檔間之新舊關係，若成員檔比目標檔新，則執行組成動作，產生新的目標檔。
 </p>
-<pre class="highlight"><code>目標檔1: 成員檔 [成員檔...]
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+目標檔1: 成員檔 [成員檔...]
 	組成動作
 	組成動作...
-</code></pre>
+</code></pre></div></div>
 
 
 <p>
 下例依存關係，描述了目標檔 sample.obj 是由成員檔 sample.asm 及 sample.inc 所組成，而組成的動作是將 sample.asm 交由 MASM 組譯。 Make 會查看 sample.obj 、 sample.asm 和 sample.inc 的時間戳記，當成員檔中的任何一個 (sample.asm 或 sample.inc) 之時間戳記晚於 sample.obj ， Make 就會執行組成動作。
 </p>
-<pre class="highlight"><code>sample.obj: sample.asm sample.inc
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+sample.obj: sample.asm sample.inc
 	masm sample.asm;
-</code></pre>
+</code></pre></div></div>
 
 
 <p>
@@ -60,7 +62,8 @@ Make 預設的文件名稱是 'Makefile' 。撰寫時， label 必須從一行�
 <h4>
 Sample of Makefile
 </h4>
-<pre class="highlight"><code># Make 並產生執行檔
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+# Make 並產生執行檔
 sample.exe: sample1.obj sample2.obj
 	link sample2.obj+sample1.obj,,nul,BCOM45.LIB
 
@@ -81,7 +84,7 @@ clear:
     -del sample2.obj
 #沒有指定成員檔時，目標被視為一個單純的識別符號。
 #當執行 'make clear' 時，就會無條件執行其中定義的檔案刪除動作。
-</code></pre>
+</code></pre></div></div>
 
 
 <h3>
@@ -111,20 +114,22 @@ Make 也提供了一些預設的變數，或稱自動變數 (Automatic Variables
 <li>$&lt;<br/>成員檔中，比目標檔還新的檔案</li>
 </ol>
 
-<pre class="highlight"><code>PROG = sample
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+PROG = sample
 SRC = a1.c a2.c a3.c
 $(PROG): $(SRC)
 	gcc -o $(PROG) $(SRC)
 
 sample2: $*.c
 	gcc -o $* $*.c
-</code></pre>
+</code></pre></div></div>
 
 
 <p>
 隱性規則中，以「字尾規則」最為常見。這是以文件的副檔名，做為依存關係的規則。先寫成員檔的副檔名，再寫目標檔的副檔名。當 Make 碰到副檔名符合的依存關係時，便會引用此規則。如下例:
 </p>
-<pre class="highlight"><code>OBJS = \
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+OBJS = \
   sample1.obj sample2.obj
 
 .asm.obj:
@@ -139,12 +144,13 @@ sample.exe:	$(OBJS)
 sample1.obj: sample1.asm
 
 sample2.obj: sample2.c
-</code></pre>
+</code></pre></div></div>
 
 <p>
 下例是一個取自 <a href="http://home.educities.edu.tw/fbtip/">FBTIP</a> 的 'Makefile' 範例。
 </p>
-<pre class="highlight"><code>CC = gcc
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+CC = gcc
 CFLAGS = -O2
 INCLUDE = ./bbslib
 
@@ -224,15 +230,16 @@ SOLARIS:
 	make bbslib LDFLAGS="$(LDFLAGS) -G"\
 		DEFINES="$(DEFINES) -DSOLARIS -DSYSV" LIBS="$(LIBS) -lsocket -lnsl"\
 		CFLAGS="$(CFLAGS)"
-</code></pre>
+</code></pre></div></div>
 
 
 <h3>
 3.Make 命令列參數
 </h3>
-<pre class="language-text">
-Microsoft nmake
 
+<h4>Microsoft nmake</h4>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
 make [參數] [巨集指命定義] [描述檔檔名]
 
 參數
@@ -240,9 +247,11 @@ make [參數] [巨集指命定義] [描述檔檔名]
 /I	不管各動作是否成功，都繼續下個動作
 /N	只列出組成動作命令字串，而不實際執行組成動作
 /S	執行組成動作時，不列出組成動作的命令字串
-</pre>
-<pre class="language-text">
-GNU make
+</code></pre></div></div>
+
+<h4>GNU make</h4>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
 make [參數] [巨集指令定義] [-f 描述檔檔名]
 
 參數
@@ -255,16 +264,18 @@ make [參數] [巨集指令定義] [-f 描述檔檔名]
 	儘可能地產生多個行程處理產生動作。
 	注意，在低階系統上，此參數的使用，有可能造成系統負載過重，
 	而使系統 crash 。
-</pre>
+</code></pre></div></div>
+
 <p>
 當不指定描述檔檔名時， make 會自動在工作目錄下，找尋檔名為'Makefile'、'makefile'或'MAKEFILE'的檔案。
 </p>
 <p>
 透過 Make 命令列定義巨集的方法如下:
 </p>
-<pre class="language-text">
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
 make ABC=123 XYZ='"Hello world"' CFLAGS='-O -DNOLIMIT'
-</pre>
+</code></pre></div></div>
+
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2145750.html</div>
 <div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
 <blockquote class="roodo-comment">
