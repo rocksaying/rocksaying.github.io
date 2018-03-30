@@ -22,19 +22,21 @@ permalink: /archives/25362202.html
 基於普遍性，選擇 ffmpeg 為轉檔工具。ffmpeg 的輸入檔名若為 <strong>-</strong> 號，就會從 stdin 讀取資料。 CGI 這一端只要一邊接收上傳資料，一邊將接收到的資料透過 pipe 寫到 ffmpeg 的 stdin 端即可。概念類似下列的命令列操作:
 </p>
 
-<pre class="language-term">
-$ cat uploaded_file | ffmpeg -i  -  -codec copy output.mp4
-</pre>
+<pre>
+<code class="language-term">$ cat uploaded_file | ffmpeg -i  -  -codec copy output.mp4
+</code></pre>
 
 <p>
 只是目前多數的 CGI 實作品(<span class="note">所有的 Web 開發框架或工具，都屬於 CGI 實作品</span>)不會讓使用者接觸到如此「低階」、「原始」的處理步驟。以 PHP 為例， Apache + mod-php 內定的檔案上傳策略就是先把上傳資料儲存為檔案後，才開始執行 PHP script 。在這個過程中，使用者不會接觸到上傳中的資料串流，只會摸到上傳完成後的成品。
 所以對透過 mod-php 執行的 PHP script 來說，它只適合這樣做:
 </p>
 
-<pre class="highlight"><code>$uploadfile = '/uploaded/files_' . $rnd;
+
+<pre class="language-text">
+$uploadfile = '/uploaded/files_' . $rnd;
 move_uploaded_file($_FILES['userfile']['tmp_name'], $uploadfile)
 system("ffmpeg -i $uploadfile -codec copy output.mp4");
-</code></pre>
+</pre>
 
 
 <p>
@@ -89,69 +91,71 @@ ffmpeg.cgi 預設的輸出目錄是 /tmp ，轉檔後的視訊檔名的主檔名
 當然實務上不會這麼直接地儲存，這就看實作者的設計了。
 </p>
 
-<pre class="highlight"><code>#!/usr/bin/php
+
+{% highlight php %}
+#!/usr/bin/php
 Content-Type: text/plain
 
-<span class="cp">&lt;?php</span>
+<?php
 
-<span class="nv">$boundary</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nx">STDIN</span><span class="p">);</span>
-<span class="nv">$end_boundary</span> <span class="o">=</span> <span class="nb">rtrim</span><span class="p">(</span><span class="nv">$boundary</span><span class="p">)</span> <span class="o">.</span> <span class="s2">"--</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
+$boundary = fgets(STDIN);
+$end_boundary = rtrim($boundary) . "--\r\n";
 
-<span class="nv">$headers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="k">while</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nx">STDIN</span><span class="p">))</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span> <span class="c1">// head end line.
-</span>        <span class="k">break</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/(^[\w\-]+): (.*)/'</span><span class="p">,</span> <span class="nv">$s</span><span class="p">,</span> <span class="nv">$m</span><span class="p">))</span>
-        <span class="nv">$headers</span><span class="p">[</span><span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="nv">$m</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
-<span class="p">}</span>
+$headers = array();
+while ($s = fgets(STDIN)) {
+    if ($s == "\r\n") // head end line.
+        break;
+    if (preg_match('/(^[\w\-]+): (.*)/', $s, $m))
+        $headers[$m[1]] = trim($m[2]);
+}
 
-<span class="nv">$filename</span> <span class="o">=</span> <span class="s1">'test.mp4'</span><span class="p">;</span>
+$filename = 'test.mp4';
 
-<span class="c1">// Get filename of upload file.
-</span><span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$headers</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]))</span> <span class="p">{</span>
-    <span class="nv">$disposition</span> <span class="o">=</span> <span class="nv">$headers</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">];</span>
-    <span class="k">echo</span> <span class="s1">'Content-Disposition: '</span><span class="p">,</span> <span class="nv">$disposition</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+// Get filename of upload file.
+if (isset($headers['Content-Disposition'])) {
+    $disposition = $headers['Content-Disposition'];
+    echo 'Content-Disposition: ', $disposition, "\n";
 
-    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/filename="(.*)\.[\w]+"$/'</span><span class="p">,</span> <span class="nv">$disposition</span><span class="p">,</span> <span class="nv">$m</span><span class="p">))</span>
-        <span class="nv">$filename</span> <span class="o">=</span> <span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">.</span> <span class="s1">'.mp4'</span><span class="p">;</span>
-<span class="p">}</span>
+    if (preg_match('/filename="(.*)\.[\w]+"$/', $disposition, $m))
+        $filename = $m[1] . '.mp4';
+}
 
-<span class="c1">// You may save this filename.
-</span><span class="k">echo</span> <span class="nv">$filename</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+// You may save this filename.
+echo $filename, "\n";
 
-<span class="nv">$out_stream</span> <span class="o">=</span> <span class="nb">popen</span><span class="p">(</span><span class="s1">'ffmpeg -i - -vcodec libx264 -b:v 500000 -s 640x360
-    -acodec libvo_aacenc -b:a 128000 -ar 48000 -y /tmp/'</span> <span class="o">.</span> <span class="nv">$filename</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">);</span>
-<span class="c1">#$out_stream = popen('ffmpeg -i - -vcodec mpeg4 -vb 1000k -r 25 -s 640x360 \
+$out_stream = popen('ffmpeg -i - -vcodec libx264 -b:v 500000 -s 640x360
+    -acodec libvo_aacenc -b:a 128000 -ar 48000 -y /tmp/' . $filename, 'w');
+#$out_stream = popen('ffmpeg -i - -vcodec mpeg4 -vb 1000k -r 25 -s 640x360 \
 #    -acodec mp2 -ab 96k -ar 22050 -y /tmp/' . $filename, 'w');
-</span>
-<span class="k">if</span> <span class="p">(</span><span class="nv">$out_stream</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Could not invoke ffmpeg.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="nv">$data_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="nv">$out_buffer</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-<span class="k">while</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nx">STDIN</span><span class="p">))</span> <span class="p">{</span>
-    <span class="c1">#if (strpos($s, $boundary) === 0)
-</span>    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span> <span class="o">==</span> <span class="nv">$end_boundary</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">#echo "BREAK\n";
-</span>        <span class="k">break</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$out_stream</span><span class="p">,</span> <span class="nv">$out_buffer</span><span class="p">);</span>
-    <span class="nv">$data_len</span> <span class="o">+=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$out_buffer</span><span class="p">);</span>
-    <span class="nv">$out_buffer</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
-<span class="p">}</span>
+if ($out_stream === false) {
+    echo "Could not invoke ffmpeg.\n";
+    exit(1);
+}
 
-<span class="nb">fwrite</span><span class="p">(</span><span class="nv">$out_stream</span><span class="p">,</span> <span class="nb">substr</span><span class="p">(</span><span class="nv">$out_buffer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">));</span> <span class="c1">// strip end mark (\r\n).
-</span><span class="nb">pclose</span><span class="p">(</span><span class="nv">$out_stream</span><span class="p">);</span>
+$data_len = 0;
+$out_buffer = false;
+while ($s = fgets(STDIN)) {
+    #if (strpos($s, $boundary) === 0)
+    if ($s == $end_boundary) {
+        #echo "BREAK\n";
+        break;
+    }
+    fwrite($out_stream, $out_buffer);
+    $data_len += strlen($out_buffer);
+    $out_buffer = $s;
+}
 
-<span class="nv">$data_len</span> <span class="o">+=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$out_buffer</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
+fwrite($out_stream, substr($out_buffer, 0, -2)); // strip end mark (\r\n).
+pclose($out_stream);
 
-<span class="c1">// Output read bytes to browser.
-</span><span class="k">echo</span> <span class="nv">$data_len</span><span class="p">;</span>
+$data_len += strlen($out_buffer) - 2;
 
-<span class="cp">?&gt;</span>
-</code></pre>
+// Output read bytes to browser.
+echo $data_len;
+
+?>
+{% endhighlight %}
 
 
 <p>
@@ -165,15 +169,17 @@ ffmpeg.cgi 要設置可執行屬性，以便執行。(<span class="note">因為�
 ffmpeg.html 則是示範用的檔案上傳頁面。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">'/cgi-bin/ffmpeg.cgi'</span> <span class="na">method=</span><span class="s">'POST'</span>
-	<span class="na">enctype=</span><span class="s">'multipart/form-data'</span><span class="nt">&gt;</span>
-<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">name=</span><span class="s">"data"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;br/&gt;</span>
-<span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>Submit<span class="nt">&lt;/button&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
+
+{% highlight html %}
+<html>
+<form action='/cgi-bin/ffmpeg.cgi' method='POST'
+	enctype='multipart/form-data'>
+<input type="file" name="data" />
+<br/>
+<button type="submit">Submit</button>
+</form>
+</html>
+{% endhighlight %}
 
 
 <p>

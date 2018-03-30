@@ -43,105 +43,109 @@ Screen 會用 X, Y 座標註明顯示器映照的畫面範圍起始點。
 Vala 版 - screen-monitors.vala
 </h4>
 
-<pre class="highlight"><code><span class="c1">// valac --pkg=gtk+-2.0 --pkg=gdk-2.0 screen-monitors.vala
-</span><span class="n">using</span> <span class="n">Gtk</span><span class="p">;</span>
-<span class="n">using</span> <span class="n">Gdk</span><span class="p">;</span>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="n">string</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="n">nothing</span> <span class="o">=</span> <span class="p">{</span><span class="s">""</span><span class="p">};</span>
-    <span class="n">Gtk</span><span class="p">.</span><span class="n">init</span><span class="p">(</span><span class="n">ref</span> <span class="n">nothing</span><span class="p">);</span>
+{% highlight csharp %}
+// valac --pkg=gtk+-2.0 --pkg=gdk-2.0 screen-monitors.vala
+using Gtk;
+using Gdk;
 
-    <span class="n">var</span> <span class="n">scr</span> <span class="o">=</span> <span class="n">Gdk</span><span class="p">.</span><span class="n">Screen</span><span class="p">.</span><span class="n">get_default</span><span class="p">();</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Screen height(%d), width(%d)</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> 
-            <span class="n">Gdk</span><span class="p">.</span><span class="n">Screen</span><span class="p">.</span><span class="n">height</span><span class="p">(),</span> <span class="n">Gdk</span><span class="p">.</span><span class="n">Screen</span><span class="p">.</span><span class="n">width</span><span class="p">());</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Screen height(%d), width(%d)</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> 
-            <span class="n">scr</span><span class="p">.</span><span class="n">get_height</span><span class="p">(),</span> <span class="n">scr</span><span class="p">.</span><span class="n">get_width</span><span class="p">());</span>
-    <span class="n">var</span> <span class="n">n_monitors</span> <span class="o">=</span> <span class="n">scr</span><span class="p">.</span><span class="n">get_n_monitors</span><span class="p">();</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Monitors: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n_monitors</span><span class="p">);</span>
+int main()
+{
+    int i = 0;
+    string[1] nothing = {""};
+    Gtk.init(ref nothing);
 
-    <span class="n">var</span> <span class="n">rects</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Rectangle</span><span class="p">[</span><span class="n">n_monitors</span><span class="p">];</span>
-    <span class="n">Rectangle</span> <span class="n">rect</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_monitors</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">scr</span><span class="p">.</span><span class="n">get_monitor_geometry</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">out</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Rectangle %d : x[%d], y[%d], height[%d], width[%d]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> 
-                <span class="n">i</span><span class="p">,</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">x</span><span class="p">,</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">y</span><span class="p">,</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">width</span><span class="p">,</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">height</span><span class="p">);</span>
-    <span class="p">}</span>
+    var scr = Gdk.Screen.get_default();
+    stdout.printf("Screen height(%d), width(%d)\n", 
+            Gdk.Screen.height(), Gdk.Screen.width());
+    stdout.printf("Screen height(%d), width(%d)\n", 
+            scr.get_height(), scr.get_width());
+    var n_monitors = scr.get_n_monitors();
+    stdout.printf("Monitors: %d\n", n_monitors);
 
-    <span class="n">var</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Gtk</span><span class="p">.</span><span class="n">Window</span><span class="p">[</span><span class="n">n_monitors</span><span class="p">];</span>
-    <span class="n">Gtk</span><span class="p">.</span><span class="n">Window</span> <span class="n">w</span><span class="p">;</span>
-    <span class="n">Label</span> <span class="n">label</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_monitors</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">w</span> <span class="o">=</span> <span class="n">ws</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Gtk</span><span class="p">.</span><span class="n">Window</span><span class="p">();</span>
-        <span class="n">rect</span> <span class="o">=</span> <span class="n">rects</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-        <span class="n">w</span><span class="p">.</span><span class="n">destroy</span><span class="p">.</span><span class="n">connect</span><span class="p">(</span><span class="n">Gtk</span><span class="p">.</span><span class="n">main_quit</span><span class="p">);</span>
-        <span class="n">w</span><span class="p">.</span><span class="n">title</span> <span class="o">=</span> <span class="err">@</span><span class="s">"Window at monitor $i"</span><span class="p">;</span>
-        <span class="n">w</span><span class="p">.</span><span class="n">set_default_size</span><span class="p">(</span><span class="n">rect</span><span class="p">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">rect</span><span class="p">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span><span class="p">);</span>
-        <span class="n">w</span><span class="p">.</span><span class="n">move</span><span class="p">(</span><span class="n">rect</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">rect</span><span class="p">.</span><span class="n">width</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="n">rect</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">rect</span><span class="p">.</span><span class="n">height</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Label</span><span class="p">(</span><span class="n">null</span><span class="p">);</span>
-        <span class="n">label</span><span class="p">.</span><span class="n">set_use_markup</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-        <span class="n">label</span><span class="p">.</span><span class="n">set_markup</span><span class="p">(</span><span class="err">@</span><span class="s">"&lt;span font='64'&gt;$i&lt;/span&gt;"</span><span class="p">);</span>
-        <span class="n">w</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
-        <span class="n">w</span><span class="p">.</span><span class="n">show_all</span><span class="p">();</span>
-    <span class="p">}</span>
+    var rects = new Rectangle[n_monitors];
+    Rectangle rect;
+    for (i = 0; i < n_monitors; ++i) {
+        scr.get_monitor_geometry(i, out rects[i]);
+        stdout.printf("Rectangle %d : x[%d], y[%d], height[%d], width[%d]\n", 
+                i, rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+    }
 
-    <span class="n">Gtk</span><span class="p">.</span><span class="n">main</span><span class="p">();</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    var ws = new Gtk.Window[n_monitors];
+    Gtk.Window w;
+    Label label;
+    for (i = 0; i < n_monitors; ++i) {
+        w = ws[i] = new Gtk.Window();
+        rect = rects[i];
+        w.destroy.connect(Gtk.main_quit);
+        w.title = @"Window at monitor $i";
+        w.set_default_size(rect.width/2, rect.height/2);
+        w.move(rect.x + rect.width/4, rect.y + rect.height/4);
+        label = new Label(null);
+        label.set_use_markup(true);
+        label.set_markup(@"<span font='64'>$i</span>");
+        w.add(label);
+        w.show_all();
+    }
+
+    Gtk.main();
+    return 0;
+}
+{% endhighlight %}
 
 
 <h4>
 GJS/Gnome-Shell 版 - screen-monitors.js
 </h4>
 
-<pre class="highlight"><code><span class="c1">// Use GDK to get size of current screen.</span>
-<span class="kr">const</span> <span class="nx">Gdk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gdk</span><span class="p">;</span>
-<span class="kr">const</span> <span class="nx">Gtk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">;</span>
 
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+{% highlight javascript %}
+// Use GDK to get size of current screen.
+const Gdk = imports.gi.Gdk;
+const Gtk = imports.gi.Gtk;
 
-<span class="kd">var</span> <span class="nx">screen</span> <span class="o">=</span> <span class="nx">Gdk</span><span class="p">.</span><span class="nx">Screen</span><span class="p">.</span><span class="nx">get_default</span><span class="p">();</span> <span class="c1">// w.get_screen();</span>
-<span class="kd">var</span> <span class="nx">n_monitors</span> <span class="o">=</span> <span class="nx">screen</span><span class="p">.</span><span class="nx">get_n_monitors</span><span class="p">();</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Current screen width: "</span> <span class="o">+</span> <span class="nx">screen</span><span class="p">.</span><span class="nx">get_width</span><span class="p">()</span> <span class="o">+</span> 
-                  <span class="s2">"; height: "</span> <span class="o">+</span> <span class="nx">screen</span><span class="p">.</span><span class="nx">get_height</span><span class="p">());</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Number of Monitors: "</span> <span class="o">+</span> <span class="nx">n_monitors</span><span class="p">);</span>
+Gtk.init(0, null);
 
-<span class="kd">var</span> <span class="nx">monitor_geometry</span> <span class="o">=</span> <span class="p">[</span><span class="k">new</span> <span class="nx">Gdk</span><span class="p">.</span><span class="nx">Rectangle</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Gdk</span><span class="p">.</span><span class="nx">Rectangle</span><span class="p">];</span>
-<span class="c1">//http://www.pygtk.org/docs/pygtk/class-gdkrectangle.html</span>
+var screen = Gdk.Screen.get_default(); // w.get_screen();
+var n_monitors = screen.get_n_monitors();
+print("Current screen width: " + screen.get_width() + 
+                  "; height: " + screen.get_height());
+print("Number of Monitors: " + n_monitors);
 
-<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">n_monitors</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">screen</span><span class="p">.</span><span class="nx">get_monitor_geometry</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">monitor_geometry</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"Geometry of Monitor "</span><span class="p">,</span> <span class="nx">i</span><span class="p">);</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"\tWidth:  "</span> <span class="o">+</span> <span class="nx">monitor_geometry</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">width</span><span class="p">);</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"\tHeight: "</span> <span class="o">+</span> <span class="nx">monitor_geometry</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">height</span><span class="p">);</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"\tX:      "</span> <span class="o">+</span> <span class="nx">monitor_geometry</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">x</span><span class="p">);</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"\tY:      "</span> <span class="o">+</span> <span class="nx">monitor_geometry</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">y</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">//http://developer.gnome.org/gdk/stable/GdkScreen.html</span>
-<span class="c1">//http://www.pygtk.org/docs/pygtk/gdk-functions.html</span>
-<span class="c1">//http://www.gtk.org/api/2.6/gdk/multihead.html</span>
+var monitor_geometry = [new Gdk.Rectangle, new Gdk.Rectangle];
+//http://www.pygtk.org/docs/pygtk/class-gdkrectangle.html
 
-<span class="kd">var</span> <span class="nx">ws</span> <span class="o">=</span> <span class="p">[</span><span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">];</span>
-<span class="kd">var</span> <span class="nx">w</span><span class="p">,</span> <span class="nx">label</span><span class="p">,</span> <span class="nx">rect</span><span class="p">;</span>
-<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">n_monitors</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">w</span> <span class="o">=</span> <span class="nx">ws</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-    <span class="nx">rect</span> <span class="o">=</span> <span class="nx">monitor_geometry</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"destroy"</span><span class="p">,</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">title</span> <span class="o">=</span> <span class="s2">"Window at monitor "</span> <span class="o">+</span> <span class="nx">i</span><span class="p">;</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">set_default_size</span><span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">rect</span><span class="p">.</span><span class="nx">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">);</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">move</span><span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">rect</span><span class="p">.</span><span class="nx">width</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">rect</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">rect</span><span class="p">.</span><span class="nx">height</span> <span class="o">/</span> <span class="mi">4</span><span class="p">);</span>
-    <span class="nx">label</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Label</span><span class="p">({</span>
-        <span class="na">label</span><span class="p">:</span> <span class="s2">"&lt;span font='64'&gt;"</span> <span class="o">+</span> <span class="nx">i</span> <span class="o">+</span> <span class="s2">"&lt;/span&gt;"</span><span class="p">,</span>
-        <span class="na">use_markup</span><span class="p">:</span> <span class="kc">true</span>
-        <span class="p">});</span> <span class="c1">// 跟 GIR 的宣告內容不符...</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">label</span><span class="p">);</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">show_all</span><span class="p">();</span>
-<span class="p">}</span>
+for (var i = 0; i < n_monitors; ++i) {
+    screen.get_monitor_geometry(i, monitor_geometry[i])
+    print("Geometry of Monitor ", i);
+    print("\tWidth:  " + monitor_geometry[i].width);
+    print("\tHeight: " + monitor_geometry[i].height);
+    print("\tX:      " + monitor_geometry[i].x);
+    print("\tY:      " + monitor_geometry[i].y);
+}
+//http://developer.gnome.org/gdk/stable/GdkScreen.html
+//http://www.pygtk.org/docs/pygtk/gdk-functions.html
+//http://www.gtk.org/api/2.6/gdk/multihead.html
 
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">main</span><span class="p">();</span> <span class="c1">// gtk loop, quit by main_quit().</span>
-</code></pre>
+var ws = [new Gtk.Window, new Gtk.Window];
+var w, label, rect;
+for (var i = 0; i < n_monitors; ++i) {
+    w = ws[i];
+    rect = monitor_geometry[i];
+    w.connect("destroy", Gtk.main_quit);
+    w.title = "Window at monitor " + i;
+    w.set_default_size(rect.width / 2, rect.height / 2);
+    w.move(rect.x + rect.width / 4, rect.y + rect.height / 4);
+    label = new Gtk.Label({
+        label: "<span font='64'>" + i + "</span>",
+        use_markup: true
+        }); // 跟 GIR 的宣告內容不符...
+    w.add(label);
+    w.show_all();
+}
+
+Gtk.main(); // gtk loop, quit by main_quit().
+{% endhighlight %}
 
 
 <h4>

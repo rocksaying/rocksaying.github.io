@@ -14,55 +14,59 @@ permalink: /archives/35970791.html
 <!--more-->
 <p>像下面的程式碼範例，你設計欄位 <code>field1</code> 是一個字串欄位，讓使用者輸入文字，例如 <code>hello world</code>。若駭客抓住這一點，故意輸入 <code>@/etc/passwd</code> ，那麼 curl 就會認為這是要上傳檔案，而去讀取 /etc/passwd 的內容並將之送出。</p>
 
-<pre class="highlight"><code>
+
+{% highlight php %}
 $fields =array(
-    'field1' =&gt; $input_string
+    'field1' => $input_string
 );
 $opts = array(
-    CURLOPT_POST    =&gt; true,
-    CURLOPT_POSTFIELDS =&gt; $fields
+    CURLOPT_POST    => true,
+    CURLOPT_POSTFIELDS => $fields
 );
 
 curl_setopt_array($hr, $opts);
-</code></pre>
+{% endhighlight %}
 
 
 <p>為了修正這個安全問題， PHP 5.5 之後關閉了這個上傳檔案的捷徑(<span class="note">有組態項目可以開啟這功能，但基於安全理由，我不建議這麼做</span>)。如果要上傳的表單欄位中包含檔案型態，那麼設計者必須明確地使用 <code>curl_file_create()</code> 函數處理這個資料欄位。當然，設計者有必要檢查檔案路徑是否安全。幸好這項調整工作很容易修改。如下所示:</p>
 
-<pre class="highlight"><code>
+
+{% highlight php %}
 $fields =array(
-    // 'field1' =&gt; '@' . $file_path # INSECURITY!
-    'field1' =&gt; curl_file_create($file_path) # Good.
+    // 'field1' => '@' . $file_path # INSECURITY!
+    'field1' => curl_file_create($file_path) # Good.
 );
 $opts = array(
-    CURLOPT_POST    =&gt; true,
-    CURLOPT_POSTFIELDS =&gt; $fields
+    CURLOPT_POST    => true,
+    CURLOPT_POSTFIELDS => $fields
 );
 
 curl_setopt_array($hr, $opts);
-</code></pre>
+{% endhighlight %}
 
 
 <p>對於 PHP 5.4 及其以前的舊版用戶，可以參考網友分享的偷懶替代法，在程式碼中加入下列定義。</p>
 
-<pre class="highlight"><code>
-# For PHP <span class="nt">&lt; 5</span><span class="err">.</span><span class="na">5:</span>
-<span class="err">#</span> <span class="na">See</span> <span class="na">also:</span> <span class="na">http:</span><span class="err">//</span><span class="na">php</span><span class="err">.</span><span class="na">net</span><span class="err">/</span><span class="na">manual</span><span class="err">/</span><span class="na">en</span><span class="err">/</span><span class="na">function</span><span class="err">.</span><span class="na">curl-file-create</span><span class="err">.</span><span class="na">php</span>
-<span class="na">if</span> <span class="err">(!</span><span class="na">function_exists</span><span class="err">('</span><span class="na">curl_file_create</span><span class="err">'))</span> <span class="err">{</span>
-    <span class="na">function</span> <span class="na">curl_file_create</span><span class="err">($</span><span class="na">filename</span><span class="err">,</span> <span class="err">$</span><span class="na">mimetype =</span><span class="err"> </span><span class="s">''</span><span class="err">,</span> <span class="err">$</span><span class="na">postname =</span><span class="err"> </span><span class="s">''</span><span class="err">)</span> <span class="err">{</span>
-        <span class="na">return</span> <span class="err">"@$</span><span class="na">filename</span><span class="err">;</span><span class="na">filename=</span><span class="s">"
+
+{% highlight php %}
+# For PHP < 5.5:
+# See also: http://php.net/manual/en/function.curl-file-create.php
+if (!function_exists('curl_file_create')) {
+    function curl_file_create($filename, $mimetype = '', $postname = '') {
+        return "@$filename;filename="
             . ($postname ?: basename($filename))
-            . ($mimetype ? "</span><span class="err">;</span><span class="na">type=</span><span class="s">$mimetype"</span> <span class="na">:</span> <span class="err">'');</span>
-    <span class="err">}</span>
-<span class="err">}</span>
-</code></pre>
+            . ($mimetype ? ";type=$mimetype" : '');
+    }
+}
+{% endhighlight %}
 
 
 <p>這個偷懶法就是定義一個 <code>curl_file_create()</code> ，但內容只是回傳一個以 <code>@</code> 標示的字串。在舊版 PHP 中，它仍然會交給 curl 去自動載入檔案並上傳。但在新版 PHP 中，就會調用內建的 <code>curl_file_create()</code> 函數處理檔案的載入工作。</p>
 
 <p>最後，提供一個無視 PHP 版本也不透過 curl 的方法，即下列的 <code>do_post_request()</code> 函數。</p>
 
-<pre class="highlight"><code>
+
+{% highlight php %}
 function do_post_request($url, $postdata = false, $files = false)
 {
     $destination = $url;
@@ -76,7 +80,7 @@ function do_post_request($url, $postdata = false, $files = false)
 
     //Collect Postdata
     if ($postdata) {
-        foreach($postdata as $key =&gt; $val) {
+        foreach($postdata as $key => $val) {
             $data .= "--$mime_boundary\n";
             $data .= "Content-Disposition: form-data; name="".$key.""\n\n".$val."\n";
         }
@@ -84,7 +88,7 @@ function do_post_request($url, $postdata = false, $files = false)
     $data .= "--$mime_boundary\n";
 
     if ($files) {
-        foreach ($files as $key =&gt; $content) {
+        foreach ($files as $key => $content) {
             $data .= 'Content-Disposition: form-data; name="' .
                       $key . '"; filename="' . $key . '"' . $eol;
             $data .= 'Content-Type: application/octet-stream' . $eol;
@@ -96,11 +100,11 @@ function do_post_request($url, $postdata = false, $files = false)
     $data .= "--" . $mime_boundary . "--" . $eol . $eol; // finish with two eol's!!
 
     $params = array(
-        'http' =&gt; array(
-            'method' =&gt; 'POST',
-            'header' =&gt; 'Content-Type: multipart/form-data; boundary=' .
+        'http' => array(
+            'method' => 'POST',
+            'header' => 'Content-Type: multipart/form-data; boundary=' .
                 $mime_boundary . $eol,
-            'content' =&gt; $data
+            'content' => $data
         )
     );
 
@@ -108,7 +112,7 @@ function do_post_request($url, $postdata = false, $files = false)
     $response = @file_get_contents($destination, FILE_TEXT, $ctx);
     return $response;
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>不過這方法假設所有表單欄位都是檔案型態。如果你要上傳的表單混雜了一般文字欄位和檔案型態欄位的話，你要自己區分處理。</p>

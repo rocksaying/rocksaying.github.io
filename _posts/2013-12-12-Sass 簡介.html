@@ -74,26 +74,28 @@ Sass 語法摘要
 變數用法非常簡單，任何一個 shell script/PHP 使用者都能一眼理解。就是用 $ 符號。如下:
 </p>
 
-<pre class="highlight"><code>
-<span class="err">$</span><span class="nt">font-stack</span><span class="o">:</span>    <span class="nt">Helvetica</span><span class="o">,</span> <span class="nt">sans-serif</span><span class="o">;</span>
-<span class="err">$</span><span class="nt">primary-color</span><span class="o">:</span> <span class="nf">#333</span><span class="o">;</span>
 
-<span class="nt">body</span> <span class="p">{</span>
-  <span class="nl">font</span><span class="p">:</span> <span class="m">100%</span> <span class="err">$</span><span class="n">font-stack</span><span class="p">;</span>
-  <span class="nl">color</span><span class="p">:</span> <span class="err">$</span><span class="n">primary-color</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight sass %}
+$font-stack:    Helvetica, sans-serif;
+$primary-color: #333;
+
+body {
+  font: 100% $font-stack;
+  color: $primary-color;
+}
+{% endhighlight %}
 
 
 <p>轉譯為 CSS 後，在 body 樣式宣告中的 <var>$font-stack</var>、<var>$primary-color</var> 就會替換為實際的值。
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">body</span> <span class="p">{</span>
-  <span class="nl">font</span><span class="p">:</span> <span class="m">100%</span> <span class="n">Helvetica</span><span class="p">,</span> <span class="nb">sans-serif</span><span class="p">;</span>
-  <span class="nl">color</span><span class="p">:</span> <span class="m">#333</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight sass %}
+body {
+  font: 100% Helvetica, sans-serif;
+  color: #333;
+}
+{% endhighlight %}
 
 
 <h5>巢狀結構
@@ -102,45 +104,47 @@ Sass 語法摘要
 <p>XML/HTML 具有巢狀結構，但 CSS 用於描述巢狀結構樣式的形式卻是平面的。如下：
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">nav</span> <span class="nt">ul</span> <span class="p">{</span>
-  <span class="nl">margin</span><span class="p">:</span> <span class="m">0</span><span class="p">;</span>
-  <span class="nl">padding</span><span class="p">:</span> <span class="m">0</span><span class="p">;</span>
-  <span class="nl">list-style</span><span class="p">:</span> <span class="nb">none</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nt">nav</span> <span class="nt">li</span> <span class="p">{</span>
-  <span class="nl">display</span><span class="p">:</span> <span class="n">inline-block</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight sass %}
+nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
-<span class="nt">nav</span> <span class="nt">a</span> <span class="p">{</span>
-  <span class="nl">display</span><span class="p">:</span> <span class="nb">block</span><span class="p">;</span>
-  <span class="nl">padding</span><span class="p">:</span> <span class="m">6px</span> <span class="m">12px</span><span class="p">;</span>
-  <span class="nl">text-decoration</span><span class="p">:</span> <span class="nb">none</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+nav li {
+  display: inline-block;
+}
+
+nav a {
+  display: block;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+{% endhighlight %}
 
 
 <p>Sass 則加入了巢狀描述語法，所以上述的 CSS 內容可以改寫成下列 Sass 內容:
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">nav</span> <span class="p">{</span>
-  <span class="err">ul</span> <span class="err">{</span>
-    <span class="nl">margin</span><span class="p">:</span> <span class="m">0</span><span class="p">;</span>
-    <span class="nl">padding</span><span class="p">:</span> <span class="m">0</span><span class="p">;</span>
-    <span class="nl">list-style</span><span class="p">:</span> <span class="nb">none</span><span class="p">;</span>
-  <span class="p">}</span>
 
-  <span class="nt">li</span> <span class="p">{</span> <span class="nl">display</span><span class="p">:</span> <span class="n">inline-block</span><span class="p">;</span> <span class="p">}</span>
+{% highlight sass %}
+nav {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
 
-  <span class="nt">a</span> <span class="p">{</span>
-    <span class="nl">display</span><span class="p">:</span> <span class="nb">block</span><span class="p">;</span>
-    <span class="nl">padding</span><span class="p">:</span> <span class="m">6px</span> <span class="m">12px</span><span class="p">;</span>
-    <span class="nl">text-decoration</span><span class="p">:</span> <span class="nb">none</span><span class="p">;</span>
-  <span class="p">}</span>
-<span class="err">}</span>
-</code></pre>
+  li { display: inline-block; }
+
+  a {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+  }
+}
+{% endhighlight %}
 
 
 <h5>
@@ -153,47 +157,50 @@ Mixins
 <p>基於歷史因素，定義邊角圓弧半徑時，我們習慣前綴瀏覽器代碼。所以定義一個 border-radius 屬性時，我們往往要寫 5 行。如下:
 </p>
 
-<pre class="highlight"><code>
-<span class="nc">.box1</span> <span class="p">{</span>
-  <span class="nl">-webkit-border-radius</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-  <span class="nl">-moz-border-radius</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-  <span class="nl">-ms-border-radius</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-  <span class="nl">-o-border-radius</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-  <span class="nl">border-radius</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nc">.box2</span> <span class="p">{</span>
-  <span class="nl">-webkit-border-radius</span><span class="p">:</span> <span class="m">15px</span><span class="p">;</span>
-  <span class="nl">-moz-border-radius</span><span class="p">:</span> <span class="m">15px</span><span class="p">;</span>
-  <span class="nl">-ms-border-radius</span><span class="p">:</span> <span class="m">15px</span><span class="p">;</span>
-  <span class="nl">-o-border-radius</span><span class="p">:</span> <span class="m">15px</span><span class="p">;</span>
-  <span class="nl">border-radius</span><span class="p">:</span> <span class="m">15px</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight sass %}
+.box1 {
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  -ms-border-radius: 10px;
+  -o-border-radius: 10px;
+  border-radius: 10px;
+}
+
+.box2 {
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  -ms-border-radius: 15px;
+  -o-border-radius: 15px;
+  border-radius: 15px;
+}
+{% endhighlight %}
 
 
 <p>使用 Sass 的 Mixins 就可以簡化為一行。首先用 Sass 關鍵字 <dfn>@mixin</dfn> 定義一個巨集 <code>border-radius</code> 且代入一個半徑參數：<var>$radius</var>，內容如下：
 </p>
 
-<pre class="highlight"><code>
-<span class="k">@mixin</span> <span class="n">border-radius</span><span class="p">(</span><span class="err">$</span><span class="n">radius</span><span class="p">)</span> <span class="p">{</span>
-  <span class="nl">-webkit-border-radius</span><span class="p">:</span> <span class="err">$</span><span class="n">radius</span><span class="p">;</span>
-     <span class="nl">-moz-border-radius</span><span class="p">:</span> <span class="err">$</span><span class="n">radius</span><span class="p">;</span>
-      <span class="nl">-ms-border-radius</span><span class="p">:</span> <span class="err">$</span><span class="n">radius</span><span class="p">;</span>
-       <span class="nl">-o-border-radius</span><span class="p">:</span> <span class="err">$</span><span class="n">radius</span><span class="p">;</span>
-          <span class="nl">border-radius</span><span class="p">:</span> <span class="err">$</span><span class="n">radius</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight sass %}
+@mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+     -moz-border-radius: $radius;
+      -ms-border-radius: $radius;
+       -o-border-radius: $radius;
+          border-radius: $radius;
+}
+{% endhighlight %}
 
 
 <p>套用 border-radius($radius) 這個 mixin ，原本的樣式內容就可簡化為:
 </p>
 
-<pre class="highlight"><code>
-<span class="nc">.box1</span> <span class="p">{</span> <span class="err">@include</span> <span class="err">border-radius(10px);</span> <span class="p">}</span>
 
-<span class="nc">.box2</span> <span class="p">{</span> <span class="err">@include</span> <span class="err">border-radius(15px);</span> <span class="p">}</span>
-</code></pre>
+{% highlight sass %}
+.box1 { @include border-radius(10px); }
+
+.box2 { @include border-radius(15px); }
+{% endhighlight %}
 
 
 <h5>繼承樣式類別
@@ -202,89 +209,93 @@ Mixins
 <p>CSS 的樣式類別，只用於分類視覺元件，它本身不具繼承性。所以我們以前要這麼寫:
 </p>
 
-<pre class="highlight"><code>
-<span class="nc">.message</span><span class="o">,</span> <span class="nc">.success</span><span class="o">,</span> <span class="nc">.error</span><span class="o">,</span> <span class="nc">.warning</span> <span class="p">{</span>
-  <span class="nl">border</span><span class="p">:</span> <span class="m">1px</span> <span class="nb">solid</span> <span class="m">#cccccc</span><span class="p">;</span>
-  <span class="nl">padding</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-  <span class="nl">color</span><span class="p">:</span> <span class="m">#333</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nc">.success</span> <span class="p">{</span>
-  <span class="nl">border-color</span><span class="p">:</span> <span class="no">green</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight sass %}
+.message, .success, .error, .warning {
+  border: 1px solid #cccccc;
+  padding: 10px;
+  color: #333;
+}
 
-<span class="nc">.error</span> <span class="p">{</span>
-  <span class="nl">border-color</span><span class="p">:</span> <span class="no">red</span><span class="p">;</span>
-<span class="p">}</span>
+.success {
+  border-color: green;
+}
 
-<span class="nc">.warning</span> <span class="p">{</span>
-  <span class="nl">border-color</span><span class="p">:</span> <span class="no">yellow</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+.error {
+  border-color: red;
+}
+
+.warning {
+  border-color: yellow;
+}
+{% endhighlight %}
 
 
 <p>HTML 部分:
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"message success"</span><span class="nt">&gt;</span>
+
+{% highlight sass %}
+<p class="message success">
 成功訊息
-<span class="nt">&lt;/p&gt;</span>
+</p>
 
-<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"message error"</span><span class="nt">&gt;</span>
+<p class="message error">
 錯誤訊息
-<span class="nt">&lt;/p&gt;</span>
+</p>
 
-<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"message warning"</span><span class="nt">&gt;</span>
+<p class="message warning">
 警告訊息
-<span class="nt">&lt;/p&gt;</span>
-</code></pre>
+</p>
+{% endhighlight %}
 
 
 <p>Sass 則允許用關鍵字 <dfn>@extend</dfn> 繼承樣式類別，所以可改寫：
 </p>
 
-<pre class="highlight"><code>
-<span class="nc">.message</span> <span class="p">{</span>
-  <span class="nl">border</span><span class="p">:</span> <span class="m">1px</span> <span class="nb">solid</span> <span class="m">#ccc</span><span class="p">;</span>
-  <span class="nl">padding</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-  <span class="nl">color</span><span class="p">:</span> <span class="m">#333</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nc">.success</span> <span class="p">{</span>
-  <span class="err">@extend</span> <span class="err">.message;</span>    
-  <span class="c">/* 繼承 .message 所定義的 border 1px, padding 10px, color #333 內容 */</span>
-  <span class="nl">border-color</span><span class="p">:</span> <span class="no">green</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight sass %}
+.message {
+  border: 1px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
 
-<span class="nc">.error</span> <span class="p">{</span>
-  <span class="err">@extend</span> <span class="err">.message;</span>
-  <span class="nl">border-color</span><span class="p">:</span> <span class="no">red</span><span class="p">;</span>
-<span class="p">}</span>
+.success {
+  @extend .message;    
+  /* 繼承 .message 所定義的 border 1px, padding 10px, color #333 內容 */
+  border-color: green;
+}
 
-<span class="nc">.warning</span> <span class="p">{</span>
-  <span class="err">@extend</span> <span class="err">.message;sssssssssssssssssss</span>
-  <span class="nl">border-color</span><span class="p">:</span> <span class="no">yellow</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+.error {
+  @extend .message;
+  border-color: red;
+}
+
+.warning {
+  @extend .message;sssssssssssssssssss
+  border-color: yellow;
+}
+{% endhighlight %}
 
 
 <p>而 HTML 的部份則可以改寫為:
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"success"</span><span class="nt">&gt;</span>
+
+{% highlight sass %}
+<p class="success">
 成功訊息
-<span class="nt">&lt;/p&gt;</span>
+</p>
 
-<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"error"</span><span class="nt">&gt;</span>
+<p class="error">
 錯誤訊息
-<span class="nt">&lt;/p&gt;</span>
+</p>
 
-<span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">"warning"</span><span class="nt">&gt;</span>
+<p class="warning">
 警告訊息
-<span class="nt">&lt;/p&gt;</span>
-</code></pre>
+</p>
+{% endhighlight %}
 
 
 <p>

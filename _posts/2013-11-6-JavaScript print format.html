@@ -23,26 +23,28 @@ permalink: /archives/25899028.html
 這是 C# 式的用法。
 </p>
 
-<pre class="highlight"><code><span class="cm">/**
+
+{% highlight javascript %}
+/**
 A method of String: "format".interpolate(...);
 by {0}, {1}, {2}, ... base from 0.
- */</span>
-<span class="nb">String</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">interpolate</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// do nothing</span>
-        <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+ */
+String.prototype.interpolate = function()
+{
+    if (arguments.length < 1) // do nothing
+        return this;
 
-    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">;</span>
-    <span class="c1">// see ECMA-262 3rd edition, 15.5.4.11 String.prototype.replace.
-</span>
-    <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\{\d</span><span class="sr">+</span><span class="se">\}</span><span class="sr">/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">k</span> <span class="o">=</span> <span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nx">matched</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// index base from 0.
-</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">?</span> <span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
-    <span class="p">});</span>
-<span class="p">}</span>
-</code></pre>
+    var s = this;
+    var args = arguments;
+    // see ECMA-262 3rd edition, 15.5.4.11 String.prototype.replace.
+
+    return s.replace(/\{\d+\}/g, function(matched, offset, src) {
+        var k = matched.substring(1,matched.length-1); // index base from 0.
+
+        return (args[k] ? args[k] : matched);
+    });
+}
+{% endhighlight %}
 
 
 <p>
@@ -50,49 +52,52 @@ by {0}, {1}, {2}, ... base from 0.
 這比較像 shell script 的用法。
 </p>
 
-<pre class="highlight"><code><span class="cm">/**
+
+{% highlight javascript %}
+/**
 A method of String: "format".interpolate(...);
 by $1, $2, ... base from 1.
- */</span>
-<span class="nb">String</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">interpolate2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">index_offset</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// index base from 1.
-</span>
-    <span class="k">if</span> <span class="p">(</span><span class="k">this</span> <span class="k">instanceof</span> <span class="nb">String</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// nothing</span>
-            <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="nx">s</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="c1">// notice: arguments is not an array.
-</span>
-        <span class="nx">index_offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="c1">/// nothing</span>
-            <span class="k">return</span> <span class="nx">s</span><span class="p">;</span>
-    <span class="p">}</span>
+ */
+String.prototype.interpolate2 = function()
+{
+    var s = this;
+    var index_offset = 1; // index base from 1.
 
-    <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">;</span>
-    <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\$[\$\d]</span><span class="sr">+/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">k</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="nx">index_offset</span><span class="p">;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">?</span> <span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
-    <span class="p">});</span>
-<span class="p">}</span>
-</code></pre>
+    if (this instanceof String) {
+        if (arguments.length < 1) // nothing
+            return this;
+    }
+    else {
+        s = arguments[0]; // notice: arguments is not an array.
+
+        index_offset = 0;
+        if (arguments.length < 2) /// nothing
+            return s;
+    }
+
+    var args = arguments;
+    return s.replace(/\$[\$\d]+/g, function(matched, offset, src) {
+        var k = parseInt(matched.substring(1)) - index_offset;
+        return (args[k] ? args[k] : matched);
+    });
+}
+{% endhighlight %}
 
 
 <p>
 使用如下例。
 </p>
 
-<pre class="highlight"><code><span class="nx">alert</span><span class="p">(</span><span class="s2">"nothing"</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">());</span>
 
-<span class="c1">// 這是 C# 式的用法。基數從0開始。</span>
-<span class="nx">alert</span><span class="p">(</span><span class="s2">"hello {0}. {1} + {2} = {3}"</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="s2">"abc{2}"</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+{% highlight javascript %}
+alert("nothing".interpolate());
 
-<span class="c1">// 這比較像 shell script 的用法，基數從1開始。</span>
-<span class="nx">alert</span><span class="p">(</span><span class="s2">"hello $1. $2 + $3 = $4"</span><span class="p">.</span><span class="nx">interpolate2</span><span class="p">(</span><span class="s2">"abc$2"</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+// 這是 C# 式的用法。基數從0開始。
+alert("hello {0}. {1} + {2} = {3}".interpolate("abc{2}", 'two', 3, 5));
 
-</code></pre>
+// 這比較像 shell script 的用法，基數從1開始。
+alert("hello $1. $2 + $3 = $4".interpolate2("abc$2", 'two', 3, 5));
+{% endhighlight %}
 
 
 <p>

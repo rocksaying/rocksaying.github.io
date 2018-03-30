@@ -82,30 +82,30 @@ rest parameter
 <p>舉例來說:
 </p>
 
-<pre class="highlight"><code>
-<span class="kd">function</span> <span class="nx">func1</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">arguments</span><span class="p">,</span> <span class="s1">'count:'</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="nx">func1</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'other'</span><span class="p">,</span> <span class="s1">'parameters'</span><span class="p">);</span>
+{% highlight javascript %}
+function func1(x, y)
+{
+    console.log(arguments, 'count:', arguments.length);
+}
 
-<span class="c1">//輸出: Arguments {0:1, 1:2, 2:'other', 3:'parameters'} count: 4
-</span>
-</code></pre>
+func1(1, 2, 'other', 'parameters');
+
+//輸出: Arguments {0:1, 1:2, 2:'other', 3:'parameters'} count: 4
+{% endhighlight %}
 
 
-<pre class="highlight"><code>
-<span class="kd">function</span> <span class="nx">func2</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">,</span> <span class="p">...</span><span class="nx">z</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">z</span><span class="p">,</span> <span class="s1">'count:'</span><span class="p">,</span> <span class="nx">z</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="nx">func2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'other'</span><span class="p">,</span> <span class="s1">'parameters'</span><span class="p">);</span>
+{% highlight javascript %}
+function func2(x, y, ...z)
+{
+    console.log(z, 'count:', z.length);
+}
 
-<span class="c1">//輸出: Array[ 'other', 'parameters' ] count: 2
-</span>
-</code></pre>
+func2(1, 2, 'other', 'parameters');
+
+//輸出: Array[ 'other', 'parameters' ] count: 2
+{% endhighlight %}
 
 
 
@@ -331,41 +331,44 @@ Skymizer 雲端編譯
 <p>講者舉了幾個程式碼經過編譯器最佳化的預期範例。其中一個大概像下面這樣:
 </p>
 
-<pre class="highlight"><code>
-<span class="c1">// 程序人員手寫碼
-</span><span class="kt">int</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-    <span class="k">return</span> <span class="o">*</span><span class="n">a</span> <span class="o">+</span> <span class="mi">3</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c %}
+// 程序人員手寫碼
+int func(int *a, int *b)
+{
+    *a = 1;
+    *b = 2;
+    return *a + 3;
+}
+{% endhighlight %}
 
 
-<pre class="highlight"><code>
-<span class="c1">// 編譯器最佳化後預期的程式碼
-</span><span class="kt">int</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-    <span class="k">return</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c %}
+// 編譯器最佳化後預期的程式碼
+int func(int *a, int *b)
+{
+    *a = 1;
+    *b = 2;
+    return 1 + 3;
+}
+{% endhighlight %}
 
 
 <p>說真的，我從來都不希望編譯器幫我做這種最佳化。因為在我看來，回傳 *a + 3 和 1 + 3 是兩碼子事。如果是我，我會直接寫成:
 </p>
 
-<pre class="highlight"><code>
-<span class="kt">int</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">result</span><span class="p">;</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="n">result</span> <span class="o">+=</span> <span class="mi">3</span><span class="p">;</span> <span class="c1">// 回傳值是現在值 + 3。
-</span>    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c %}
+int func(int *a, int *b)
+{
+    int result;
+    result = *a = 1;
+    result += 3; // 回傳值是現在值 + 3。
+    *b = 2;
+    return result;
+}
+{% endhighlight %}
 
 
 <p>講者也說這個最佳化有 bug ，因為 *a 和 *b 有可能指向同一個變數。另一個迴圈內部交錯，想像編譯器會利用 CPU pipe 最佳化平行處理的範例。如果是我，至少會用上 <a href="http://en.wikipedia.org/wiki/OpenMP">OpenMP</a> ，而不是預期編譯器可以幫我做什麼。講者舉的其他例子，通常上也是我在 code review 時看到，一定會拉下來的寫法。

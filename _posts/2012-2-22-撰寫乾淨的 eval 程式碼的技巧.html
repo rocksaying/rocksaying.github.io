@@ -17,20 +17,22 @@ JavaScript 的 <dfn>eval()</dfn> 功能很強大，但想用得好卻不容易�
 eval_bad.js 是典型的難寫難讀的 eval 寫法。
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">prefix</span> <span class="o">=</span> <span class="s2">"X-"</span><span class="p">;</span>
 
-<span class="nb">eval</span><span class="p">(</span><span class="s2">" \
+{% highlight javascript %}
+var prefix = "X-";
+
+eval(" \
     var lists = { \
-        "</span><span class="nx">name</span><span class="s2">": "</span><span class="nx">abc</span><span class="s2">", \
-        "</span><span class="nx">age</span><span class="s2">" : 1, \
-        "</span><span class="nx">code</span><span class="s2">": prefix + "</span><span class="mi">0010</span><span class="s2">" \
+        "name": "abc", \
+        "age" : 1, \
+        "code": prefix + "0010" \
     }; \
      \
     for (var p in lists) { \
-        alert(p + "</span><span class="err">:</span> <span class="s2">" + lists[p]); \
+        alert(p + ": " + lists[p]); \
     } \
-"</span><span class="p">);</span>
-</code></pre>
+");
+{% endhighlight %}
 
 <p>
 這種寫法難寫難讀。大部份的書籍，甚至因此建議程式人員不要用 <dfn>eval()</dfn>。
@@ -85,15 +87,17 @@ eval_bad.js 是典型的難寫難讀的 eval 寫法。
 請看 function-toString.js 。
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">sawp</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="nx">a</span><span class="p">;</span>
-    <span class="nx">a</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
-    <span class="nx">b</span> <span class="o">=</span> <span class="nx">c</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nx">print</span><span class="p">(</span><span class="nx">swap</span><span class="p">.</span><span class="nx">toString</span><span class="p">());</span>
-<span class="c1">// alert(swap.toString());</span>
-</code></pre>
+{% highlight javascript %}
+function sawp(a, b) {
+    var c = a;
+    a = b;
+    b = c;
+}
+
+print(swap.toString());
+// alert(swap.toString());
+{% endhighlight %}
 
 
 <p>
@@ -114,25 +118,27 @@ eval_clean.js 是以 eval_bad.js 為對照所改寫的清晰版本。
 其中 <dfn>_script()</dfn> 函數，就是我用來取出程式碼文句的函數。
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">_script</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
-    <span class="k">return</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
-<span class="p">}</span>
 
-<span class="kd">var</span> <span class="nx">prefix</span> <span class="o">=</span> <span class="s2">"X-"</span><span class="p">;</span>
+{% highlight javascript %}
+function _script(f) {
+    var ctx = f.toString();
+    return ctx.slice(ctx.indexOf('{') + 1, ctx.lastIndexOf('}'));
+}
 
-<span class="nb">eval</span><span class="p">(</span><span class="nx">_script</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-    <span class="kd">var</span> <span class="nx">lists</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"abc"</span><span class="p">,</span> 
-        <span class="s2">"age"</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="s2">"code"</span><span class="p">:</span> <span class="nx">prefix</span> <span class="o">+</span> <span class="s2">"0010"</span>
-    <span class="p">};</span>
+var prefix = "X-";
 
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">lists</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">alert</span><span class="p">(</span><span class="nx">p</span> <span class="o">+</span> <span class="s2">": "</span> <span class="o">+</span> <span class="nx">lists</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">}));</span>
-</code></pre>
+eval(_script(function(){
+    var lists = {
+        "name": "abc", 
+        "age" : 1,
+        "code": prefix + "0010"
+    };
+
+    for (var p in lists) {
+        alert(p + ": " + lists[p]);
+    }
+}));
+{% endhighlight %}
 
 
 <p>

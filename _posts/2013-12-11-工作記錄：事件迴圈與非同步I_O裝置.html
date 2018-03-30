@@ -58,13 +58,14 @@ permalink: /archives/26050676.html
 大部份的 GUI 函數庫的設計模式，採用事件迴圈(event loop)。由於整個應用軟體都環繞著這一個迴圈運作，故一般又稱為主迴圈(main loop)。例如 GTK、 Qt 甚至是 Web 瀏覽器內部也是。事件迴圈模式，其運作方式類似我在「<a href="{{ site.baseurl }}/archives/2006/select%28%29%20-%20I_O%20Multiplexer.html">select() - I/O Multiplexer</a>」所敘內容；又或是「<a href="http://davidz25.blogspot.tw/2011/06/writing-c-library-part-2.html">Event handling and the main loop</a>」所說: <q>The truth is that a main-loop is really a well-known concept with a different name: it's basically an abstraction of OS primitives such as select(2)</q>。例如 GTK 的 gtk_main()/Gtk.main() 函數，其內部就是一類似 select() 的分工器。設計者先註冊每個元件的事件交由哪個函數處理。分工器則查看最近有什麼工作在等待處理，然後調用註冊的處理函數。等待處理函數結束後，再繼續查看下一個工作，不斷循環。虛擬碼如下所示。
 </p>
 
-<pre class="highlight"><code>
-<span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">event_source</span> <span class="o">=</span> <span class="n">select</span><span class="p">();</span>
-    <span class="n">event_handler</span> <span class="o">=</span> <span class="n">event_handler_table</span><span class="p">[</span><span class="n">event_source</span><span class="p">];</span>
-    <span class="n">invoke</span> <span class="n">event_handler</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c %}
+while (true) {
+    event_source = select();
+    event_handler = event_handler_table[event_source];
+    invoke event_handler;
+}
+{% endhighlight %}
 
 
 <p>
@@ -79,19 +80,20 @@ permalink: /archives/26050676.html
 針對上述情形，比較直觀的做法是將會耗時等待的事件處理函數，改寫成執行緒模式。
 </p>
 
-<pre class="highlight"><code>
-<span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">event_source</span> <span class="o">=</span> <span class="n">select</span><span class="p">();</span>
-    <span class="n">event_handler</span> <span class="o">=</span> <span class="n">event_handler_table</span><span class="p">[</span><span class="n">event_source</span><span class="p">];</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">event_handler</span> <span class="n">is</span> <span class="n">thread_able</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">handler_thread</span> <span class="o">=</span> <span class="n">new</span> <span class="kr">thread</span><span class="p">(</span><span class="n">event_handler</span><span class="p">);</span>
-        <span class="n">start</span> <span class="n">handler_thread</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="n">invoke</span> <span class="n">event_handler</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c %}
+while (true) {
+    event_source = select();
+    event_handler = event_handler_table[event_source];
+    if (event_handler is thread_able) {
+        handler_thread = new thread(event_handler);
+        start handler_thread;
+    }
+    else {
+        invoke event_handler;
+    }
+}
+{% endhighlight %}
 
 
 <p>

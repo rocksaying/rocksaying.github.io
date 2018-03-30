@@ -16,14 +16,16 @@ permalink: /archives/21307942.html
 <p>
 首先看看我同事所要做的事。基本上可以簡化成下列 issue-1.js 展現的形式:
 </p>
-<pre class="highlight"><code><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="nx">a</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">;</span>
-    <span class="p">});</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'output3'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">sum</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight javascript %}
+function() {
+    var sum = 0;
+    a.forEach(function(v) {
+        sum += v;
+    });
+    document.getElementById('output3').innerHTML = sum;
+}
+{% endhighlight %}
 
 
 <p>
@@ -35,26 +37,27 @@ permalink: /archives/21307942.html
 所以 issue-1.js 要連帶資料傳給其他端點的做法，可如下列所示:
 </p>
 
-<pre class="highlight"><code><span class="c1">// ---- at local host ----</span>
-<span class="kd">var</span> <span class="nx">code</span> <span class="o">=</span> <span class="nx">_script</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="nx">a</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">;</span>
-        <span class="p">});</span>
-        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'output3'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">sum</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">});</span>
-<span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]);</span>
 
-<span class="nx">pass_to_remote_host</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+{% highlight javascript %}
+// ---- at local host ----
+var code = _script(function() {
+    function(a) {
+        var sum = 0;
+        a.forEach(function(v) {
+            sum += v;
+        });
+        document.getElementById('output3').innerHTML = sum;
+    }
+});
+var data = JSON.stringify([1,2,3]);
 
-<span class="c1">// ---- at remote host ----</span>
-<span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">recv_code_data</span><span class="p">();</span>
-<span class="nx">func</span> <span class="o">=</span> <span class="nx">req</span><span class="p">.</span><span class="nx">code</span><span class="p">;</span>
-<span class="nx">func</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>  <span class="c1">// data is already unserialized.</span>
+pass_to_remote_host(code, data);
 
-</code></pre>
+// ---- at remote host ----
+var req = recv_code_data();
+func = req.code;
+func(req.data);  // data is already unserialized.
+{% endhighlight %}
 
 
 <p>
@@ -66,42 +69,43 @@ permalink: /archives/21307942.html
 下列是我擴充改寫後的新 <dfn>_script()</dfn> ，再加碼送另一個 <dfn>_script_valist()</dfn>。兩套方法任君選擇。
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">_script</span><span class="p">(</span><span class="nx">f</span><span class="p">,</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
-    <span class="kd">var</span> <span class="nx">k</span><span class="p">;</span>
-    <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\$[\$\w]</span><span class="sr">+/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">k</span> <span class="o">=</span> <span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-            <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">?</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">k</span><span class="p">])</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
-        <span class="p">})</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nx">ctx</span><span class="p">;</span>
-    <span class="cm">/*
+
+{% highlight javascript %}
+function _script(f, args) {
+    var ctx = f.toString();
+    var k;
+    ctx = ctx.slice(ctx.indexOf('{') + 1, ctx.lastIndexOf('}'));
+    if (args) {
+        ctx = ctx.replace(/\$[\$\w]+/g, function(matched, offset, src) {
+            k = matched.substring(1);
+            return (args[k] ? JSON.stringify(args[k]) : matched);
+        })
+    }
+    return ctx;
+    /*
     string.replace() with replace function:
     see ECMA-262 3rd edition, 15.5.4.11 String.prototype.replace, page 102.
-    */</span>
-<span class="p">}</span>
+    */
+}
 
-<span class="kd">function</span> <span class="nx">_script_valist</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">f</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
-    <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">;</span>
-    <span class="c1">// 讓 args 指向參數清單，以便讓 ctx.replace 取得</span>
-    <span class="kd">var</span> <span class="nx">idx</span><span class="p">;</span>
-    <span class="nx">ctx</span> <span class="o">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'}'</span><span class="p">));</span>
-    <span class="k">return</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\$\d</span><span class="sr">/g</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">matched</span><span class="p">,</span> <span class="nx">offset</span><span class="p">,</span> <span class="nx">src</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">// 這個範圍的 arguments 指向這個匿名函數的參數清單，</span>
-        <span class="c1">// 而不是 _script_valist 的參數清單</span>
-        <span class="nx">idx</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">matched</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">idx</span><span class="p">]</span> <span class="p">?</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">args</span><span class="p">[</span><span class="nx">idx</span><span class="p">])</span> <span class="p">:</span> <span class="nx">matched</span><span class="p">);</span>
-    <span class="p">});</span>
-    <span class="cm">/*
+function _script_valist(f) {
+    var ctx = f.toString();
+    var args = arguments;
+    // 讓 args 指向參數清單，以便讓 ctx.replace 取得
+    var idx;
+    ctx = ctx.slice(ctx.indexOf('{') + 1, ctx.lastIndexOf('}'));
+    return ctx.replace(/\$\d/g, function(matched, offset, src) {
+        // 這個範圍的 arguments 指向這個匿名函數的參數清單，
+        // 而不是 _script_valist 的參數清單
+        idx = parseInt(matched.substring(1));
+        return (args[idx] ? JSON.stringify(args[idx]) : matched);
+    });
+    /*
     arguments:
     see ECMA-262 3rd edition, 10.1.6 Activation Object, page 38.
-    */</span>
-<span class="p">}</span>
-
-</code></pre>
+    */
+}
+{% endhighlight %}
 
 
 <p>
@@ -112,8 +116,10 @@ PHP 或 Perl 等語言的使用者應該很熟悉像 <code>"hello $name"</code> 
 sample.html 示範這兩個函數的用法與實際產出。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;script&gt;</span>
+
+{% highlight javascript %}
+<html>
+<script>
 // 此處省略 _script 與 _script_valist 的定義。
 
 function test() {
@@ -153,17 +159,16 @@ function test() {
     [1,2,3,4,5]
     ));
 }
-<span class="nt">&lt;/script&gt;</span>
-<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">"test();"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;pre</span> <span class="na">id=</span><span class="s">"output1"</span><span class="nt">&gt;&lt;/pre&gt;</span>
+</script>
+<body onload="test();">
+<pre id="output1"></pre>
 
-<span class="nt">&lt;pre</span> <span class="na">id=</span><span class="s">"output2"</span><span class="nt">&gt;&lt;/pre&gt;</span>
+<pre id="output2"></pre>
 
-<span class="nt">&lt;pre</span> <span class="na">id=</span><span class="s">"output3"</span><span class="nt">&gt;&lt;/pre&gt;</span>
+<pre id="output3"></pre>
 
-<span class="nt">&lt;/html&gt;</span>
-
-</code></pre>
+</html>
+{% endhighlight %}
 
 
 <p>

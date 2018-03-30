@@ -132,74 +132,75 @@ load html -> javascript parse evideo tag -> javascript request mplayer.php -> mp
 video-basic.html 展示了上述流程的基本運作方式:
 </p>
 
-<pre class="highlight"><code>
-<span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;meta</span> <span class="na">charset=</span><span class="s">"UTF-8"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;style </span><span class="na">type=</span><span class="s">"text/css"</span><span class="nt">&gt;</span>
-<span class="nf">#video</span> <span class="p">{</span>
-    <span class="nl">border</span><span class="p">:</span> <span class="m">3px</span> <span class="nb">outset</span> <span class="no">red</span><span class="p">;</span>
-    <span class="nl">width</span><span class="p">:</span> <span class="m">70%</span><span class="p">;</span>
-    <span class="nl">height</span><span class="p">:</span> <span class="m">60%</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nt">&lt;/style&gt;</span>
 
-<span class="nt">&lt;script&gt;</span>
-<span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'DOMContentLoaded'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
-    <span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'video'</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">video_src</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s1">'src'</span><span class="p">);</span>
+{% highlight javascript %}
+<html>
+<meta charset="UTF-8">
+<style type="text/css">
+#video {
+    border: 3px outset red;
+    width: 70%;
+    height: 60%;
+}
+</style>
 
-    <span class="kd">var</span> <span class="nx">xhr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">overrideMimeType</span><span class="p">)</span>
-        <span class="nx">xhr</span><span class="p">.</span><span class="nx">overrideMimeType</span><span class="p">(</span><span class="s1">'text/plain'</span><span class="p">);</span>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    var node = document.getElementById('video');
+    var video_src = node.getAttribute('src');
 
-    <span class="nx">xhr</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">//console.info(this.status);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">&gt;=</span> <span class="mi">300</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Could not load file'</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="p">}</span>
+    var xhr = new XMLHttpRequest();
+    if (xhr.overrideMimeType)
+        xhr.overrideMimeType('text/plain');
 
-        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// DONE</span>
-            <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'video ended'</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">};</span>
+    xhr.onreadystatechange = function() {
+        //console.info(this.status);
+        if (this.status >= 300) {
+            if (this.readyState == 4) {
+                window.alert('Could not load file');
+            }
+            return false;
+        }
 
-    <span class="kd">var</span> <span class="nx">screen_top</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">screen_left</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">mozInnerScreenY</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// Firefox only.</span>
-        <span class="nx">screen_top</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">mozInnerScreenY</span><span class="p">;</span>
-        <span class="nx">screen_left</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">mozInnerScreenX</span><span class="p">;</span>
-    <span class="p">}</span>
+        if (this.status == 200 && this.readyState == 4) { // DONE
+            window.alert('video ended');
+        }
+    };
+
+    var screen_top = 0, screen_left = 0;
+    if (window.mozInnerScreenY) { // Firefox only.
+        screen_top = window.mozInnerScreenY;
+        screen_left = window.mozInnerScreenX;
+    }
     
-    <span class="kd">var</span> <span class="nx">mrl</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s1">'mplayer.php'</span><span class="p">,</span>
-        <span class="s1">'?src='</span><span class="p">,</span> <span class="nx">video_src</span><span class="p">,</span>
-        <span class="s1">'&amp;width='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientWidth</span><span class="p">,</span> 
-        <span class="s1">'&amp;height='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientHeight</span><span class="p">,</span> 
-        <span class="s1">'&amp;top='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">offsetTop</span> <span class="o">+</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientTop</span> <span class="o">+</span> <span class="nx">screen_top</span><span class="p">,</span>
-        <span class="s1">'&amp;left='</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">offsetLeft</span> <span class="o">+</span> <span class="nx">node</span><span class="p">.</span><span class="nx">clientLeft</span> <span class="o">+</span> <span class="nx">screen_left</span><span class="p">,</span>
-        <span class="s1">'&amp;keep_aspect=true'</span>
-    <span class="p">].</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">debug</span><span class="p">(</span><span class="nx">mrl</span><span class="p">);</span>
+    var mrl = [
+        'mplayer.php',
+        '?src=', video_src,
+        '&width=', node.clientWidth, 
+        '&height=', node.clientHeight, 
+        '&top=', node.offsetTop + node.clientTop + screen_top,
+        '&left=', node.offsetLeft + node.clientLeft + screen_left,
+        '&keep_aspect=true'
+    ].join('');
+    console.debug(mrl);
 
-    <span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">,</span> <span class="nx">mrl</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span> <span class="c1">// async call</span>
-    <span class="nx">xhr</span><span class="p">.</span><span class="nx">send</span><span class="p">();</span>
-<span class="p">},</span> <span class="kc">false</span><span class="p">);</span>
-<span class="nt">&lt;/script&gt;</span>
+    xhr.open('GET', mrl, true); // async call
+    xhr.send();
+}, false);
+</script>
 
-<span class="nt">&lt;body&gt;</span>
+<body>
 
-<span class="nt">&lt;p&gt;</span>
+<p>
 OMXPlayer play video.
-<span class="nt">&lt;/p&gt;</span>
+</p>
 
-<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">'video'</span> <span class="na">src=</span><span class="s">'1080p/big_buck_bunny_1080p_h264.mov'</span><span class="nt">&gt;</span>
-<span class="nt">&lt;/div&gt;</span>
+<div id='video' src='1080p/big_buck_bunny_1080p_h264.mov'>
+</div>
 
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
+</body>
+</html>
+{% endhighlight %}
 
 
 <p>

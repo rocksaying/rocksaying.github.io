@@ -29,7 +29,9 @@ ByteArray
 建構時需要傳給它一個字串。其他時候和一般字串沒兩樣。用例如下:
 </p>
 
-<pre class="highlight"><code>$src = '123456';
+
+{% highlight php %}
+$src = '123456';
 
 $ba = new ByteArray($src);
 
@@ -47,8 +49,7 @@ echo isset($ba[1]) ? 'yes' : 'no', \n";
 
 $ba[0] = 'a';       // indexer set.
 $ba[-1] = 'z';
-
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -69,23 +70,25 @@ $ba[-1] = 'z';
     </li>
 </ul>
 
-<pre class="highlight"><code>$sample_service = 'blog.rock.sample.Hello';
+
+{% highlight php %}
+$sample_service = 'blog.rock.sample.Hello';
 $sample_object_path = '/blog/rock/sample/Hello';
 $sample_interface = 'blog.rock.sample.Hello';
 
 $d = new Dbus(Dbus::BUS_SYSTEM);
 
-$proxy = $d-&gt;createProxy(
+$proxy = $d->createProxy(
     $sample_service, $sample_object_path, $sample_interface);
 
 $a = new ByteArray("sf\0sfs f");
 echo $a, "\n";
 echo strlen($a), "\n";
 
-$res = $proxy-&gt;SayAy(array(1,2,3,4)); // pass a DBusArray
+$res = $proxy->SayAy(array(1,2,3,4)); // pass a DBusArray
 echo $res, "\n";    // return length of array.
 
-$res = $proxy-&gt;SayAy($a);   // pass a ByteArray
+$res = $proxy->SayAy($a);   // pass a ByteArray
 echo $res, "\n";    // return length of array.
 
 $filepath = "/home/rock/Pictures/wallpaper/1.jpg";
@@ -94,14 +97,13 @@ $s = file_get_contents($filepath);
 
 echo "size of file: ", strlen($s), "\n";
 
-$res = $proxy-&gt;SayAy(new ByteArray($s));
+$res = $proxy->SayAy(new ByteArray($s));
 echo $res, "\n";
 
-$a = $proxy-&gt;RetAy($filepath); // return the content of file.
+$a = $proxy->RetAy($filepath); // return the content of file.
 echo get_class($a), "\n";
 echo strlen($a), "\n";
-
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -109,17 +111,19 @@ echo strlen($a), "\n";
 這帶來額外的效能問題，還牽扯到一個 PHP 內部記憶體管理的問題。請看下列 PHP 程式，各位猜猜這個 PHP 程式要配置多少記憶體？
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$l</span> <span class="o">=</span> <span class="mi">500000</span><span class="p">;</span> <span class="c1">// 500KB
-</span>
-<span class="nv">$a</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
 
-<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$l</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span>
-    <span class="nv">$a</span><span class="p">[]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+{% highlight php %}
+<?php
+$l = 500000; // 500KB
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">5</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$a = array();
+
+for ($i = 0; $i < $l; ++$i)
+    $a[] = 1;
+
+sleep(60*5);
+?>
+{% endhighlight %}
 
 
 <p>
