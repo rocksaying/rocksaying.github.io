@@ -87,7 +87,7 @@ Linux 桌面應用軟體這一部份，可參考「[Debian 8 (jessie) 安裝筆�
 
 我安裝了*geany* 文字編輯器，用它開啟一個中文內容的文件。在未安裝中文環境之前，執行畫面如下圖。
 
-[安裝中文字型前](https://i.imgur.com/vAwAR9E.png)
+![安裝中文字型前](https://i.imgur.com/vAwAR9E.png)
 
 WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。所以 geany 也會使用中文語系介面。但因為尚未安裝中文字型，故所以原本應該顯示中文字的內容，全都以方塊字取代。
 
@@ -97,7 +97,7 @@ WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。�
 
 安裝中文字型後，我先在 WSL 視窗中執行 *fc-list* 列出 X Server 找到的中文字型，確認文泉驛黑體已經可以用了。再同樣用 geany 開啟相同文件。現在中文字就正常顯示了。
 
-[安裝中文字型後](https://i.imgur.com/xrY65Iy.png)
+![安裝中文字型後](https://i.imgur.com/xrY65Iy.png)
 
 <div class="note">
 如果你想手動安裝更多中文字型，字型檔的目錄是在 WSL 環境內部的 */usr/share/font* 。在 WSL 終端視窗中，你可以把 */mnt/c/Windows/Fonts* 的 TrueType 字型複製到 */usr/share/font/truetype* 。
