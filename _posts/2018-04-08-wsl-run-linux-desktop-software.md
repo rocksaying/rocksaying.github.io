@@ -5,7 +5,7 @@ tags: [wsl, linux, debian, windows, x-window, 中文]
 cover: https://i.imgur.com/xrY65Iy.png
 ---
 
-自從微軟將 Windows Subsystem for Linux (WSL) 正式釋出後， Windows 10 的使用者不用安裝虛擬機，也可以配置 Linux 環境。還可以在 Microsoft Store 下輕鬆選擇你想用的 Linux 散佈版本。像是 Ubuntu, Debian, Kali Linux 都已經有了 Microsoft Store 上的 App 版本。只要用 1GB 左右的系統磁碟空間，你就可以像安裝 Windows App 般安裝一套 Linux 終端環境。
+自從微軟將 Windows Subsystem for Linux (WSL) 正式釋出後， Windows 10 的使用者不必安裝虛擬機也可配置 Linux 環境，還可在 Microsoft Store 下輕鬆選擇你想用的 Linux 散佈版本。像是 Ubuntu, Debian, Kali Linux 都已經有 Microsoft Store 上的 App 版本。只要準備 1GB 左右的系統磁碟空間，你就能像安裝 Windows App 般安裝一套 Linux 終端環境。
 
 在 WSL 的終端視窗下，使用文字終端軟體時幾乎沒有不適應之處。不過，人總是貪心的。文字終端軟體可以用，哪 Linux 的桌面應用軟體呢？我搜尋了網路上的相關文章，很快就成功跑起 Linux 桌面應用軟體，也順便解決了中文顯示的問題。
 
@@ -13,7 +13,9 @@ cover: https://i.imgur.com/xrY65Iy.png
 
 #### 套件需求
 
-我使用的 WSL 環境是 Ubuntu 和 Debian 。所以本文提到的軟體套件名稱與安裝工具，都是用於 Ubuntu/Debian 。
+想在 WSL 環境下使用 Linux 桌面應用軟體，基本需要額外 500MB 系統磁碟空間。 
+
+我使用的 WSL 環境是 Ubuntu 和 Debian 。所以本文提到的軟體套件名稱與安裝工具，都針對 Ubuntu/Debian 。
 
 在 WSL 終端視窗下，你需要執行 *apt-get* 指令安裝下列套件:
 
@@ -42,11 +44,11 @@ VcXsrv 安裝動作很簡單，執行安裝檔後，按指示一路下一步即�
 
 執行 XLaunch 會先讓使用者挑選 X Server 的呈現模式和一些顯示功能設置，然後才起動 X Server 。
 
-執行 VcXsrv 則是用預設模式直接起動 X Server 。一般用此模式即可。
+直接執行 VcXsrv 將預設採用 Multiple windows 模式起動 X Server 。一般用此模式即可。如果你想用 X Window 管理程式和桌面管理程式 (KDE, Gnome-shell) 的話，則建議選擇 One large window 模式。
 
-以現況來說， VcXsrv 這邊不需要調整設置，就可配合 WSL 工作。大部份需要手動調整的內容，都是 WSL 這端的事。
+以現況來說， VcXsrv 這邊不需要調整設置就可配合 WSL 工作。大部份需要手動調整的內容，都是 WSL 這端的事。
 
-首先，啟動 WSL 視窗，安裝 *x11-apps* 套件，它提供了一些 X client 的小玩具，例如小眼睛 *xeyes* 。接著編輯 WSL 內的 */etc/profile* 或是 *~/.bashrc* ，加入一行 `export DISPLAY=127.0.0.1:0` 讓 X client 知道 X Server 的位址。
+首先，啟動 WSL 視窗，安裝 *x11-apps* 套件，它提供了一些 X client 的小玩具，例如小眼睛 *xeyes* 。接著編輯 WSL 內的 */etc/profile* 或是 *~/.bashrc* ，加入一行 `export DISPLAY=127.0.0.1:0` 讓 X client 知道 X Server 的位址，本文用例就是本機電腦。至於連線遠端 IP 的玩法，不在本文範圍。
 
 ```term
 $ sudo apt-get install x11-apps
@@ -64,7 +66,7 @@ root$ echo "export DISPLAY=127.0.0.1:0" >> /etc/profile
 ![xeyes on Windows Subsystem for Linux](https://i.imgur.com/3o8G19E.png)
 
 <div class="note">
-X Window (沒有 s ) 是 UNIX 時代發展出的一套巧妙的視窗工作架構，採用主從式通訊協定架構。和 Windows 的整合式視窗架構太不相同。詳情請看維基百科: [X Window系統](https://zh.wikipedia.org/wiki/X_Window%E7%B3%BB%E7%B5%B1) 。
+X Window (沒有 s ) 是 UNIX 時代發展出的一套巧妙的視窗工作架構，採用主從式通訊協定架構。和 Windows 的整合式視窗架構大不相同。詳情請看維基百科: <a href="https://zh.wikipedia.org/wiki/X_Window%E7%B3%BB%E7%B5%B1">X Window系統</a>。
 </div>
 
 
@@ -89,18 +91,18 @@ Linux 桌面應用軟體這一部份，可參考「[Debian 8 (jessie) 安裝筆�
 
 ![安裝中文字型前](https://i.imgur.com/vAwAR9E.png)
 
-WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。所以 geany 也會使用中文語系介面。但因為尚未安裝中文字型，故所以原本應該顯示中文字的內容，全都以方塊字取代。
+WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。所以 geany 也會使用中文語系介面。但因為尚未安裝中文字型，故原本應顯示中文字的內容，全都以方塊字取代。
 
-至於背景的正常顯示中文的瀏覽器畫面，那是我的 Windows Firefox 內容。不是 WSL 內的 Linux Firefox 。
+至於背景正常顯示中文的瀏覽器畫面，那是我的 Windows Firefox 內容。不是 WSL 內的 Linux Firefox 。
 
-原先以為要錯誤嘗試很多事，但靠著我以前留下的中文環境的安裝筆記，我一下就搞定了。在 WSL 環境下安裝 Linux 中文桌面環境的步驟，基本上就與我從 Debian/Ubuntu 基本安裝的基礎上加裝中文環境的步驟相同。參考「[Debian 8 (jessie) 安裝筆記 中文環境篇](http://rocksaying.tw/archives/31556973.html)」。基本上不必安裝 KDE 或 GNOME Desktop 套件。有套件依賴的時候，再自動安裝即可。
+原先以為要錯誤嘗試很多事，但靠著我以前留下的中文環境的安裝筆記，我一下就搞定了。在 WSL 環境下安裝 Linux 中文桌面環境的步驟，基本上就與我從 Debian/Ubuntu 基本安裝的基礎上加裝中文環境的步驟相同。參考「[Debian 8 (jessie) 安裝筆記 中文環境篇](http://rocksaying.tw/archives/31556973.html)」。 WSL 用例不必主動安裝 KDE 或 GNOME Desktop 套件。有套件依賴的時候，再自動安裝即可。
 
-安裝中文字型後，我先在 WSL 視窗中執行 *fc-list* 列出 X Server 找到的中文字型，確認文泉驛黑體已經可以用了。再同樣用 geany 開啟相同文件。現在中文字就正常顯示了。
+安裝中文字型後，我先在 WSL 視窗中執行 *fc-list* 列出 X Server 找到的中文字型，確認文泉驛黑體可用。再同樣以 geany 開啟相同文件。現在中文字就正常顯示了。
 
 ![安裝中文字型後](https://i.imgur.com/xrY65Iy.png)
 
 <div class="note">
-如果你想手動安裝更多中文字型，字型檔的目錄是在 WSL 環境內部的 */usr/share/font* 。在 WSL 終端視窗中，你可以把 */mnt/c/Windows/Fonts* 的 TrueType 字型複製到 */usr/share/font/truetype* 。
+如果你想手動安裝更多中文字型，字型檔的目錄是在 WSL 環境內部的 /usr/share/font 或者 ~/.fonts 。在 WSL 終端視窗中，你可以把 /mnt/c/Windows/Fonts 的 TrueType 字型複製到 /usr/share/font/truetype 或是在 ~/.fonts 中建個符號連結指向 /mnt/c/Windows/Fonts 。
 </div>
 
 不過呢，你會發現中文輸入不能用。雖然 Windows 的中文輸入法可以讓你在 WSL 的終端環境下輸入中文字，但卻不能用於 WSL 下的 Linux 桌面軟體。你需要再安裝 X Window 的輸入法。我個人是用 *hime* 。細節在參考筆記中都提到了，不再細說。
