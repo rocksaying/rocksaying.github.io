@@ -20,7 +20,8 @@ permalink: /archives/11847511.html
 <p>
 首先，我先準備一個簡單的 JavaScript 程式 (ext.js)，它會產生一筆 JSON 資料，我讓它依循 Google Data Protocol 的方式，呼叫遠端調用者所準備好的函數。
 </p>
-<script type="syntaxhighlighter" class="brush: javascript"><![CDATA[
+
+{% highlight javascript %}
 alert('ext.js load')
 var currentTime = new Date()
 var model = {
@@ -29,13 +30,13 @@ var model = {
 }
 ext_callback( model )
 
-]]></script>
+{% endhighlight %}
 
 <p>
 接著，我要準備一個網頁，在其中將利用 <code>document.createElement('script');</code> 動態載入上列的 ext.js 。
 </p>
 
-<script type="syntaxhighlighter" class="brush: javascript"><![CDATA[
+{% highlight javascript %}
 <script type="text/javascript">
 //See: Google Data Protocol
 function ext_callback(data) {
@@ -64,20 +65,28 @@ function dynamicLoadJs1() {
 //    var scripts = document.getElementsByTagName('head')[0].getElementsByTagName('script')
 //    alert(scripts.length)
 
-    if (js.attachEvent) js.attachEvent('onload', remove_this_after_loaded); // not work in IE
-    else js.addEventListener('load', remove_this_after_loaded, false); // W3C DOM
+    if (js.attachEvent) {
+        js.attachEvent('onload', remove_this_after_loaded); // not work in IE
+    }
+    else {
+        js.addEventListener('load', remove_this_after_loaded, false); // W3C DOM
+    }
 }
 
-if (window.attachEvent) window.attachEvent('onload', dynamicLoadJs1); // IE only
-else window.addEventListener('load', dynamicLoadJs1, false); // W3C DOM
-&lt;/script>
+if (window.attachEvent) {
+    window.attachEvent('onload', dynamicLoadJs1); // IE only
+}
+else {
+    window.addEventListener('load', dynamicLoadJs1, false); // W3C DOM
+}
+</script>
 
 <p>
 Working...
 </p>
 <a href="javascript:dynamicLoadJs1()">Load script!</a>
 
-]]></script>
+{% endhighlight %}
 
 <p>
 此網頁會在載入後自動載入 ext.js 並執行它一次。頁面上有一個連結 (Load script!)，當你點擊它時，還會再次載入與執行 ext.js。 ext.js 的回傳內容中含有時間，你將可觀察到它每次執行時的內容都會改變。

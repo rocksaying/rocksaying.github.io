@@ -55,7 +55,7 @@ ThinkPad X200s 是12吋寬螢幕 (1280x800)，以正常方向看電子書時，�
 <p>
 首先執行 <kbd>xinput list</kbd> 查看 TrackPoint 的設備名稱。在目前的 Linux 版本中，它的完整設備名稱是 <dfn>TPPS/2 IBM TrackPoint</dfn>。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 laptop$ xinput list
 ...
 	Min_keycode is 8
@@ -77,13 +77,13 @@ laptop$ xinput list
 "Macintosh mouse button emulation"	id=8	[XExtensionPointer]
 	Type is MOUSE
 ...
-</pre>
+</code></pre>
 
 <p>
 接著執行 <kbd>xinput list-props "TPPS/2 IBM TrackPoint"</kbd>(請輸入上列指令查到的完整設備名稱) 查看有哪些屬性可以調整。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 laptop$ xinput list-props "TPPS/2 IBM TrackPoint"
 Device 'TPPS/2 IBM TrackPoint':
 	Device Enabled (97):	1
@@ -100,7 +100,7 @@ Device 'TPPS/2 IBM TrackPoint':
 	Evdev Wheel Emulation Button (240):	2
 	Evdev Drag Lock Buttons (241):	0
 
-</pre>
+</code></pre>
 <p>
 與螢幕旋轉有關者，是:
 </p>
@@ -112,26 +112,29 @@ Device 'TPPS/2 IBM TrackPoint':
 <h5>
 小紅點正常軸線
 </h5>
-<pre class="language-term">
+<pre><code class="language-term">
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 0
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 0 0
-</pre>
+
+</code></pre>
 
 <h5>
 小紅點左轉90度軸線
 </h5>
-<pre class="language-term">
+<pre><code class="language-term">
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 1
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 1 0
-</pre>
+
+</code></pre>
 
 <h5>
 小紅點右轉90度軸線
 </h5>
-<pre class="language-term">
+<pre><code class="language-term">
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axes Swap" 8 1
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Axis Inversion" 8 0 1
-</pre>
+
+</code></pre>
 
 <h4>
 鍵盤方向鍵配置調整
@@ -173,10 +176,11 @@ Forward: 159
 <h5>
 方向鍵正常配置
 </h5>
-<pre class="language-term">
+<pre><code class="language-term">
 #           Up       Down     Left     Right
 setkeycodes e048 103 e050 108 e04b 105 e04d 106 e06a 158 e069 159
-</pre>
+
+</code></pre>
 
 <h5>
 方向鍵左轉90度配置
@@ -184,9 +188,10 @@ setkeycodes e048 103 e050 108 e04b 105 e04d 106 e06a 158 e069 159
 <p>
 我將 Back, Forword 配置為 PageUp、PageDown 按鍵。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 setkeycodes e048 106 e050 105 e04b 103 e04d 108 e06a 104 e069 109
-</pre>
+
+</code></pre>
 
 <h5>
 方向鍵右轉90度配置
@@ -194,9 +199,10 @@ setkeycodes e048 106 e050 105 e04b 103 e04d 108 e06a 104 e069 109
 <p>
 我將 Back, Forword 配置為 PageDown、PageUp 按鍵。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 setkeycodes e048 105 e050 106 e04b 108 e04d 103 e06a 109 e069 104
-</pre>
+
+</code></pre>
 
 <h4>
 All in one
@@ -205,7 +211,7 @@ All in one
 我將上述三種動作整合在一個指令稿中，名稱為 <dfn>rotate</dfn>。執行 <kbd>rotate left</kbd> 即可向左旋轉90度，執行 <kbd>rotate normal</kbd> 回復正常。由於 <dfn>setkeycodes</dfn> 指令需要以 root 身份執行，所以需要配合 sudo 。或者，可以設定  <dfn>setkeycodes</dfn> 的 <dfn>SetUID</dfn> 屬性，令它自動切換為 root 身份。
 </p>
 
-<script type="syntaxhighlighter" class="brush: bash;"><![CDATA[
+{% highlight sh %}
 #!/bin/sh
 
 # WARNING!!!
@@ -278,7 +284,7 @@ case "$1" in
 		;;
 esac
 
-]]></script>
+{% endhighlight %}
 
 <p>
 因為我將要透過鍵盤捷徑鍵來執行旋轉動作，所以我設定了 <dfn>setkeycodes</dfn> 的 SetUID 屬性 (<kbd>sudo chmod u+s /usr/bin/setkeycodes</kbd>)，略過密碼詢問動作。最後，使用桌面工具「系統」->「偏好設定」->「鍵盤捷徑鍵」，加入 自訂的捷徑鍵，命令列輸入 <code>rotate auto</code>，按鍵設定 <code>Fn + F9</code>。如此一來，我只需要按下 <code>Fn + F9</code> 就可以切換螢幕的方向了。此鍵盤捷徑鍵的設定方式，只適用於 GNOME 桌面環境。

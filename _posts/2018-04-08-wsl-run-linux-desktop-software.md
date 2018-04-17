@@ -26,7 +26,7 @@ cover: https://i.imgur.com/xrY65Iy.png
 * fonts-wqy-zenhei 
 * fonts-wqy-microhei 
 
-我個人選擇安裝下列 Lunix 桌面應用軟體:
+我個人選擇安裝下列 Linux 桌面應用軟體:
 
 * gnome-commander : 左右雙面板的檔案管理器。
 * geany : 功能豐富，且不依賴完整桌面環境的文字編輯器。
@@ -91,7 +91,7 @@ Linux 桌面應用軟體這一部份，可參考「[Debian 8 (jessie) 安裝筆�
 
 ![安裝中文字型前](https://i.imgur.com/vAwAR9E.png)
 
-WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。所以 geany 也會使用中文語系介面。但因為尚未安裝中文字型，故原本應顯示中文字的內容，全都以方塊字取代。
+WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。所以 geany 也會使用中文語系介面。但因為尚未安裝中文字型，故原本應顯示中文字的內容，全都以方塊豆腐字取代。
 
 至於背景正常顯示中文的瀏覽器畫面，那是我的 Windows Firefox 內容。不是 WSL 內的 Linux Firefox 。
 

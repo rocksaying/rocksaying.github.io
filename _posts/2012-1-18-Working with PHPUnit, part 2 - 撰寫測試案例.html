@@ -39,32 +39,34 @@ $ phpunit Model_My_ExampleTest unit_test/my_example_test.php
 SimpleTest.php 是一個基本的測試案例源碼樣板，可以此測試 PHPUnit 是否成功安裝。
 </p>
 <h4>SimpleTest.php</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
 
-<span class="k">class</span> <span class="nc">SimpleTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span>
-<span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">thisIsNotATest</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'nothing'</span><span class="p">;</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+require_once 'PHPUnit/Framework.php';
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">testItIsTrue</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertTrue</span><span class="p">(</span><span class="k">TRUE</span><span class="p">);</span>
-    <span class="p">}</span>
+class SimpleTest extends PHPUnit_Framework_TestCase
+{
+    public function thisIsNotATest()
+    {
+        echo 'nothing';
+    }
 
-    <span class="sd">/**
+    public function testItIsTrue()
+    {
+        $this->assertTrue(TRUE);
+    }
+
+    /**
      * @test
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">arrayIsEmpty</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="nv">$fixture</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$fixture</span><span class="p">));</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+     */
+    public function arrayIsEmpty()
+    {
+        $fixture = array();
+        $this->assertEquals(0, count($fixture));
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>
@@ -117,43 +119,45 @@ DatabaseRow 是一個彈性的資料庫欄位類別。可以藉 Configuration-dr
 
 <h4>DatabaseRow.php</h4>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">DatabaseRow</span> <span class="p">{</span>
-    <span class="k">protected</span> <span class="nv">$fieldMap</span><span class="p">;</span>
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$schema</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$schema</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$schema</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">schema</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">]))</span> <span class="p">{</span>
-                    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">[</span><span class="s1">'default'</span><span class="p">];</span>
-                <span class="p">}</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+class DatabaseRow {
+    protected $fieldMap;
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$isType</span> <span class="o">=</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">)</span>
-            <span class="o">?</span> <span class="s1">'is_'</span> <span class="o">.</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span>
-            <span class="o">:</span> <span class="k">FALSE</span>
-        <span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nv">$isType</span> <span class="k">or</span> <span class="nv">$isType</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+    public function __construct(&$schema = FALSE) {
+        if ($schema) {
+            foreach ($schema as $k => $v) {
+                $this->fieldMap[$k]->schema = $v;
+                if (isset($v['default'])) {
+                    $this->fieldMap[$k]->value = $v['default'];
+                }
+            }
+        }
+        else {
+            $this->fieldMap = array();
+        }
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$k</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span><span class="p">)</span>
-            <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fieldMap</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">value</span>
-            <span class="o">:</span> <span class="k">FALSE</span>
-        <span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    public function __set($k, $v) {
+        $isType = (isset($this->fieldMap[$k]->schema)
+            ? 'is_' . $this->fieldMap[$k]->schema['type']
+            : FALSE
+        );
+        if ( !$isType or $isType($v) ) {
+            $this->fieldMap[$k]->value = $v;
+        }
+    }
+
+    public function __get($k) {
+        return (isset($this->fieldMap[$k]->value)
+            ? $this->fieldMap[$k]->value
+            : FALSE
+        );
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>
@@ -198,118 +202,122 @@ Tests: 2, Incomplete: 2.
 當我們將 DatabaseRow 類別的內容完成到一個段落時，我們同時改寫 DatabaseRowTest.php 的內容，為了載入 schema ，我添加 phpunit 沒有為我們加上的建構行為，在其中載入 schema (30-34行)。此處我先測試未指派 schema 和有指派 schema 兩個情形。下列為測試案例使用的 schema 與改寫後的第二版 DatabaseRowTest.php 。
 </p>
 <h4>DatabaseRowTest.js</h4>
-<pre class="highlight"><code>{
+
+{% highlight php %}
+{
     "id": {
         "type": "integer",
         "default": 0
     }
 }
-</code></pre>
+{% endhighlight %}
 
 <h4>DatabaseRowTest.php, version 2</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
-</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">))</span> <span class="p">{</span>
-    <span class="nb">define</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">,</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestCase.php"</span><span class="p">;</span>
-<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestSuite.php"</span><span class="p">;</span>
+{% highlight php %}
+<?php
+// Call DatabaseRowTest::main() if this source file is executed directly.
+if (!defined("PHPUnit_MAIN_METHOD")) {
+    define("PHPUnit_MAIN_METHOD", "DatabaseRowTest::main");
+}
 
-<span class="k">require_once</span> <span class="s1">'DatabaseRow.php'</span><span class="p">;</span>
+require_once "PHPUnit/Framework/TestCase.php";
+require_once "PHPUnit/Framework/TestSuite.php";
 
-<span class="sd">/**
+require_once 'DatabaseRow.php';
+
+/**
  * Test class for DatabaseRow.
  * Generated by PHPUnit_Util_Skeleton on 2007-xx-xx.
- */</span>
-<span class="k">class</span> <span class="nc">DatabaseRowTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
-    <span class="sd">/**
+ */
+class DatabaseRowTest extends PHPUnit_Framework_TestCase {
+    /**
      * Runs the test methods of this class.
      *
      * @access public
      * @static
-     */</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">require_once</span> <span class="s2">"PHPUnit/TextUI/TestRunner.php"</span><span class="p">;</span>
+     */
+    public static function main() {
+        require_once "PHPUnit/TextUI/TestRunner.php";
 
-        <span class="nv">$suite</span>  <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestSuite</span><span class="p">(</span><span class="s2">"DatabaseRowTest"</span><span class="p">);</span>
-        <span class="nv">$result</span> <span class="o">=</span> <span class="nx">PHPUnit_TextUI_TestRunner</span><span class="o">::</span><span class="na">run</span><span class="p">(</span><span class="nv">$suite</span><span class="p">);</span>
-    <span class="p">}</span>
+        $suite  = new PHPUnit_Framework_TestSuite("DatabaseRowTest");
+        $result = PHPUnit_TextUI_TestRunner::run($suite);
+    }
 
-    <span class="k">private</span> <span class="nv">$schema</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span> <span class="o">=</span>
-            <span class="nb">json_decode</span><span class="p">(</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'DatabaseRowTest.js'</span><span class="p">),</span> <span class="kc">true</span><span class="p">);</span>
-    <span class="p">}</span>
+    private $schema;
+    public function __construct() {
+        $this->schema =
+            json_decode(file_get_contents('DatabaseRowTest.js'), true);
+    }
 
-    <span class="sd">/**
+    /**
      * Sets up the fixture, for example, open a network connection.
      * This method is called before a test is executed.
      *
      * @access protected
-     */</span>
-    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
-    <span class="p">}</span>
+     */
+    protected function setUp() {
+    }
 
-    <span class="sd">/**
+    /**
      * Tears down the fixture, for example, close a network connection.
      * This method is called after a test is executed.
      *
      * @access protected
-     */</span>
-    <span class="k">protected</span> <span class="k">function</span> <span class="nf">tearDown</span><span class="p">()</span> <span class="p">{</span>
-    <span class="p">}</span>
+     */
+    protected function tearDown() {
+    }
 
-    <span class="sd">/**
+    /**
      * 未指定 Schema 時，任何欄位之值皆為 FALSE
      *
      * @test
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithoutSchema</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function newDatabaseRowWithoutSchema() {
+        $row = new DatabaseRow;
+        $this->assertFalse($row->id);
+    }
 
-    <span class="sd">/**
+    /**
      * 指派 Schema 。
      * 在此例中，只有 id 欄位，型態為 integer ，預設值為 0 。
      *
      * @test
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithSchema</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'default'</span><span class="p">],</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">address</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function newDatabaseRowWithSchema() {
+        $row = new DatabaseRow($this->schema);
+        $this->assertType($this->schema['id']['type'], $row->id);
+        $this->assertEquals($this->schema['id']['default'], $row->id);
+        $this->assertFalse($row->address);
+    }
 
-    <span class="sd">/**
+    /**
      * @todo Implement test__set().
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">test__set</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">// Remove the following line when you implement this test.
-</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">markTestIncomplete</span><span class="p">(</span>
-          <span class="s2">"This test has not been implemented yet."</span>
-        <span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function test__set() {
+        // Remove the following line when you implement this test.
+        $this->markTestIncomplete(
+          "This test has not been implemented yet."
+        );
+    }
 
-    <span class="sd">/**
+    /**
      * @todo Implement test__get().
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">test__get</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">// Remove the following line when you implement this test.
-</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">markTestIncomplete</span><span class="p">(</span>
-          <span class="s2">"This test has not been implemented yet."</span>
-        <span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+     */
+    public function test__get() {
+        // Remove the following line when you implement this test.
+        $this->markTestIncomplete(
+          "This test has not been implemented yet."
+        );
+    }
+}
 
-<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
-</span><span class="k">if</span> <span class="p">(</span><span class="nx">PHPUnit_MAIN_METHOD</span> <span class="o">==</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">DatabaseRowTest</span><span class="o">::</span><span class="na">main</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+// Call DatabaseRowTest::main() if this source file is executed directly.
+if (PHPUnit_MAIN_METHOD == "DatabaseRowTest::main") {
+    DatabaseRowTest::main();
+}
+?>
+{% endhighlight %}
 
 
 <p>
@@ -317,111 +325,113 @@ Tests: 2, Incomplete: 2.
 </p>
 
 <h4>DatabaseRowTest.php, version 3</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
-</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">))</span> <span class="p">{</span>
-    <span class="nb">define</span><span class="p">(</span><span class="s2">"PHPUnit_MAIN_METHOD"</span><span class="p">,</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestCase.php"</span><span class="p">;</span>
-<span class="k">require_once</span> <span class="s2">"PHPUnit/Framework/TestSuite.php"</span><span class="p">;</span>
+{% highlight php %}
+<?php
+// Call DatabaseRowTest::main() if this source file is executed directly.
+if (!defined("PHPUnit_MAIN_METHOD")) {
+    define("PHPUnit_MAIN_METHOD", "DatabaseRowTest::main");
+}
 
-<span class="k">require_once</span> <span class="s1">'DatabaseRow.php'</span><span class="p">;</span>
+require_once "PHPUnit/Framework/TestCase.php";
+require_once "PHPUnit/Framework/TestSuite.php";
 
-<span class="sd">/**
+require_once 'DatabaseRow.php';
+
+/**
  * Test class for DatabaseRow.
  * Generated by PHPUnit_Util_Skeleton on 2007-xx-xx.
- */</span>
-<span class="k">class</span> <span class="nc">DatabaseRowTest</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
-    <span class="sd">/**
+ */
+class DatabaseRowTest extends PHPUnit_Framework_TestCase {
+    /**
      * Runs the test methods of this class.
      *
      * @access public
      * @static
-     */</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">require_once</span> <span class="s2">"PHPUnit/TextUI/TestRunner.php"</span><span class="p">;</span>
+     */
+    public static function main() {
+        require_once "PHPUnit/TextUI/TestRunner.php";
 
-        <span class="nv">$suite</span>  <span class="o">=</span> <span class="k">new</span> <span class="nx">PHPUnit_Framework_TestSuite</span><span class="p">(</span><span class="s2">"DatabaseRowTest"</span><span class="p">);</span>
-        <span class="nv">$result</span> <span class="o">=</span> <span class="nx">PHPUnit_TextUI_TestRunner</span><span class="o">::</span><span class="na">run</span><span class="p">(</span><span class="nv">$suite</span><span class="p">);</span>
-    <span class="p">}</span>
+        $suite  = new PHPUnit_Framework_TestSuite("DatabaseRowTest");
+        $result = PHPUnit_TextUI_TestRunner::run($suite);
+    }
 
-    <span class="k">private</span> <span class="nv">$schema</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span> <span class="o">=</span>
-            <span class="nb">json_decode</span><span class="p">(</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'DatabaseRowTest.js'</span><span class="p">),</span> <span class="kc">true</span><span class="p">);</span>
-    <span class="p">}</span>
+    private $schema;
+    public function __construct() {
+        $this->schema =
+            json_decode(file_get_contents('DatabaseRowTest.js'), true);
+    }
 
-    <span class="k">private</span> <span class="nv">$row</span><span class="p">;</span>
-    <span class="sd">/**
+    private $row;
+    /**
      * 每個測試項目執行前，都重新配置一次 $row
      *
      * @access protected
-     */</span>
-    <span class="k">protected</span> <span class="k">function</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    protected function setUp() {
+        $this->row = new DatabaseRow($this->schema);
+    }
 
-    <span class="sd">/**
+    /**
      * 未指定 Schema 時，任何欄位之值皆為 FALSE
      *
      * @test
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithoutSchema</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$row</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseRow</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function newDatabaseRowWithoutSchema() {
+        $row = new DatabaseRow;
+        $this->assertFalse($row->id);
+    }
 
-    <span class="sd">/**
+    /**
      * 指派 Schema 。
      * 在此例中，只有 id 欄位，型態為 integer ，預設值為 0 。
      *
      * @test
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">newDatabaseRowWithSchema</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'default'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">address</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function newDatabaseRowWithSchema() {
+        $this->assertType($this->schema['id']['type'], $this->row->id);
+        $this->assertEquals($this->schema['id']['default'], $this->row->id);
+        $this->assertFalse($this->row->address);
+    }
 
-    <span class="sd">/**
+    /**
      * 右值不符欄位型態時，欄位值不變。
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">testSetIdAsInvalidValue</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span> <span class="o">=</span> <span class="s1">'john'</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'default'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function testSetIdAsInvalidValue() {
+        $this->row->id = 'john';
+        $this->assertType($this->schema['id']['type'], $this->row->id);
+        $this->assertEquals($this->schema['id']['default'], $this->row->id);
+    }
 
-    <span class="sd">/**
+    /**
      * 設定 id 為 5。
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">testSetIdAsFive</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertType</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">schema</span><span class="p">[</span><span class="s1">'id'</span><span class="p">][</span><span class="s1">'type'</span><span class="p">],</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function testSetIdAsFive() {
+        $this->row->id = 5;
+        $this->assertType($this->schema['id']['type'], $this->row->id);
+        $this->assertEquals(5, $this->row->id);
+    }
 
-    <span class="sd">/**
+    /**
      * 增加 name 欄位，未指定資料型態 (不檢查型態)
      * 增加欄位前，其值為 FALSE 。
      * 增加欄位後，先設其值為 5 ，再設為 'john'。
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">testSetNameAsJohn</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertFalse</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="s1">'john'</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">assertEquals</span><span class="p">(</span><span class="s1">'john'</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">row</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+     */
+    public function testSetNameAsJohn() {
+        $this->assertFalse($this->row->name);
+        $this->row->name = 5;
+        $this->assertEquals(5, $this->row->name);
+        $this->row->name = 'john';
+        $this->assertEquals('john', $this->row->name);
+    }
+}
 
-<span class="c1">// Call DatabaseRowTest::main() if this source file is executed directly.
-</span><span class="k">if</span> <span class="p">(</span><span class="nx">PHPUnit_MAIN_METHOD</span> <span class="o">==</span> <span class="s2">"DatabaseRowTest::main"</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">DatabaseRowTest</span><span class="o">::</span><span class="na">main</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+// Call DatabaseRowTest::main() if this source file is executed directly.
+if (PHPUnit_MAIN_METHOD == "DatabaseRowTest::main") {
+    DatabaseRowTest::main();
+}
+?>
+{% endhighlight %}
 
 
 <p>

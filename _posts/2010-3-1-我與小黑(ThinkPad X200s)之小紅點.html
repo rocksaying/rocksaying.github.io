@@ -37,11 +37,11 @@ ThinkPad 系列筆記型電腦最大的特色就是鍵盤上的中原一點紅�
 在終端機下，利用 <dfn>find</dfn> 指令，可以很快地找到檔案。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 rock-laptop:~$  find /sys/devices/platform/i8042 -name press_to_select
 /sys/devices/platform/i8042/serio1/press_to_select
 
-</pre>
+</code></pre>
 <p>
 如上所示，<var>press_to_select</var> 在我的 X200s 上的位置是在 <var>/sys/devices/platform/i8042/serio1/press_to_select</var>。
 </p>
@@ -53,10 +53,11 @@ rock-laptop:~$  find /sys/devices/platform/i8042 -name press_to_select
 請用 sudo 開啟你的文字編輯器，編輯 <dfn>/etc/rc.local</dfn>，<em>在 <code>exit 0</code> 之前</em>加入下列指令。再度提醒，請把下列的 <var>press_to_select</var> 所在路徑替換為你依照上列步驟實際搜尋得到的完整路徑。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 # TrackPoint: Enable Press to select
 echo -n 1 > <var>/sys/devices/platform/i8042/serio1/press_to_select</var>
-</pre>
+
+</code></pre>
 
 
 <h5>
@@ -86,10 +87,11 @@ gpointing-device-settings 設定方式
 在 Ubuntu 9.10/10.04 或更新的版本中，你只需要安裝 <dfn>gpointing-device-settings</dfn> 這個套件，再於終端機下執行 <dfn>gpointing-device-settings</dfn> 指令，或是從「系統／偏好設定／Pointing devices」選單啟動，即可設定相關動作。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 rock-laptop:~$ sudo apt-get install gpointing-device-settings
 rock-laptop:~$ gpointing-device-settings
-</pre>
+
+</code></pre>
 
 <p>
 請勾選下列4項，而 Use wheel emulation 的子項目 button ，請設為 2 。
@@ -125,7 +127,7 @@ xinput 設定方式
 <p>
 如果你不想安裝 gpointing-device-settings 或是套件版本太舊，你也可以用命令列工具 <dfn>xinput</dfn> 設定。請參考設定 Press to Select 的動作，將下列指令加入 <dfn>/etc/rc.local</dfn> 或是 <dfn>/etc/gdm/PreSession/Default</dfn> 中。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 # 啟用中鍵模擬功能
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Middle Button Emulation" 8 1
 # 啟用滾輪模擬功能
@@ -138,7 +140,7 @@ xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Middle Button Timeout" 8 50
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation Inertia" 8 10
 xinput set-int-prop "TPPS/2 IBM TrackPoint" "Evdev Wheel Emulation Timeout" 8 200
 
-</pre>
+</code></pre>
 <p>
 建議先執行 <code>xinput list</code> 查詢小紅點的設備名稱。通常是<dfn>TPPS/2 IBM TrackPoint</dfn>。
 </p>

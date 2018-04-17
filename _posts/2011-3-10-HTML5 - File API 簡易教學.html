@@ -30,23 +30,25 @@ HTML5 規劃了一組支援本地文件(客戶端文件)讀取的函數介面，
 <p>
 下列是一個簡單的範例，展示如何從檔案選擇元件(input type="file")獲得 <dfn>File</dfn> 個體，並觀看其屬性值。
 </p>
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">file_viewer_load</span><span class="p">(</span><span class="nx">controller</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="s2">"Type of files[0]: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">toString</span><span class="p">()</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="o">+</span>
-        <span class="s2">"File name: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="o">+</span>
-        <span class="s2">"File size: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">size</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="o">+</span>
-        <span class="s2">"File type: "</span> <span class="o">+</span> <span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">type</span><span class="p">;</span>
-    <span class="nx">alert</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
-    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer_load(this);"</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
-</span></code></pre>
+
+{% highlight javascript %}
+<html>
+<script type="text/javascript">
+function file_viewer_load(controller) {
+    var s = "Type of files[0]: " + controller.files[0].toString() + "\n" +
+        "File name: " + controller.files[0].name + "\n" +
+        "File size: " + controller.files[0].size + "\n" +
+        "File type: " + controller.files[0].type;
+    alert(s);
+}
+</script>
+
+<div>
+<input id="file_selector" type="file" value=""
+    onchange="file_viewer_load(this);"/>
+</div>
+</html>
+{% endhighlight %}
 
 
 <div class="note">
@@ -69,65 +71,66 @@ Read as Text
 最後在頁面上顯示檔案內容。
 </p>
 
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">FileViewer</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span>
-        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReader</span><span class="p">();</span>
+{% highlight javascript %}
+<html>
+<script type="text/javascript">
+function FileViewer(args) {
+    for (var p in args)
+        this[p] = args[p];
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">onloadend</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">self</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-                    <span class="nx">self</span><span class="p">.</span><span class="nx">loaded</span><span class="p">();</span>
-                <span class="p">}</span>
-    <span class="p">})(</span><span class="k">this</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">FileViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">load</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">file</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">readAsText</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">FileViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">loaded</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_name</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_size</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">;</span>
-<span class="p">}</span>
+    this.reader = new FileReader();
 
-<span class="kd">var</span> <span class="nx">file_viewer</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+    this.reader.onloadend = (function(self) {
+        return function() {
+                    self.loaded();
+                }
+    })(this);
+}
+FileViewer.prototype.load = function() {
+    this.file = this.controller.files[0];
+    this.reader.readAsText(this.file);
+}
+FileViewer.prototype.loaded = function() {
+    this.view_name.value = this.file.name;
+    this.view_size.value = this.file.size;
+    this.view.value = this.reader.result;
+}
 
-<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">file_viewer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileViewer</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="na">controller</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'file_selector'</span><span class="p">),</span>
-            <span class="na">view_name</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filename'</span><span class="p">),</span>
-            <span class="na">view_size</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filesize'</span><span class="p">),</span>
-            <span class="na">view</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_box'</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="p">);</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">body</span> <span class="nx">onload</span><span class="o">=</span><span class="s2">"init();"</span><span class="o">&gt;</span>
+var file_viewer = undefined;
 
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
-    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer.load();"</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="nx">Name</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filename"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
-            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
-<span class="nx">Size</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filesize"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
-            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">textarea</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_box"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">cols</span><span class="o">=</span><span class="s2">"60"</span> <span class="nx">rows</span><span class="o">=</span><span class="s2">"20"</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/textarea&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
-</span>
-</code></pre>
+function init() {
+    file_viewer = new FileViewer(
+        {
+            controller: document.getElementById('file_selector'),
+            view_name: document.getElementById('show_filename'),
+            view_size: document.getElementById('show_filesize'),
+            view: document.getElementById('show_box')
+        }
+    );
+}
+</script>
+
+<body onload="init();">
+
+<div>
+<input id="file_selector" type="file" value=""
+    onchange="file_viewer.load();"/>
+</div>
+
+<div>
+Name: <input id="show_filename" type="text"
+            readonly="true" value=""/>
+Size: <input id="show_filesize" type="text"
+            readonly="true" value=""/>
+<br/>
+<textarea id="show_box" readonly="true" cols="60" rows="20">
+</textarea>
+</div>
+
+</body>
+</html>
+{% endhighlight %}
 
 
 <p>
@@ -169,72 +172,73 @@ Data URI (<a href="http://tools.ietf.org/html/rfc2397">RFC 2397</a>) 是一種�
 image-view.html 利用 Data URI 機制，直接在頁面上顯示使用者選取的本地圖片內容，而不須上傳到伺服端處理。
 </p>
 
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">ImageViewer</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span>
-        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReader</span><span class="p">();</span>
+{% highlight javascript %}
+<html>
+<script type="text/javascript">
+function ImageViewer(args) {
+    for (var p in args)
+        this[p] = args[p];
 
-    <span class="kd">function</span> <span class="nx">_event_handler</span><span class="p">(</span><span class="nx">self</span><span class="p">,</span> <span class="nx">method</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="kd">function</span><span class="p">(){</span>
-            <span class="nx">method</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">self</span><span class="p">);</span>
-        <span class="p">};</span>
-    <span class="p">}</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">onloadend</span> <span class="o">=</span> <span class="nx">_event_handler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">loaded</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">ImageViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">load</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">file</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">readAsDataURL</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">ImageViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">loaded</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_name</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_size</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_data</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">);</span>
+    this.reader = new FileReader();
 
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span> <span class="sr">/^image/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span> <span class="p">)</span>
-        <span class="nx">alert</span><span class="p">(</span><span class="s2">"This is not an image file. Type: "</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">);</span>
-    <span class="k">else</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">view</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">;</span>
-<span class="p">}</span>
+    function _event_handler(self, method) {
+        return function(){
+            method.call(self);
+        };
+    }
+    this.reader.onloadend = _event_handler(this, this.loaded);
+}
+ImageViewer.prototype.load = function() {
+    this.file = this.controller.files[0];
+    this.reader.readAsDataURL(this.file);
+}
+ImageViewer.prototype.loaded = function() {
+    this.view_name.value = this.file.name;
+    this.view_size.value = this.file.size;
+    this.view_data.value = this.reader.result.substring(0,100);
 
-<span class="kd">var</span> <span class="nx">file_viewer</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+    if ( ! /^image/.test(this.file.type) )
+        alert("This is not an image file. Type: " + this.file.type);
+    else
+        this.view.src = this.reader.result;
+}
 
-<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">file_viewer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ImageViewer</span><span class="p">({</span>
-        <span class="na">controller</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'file_selector'</span><span class="p">),</span>
-        <span class="na">view_name</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filename'</span><span class="p">),</span>
-        <span class="na">view_size</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filesize'</span><span class="p">),</span>
-        <span class="na">view</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_image'</span><span class="p">),</span>
-        <span class="na">view_data</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_data'</span><span class="p">)</span>
-    <span class="p">});</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">body</span> <span class="nx">onload</span><span class="o">=</span><span class="s2">"init();"</span><span class="o">&gt;</span>
+var file_viewer = undefined;
 
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
-    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer.load();"</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="nx">Name</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filename"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
-            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
-<span class="nx">Size</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filesize"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span>
-            <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">textarea</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_data"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">cols</span><span class="o">=</span><span class="s2">"60"</span> <span class="nx">rows</span><span class="o">=</span><span class="s2">"2"</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/textarea&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">img</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_image"</span> <span class="nx">alt</span><span class="o">=</span><span class="s2">"Show Image"</span> <span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
-</span>
-</code></pre>
+function init() {
+    file_viewer = new ImageViewer({
+        controller: document.getElementById('file_selector'),
+        view_name: document.getElementById('show_filename'),
+        view_size: document.getElementById('show_filesize'),
+        view: document.getElementById('show_image'),
+        view_data: document.getElementById('show_data')
+    });
+}
+</script>
+
+<body onload="init();">
+
+<div>
+<input id="file_selector" type="file" value=""
+    onchange="file_viewer.load();"/>
+</div>
+
+<div>
+Name: <input id="show_filename" type="text"
+            readonly="true" value=""/>
+Size: <input id="show_filesize" type="text"
+            readonly="true" value=""/>
+<br/>
+<textarea id="show_data" readonly="true" cols="60" rows="2">
+</textarea>
+<br/>
+<img id="show_image" alt="Show Image" />
+</div>
+
+</body>
+</html>
+{% endhighlight %}
 
 
 <p>
@@ -265,55 +269,56 @@ FileReaderSync
 下列是採用 FileReaderSync 讀取方法的 file-view.html。
 </p>
 
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">FileViewer</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span>
-        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReaderSync</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="nx">FileViewer</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">load</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_name</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view_size</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+{% highlight javascript %}
+<html>
+<script type="text/javascript">
+function FileViewer(args) {
+    for (var p in args)
+        this[p] = args[p];
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">file</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controller</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">view</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">reader</span><span class="p">.</span><span class="nx">readAsText</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">file</span><span class="p">);</span>
-<span class="p">}</span>
+    this.reader = new FileReaderSync();
+}
+FileViewer.prototype.load = function() {
+    this.view_name.value = this.file.name;
+    this.view_size.value = this.file.size;
 
-<span class="kd">var</span> <span class="nx">file_viewer</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+    this.file = this.controller.files[0];
+    this.view.value = this.reader.readAsText(this.file);
+}
 
-<span class="kd">function</span> <span class="nx">init</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">file_viewer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileViewer</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="na">controller</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'file_selector'</span><span class="p">),</span>
-            <span class="na">view_name</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filename'</span><span class="p">),</span>
-            <span class="na">view_size</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_filesize'</span><span class="p">),</span>
-            <span class="na">view</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'show_box'</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="p">);</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">body</span> <span class="nx">onload</span><span class="o">=</span><span class="s2">"init();"</span><span class="o">&gt;</span>
+var file_viewer = undefined;
 
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"file_selector"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"file"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span>
-    <span class="nx">onchange</span><span class="o">=</span><span class="s2">"file_viewer.load();"</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
-<span class="nx">Name</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filename"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
-<span class="nx">Size</span><span class="err">:</span> <span class="o">&lt;</span><span class="nx">input</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_filesize"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">value</span><span class="o">=</span><span class="s2">""</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">textarea</span> <span class="nx">id</span><span class="o">=</span><span class="s2">"show_box"</span> <span class="nx">readonly</span><span class="o">=</span><span class="s2">"true"</span> <span class="nx">cols</span><span class="o">=</span><span class="s2">"60"</span> <span class="nx">rows</span><span class="o">=</span><span class="s2">"20"</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/textarea&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
-</span>
-</code></pre>
+function init() {
+    file_viewer = new FileViewer(
+        {
+            controller: document.getElementById('file_selector'),
+            view_name: document.getElementById('show_filename'),
+            view_size: document.getElementById('show_filesize'),
+            view: document.getElementById('show_box')
+        }
+    );
+}
+</script>
+
+<body onload="init();">
+
+<div>
+<input id="file_selector" type="file" value=""
+    onchange="file_viewer.load();"/>
+</div>
+
+<div>
+Name: <input id="show_filename" type="text" readonly="true" value=""/>
+Size: <input id="show_filesize" type="text" readonly="true" value=""/>
+<br/>
+<textarea id="show_box" readonly="true" cols="60" rows="20">
+</textarea>
+</div>
+
+</body>
+</html>
+{% endhighlight %}
 
 
 <p>
