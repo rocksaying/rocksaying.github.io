@@ -17,16 +17,18 @@ This feature requires PHP 5.
 <p>
 The statement <code>foreach ($arrayobject as $k => $v) {...}</code> means:
 </p>
-<pre class="highlight"><code>$arrayobject-&gt;iterator-&gt;rewind();
-while ($arrayobject-&gt;iterator-&gt;valid()) {
-    $v = $arrayobject-&gt;iterator-&gt;current();
-    $k = $arrayobject-&gt;iterator-&gt;key();
+
+{% highlight php %}
+$arrayobject->iterator->rewind();
+while ($arrayobject->iterator->valid()) {
+    $v = $arrayobject->iterator->current();
+    $k = $arrayobject->iterator->key();
 
     ...
 
-    $arrayobject-&gt;iterator-&gt;next();
+    $arrayobject->iterator->next();
 }
-</code></pre>
+{% endhighlight %}
 
 <div class="note">
 Note: A native array could be iterate by reference. For example: <code>foreach ($array as $k => &$v)</code>. But an instance of ArrayIterator can not do that. Cause the value of iteration is return from method <code>ArrayIterator::current()</code> which prototype is not a reference.
@@ -35,112 +37,114 @@ Note: A native array could be iterate by reference. For example: <code>foreach (
 <p>
 The following codes shows how to overload indexer and foreach structure in PHP5.
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">MyArrayIterator</span> <span class="k">extends</span> <span class="nx">ArrayIterator</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">rewind</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator rewind: begin to iterate.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">rewind</span><span class="p">();</span>
-    <span class="p">}</span>
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">valid</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator valid: every iteration will call once.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">valid</span><span class="p">();</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+class MyArrayIterator extends ArrayIterator {
+    public function rewind() {
+        echo "overloading operator rewind: begin to iterate.\n";
+        return parent::rewind();
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">current</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator current: foreach (obj as ? =&gt; value).</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">current</span><span class="p">();</span>
-    <span class="p">}</span>
+    public function valid() {
+        echo "overloading operator valid: every iteration will call once.\n";
+        return parent::valid();
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">key</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator key: foreach (obj as key =&gt; ?).</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">key</span><span class="p">();</span>
-    <span class="p">}</span>
+    public function current() {
+        echo "overloading operator current: foreach (obj as ? => value).\n";
+        return parent::current();
+    }
+
+    public function key() {
+        echo "overloading operator key: foreach (obj as key => ?).\n";
+        return parent::key();
+    }
     
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">next</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator next: next iteration.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">next</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    public function next() {
+        echo "overloading operator next: next iteration.\n";
+        return parent::next();
+    }
+}
 
-<span class="k">class</span> <span class="nc">MyArray</span> <span class="k">extends</span> <span class="nx">ArrayObject</span> <span class="p">{</span>
-    <span class="sd">/**
+class MyArray extends ArrayObject {
+    /**
      * It means: $array[] = $v
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">append</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading setter: obj[]= </span><span class="nv">$v</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">append</span><span class="p">(</span><span class="nv">$v</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function append($v) {
+        echo "overloading setter: obj[]= $v\n";
+        return parent::append($v);
+    }
 
-    <span class="sd">/**
+    /**
      * It means: $array[$index] = $v
      * Ruby's []= method.
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetSet</span><span class="p">(</span><span class="nv">$index</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading setter: obj[</span><span class="nv">$index</span><span class="s2">]= </span><span class="nv">$v</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">offsetSet</span><span class="p">(</span><span class="nv">$index</span><span class="p">,</span> <span class="nv">$v</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function offsetSet($index, $v) {
+        echo "overloading setter: obj[$index]= $v\n";
+        return parent::offsetSet($index, $v);
+    }
 
-    <span class="sd">/**
+    /**
      * It means:  $v = $array[$index]
      * Ruby's [] method.
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetGet</span><span class="p">(</span><span class="nv">$index</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading getter: =obj[</span><span class="nv">$index</span><span class="s2">]</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">offsetGet</span><span class="p">(</span><span class="nv">$index</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function offsetGet($index) {
+        echo "overloading getter: =obj[$index]\n";
+        return parent::offsetGet($index);
+    }
 
-    <span class="sd">/**
+    /**
      * It means: isset($array[$index])
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetExists</span><span class="p">(</span><span class="nv">$index</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator of isset: isset(obj[</span><span class="nv">$index</span><span class="s2">])</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">offsetExists</span><span class="p">(</span><span class="nv">$index</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function offsetExists($index) {
+        echo "overloading operator of isset: isset(obj[$index])\n";
+        return parent::offsetExists($index);
+    }
 
-    <span class="sd">/**
+    /**
      * It means: unset($array[$index])
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">offsetUnset</span><span class="p">(</span><span class="nv">$index</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator of unset: unset(obj[</span><span class="nv">$index</span><span class="s2">])</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">offsetUnset</span><span class="p">(</span><span class="nv">$index</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function offsetUnset($index) {
+        echo "overloading operator of unset: unset(obj[$index])\n";
+        return parent::offsetUnset($index);
+    }
 
-    <span class="sd">/**
+    /**
      * It means: count($array)
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">count</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading operator of count: count(obj)</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">count</span><span class="p">();</span>
-    <span class="p">}</span>
+     */
+    public function count() {
+        echo "overloading operator of count: count(obj)\n";
+        return parent::count();
+    }
     
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">getIterator</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"overloading control structure of foreach: foreach(obj as)</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="c1">//return parent::getIterator();
-</span>        <span class="k">return</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">iterator</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyArrayIterator</span><span class="p">(</span><span class="k">parent</span><span class="o">::</span><span class="na">getIterator</span><span class="p">()));</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    public function getIterator() {
+        echo "overloading control structure of foreach: foreach(obj as)\n";
+        //return parent::getIterator();
+        return ($this->iterator = new MyArrayIterator(parent::getIterator()));
+    }
+}
 
-<span class="nv">$array</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'1'</span> <span class="o">=&gt;</span> <span class="s1">'one'</span><span class="p">,</span>
-               <span class="s1">'2'</span> <span class="o">=&gt;</span> <span class="s1">'two'</span><span class="p">,</span>
-               <span class="s1">'3'</span> <span class="o">=&gt;</span> <span class="s1">'three'</span><span class="p">);</span>
+$array = array('1' => 'one',
+               '2' => 'two',
+               '3' => 'three');
 
-<span class="nv">$arrayobject</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyArray</span><span class="p">(</span><span class="nv">$array</span><span class="p">);</span>
+$arrayobject = new MyArray($array);
 
-<span class="k">echo</span> <span class="nv">$arrayobject</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$arrayobject</span><span class="p">[]</span> <span class="o">=</span> <span class="s1">'four'</span><span class="p">;</span>
-<span class="nv">$arrayobject</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'five'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$arrayobject</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$arrayobject</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nb">unset</span><span class="p">(</span><span class="nv">$arrayobject</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
+echo $arrayobject[1], "\n";
+$arrayobject[] = 'four';
+$arrayobject[5] = 'five';
+echo count($arrayobject), "\n";
+echo isset($arrayobject[4]), "\n";
+unset($arrayobject[3]);
 
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$arrayobject</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"iteration: </span><span class="nv">$k</span><span class="s2"> = </span><span class="nv">$v</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+foreach ($arrayobject as $k => $v) {
+    echo "iteration: $k = $v\n";
+}
 
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$array</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+print_r($array);
+?>
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

@@ -25,39 +25,45 @@ Block 無法單獨存在，只能作為 Ruby 指令或呼叫方法時的引數�
 <p>
 Block way. 這種用法較常見。
 </p>
-<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">block_given?</span>
-        <span class="k">yield</span> <span class="n">n</span>    <span class="c1"># yield to black</span>
-    <span class="k">else</span>
-        <span class="nb">puts</span> <span class="s1">'no block'</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-</code></pre>
+
+{% highlight ruby %}
+def nP(n)
+    if block_given?
+        yield n    # yield to black
+    else
+        puts 'no block'
+    end
+end
+{% endhighlight %}
 
 
 <p>
 <code>Proc</code> way. 細節後述。
 </p>
-<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">block_given?</span>
-        <span class="nb">p</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>    <span class="c1"># call proc p</span>
-    <span class="k">else</span>
-        <span class="nb">puts</span> <span class="s1">'no block'</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-</code></pre>
+
+{% highlight ruby %}
+def nP(n, &p)
+    if block_given?
+        p.call n    # call proc p
+    else
+        puts 'no block'
+    end
+end
+{% endhighlight %}
 
 
 <p>
 用例:
 </p>
-<pre class="highlight"><code><span class="n">nP</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="nb">puts</span> <span class="n">n</span><span class="p">}</span>
-<span class="n">nP</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
-    <span class="n">n</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
-        <span class="nb">puts</span> <span class="s1">'a'</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-</code></pre>
+
+{% highlight ruby %}
+nP('hello') {|n| puts n}
+nP(10) do |n|
+    n.times do
+        puts 'a'
+    end
+end
+{% endhighlight %}
 
 <p>
 不論是用 block 或是 Proc ，都可以用 <a href="http://www.ruby-doc.org/core/classes/Kernel.html#M005928">Kernel::block_given?</a> 方法判斷使用方有無傳遞 block 。
@@ -66,39 +72,43 @@ Block way. 這種用法較常見。
 <a href="http://www.ruby-doc.org/core/classes/Proc.html#M001576">Proc::call</a> 方法也可以運算子 <code>[ ]</code> 形式調用。上例之 <code>p.call n</code> 亦可寫成 <code>p[n]</code>。
 </p>
 
-<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP1</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">block_given?</span>
-        <span class="k">yield</span> <span class="n">n</span>    <span class="c1"># yield to black</span>
-    <span class="k">else</span>
-        <span class="nb">puts</span> <span class="s1">'no block'</span>
-    <span class="k">end</span>
-<span class="k">end</span>
 
-<span class="k">def</span> <span class="nf">nP2</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">block_given?</span>
-        <span class="nb">p</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>    <span class="c1"># call proc p</span>
-    <span class="k">else</span>
-        <span class="nb">puts</span> <span class="s1">'no block'</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-</code></pre>
+{% highlight ruby %}
+def nP1(n)
+    if block_given?
+        yield n    # yield to black
+    else
+        puts 'no block'
+    end
+end
+
+def nP2(n, &p)
+    if block_given?
+        p[n]    # call proc p
+    else
+        puts 'no block'
+    end
+end
+{% endhighlight %}
 
 
 <p>
 ECMAScript 只有 <code>Function</code> 類，沒有 block 與 proc 的區分。上述的 Ruby 程式，以 ECMAScript 表達如下列所示:
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">nP</span><span class="p">(</span><span class="nx">n</span><span class="p">,</span> <span class="nx">p</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="nx">p</span><span class="p">(</span><span class="nx">n</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="nx">nP</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">n</span><span class="p">){</span><span class="nx">print</span><span class="p">(</span><span class="nx">n</span><span class="p">)});</span>
-<span class="nx">nP</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span>
-  <span class="kd">function</span><span class="p">(</span><span class="nx">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">n</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span>
-      <span class="nx">print</span><span class="p">(</span><span class="s1">'a'</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">);</span>
-</code></pre>
+{% highlight javascript %}
+function nP(n, p) {
+    return p(n);
+}
+
+nP(10, function(n){print(n)});
+nP(10,
+  function(n) {
+    for (var i = 0; i < n; ++i)
+      print('a');
+  }
+);
+{% endhighlight %}
 
 
 <h5>Block and Method</h5>
@@ -106,19 +116,21 @@ ECMAScript 只有 <code>Function</code> 類，沒有 block 與 proc 的區分。
 定義方法時，若參數名稱前冠上 <code>&amp;</code> 符號， Ruby 將自動轉換 block 為 Proc 實例(隱性調用 Proc.new)，令其成為具名參數。
 </p>
 
-<pre class="highlight"><code><span class="k">def</span> <span class="nf">nP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
-    <span class="nb">p</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
-<span class="k">end</span>
 
-<span class="k">def</span> <span class="nf">mP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">p</span><span class="p">)</span>
-    <span class="nb">p</span><span class="p">.</span><span class="nf">call</span> <span class="n">m</span>
-<span class="k">end</span>
+{% highlight ruby %}
+def nP(n, &p)
+    p.call n
+end
 
-<span class="n">nP</span><span class="p">(</span><span class="s1">'john'</span><span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="nb">name</span><span class="p">}</span>
+def mP(m, p)
+    p.call m
+end
 
-<span class="n">mP</span><span class="p">(</span><span class="s1">'bob'</span><span class="p">,</span> <span class="no">Proc</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="nb">name</span><span class="p">}</span> <span class="p">)</span>
-<span class="n">mP</span><span class="p">(</span><span class="s1">'bob'</span><span class="p">,</span> <span class="nb">proc</span> <span class="p">{</span><span class="o">|</span><span class="nb">name</span><span class="o">|</span> <span class="nb">puts</span> <span class="nb">name</span><span class="p">}</span> <span class="p">)</span>  <span class="c1"># Kernel::proc</span>
-</code></pre>
+nP('john') {|name| puts name}
+
+mP('bob', Proc.new {|name| puts name} )
+mP('bob', proc {|name| puts name} )  # Kernel::proc
+{% endhighlight %}
 
 
 <p>
@@ -127,36 +139,40 @@ ECMAScript 只有 <code>Function</code> 類，沒有 block 與 proc 的區分。
 <p>
 如果要傳遞多段程式，則不適用上述轉換機制。程序員必須明確指示處理動作。
 </p>
-<pre class="highlight"><code><span class="k">def</span> <span class="nf">xP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p2</span><span class="p">)</span>  <span class="c1"># ERROR!</span>
-<span class="k">end</span>
 
-<span class="k">def</span> <span class="nf">xP</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
-    <span class="n">p1</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
-    <span class="n">p2</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
-<span class="k">end</span>
+{% highlight ruby %}
+def xP(n, &p1, &p2)  # ERROR!
+end
 
-<span class="n">xP</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span>
-    <span class="nb">proc</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="nb">puts</span> <span class="n">n</span> <span class="p">},</span>
-    <span class="nb">proc</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="n">n</span><span class="p">.</span><span class="nf">times</span> <span class="p">{</span><span class="nb">puts</span> <span class="s1">'a'</span><span class="p">}</span> <span class="p">}</span>
-<span class="p">)</span>
-</code></pre>
+def xP(n, p1, p2)
+    p1.call n
+    p2.call n
+end
+
+xP(5,
+    proc {|n| puts n },
+    proc {|n| n.times {puts 'a'} }
+)
+{% endhighlight %}
 
 
 <p>
 自動轉換 block 為 Proc 實例的機制通常應用於動態繫結的場合。
 </p>
-<pre class="highlight"><code><span class="k">class</span> <span class="nc">DP</span>
-    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">&amp;</span><span class="nb">p</span><span class="p">)</span>
-        <span class="vi">@do</span> <span class="o">=</span> <span class="nb">p</span>
-    <span class="k">end</span>
-    <span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-        <span class="vi">@do</span><span class="p">.</span><span class="nf">call</span> <span class="n">n</span>
-    <span class="k">end</span>
-<span class="k">end</span>
 
-<span class="n">d</span> <span class="o">=</span> <span class="no">DP</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span> <span class="nb">puts</span> <span class="n">n</span><span class="p">}</span>
-<span class="n">d</span><span class="p">.</span><span class="nf">do</span> <span class="mi">5</span>
-</code></pre>
+{% highlight ruby %}
+class DP
+    def initialize(&p)
+        @do = p
+    end
+    def do(n)
+        @do.call n
+    end
+end
+
+d = DP.new {|n| puts n}
+d.do 5
+{% endhighlight %}
 
 
 <p>

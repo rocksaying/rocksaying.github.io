@@ -17,51 +17,55 @@ permalink: /archives/3547207.html
 <p>
 如果 PHP 沒有 magic method，那麼就要提供一個 interface 叫  <code>ObjectAccess</code> ，宣告兩個方法 __set, __get 。
 </p>
-<pre class="highlight"><code>class JsHash implements ObjectAccess, ArrayAccess {
+
+{% highlight php %}
+class JsHash implements ObjectAccess, ArrayAccess {
   public function __set($k, $v) {
-    $this-&gt;$k = $v;
+    $this->$k = $v;
   }
   public function __get($k) {
-    return $this-&gt;$k;
+    return $this->$k;
   }
 
   public function offsetSet($k, $v) {
-      $this-&gt;$k = $v;
+      $this->$k = $v;
   }
   public function offsetGet($k) {
-    return $this-&gt;$k;
+    return $this->$k;
   }
 }
 
 $h = new JsHash;
-$h-&gt;xyz = 'abc';
+$h->xyz = 'abc';
 echo $h['xyz']
-</code></pre>
+{% endhighlight %}
 
 
 <p>
 反過來，如果 PHP 不用 interface <code>ArrayAccess</code>，而用 magic method ，那麼有一組 magic method: offsetSet, offsetGet。
 </p>
-<pre class="highlight"><code>class JsHash {
+
+{% highlight php %}
+class JsHash {
   public function __set($k, $v) {
-    $this-&gt;$k = $v;
+    $this->$k = $v;
   }
   public function __get($k) {
-    return $this-&gt;$k;
+    return $this->$k;
   }
 
   public function offsetSet($k, $v) {
-      $this-&gt;$k = $v;
+      $this->$k = $v;
   }
   public function offsetGet($k) {
-    return $this-&gt;$k;
+    return $this->$k;
   }
 }
 
 $h = new JsHash;
-$h-&gt;xyz = 'abc';
+$h->xyz = 'abc';
 echo $h['xyz']
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -71,14 +75,16 @@ interface 是個空殼，類別實際上就是要有對應的 member method。
 <p>
 再回到 racklin 的<a href="{{ site.baseurl }}/archives/3526951.html#comment-11071499">例子</a>:
 </p>
-<pre class="highlight"><code>function abc(ArrayAccess $obj) {
+
+{% highlight php %}
+function abc(ArrayAccess $obj) {
     echo $obj[0];
 }
 
 $a = array(0);
 abc(new ArrayObject($a));
 abc( $a ); //ERROR!
-</code></pre>
+{% endhighlight %}
 
 <p>
 這樣就限定 $obj 必須是一個集合型態的實例了。但第7行出現了一個很好笑的矛盾：原生的陣列竟然不被接受!? 對 C++ 使用者而言，這種情形表示程序員的功力不夠，竟然忘了覆載型別轉換運算子。
@@ -91,18 +97,20 @@ abc( $a ); //ERROR!
 再者，在 PHP 中不常這麼做，更常見的情形是引數可以是任何型態。<em>這種實作方式牽涉到 PHP5 不像 C++/Java 具有同名異式的覆載能力</em>。理由可見 <a href="{{ site.baseurl }}/archives/2642460.html">參數寫作風格</a>。對靜態語言而言，使用函數簽名按理來說是好的。但 PHP 目前不支援同名異式的覆載。這表示我如果想限定型別，就要增加許多不必要的方法名稱。例如: abcByArray(), abcByArrayAccess()。於是我們一般寫成:
 </p>
 
-<pre class="highlight"><code>function abc($obj) {
+
+{% highlight php %}
+function abc($obj) {
   // is_array() 不會檢查$obj是否實作了ArrayAccess。
   if (is_array($obj) or is_subclass_of($obj, 'ArrayAccess') /*method_exists($obj, 'offsetGet')*/)
   {
-    foreach ($obj as $index =&gt; $v)
+    foreach ($obj as $index => $v)
       echo $obj[$index];
   }
   else {
     echo $obj;
   }
 }
-</code></pre>
+{% endhighlight %}
 
 <p>
 上例中也顯示 PHP 未平滑地將 primitive type 的方法(函數)與個體導向機制繫結，故 <code>is_array()</code> 只能判斷 primitive array ，而不能判別是否為一具有 ArrayAccess 行為的個體。
@@ -113,31 +121,33 @@ abc( $a ); //ERROR!
 <p>
 Ruby 的做法是，我只關注有沒有我需要的方法。使用者也可以隨時抽換他的方法內容。如下例:
 </p>
-<pre class="highlight"><code><span class="k">def</span> <span class="nf">abc</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-    <span class="n">o</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
-        <span class="nb">puts</span> <span class="n">i</span>
-    <span class="p">}</span>
-<span class="k">end</span>
 
-<span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">]</span>
-<span class="n">abc</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+{% highlight php %}
+def abc(o)
+    o.each { |i|
+        puts i
+    }
+end
 
-<span class="c1"># if you want change the method of instance, just redefine it.</span>
-<span class="k">def</span> <span class="nc">s</span><span class="o">.</span><span class="nf">each</span>
-    <span class="k">yield</span> <span class="nb">self</span><span class="p">.</span><span class="nf">join</span>
-<span class="k">end</span>
-<span class="n">abc</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># like a string</span>
+s = [1,3,5,7,9]
+abc(s)
 
-<span class="n">s</span> <span class="o">=</span> <span class="s1">'hello'</span>
-<span class="n">abc</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+# if you want change the method of instance, just redefine it.
+def s.each
+    yield self.join
+end
+abc(s)  # like a string
 
-<span class="k">def</span> <span class="nc">s</span><span class="o">.</span><span class="nf">each</span>
-    <span class="nb">self</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="s1">''</span><span class="p">).</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">c</span><span class="o">|</span>
-        <span class="k">yield</span> <span class="n">c</span>
-    <span class="p">}</span>
-<span class="k">end</span>
-<span class="n">abc</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># like a array</span>
-</code></pre>
+s = 'hello'
+abc(s)
+
+def s.each
+    self.split('').each { |c|
+        yield c
+    }
+end
+abc(s)  # like a array
+{% endhighlight %}
 
 
 <p>
