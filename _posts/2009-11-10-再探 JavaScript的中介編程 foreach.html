@@ -21,37 +21,39 @@ permalink: /archives/10637755.html
 本文範例中使用了 <dfn>Document</dfn> 資料型別，而這是以網頁瀏覽器為宿主時才會擁有的原生型別，所以請透過瀏覽器(如 Firefox, IE)等執行。如果不知道如何執行的讀者，可以開啟 <a href="http://www.squarefree.com/shell/shell.html">JavaScript shell</a> 此網頁，把程式碼剪貼到上面去執行。
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">];</span>
 
-<span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">implementation</span><span class="p">.</span><span class="nx">createDocument</span> <span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
-<span class="kd">var</span> <span class="nx">items</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'items'</span><span class="p">);</span>
-<span class="kd">var</span> <span class="nx">item</span><span class="p">,</span> <span class="nx">i</span><span class="p">;</span>
-<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">item</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'item'</span><span class="p">);</span>
-    <span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">x</span><span class="p">.</span><span class="nx">createTextNode</span><span class="p">(</span><span class="nx">i</span><span class="p">));</span>
-    <span class="nx">items</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">x</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">items</span><span class="p">);</span>
+{% highlight javascript %}
+var a = [0, 1, 2, 3, 4];
 
-<span class="nx">print</span><span class="p">(</span><span class="s1">'==== foreach 使用前 ===='</span><span class="p">);</span>
+var x = document.implementation.createDocument ('', '', null);
+var items = x.createElement('items');
+var item, i;
+for (i = 0; i < 5; i++) {
+    item = x.createElement('item');
+    item.appendChild(x.createTextNode(i));
+    items.appendChild(item);
+}
+x.appendChild(items);
 
-<span class="c1">//走訪 array ，你要寫 array 的程式碼</span>
-<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">v</span> <span class="o">=</span> <span class="nx">a</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+print('==== foreach 使用前 ====');
 
-    <span class="nx">print</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
-<span class="p">}</span>
+//走訪 array ，你要寫 array 的程式碼
+for (i = 0; i < a.length; i++) {
+    v = a[i];
 
-<span class="c1">//走訪 xml ，你要寫 xml 的程式碼</span>
-<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span>
-     <span class="nx">i</span><span class="p">;</span>
-     <span class="nx">i</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="nx">v</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
+    print(v);
+}
 
-    <span class="nx">print</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+//走訪 xml ，你要寫 xml 的程式碼
+for (i = x.firstChild.firstChild;
+     i;
+     i = i.nextSibling)
+{
+    v = i.firstChild.nodeValue;
+
+    print(v);
+}
+{% endhighlight %}
 
 <p>
 如無意外，你會看到兩次 01234。這分別是 <var>a</var> 和 <var>x</var> 的傾印結果。
@@ -67,40 +69,42 @@ permalink: /archives/10637755.html
 我分別定義了兩個建構者(Java叫"類別")， <dfn>DataArray</dfn> 負責陣列，<dfn>DataXml</dfn> 負責 XML 文件。同樣都定義了 <dfn>foreach</dfn> 方法。而它們的內容其實就是上面的 <code>for(;;){}</code> ，我把它們搬進類別中了。
 至於迭代內容則以函數加以參數化，傳給 foreach 調用。
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">DataArray</span><span class="p">(</span><span class="nx">init</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">init</span><span class="p">;</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">v</span><span class="p">;</span>
-        <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">v</span> <span class="o">=</span> <span class="nx">a</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+{% highlight javascript %}
+function DataArray(init) {
+    var a = init;
 
-            <span class="nx">f</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    this.foreach = function(f) {
+        var i, v;
+        for (i = 0; i < a.length; i++) {
+            v = a[i];
 
-<span class="kd">function</span> <span class="nx">DataXml</span><span class="p">(</span><span class="nx">init</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="nx">init</span><span class="p">;</span>
+            f(v);
+        }
+    }
+}
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">v</span><span class="p">;</span>
-        <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span>
-             <span class="nx">i</span><span class="p">;</span>
-             <span class="nx">i</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="nx">v</span> <span class="o">=</span> <span class="nx">i</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
+function DataXml(init) {
+    var x = init;
 
-            <span class="nx">f</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">};</span>
-<span class="p">}</span>
+    this.foreach = function(f) {
+        var i, v;
+        for (i = x.firstChild.firstChild;
+             i;
+             i = i.nextSibling)
+        {
+            v = i.firstChild.nodeValue;
 
-<span class="c1">//順便定義 print(v)</span>
-<span class="kd">function</span> <span class="nx">pv</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="nx">v</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+            f(v);
+        }
+    };
+}
+
+//順便定義 print(v)
+function pv(v) {
+    print(v);
+}
+{% endhighlight %}
 
 
 <h4>
@@ -109,16 +113,17 @@ permalink: /archives/10637755.html
 <p>
 接下來就是重頭戲了，
 </p>
-<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s1">'==== foreach 使用後 ===='</span><span class="p">);</span>
-<span class="kd">var</span> <span class="nx">da</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataArray</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
 
-<span class="nx">da</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="nx">pv</span> <span class="p">);</span>
+{% highlight javascript %}
+print('==== foreach 使用後 ====');
+var da = new DataArray(a);
 
-<span class="kd">var</span> <span class="nx">dx</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataXml</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+da.foreach( pv );
 
-<span class="nx">dx</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="nx">pv</span> <span class="p">);</span>
+var dx = new DataXml(x);
 
-</code></pre>
+dx.foreach( pv );
+{% endhighlight %}
 
 <p>
 瞧，一整個簡化了，你不用再看見重複的 <code>for(;;){}</code> 了。甚至不用再區分 array 或 xml 而寫不同的程式碼。
@@ -126,31 +131,32 @@ permalink: /archives/10637755.html
 <p>
 好戲就這樣嗎？不，還沒呢。精彩的總是壓軸演出。
 </p>
-<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s1">'==== 再進一步 ===='</span><span class="p">);</span>
 
-<span class="nx">containers</span> <span class="o">=</span> <span class="p">[</span><span class="nx">da</span><span class="p">,</span> <span class="nx">dx</span><span class="p">];</span>
+{% highlight javascript %}
+print('==== 再進一步 ====');
 
-<span class="p">(</span><span class="k">new</span> <span class="nx">DataArray</span><span class="p">(</span><span class="nx">containers</span><span class="p">)).</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">d</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="nx">pv</span> <span class="p">)</span>
-<span class="p">});</span>
+containers = [da, dx];
 
-<span class="nx">print</span><span class="p">(</span><span class="s1">'不用 foreach 的話，你要這樣寫'</span><span class="p">);</span>
+(new DataArray(containers)).foreach( function(d) {
+    d.foreach( pv )
+});
 
-<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">containers</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">d</span> <span class="o">=</span> <span class="nx">containers</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+print('不用 foreach 的話，你要這樣寫');
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'[object XMLDocument]'</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//... 請自己copy上面走訪 x 的程式碼</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'[object ???'</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//如果有一堆不同資料型態，你要寫下一排 else if...</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="c1">//... 請自己copy上面走訪 a 的程式碼</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+for (i = 0; i < containers.length; i++) {
+    d = containers[i];
 
-</code></pre>
+    if (d.toString() == '[object XMLDocument]') {
+        //... 請自己copy上面走訪 x 的程式碼
+    }
+    else if (d.toString() == '[object ???') {
+        //如果有一堆不同資料型態，你要寫下一排 else if...
+    }
+    else {
+        //... 請自己copy上面走訪 a 的程式碼
+    }
+}
+{% endhighlight %}
 
 
 <p>
@@ -178,7 +184,7 @@ Flanagan and Matz, The Ruby Programming Language, page 281, O'Reilly 2008
 </p>
 <p>
 如果覺得上述的示範還是不算中介編程，那麼不妨換個方式來看本文的例子。請把 foreach 看成一段 macro，而不要看成一個函數。那麼當我寫下 <code>d.foreach( pv );</code> 之後，各位就可以想像成 JavaScript 自動把上面那一行代換成（產生）<code>
-for (xxx;xxx;xxx) { v = i; pv(v) } </ocde>
+for (xxx;xxx;xxx) { v = i; pv(v) } </code>
 </p>
 <p>
 當然我上面的例子中顯示，JavaScript這個 "foreach" 巨集還具有判斷對象型別套用不同<code>for(;;){}</code>的功能。在 C++ 中，這是用 template 來做的.

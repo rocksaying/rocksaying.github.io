@@ -14,132 +14,132 @@ permalink: /archives/10683081.html
 本文的範例源碼係延續自<a href="{{ site.baseurl }}/archives/10624583.html" class="bookname_notation">JavaScript的中介編程與反射能力示範</a>，除了加上 JavaScript 操作 <dfn>prototype</dfn> 擴充類別定義的程式碼外，順便也修改了原本的程式結構，令它可以直接透過建構子所接受的 Hash Table 內容，決定實體的可用資料欄位。不像前一版本顯著列出欄位清單。
 </p>
 
-<pre class="highlight"><code><span class="cm">/**
- * define a constructor named 'Class'
- */</span>
-<span class="nx">Class</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">;</span>
 
-<span class="cm">/**
+{% highlight javascript %}
+/**
+ * define a constructor named 'Class'
+ */
+Class = new Function;
+
+/**
  * foreach
  * @param f  Your iterator: F(key value)
- */</span>
-<span class="nx">Class</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">f</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+ */
+Class.prototype.foreach = function(f) {
+    for (var p in this.props) {
+        f(p, this.props[p]);
+    }
+}
 
-<span class="cm">/**
+/**
  * accessor
  * @param props 要使用預設存取器的屬性列表(hash table).
- */</span>
-<span class="nx">Class</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">accessor</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">sourceText</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nx">p</span> <span class="k">in</span> <span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">sourceText</span> <span class="o">=</span> <span class="s2">"  \
+ */
+Class.prototype.accessor = function(props) {
+    var p, sourceText;
+    for (p in props) {
+        sourceText = "  \
             if (v == undefined) \
                 return this.props.{XXX}; \
             else    \
                 this.props.{XXX} = v;   \
-            "</span><span class="p">;</span>
+            ";
 
-        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s2">"v"</span><span class="p">,</span> <span class="nx">sourceText</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/{XXX}/g</span><span class="p">,</span> <span class="nx">p</span><span class="p">));</span>
-        <span class="c1">// Script解譯器會自動將上面的源碼解釋為:</span>
-        <span class="c1">//  this[p] = function(v) {</span>
-        <span class="c1">//      if (v == undefined)</span>
-        <span class="c1">//          return this.props.?</span>
-        <span class="c1">//      else</span>
-        <span class="c1">//          this.props.? = v;</span>
-        <span class="c1">//  }</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+        this[p] = new Function("v", sourceText.replace(/{XXX}/g, p));
+        // Script解譯器會自動將上面的源碼解釋為:
+        //  this[p] = function(v) {
+        //      if (v == undefined)
+        //          return this.props.?
+        //      else
+        //          this.props.? = v;
+        //  }
+    }
+}
 
-<span class="cm">/**
+/**
  * 此資料類別直接透過建構子所接受的 Hash Table 內容，決定
  * 實體的可用資料欄位。不像前一版本顯著列出欄位清單。
  * @param args  hash table
- */</span>
-<span class="kd">function</span> <span class="nx">Data</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
+ */
+function Data(args) {
+    if (args == undefined)
+        return;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">props</span> <span class="o">=</span> <span class="p">{}</span>
+    this.props = {}
 
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
-    <span class="p">}</span>
+    for (var p in args) {
+        this.props[p] = args[p];
+    }
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">accessor</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">Data</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">;</span>
-<span class="c1">//定義 Data 的原型是 Class 。亦即定義 Data 為 Class 的衍生類</span>
-
-
-<span class="kd">var</span> <span class="nx">d1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">({</span>
-    <span class="na">id</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="na">title</span><span class="p">:</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="na">content</span><span class="p">:</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="na">timestamp</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">()</span>
-<span class="p">});</span>
-
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Properties of d1"</span><span class="p">);</span>
-<span class="nx">d1</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">value</span><span class="p">){</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">" : "</span> <span class="o">+</span> <span class="nx">value</span> <span class="p">);</span>
-<span class="p">});</span>
-
-<span class="c1">//別種資料結果</span>
-<span class="kd">var</span> <span class="nx">d2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">({</span>
-    <span class="s1">'id'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span><span class="p">:</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'create_timestamp'</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">(),</span>
-    <span class="s1">'update_timestamp'</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">(),</span>
-    <span class="s1">'table'</span><span class="p">:</span> <span class="s1">'Data'</span><span class="p">,</span>
-    <span class="s1">'gid'</span><span class="p">:</span> <span class="mi">100</span>
-<span class="p">});</span>
-
-<span class="nx">print</span><span class="p">(</span><span class="s2">"\n---- Accessor demo ----"</span><span class="p">);</span>
-<span class="nx">d2</span><span class="p">.</span><span class="nx">title</span><span class="p">(</span><span class="s1">'javascript'</span><span class="p">);</span> <span class="c1">// setter</span>
-<span class="nx">print</span><span class="p">(</span> <span class="nx">d2</span><span class="p">.</span><span class="nx">title</span><span class="p">()</span> <span class="p">);</span> <span class="c1">//getter</span>
-
-<span class="nx">print</span><span class="p">(</span><span class="s2">"\nProperties of d2"</span><span class="p">);</span>
-<span class="nx">d2</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">" : "</span> <span class="o">+</span> <span class="nx">value</span> <span class="p">);</span>
-<span class="p">});</span>
-
-<span class="nx">print</span><span class="p">(</span> <span class="s2">"---- More ----"</span> <span class="p">);</span>
-
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nx">d1</span><span class="p">.</span><span class="nx">sayHello</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="s2">" * Sorry, they can not speak.\n"</span> <span class="p">);</span>
-<span class="p">}</span>
-
-<span class="c1">// 直接操作 Data.prototype ，添加新的定義。</span>
-<span class="nx">Data</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">sayHello</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="s2">"Hello, I am "</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">title</span> <span class="p">);</span>
-<span class="p">}</span>
-
-<span class="c1">// 現在它們能說 hello 了</span>
-
-<span class="nx">print</span><span class="p">(</span> <span class="s2">" * Now, they can say hello."</span> <span class="p">);</span>
-<span class="nx">d1</span><span class="p">.</span><span class="nx">sayHello</span><span class="p">();</span>
-<span class="nx">d2</span><span class="p">.</span><span class="nx">sayHello</span><span class="p">();</span>
-
-<span class="nx">d2</span><span class="p">.</span><span class="nx">jump</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="s2">"I am "</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">title</span><span class="p">()</span> <span class="o">+</span> <span class="s2">", and I can jump."</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nx">d1</span><span class="p">.</span><span class="nx">jump</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">" * Sorry, "</span> <span class="o">+</span> <span class="nx">d1</span><span class="p">.</span><span class="nx">title</span><span class="p">()</span> <span class="o">+</span> <span class="s2">" can not jump."</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">d2</span><span class="p">.</span><span class="nx">jump</span><span class="p">();</span>
+    this.accessor(this.props);
+}
+Data.prototype = new Class;
+//定義 Data 的原型是 Class 。亦即定義 Data 為 Class 的衍生類
 
 
-</code></pre>
+var d1 = new Data({
+    id: 1,
+    title: 'rock',
+    content: 'hello world',
+    timestamp: (new Date()).toLocaleString()
+});
+
+print("Properties of d1");
+d1.foreach( function(name, value){
+    print( name + " : " + value );
+});
+
+//別種資料結果
+var d2 = new Data({
+    'id': 1,
+    'title': 'rock',
+    'create_timestamp': (new Date()).toLocaleString(),
+    'update_timestamp': (new Date()).toLocaleString(),
+    'table': 'Data',
+    'gid': 100
+});
+
+print("\n---- Accessor demo ----");
+d2.title('javascript'); // setter
+print( d2.title() ); //getter
+
+print("\nProperties of d2");
+d2.foreach( function(name, value) {
+    print( name + " : " + value );
+});
+
+print( "---- More ----" );
+
+try {
+    d1.sayHello();
+}
+catch(e) {
+    print( " * Sorry, they can not speak.\n" );
+}
+
+// 直接操作 Data.prototype ，添加新的定義。
+Data.prototype.sayHello = function() {
+    print( "Hello, I am " + this.props.title );
+}
+
+// 現在它們能說 hello 了
+
+print( " * Now, they can say hello." );
+d1.sayHello();
+d2.sayHello();
+
+d2.jump = function() {
+    print( "I am " + this.title() + ", and I can jump.");
+}
+
+try {
+    d1.jump();
+}
+catch(e) {
+    print(" * Sorry, " + d1.title() + " can not jump.");
+}
+d2.jump();
+{% endhighlight %}
 
 
 <p>

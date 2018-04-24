@@ -23,27 +23,29 @@ Vala provides two way to get time (it represents the  number  of  seconds  elaps
 <p>
 The following is an example to get current time and to output it as a formatted timestamp.
 </p>
-<pre class="highlight"><code><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">TimeVal</span> <span class="n">nowv</span> <span class="o">=</span> <span class="n">TimeVal</span><span class="p">();</span>
-    <span class="n">nowv</span><span class="p">.</span><span class="n">get_current_time</span><span class="p">();</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">nowv</span><span class="p">.</span><span class="n">to_iso8601</span><span class="p">());</span>
 
-    <span class="c1">// man ctime
-</span>    <span class="n">Time</span> <span class="n">now1</span> <span class="o">=</span> <span class="n">Time</span><span class="p">();</span>
-    <span class="n">now1</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span> <span class="kt">time_t</span><span class="p">()</span> <span class="p">);</span> <span class="c1">// get current time.
-</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now1</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
+{% highlight c# %}
+void main() {
+    TimeVal nowv = TimeVal();
+    nowv.get_current_time();
+    stdout.printf("It is %s.\n", nowv.to_iso8601());
 
-    <span class="c1">// man strftime
-</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now1</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="s">"%F %H:%M:%S"</span><span class="p">));</span>
+    // man ctime
+    Time now1 = Time();
+    now1 = Time.local( time_t() ); // get current time.
+    stdout.printf("It is %s.\n", now1.to_string());
 
-    <span class="kt">time_t</span> <span class="n">t</span> <span class="o">=</span> <span class="n">nowv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">;</span> <span class="c1">// get time from TimeVal.
-</span>    <span class="n">now1</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span> <span class="n">t</span> <span class="p">);</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"It is %s.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now1</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span>
-<span class="p">}</span>
-</code></pre>
+    // man strftime
+    stdout.printf("It is %s.\n", now1.format("%F %H:%M:%S"));
+
+    time_t t = nowv.tv_sec; // get time from TimeVal.
+    now1 = Time.local( t );
+    stdout.printf("It is %s.\n", now1.to_string());
+}
+{% endhighlight %}
 
 
-<pre class="language-term">
+<pre><code class="language-term">
 rock@desktop:~$ valac what_time_is_it.vala
 rock@desktop:~$ ./what_time_is_it
 It is 2010-08-24T08:10:18.484744Z.
@@ -51,7 +53,7 @@ It is 2010-08-24 16:10:18.
 It is 2010-08-24 16:10:18.
 It is 2010-08-24 16:10:18.
 
-</pre>
+</code></pre>
 
 <h5>
 Custom Your Log
@@ -63,7 +65,9 @@ When we design a background daemon, we usually need to log some informations to 
 The following is a custom log example. It also adds a timestamp (see above) to log messages.
 </p>
 
-<pre class="highlight"><code><span class="c">#if 0
+
+{% highlight c# %}
+#if 0
 namespace Log {
     void puts(string msg) {
         Time now = Time();
@@ -73,37 +77,37 @@ namespace Log {
     }
 }
 #endif
-</span>
-<span class="n">public</span> <span class="n">class</span> <span class="n">Log</span> <span class="p">{</span>
-    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">puts</span><span class="p">(</span><span class="n">string</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">Time</span> <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">();</span>
-        <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span><span class="kt">time_t</span><span class="p">());</span> 
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"[%s] %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span> <span class="n">msg</span><span class="p">);</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">flush</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">//redirect stdout to /tmp/test.log
-</span>    <span class="n">stdout</span> <span class="o">=</span> <span class="n">FileStream</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="s">"/tmp/test.log"</span><span class="p">,</span> <span class="s">"ab"</span><span class="p">);</span>
+public class Log {
+    public static void puts(string msg) {
+        Time now = Time();
+        now = Time.local(time_t()); 
+        stdout.printf("[%s] %s\n", now.to_string(), msg);
+        stdout.flush();
+    }
+}
+
+void main() {
+    //redirect stdout to /tmp/test.log
+    stdout = FileStream.open("/tmp/test.log", "ab");
     
-    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"world"</span><span class="p">;</span>
-    <span class="n">Log</span><span class="p">.</span><span class="n">puts</span><span class="p">(</span><span class="err">@</span><span class="s">"error message about $s."</span><span class="p">);</span>
+    var s = "world";
+    Log.puts(@"error message about $s.");
     
-    <span class="n">var</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
-    <span class="n">var</span> <span class="n">j</span> <span class="o">=</span> <span class="s">"jack"</span><span class="p">;</span>
-    <span class="n">Log</span><span class="p">.</span><span class="n">puts</span><span class="p">(</span><span class="err">@</span><span class="s">"i is $i, j is $j."</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+    var i = 10;
+    var j = "jack";
+    Log.puts(@"i is $i, j is $j.");
+}
+{% endhighlight %}
 
 
-<pre class="language-term">
+<pre><code class="language-term">
 rock@rock-desktop:~$ ./time_log 
 rock@rock-desktop:~$ cat /tmp/test.log 
 [2010-08-24 16:26:01] error message about world.
 [2010-08-24 16:26:01] i is 10, j is jack.
 
-</pre>
+</code></pre>
 
 <h5>
 How about GLib.log
@@ -113,25 +117,26 @@ How about GLib.log
 By default way, GLib.log(), GLib.message(), GLib.error(), GLib.warning(), and etc, will directly output message to /dev/stderr. We could not use FileStream to redirect those. You may invoke <a href="http://valadoc.org/glib-2.0/GLib.Log.set_default_handler.html">GLib.Log.set_default_handler()</a> or  GLib.Log.set_handler() to change handler.
 </p>
 
-<pre class="highlight"><code><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">var</span> <span class="n">log_stream</span> <span class="o">=</span> <span class="n">FileStream</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="s">"/tmp/test2.log"</span><span class="p">,</span> <span class="s">"ab"</span><span class="p">);</span>
+
+{% highlight c# %}
+void main() {
+    var log_stream = FileStream.open("/tmp/test2.log", "ab");
     
-    <span class="n">Log</span><span class="p">.</span><span class="n">set_default_handler</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
-            <span class="n">Time</span> <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">();</span>
-            <span class="n">now</span> <span class="o">=</span> <span class="n">Time</span><span class="p">.</span><span class="n">local</span><span class="p">(</span><span class="kt">time_t</span><span class="p">());</span> 
-            <span class="n">log_stream</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"[%s] %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">now</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span> <span class="n">message</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">);</span>
-    <span class="n">message</span><span class="p">(</span><span class="s">"%s"</span><span class="p">,</span> <span class="s">"hello"</span><span class="p">);</span>
-<span class="p">}</span>
+    Log.set_default_handler(
+        (domain, level, message) => {
+            Time now = Time();
+            now = Time.local(time_t()); 
+            log_stream.printf("[%s] %s\n", now.to_string(), message);
+        }
+    );
+    message("%s", "hello");
+}
+{% endhighlight %}
 
-</code></pre>
 
-
-<pre class="language-term">
+<pre><code class="language-term">
 rock@rock-desktop:~$ ./time_log2 
 rock@rock-desktop:~$ cat /tmp/test2.log 
 [2010-08-24 16:48:27] time_log2.vala:11: hello
 
-</pre><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13543703.html</div>
+</code></pre><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13543703.html</div>

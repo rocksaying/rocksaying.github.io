@@ -37,52 +37,53 @@ permalink: /archives/13196157.html
 <h6>
 blog/rock/Hello.java
 </h6>
-<pre class="highlight"><code><span class="kn">package</span> <span class="n">blog</span><span class="o">.</span><span class="na">rock</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.util.*</span><span class="o">;</span>
 
-<span class="kd">class</span> <span class="nc">Hello</span> <span class="o">{</span>
-    <span class="c1">//匯入此類別時，一併載入包含原生方法的共享函數庫。
-</span>
-    <span class="kd">static</span> <span class="o">{</span>
-        <span class="c1">//此例的共享函數庫文件名稱是 libHello.so，故此處給的參數是 "Hello".
-</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">"Hello"</span><span class="o">);</span>
-    <span class="o">}</span>
+{% highlight java %}
+package blog.rock;
+import java.util.*;
 
-    <span class="c1">//tutorial 2
-</span>
-    <span class="kd">private</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">hash</span><span class="o">;</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kt">void</span> <span class="n">put</span><span class="o">(</span><span class="n">String</span> <span class="n">k</span><span class="o">,</span> <span class="n">Integer</span> <span class="n">v</span><span class="o">);</span>
+class Hello {
+    //匯入此類別時，一併載入包含原生方法的共享函數庫。
 
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kd">static</span> <span class="n">String</span> <span class="n">concat</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">msgs</span><span class="o">);</span>
+    static {
+        //此例的共享函數庫文件名稱是 libHello.so，故此處給的參數是 "Hello".
 
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kd">static</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">fileGetContent</span><span class="o">(</span><span class="n">String</span> <span class="n">filepath</span><span class="o">)</span>
-        <span class="kd">throws</span> <span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">FileNotFoundException</span><span class="o">,</span> <span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">IOException</span><span class="o">;</span>
+        System.loadLibrary("Hello");
+    }
 
-    <span class="c1">//這只是用來測試的方法。
-</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">Hello</span> <span class="n">h</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Hello</span><span class="o">();</span>
+    //tutorial 2
 
-        <span class="n">h</span><span class="o">.</span><span class="na">hash</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;();</span>
-        <span class="n">h</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"xyz"</span><span class="o">,</span> <span class="k">new</span> <span class="n">Integer</span><span class="o">(</span><span class="mi">100</span><span class="o">));</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"h.hash.size: "</span> <span class="o">+</span> <span class="n">h</span><span class="o">.</span><span class="na">hash</span><span class="o">.</span><span class="na">size</span><span class="o">());</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"h.hash("</span><span class="n">xyz</span><span class="s">"): "</span> <span class="o">+</span> <span class="n">h</span><span class="o">.</span><span class="na">hash</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">"xyz"</span><span class="o">));</span>
+    private HashMap<String, Integer> hash;
+    public native void put(String k, Integer v);
 
-        <span class="n">s</span> <span class="o">=</span> <span class="n">Hello</span><span class="o">.</span><span class="na">concat</span><span class="o">(</span><span class="k">new</span> <span class="n">String</span><span class="o">[]{</span><span class="s">"hello-"</span><span class="o">,</span> <span class="s">"world;"</span><span class="o">,</span> <span class="s">"石頭成"</span><span class="o">});</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"concat: "</span> <span class="o">+</span> <span class="n">s</span><span class="o">);</span>
+    public native static String concat(String[] msgs);
 
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="kt">byte</span><span class="o">[]</span> <span class="n">b</span> <span class="o">=</span> <span class="n">Hello</span><span class="o">.</span><span class="na">fileGetContent</span><span class="o">(</span><span class="s">"libHello.so"</span><span class="o">);</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"File size: "</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Byte[0]: "</span> <span class="o">+</span> <span class="n">b</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
-        <span class="o">}</span>
-        <span class="k">catch</span> <span class="o">(</span><span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">}</span>
+    public native static byte[] fileGetContent(String filepath)
+        throws java.io.FileNotFoundException, java.io.IOException;
 
-</code></pre>
+    //這只是用來測試的方法。
+
+    public static void main(String[] args) {
+        Hello h = new Hello();
+
+        h.hash = new HashMap<String, Integer>();
+        h.put("xyz", new Integer(100));
+        System.out.println("h.hash.size: " + h.hash.size());
+        System.out.println("h.hash("xyz"): " + h.hash.get("xyz"));
+
+        s = Hello.concat(new String[]{"hello-", "world;", "石頭成"});
+        System.out.println("concat: " + s);
+
+        try {
+            byte[] b = Hello.fileGetContent("libHello.so");
+            System.out.println("File size: " + b.length);
+            System.out.println("Byte[0]: " + b[0]);
+        }
+        catch (java.io.IOException e) {
+        }
+    }
+}
+{% endhighlight %}
 
 
 <h4>
@@ -95,49 +96,51 @@ blog/rock/Hello.java
 <h6>
 hello-native.c
 </h6>
-<pre class="highlight"><code><span class="cp">#include "hello-glue.h"
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;fcntl.h&gt;
-#include &lt;memory.h&gt;
-#include &lt;errno.h&gt;
-</span>
-<span class="cm">/*
+
+{% highlight c %}
+#include "hello-glue.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <memory.h>
+#include <errno.h>
+
+/*
  * Class:     blog_rock_Hello
  * Method:    put
  * Signature: (Ljava/lang/String;Ljava/lang/Integer;)V
- */</span>
-<span class="n">JNIEXPORT</span> <span class="kt">void</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_put</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">k</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">v</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+ */
+JNIEXPORT void JNICALL Java_blog_rock_Hello_put
+  (JNIEnv *env, jobject this, jstring k, jobject v)
+{
+    return;
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    concat
  * Signature: ([Ljava/lang/String;)Ljava/lang/String;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jstring</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_concat</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jobjectArray</span> <span class="n">msgs</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jstring JNICALL Java_blog_rock_Hello_concat
+  (JNIEnv *env, jclass Hello, jobjectArray msgs)
+{
+    return NULL;
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    fileGetContent
  * Signature: (Ljava/lang/String;)[B
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jbyteArray</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_fileGetContent</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">filepath</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+ */
+JNIEXPORT jbyteArray JNICALL Java_blog_rock_Hello_fileGetContent
+  (JNIEnv *env, jclass Hello, jstring filepath)
+{
+    return NULL;
+}
+{% endhighlight %}
 
 
 <h4>
@@ -156,49 +159,50 @@ hello-native.c
 <p>
 查詢方法時，需要給予方法描述符號(方法簽名)，詳情查看 <a href="http://java.sun.com/docs/books/jni/html/types.html#65751">The Java Native Interface Programmer's Guide and Specification - Method descriptor</a>。此外，雖然 HashMap 是一個泛型類別，但是因為 JVM 執行時已經丟棄了泛型資訊，所以全部的泛型化參數，在 JNI 中都視為 java.lang.Object (jobject) 資料。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    put
  * Signature: (Ljava/lang/String;Ljava/lang/Integer;)V
- */</span>
-<span class="n">JNIEXPORT</span> <span class="kt">void</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_put</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">k</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">v</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jclass</span> <span class="n">hash_cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">FindClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/util/HashMap"</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span>
-    <span class="n">jobject</span> <span class="n">hash</span><span class="p">;</span>
-    <span class="n">jmethodID</span> <span class="n">mid</span><span class="p">;</span>
+ */
+JNIEXPORT void JNICALL Java_blog_rock_Hello_put
+  (JNIEnv *env, jobject this, jstring k, jobject v)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jclass hash_cls = (*env)->FindClass(env, "java/util/HashMap");
+    jfieldID fid;
+    jobject hash;
+    jmethodID mid;
 
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"hash"</span><span class="p">,</span> <span class="s">"Ljava/util/HashMap;"</span><span class="p">);</span>
-    <span class="n">hash</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">);</span>
+    fid = (*env)->GetFieldID(env, cls, "hash", "Ljava/util/HashMap;");
+    hash = (*env)->GetObjectField(env, this, fid);
 
-    <span class="c1">// Java: mid = hash_cls.getMethod("put", Object.class, Object.class);
-</span>    <span class="c1">// method descriptor:
-</span>    <span class="c1">// see http://java.sun.com/docs/books/jni/html/types.html#65751
-</span>    <span class="c1">//
-</span>    <span class="c1">// prototype: V java.util.HashMap.put(K key, V value);
-</span>    <span class="c1">// JVM already drops information of generic type.
-</span>    <span class="c1">// All generic arguments think as java.lang.Object.
-</span>    <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetMethodID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">hash_cls</span><span class="p">,</span> <span class="s">"put"</span><span class="p">,</span>
-        <span class="s">"(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">mid</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"could not found method</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-        <span class="k">goto</span> <span class="n">end</span><span class="p">;</span>
-    <span class="p">}</span>
+    // Java: mid = hash_cls.getMethod("put", Object.class, Object.class);
+    // method descriptor:
+    // see http://java.sun.com/docs/books/jni/html/types.html#65751
+    //
+    // prototype: V java.util.HashMap.put(K key, V value);
+    // JVM already drops information of generic type.
+    // All generic arguments think as java.lang.Object.
+    mid = (*env)->GetMethodID(env, hash_cls, "put",
+        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    if (mid == NULL) {
+        printf("could not found method\n");
+        goto end;
+    }
 
-    <span class="c1">// Java: mid.invoke(k, v);
-</span>    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">CallObjectMethod</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">hash</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
+    // Java: mid.invoke(k, v);
+    (*env)->CallObjectMethod(env, hash, mid, k, v);
 
-  <span class="nl">end:</span>
-    <span class="c1">// In this case, those are not necessarily.
-</span>    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">DeleteLocalRef</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">);</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">DeleteLocalRef</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">hash_cls</span><span class="p">);</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">DeleteLocalRef</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">hash</span><span class="p">);</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
-
-</code></pre>
+  end:
+    // In this case, those are not necessarily.
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, hash_cls);
+    (*env)->DeleteLocalRef(env, hash);
+    return;
+}
+{% endhighlight %}
 
 <blockquote>
 In most cases, you do not have to worry about freeing local references when implementing a native method. The Java virtual machine frees them for you when the native method returns to the caller.
@@ -215,62 +219,63 @@ In most cases, you do not have to worry about freeing local references when impl
 <p>
 字串陣列被視為一個包含參考型別資料的陣列，所以要用 GetObjectArrayElement() 一一取出陣列中的元素內容。複製字串內容時，則應注意 UTF-8 字元與 C 字元的差異，必須使用 GetStringUTFLength() 才能得到以 byte 為計算單位的長度，從而分配足夠的記憶體空間。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    concat
  * Signature: ([Ljava/lang/String;)Ljava/lang/String;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jstring</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_concat</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jobjectArray</span> <span class="n">msgs</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
-        <span class="n">jsize</span> <span class="n">length</span><span class="p">;</span>
-        <span class="n">jstring</span> <span class="n">msg</span><span class="p">;</span>
-    <span class="p">}</span> <span class="n">jmsg_t</span><span class="p">;</span>
-    <span class="n">jmsg_t</span> <span class="o">*</span><span class="n">j_msgs</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">jsize</span> <span class="n">msgs_len</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">total_len</span><span class="p">;</span>
-    <span class="n">jstring</span> <span class="n">result</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">c_msg</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">pb</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+ */
+JNIEXPORT jstring JNICALL Java_blog_rock_Hello_concat
+  (JNIEnv *env, jclass Hello, jobjectArray msgs)
+{
+    typedef struct {
+        jsize length;
+        jstring msg;
+    } jmsg_t;
+    jmsg_t *j_msgs = NULL;
+    jsize msgs_len, i, total_len;
+    jstring result = NULL;
+    const char *c_msg;
+    char *buf = NULL, *pb = NULL;
 
-    <span class="n">msgs_len</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetArrayLength</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">msgs</span><span class="p">);</span>
+    msgs_len = (*env)->GetArrayLength(env, msgs);
 
-    <span class="n">j_msgs</span> <span class="o">=</span> <span class="p">(</span><span class="n">jmsg_t</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">msgs_len</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">jmsg_t</span><span class="p">));</span>
-    <span class="c1">//alloc an array to cache jstring object of msgs.
-</span>
-    <span class="n">total_len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">msgs_len</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectArrayElement</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">msgs</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
-        <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStringUTFLength</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">msg</span><span class="p">);</span>
-        <span class="n">total_len</span> <span class="o">+=</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">length</span><span class="p">;</span>
-        <span class="c1">//printf("[%d] %d\n", i, j_msgs[i].length);
-</span>    <span class="p">}</span>
-    <span class="c1">//printf("total len: %d\n", total_len);
-</span>
-    <span class="n">buf</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">total_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="n">pb</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">msgs_len</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">c_msg</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">msg</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-        <span class="n">memcpy</span><span class="p">(</span><span class="n">pb</span><span class="p">,</span> <span class="n">c_msg</span><span class="p">,</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">length</span><span class="p">);</span>
-        <span class="n">pb</span> <span class="o">+=</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">length</span><span class="p">;</span>
-        <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">msg</span><span class="p">,</span> <span class="n">c_msg</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="o">*</span><span class="n">pb</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
-    <span class="c1">//printf("result: %s\n", buf);
-</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NewStringUTF</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
-    <span class="c1">// Java: return new String(buf);
-</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">msgs_len</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">DeleteLocalRef</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">j_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">msg</span><span class="p">);</span>
-    <span class="p">}</span>
+    j_msgs = (jmsg_t*) malloc(msgs_len * sizeof(jmsg_t));
+    //alloc an array to cache jstring object of msgs.
 
-    <span class="n">free</span><span class="p">(</span><span class="n">j_msgs</span><span class="p">);</span>
-    <span class="n">free</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
+    total_len = 0;
+    for (i = 0; i < msgs_len; ++i) {
+        j_msgs[i].msg = (*env)->GetObjectArrayElement(env, msgs, i);
+        j_msgs[i].length = (*env)->GetStringUTFLength(env, j_msgs[i].msg);
+        total_len += j_msgs[i].length;
+        //printf("[%d] %d\n", i, j_msgs[i].length);
+    }
+    //printf("total len: %d\n", total_len);
 
-</code></pre>
+    buf = (char*) malloc(total_len + 1);
+    pb = buf;
+    for (i = 0; i < msgs_len; ++i) {
+        c_msg = (*env)->GetStringUTFChars(env, j_msgs[i].msg, NULL);
+        memcpy(pb, c_msg, j_msgs[i].length);
+        pb += j_msgs[i].length;
+        (*env)->ReleaseStringUTFChars(env, j_msgs[i].msg, c_msg);
+    }
+    *pb = '\0';
+    //printf("result: %s\n", buf);
+
+    result = (*env)->NewStringUTF(env, buf);
+    // Java: return new String(buf);
+
+    for (i = 0; i < msgs_len; ++i) {
+        (*env)->DeleteLocalRef(env, j_msgs[i].msg);
+    }
+
+    free(j_msgs);
+    free(buf);
+    return result;
+}
+{% endhighlight %}
 
 
 
@@ -285,90 +290,92 @@ In most cases, you do not have to worry about freeing local references when impl
 <p>
 擲出例外的方式，請查看 <a href="http://java.sun.com/docs/books/jni/html/exceptions.html#11202">The Java Native Interface Programmer's Guide and Specification - 6. Exceptions</a>
 </p>
-<pre class="highlight"><code><span class="cm">/*
- * see http://java.sun.com/docs/books/jni/html/exceptions.html#26050
- */</span>
-<span class="kt">void</span> <span class="nf">JNU_ThrowByName</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">FindClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
-    <span class="cm">/* if cls is NULL, an exception has already been thrown */</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">cls</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ThrowNew</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="cm">/* free the local ref */</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">DeleteLocalRef</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="cm">/*
+{% highlight c %}
+/*
+ * see http://java.sun.com/docs/books/jni/html/exceptions.html#26050
+ */
+void JNU_ThrowByName(JNIEnv *env, const char *name, const char *msg)
+{
+    jclass cls = (*env)->FindClass(env, name);
+    /* if cls is NULL, an exception has already been thrown */
+    if (cls != NULL) {
+        (*env)->ThrowNew(env, cls, msg);
+    }
+    /* free the local ref */
+    (*env)->DeleteLocalRef(env, cls);
+}
+
+/*
  * Class:     blog_rock_Hello
  * Method:    fileGetContent
  * Signature: (Ljava/lang/String;)[B
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jbyteArray</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_fileGetContent</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">filepath</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">c_filepath</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">stat</span> <span class="n">file_stat</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">bp</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">pcontent</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">jbyteArray</span> <span class="n">content</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+ */
+JNIEXPORT jbyteArray JNICALL Java_blog_rock_Hello_fileGetContent
+  (JNIEnv *env, jclass Hello, jstring filepath)
+{
+    const char *c_filepath;
+    int fd;
+    struct stat file_stat;
+    unsigned char *buf = NULL, *bp = NULL, *pcontent = NULL;
+    jbyteArray content = NULL;
 
-    <span class="kt">size_t</span> <span class="n">nbr</span><span class="p">;</span> <span class="c1">//number of bytes readed
-</span>    <span class="kt">ssize_t</span> <span class="n">rc</span><span class="p">;</span>
+    size_t nbr; //number of bytes readed
+    ssize_t rc;
 
-    <span class="n">c_filepath</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    c_filepath = (*env)->GetStringUTFChars(env, filepath, NULL);
 
-    <span class="k">if</span> <span class="p">((</span><span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">c_filepath</span><span class="p">,</span> <span class="n">O_RDONLY</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">// errno
-</span>        <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">c_filepath</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ENOENT</span><span class="p">)</span>
-            <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/FileNotFoundException"</span><span class="p">,</span> <span class="s">"file not found"</span><span class="p">);</span>
-        <span class="k">else</span>
-            <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/IOException"</span><span class="p">,</span> <span class="s">"open error"</span><span class="p">);</span>
-        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="p">}</span>
+    if ((fd = open(c_filepath, O_RDONLY)) == -1) {
+        // errno
+        (*env)->ReleaseStringUTFChars(env, filepath, c_filepath);
+        if (errno == ENOENT)
+            JNU_ThrowByName(env, "java/io/FileNotFoundException", "file not found");
+        else
+            JNU_ThrowByName(env, "java/io/IOException", "open error");
+        return NULL;
+    }
 
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">c_filepath</span><span class="p">);</span>
+    (*env)->ReleaseStringUTFChars(env, filepath, c_filepath);
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">fstat</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">file_stat</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">// errno
-</span>        <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-        <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/IOException"</span><span class="p">,</span> <span class="s">"stat error"</span><span class="p">);</span>
-        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="p">}</span>
+    if (fstat(fd, &file_stat) == -1) {
+        // errno
+        close(fd);
+        JNU_ThrowByName(env, "java/io/IOException", "stat error");
+        return NULL;
+    }
 
-    <span class="n">buf</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span> <span class="n">file_stat</span><span class="p">.</span><span class="n">st_size</span> <span class="p">);</span>
+    buf = (unsigned char *) malloc( file_stat.st_size );
 
-    <span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-    <span class="n">nbr</span> <span class="o">=</span> <span class="n">file_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">;</span>
-    <span class="c1">
-</span>    <span class="k">while</span> <span class="p">(</span> <span class="p">(</span><span class="n">rc</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbr</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbr</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-            <span class="n">nbr</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="c1">//errno
-</span>            <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-            <span class="n">free</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
-            <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/IOException"</span><span class="p">,</span> <span class="s">"read error"</span><span class="p">);</span>
-            <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="n">content</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NewByteArray</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">file_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">);</span>
+    bp = buf;
+    nbr = file_stat.st_size;
+    
+    while ( (rc = read(fd, bp, nbr)) < nbr) {
+        if ( rc > 0 ) {
+            bp += rc;
+            nbr -= rc;
+        }
+        else if (errno != EINTR ) {
+            //errno
+            close(fd);
+            free(buf);
+            JNU_ThrowByName(env, "java/io/IOException", "read error");
+            return NULL;
+        }
+    }
+    content = (*env)->NewByteArray(env, file_stat.st_size);
 
-    <span class="c1">//if you want to write back data to managed array, use GetPrimitiveArrayCritical()
-</span>    <span class="n">pcontent</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetPrimitiveArrayCritical</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    //if you want to write back data to managed array, use GetPrimitiveArrayCritical()
+    pcontent = (*env)->GetPrimitiveArrayCritical(env, content, NULL);
 
-    <span class="n">memcpy</span><span class="p">(</span><span class="n">pcontent</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">file_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">);</span>
+    memcpy(pcontent, buf, file_stat.st_size);
 
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleasePrimitiveArrayCritical</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">pcontent</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    (*env)->ReleasePrimitiveArrayCritical(env, content, pcontent, 0);
 
-    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-    <span class="n">free</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">content</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    close(fd);
+    free(buf);
+    return content;
+}
+{% endhighlight %}
 
 <div class="note">
 See also <a href="{{ site.baseurl }}/archives/1998/%E5%A4%9A%E5%B7%A5%E4%BD%9C%E6%A5%AD%E4%B8%8B%E7%9A%84%E8%B3%87%E6%96%99%E8%AE%80%E5%AF%AB%E8%99%95%E7%90%86%E4%BA%8B%E9%A0%85%20-%20read()_write()%20%E8%A2%AB%20signal%20%E4%B8%AD%E6%96%B7%E7%9A%84%E8%99%95%E7%90%86.html">read()/write() 被 signal 中斷的處理</a>。
@@ -378,66 +385,67 @@ See also <a href="{{ site.baseurl }}/archives/1998/%E5%A4%9A%E5%B7%A5%E4%BD%9C%E
 fileGetContent() 第二個實作版本，不將資料先行寫入到 malloc() 配置的未託管空間，而是直接將資料寫進託管空間，節省記憶體用量。
 </p>
 
-<pre class="highlight"><code><span class="n">JNIEXPORT</span> <span class="n">jbyteArray</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_fileGetContent</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">filepath</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">c_filepath</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">stat</span> <span class="n">file_stat</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">bp</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">jbyteArray</span> <span class="n">content</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
 
-    <span class="kt">size_t</span> <span class="n">nbr</span><span class="p">;</span> <span class="c1">//number of bytes readed
-</span>    <span class="kt">ssize_t</span> <span class="n">rc</span><span class="p">;</span>
+{% highlight c %}
+JNIEXPORT jbyteArray JNICALL Java_blog_rock_Hello_fileGetContent
+  (JNIEnv *env, jclass Hello, jstring filepath)
+{
+    const char *c_filepath;
+    int fd;
+    struct stat file_stat;
+    unsigned char *buf = NULL, *bp = NULL;
+    jbyteArray content = NULL;
 
-    <span class="n">c_filepath</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    size_t nbr; //number of bytes readed
+    ssize_t rc;
 
-    <span class="k">if</span> <span class="p">((</span><span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">c_filepath</span><span class="p">,</span> <span class="n">O_RDONLY</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">// errno
-</span>        <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">c_filepath</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ENOENT</span><span class="p">)</span>
-            <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/FileNotFoundException"</span><span class="p">,</span> <span class="s">"file not found"</span><span class="p">);</span>
-        <span class="k">else</span>
-            <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/IOException"</span><span class="p">,</span> <span class="s">"open error"</span><span class="p">);</span>
-        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="p">}</span>
+    c_filepath = (*env)->GetStringUTFChars(env, filepath, NULL);
 
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">c_filepath</span><span class="p">);</span>
+    if ((fd = open(c_filepath, O_RDONLY)) == -1) {
+        // errno
+        (*env)->ReleaseStringUTFChars(env, filepath, c_filepath);
+        if (errno == ENOENT)
+            JNU_ThrowByName(env, "java/io/FileNotFoundException", "file not found");
+        else
+            JNU_ThrowByName(env, "java/io/IOException", "open error");
+        return NULL;
+    }
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">fstat</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">file_stat</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">// errno
-</span>        <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-        <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/IOException"</span><span class="p">,</span> <span class="s">"stat error"</span><span class="p">);</span>
-        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="p">}</span>
+    (*env)->ReleaseStringUTFChars(env, filepath, c_filepath);
 
-    <span class="n">content</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NewByteArray</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">file_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">);</span>
-    <span class="c1">//if you want to write back data to managed array, use GetPrimitiveArrayCritical()
-</span>    <span class="n">buf</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetPrimitiveArrayCritical</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    if (fstat(fd, &file_stat) == -1) {
+        // errno
+        close(fd);
+        JNU_ThrowByName(env, "java/io/IOException", "stat error");
+        return NULL;
+    }
 
-    <span class="n">bp</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-    <span class="n">nbr</span> <span class="o">=</span> <span class="n">file_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">;</span>
-    <span class="c1">
-</span>    <span class="k">while</span> <span class="p">(</span> <span class="p">(</span><span class="n">rc</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">bp</span><span class="p">,</span> <span class="n">nbr</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">nbr</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="n">rc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="n">bp</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-            <span class="n">nbr</span> <span class="o">-=</span> <span class="n">rc</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="c1">//errno
-</span>            <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-            <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleasePrimitiveArrayCritical</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-            <span class="n">JNU_ThrowByName</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">"java/io/IOException"</span><span class="p">,</span> <span class="s">"read error"</span><span class="p">);</span>
-            <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleasePrimitiveArrayCritical</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    content = (*env)->NewByteArray(env, file_stat.st_size);
+    //if you want to write back data to managed array, use GetPrimitiveArrayCritical()
+    buf = (*env)->GetPrimitiveArrayCritical(env, content, NULL);
 
-    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">content</span><span class="p">;</span>
-<span class="p">}</span>
+    bp = buf;
+    nbr = file_stat.st_size;
+    
+    while ( (rc = read(fd, bp, nbr)) < nbr) {
+        if ( rc > 0 ) {
+            bp += rc;
+            nbr -= rc;
+        }
+        else if (errno != EINTR ) {
+            //errno
+            close(fd);
+            (*env)->ReleasePrimitiveArrayCritical(env, content, buf, 0);
+            JNU_ThrowByName(env, "java/io/IOException", "read error");
+            return NULL;
+        }
+    }
+    (*env)->ReleasePrimitiveArrayCritical(env, content, buf, 0);
 
-</code></pre>
+    close(fd);
+    return content;
+}
+{% endhighlight %}
 
 
 
@@ -447,11 +455,11 @@ fileGetContent() 第二個實作版本，不將資料先行寫入到 malloc() �
 <p>
 執行結果當如下列所示:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 rock@rock-desktop:~/workspace/jni-tutorial$ java -Djava.library.path=. blog.rock.Hello
 h.hash.size: 1
 h.hash('xyz'): 100
 concat: hello-world;石頭成
 File size: 13296
 Byte[0]: 127
-</pre><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13196157.html</div>
+</code></pre><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13196157.html</div>

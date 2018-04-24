@@ -15,7 +15,9 @@ permalink: /archives/18627329.html
 <p>我先解釋什麼是 <dfn>doc 註解</dfn>？ 基本上，在 PHP 的語言規範中，並沒有提到 doc 註解這個條目，但是許多工具與擴充模組的程序員在設計時，卻不約而同地採用了 Java 的 doc 註解寫法做為特別強調是說明文件的註解。凡是用 <code>/**</code> (一斜兩星)開頭、<code>*/</code> (一星一斜)結尾的註解，就視為對緊隨此段落的程式元素的說明文字，專門稱之為 doc 註解。如下所示:
 </p>
 
-<pre class="highlight"><code>/**
+
+{% highlight php %}
+/**
 開頭為一斜兩星的註解，就是 doc 註解。
 因為跟著這段註解的程式元素是變數 $text1 的定義，故這段 doc 註解就被視為
 $text1 的說明文字。
@@ -32,41 +34,43 @@ var $text2;
 注意開頭只有一斜一星，這只是普通的註解。
 */
 var $text3;
-</code></pre>
+{% endhighlight %}
 
 
 <p>雖然 PHP 的語言規範沒提到 doc 註解，但 PHP Reflection 模組確實支援這種 Java doc 式的 doc 註解，並提供了 <dfn>getDocComment()</dfn> 方法讓程序員可以取得程式項目的 doc 註解文字。舉例來說，下列 get_class_doc.php 示範了如何取得指定類別的 doc 註解內容。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  Foo
 
  @author rock
- */</span>
-<span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$data</span><span class="p">;</span>
-<span class="p">}</span>
+ */
+class Foo {
+    private $data;
+}
 
-<span class="nv">$rFoo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionClass</span><span class="p">(</span><span class="s1">'Foo'</span><span class="p">);</span>
+$rFoo = new ReflectionClass('Foo');
 
-<span class="nv">$doc</span> <span class="o">=</span> <span class="nv">$rFoo</span><span class="o">-&gt;</span><span class="na">getDocComment</span><span class="p">();</span>
-<span class="k">echo</span> <span class="nv">$doc</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+$doc = $rFoo->getDocComment();
+echo $doc, "\n";
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 
 執行結果如下:
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ php get_class_doc.php
 /**
  Foo
 
  @author rock
  */
-</pre>
+</code></pre>
 
 <p>
 我們可以為變數、函數、類別、方法與屬性寫 doc 註解。想要取得這些元素的 doc 註解，就必須先配置對應於指定元素的反射體，再調用反射體的 <dfn>getDocComment()</dfn> 取其 doc 註解。要讀類別的 doc 註解，就要先透過 <dfn>ReflectionClass</dfn> 配置該類別的反射體；要讀某個體的屬性的註解，便要透過對象的反射體的 <dfn>getProperty()</dfn> 方法先配置該屬性的反射體。餘類推。
@@ -76,59 +80,61 @@ $ php get_class_doc.php
 取得 doc 註解的工作完成了。接著就要實現解析 doc 註解，找出我們定義的註記，再做我們想做的事。在本文中，我要練習的是定義一個叫 <dfn>@resource</dfn> 的屬性註記。當我配置了一個 Foo 類的個體後，我就會去查看它有沒有任何屬性加上 <dfn>@resource</dfn> 註記。若有此註記，我就從外部(類別定義之外的地方)指派一個值給那個屬性。這個作法屬於控制反轉(IoC)設計模式，IoC 在 Java 世界相當有名，但是 PHP 要做也很簡單，我以前就寫過一個，見「<a href="{{ site.baseurl }}/archives/13454601.html">PHP 實作 IoC/DI 設計模式 </a>」。ioc_prop_resource_1.php 示範了如何做這件事。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  Foo
 
  @author rock
- */</span>
-<span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
-    <span class="sd">/**
+ */
+class Foo {
+    /**
      @resource
-     */</span>
-    <span class="k">var</span> <span class="nv">$data</span><span class="p">;</span>
-<span class="p">}</span>
+     */
+    var $data;
+}
 
-<span class="nv">$form</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'name'</span>  <span class="o">=&gt;</span> <span class="s1">'Rock'</span><span class="p">,</span>
-    <span class="s1">'email'</span> <span class="o">=&gt;</span> <span class="s1">'shirock@blog'</span>
-<span class="p">);</span>
+$form = array(
+    'name'  => 'Rock',
+    'email' => 'shirock@blog'
+);
 
 
-<span class="nv">$foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+$foo = new Foo();
 
-<span class="c1"># 分析 doc ，找出 @resource 註記，指派 $form 的內容給有此註記的屬性。
-</span><span class="nv">$rfoo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$foo</span><span class="p">);</span>
+# 分析 doc ，找出 @resource 註記，指派 $form 的內容給有此註記的屬性。
+$rfoo = new ReflectionObject($foo);
 
-<span class="nv">$props</span> <span class="o">=</span> <span class="nv">$rfoo</span><span class="o">-&gt;</span><span class="na">getProperties</span><span class="p">();</span>
+$props = $rfoo->getProperties();
 
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$props</span> <span class="k">as</span> <span class="nv">$prop</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$prop_name</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">;</span>
-    <span class="nv">$doc</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">getDocComment</span><span class="p">();</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/@resource\s/"</span><span class="p">,</span> <span class="nv">$doc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"assign form to property '${prop_name}'</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="nv">$foo</span><span class="o">-&gt;</span><span class="nv">$prop_name</span> <span class="o">=</span> <span class="nv">$form</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+foreach ($props as $prop) {
+    $prop_name = $prop->name;
+    $doc = $prop->getDocComment();
+    if (preg_match("/@resource\s/", $doc) > 0) {
+        echo "assign form to property '${prop_name}'\n";
+        $foo->$prop_name = $form;
+    }
+}
 
-<span class="c1">//print_r($foo);
-</span><span class="k">echo</span> <span class="s1">'Name: '</span><span class="p">,</span>  <span class="nv">$foo</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'EMail: '</span><span class="p">,</span> <span class="nv">$foo</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'email'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+//print_r($foo);
+echo 'Name: ',  $foo->data['name'], "\n";
+echo 'EMail: ', $foo->data['email'], "\n";
+?>
+{% endhighlight %}
 
 
 <p>
 我設計的註記 <dfn>@resource</dfn> 是針對屬性賦值之用，所以這個註記最好是寫在屬性的 doc 註解內。而我就去查看各屬性的 doc 註解有沒有寫上 <dfn>@resource</dfn>。查看工作實在很簡單，用字串比對函數就行。找到之後，再把資料內容指派給那個屬性即可(第32行)。上例的執行結果如下:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ php ioc_prop_resource_1.php
 assign form to property 'data'
 Name: Rock
 EMail: shirock@blog
 
-</pre>
+</code></pre>
 
 <p>
 不過上一個例子的指派行為其實並不算好。因為那個屬性是公開存取的，所以簡單地用指派運算就成。但若屬性的存取權是受保護的(protected, private)，那麼上例的指派行為就會引起 PHP 的執行錯誤，PHP 會說你試圖改變一個不允許存取的屬性的內容。
@@ -138,53 +144,55 @@ EMail: shirock@blog
 對於屬性存取權的限制，還是有解決之道。這也是透過 Reflection 功能才能玩出的特效。說起來，Java 的 Spring framework 也是利用 java.reflect 才能玩出屬性注入的把戲(<span class="note">參考「<a href="{{ site.baseurl }}/archives/13401403.html#comment-22138959">Spring framework 實際上是透過 reflect 完成 autowired 的</a>」</span>)。我只要把指派行為改為 Reflection 的 <dfn>setValue()</dfn> 就可以讓我的注入行為更完善。ioc_prop_resource_2.php 就是改良後的範例。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  Foo
 
  @author rock
- */</span>
-<span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
-    <span class="sd">/**
+ */
+class Foo {
+    /**
      @resource
-     */</span>
-    <span class="k">private</span> <span class="nv">$data</span><span class="p">;</span>  <span class="c1"># 現在，這是私有屬性
-</span>
-    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'Name: '</span><span class="p">,</span>  <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="s1">'EMail: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">[</span><span class="s1">'email'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+     */
+    private $data;  # 現在，這是私有屬性
 
-<span class="nv">$form</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'name'</span>  <span class="o">=&gt;</span> <span class="s1">'Rock'</span><span class="p">,</span>
-    <span class="s1">'email'</span> <span class="o">=&gt;</span> <span class="s1">'shirock@blog'</span>
-<span class="p">);</span>
+    function dump() {
+        echo 'Name: ',  $this->data['name'], "\n";
+        echo 'EMail: ', $this->data['email'], "\n";
+    }
+}
+
+$form = array(
+    'name'  => 'Rock',
+    'email' => 'shirock@blog'
+);
 
 
-<span class="nv">$foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+$foo = new Foo();
 
-<span class="c1"># 分析 doc ，找出 @resource 註記，指派 $form 的內容給有此註記的屬性。
-</span><span class="nv">$rfoo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$foo</span><span class="p">);</span>
+# 分析 doc ，找出 @resource 註記，指派 $form 的內容給有此註記的屬性。
+$rfoo = new ReflectionObject($foo);
 
-<span class="nv">$props</span> <span class="o">=</span> <span class="nv">$rfoo</span><span class="o">-&gt;</span><span class="na">getProperties</span><span class="p">();</span>
+$props = $rfoo->getProperties();
 
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$props</span> <span class="k">as</span> <span class="nv">$prop</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$prop_name</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">;</span>
-    <span class="nv">$doc</span> <span class="o">=</span> <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">getDocComment</span><span class="p">();</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/@resource\s/"</span><span class="p">,</span> <span class="nv">$doc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"assign form to property '${prop_name}'</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="c1">//$foo-&gt;$prop_name = $form; # ERROR!
-</span>        <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">setAccessible</span><span class="p">(</span><span class="k">TRUE</span><span class="p">);</span> <span class="c1">// only effect this reflector.
-</span>        <span class="c1">// Ok. It can set value to this private property.
-</span>        <span class="nv">$prop</span><span class="o">-&gt;</span><span class="na">setValue</span><span class="p">(</span><span class="nv">$foo</span><span class="p">,</span> <span class="nv">$form</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+foreach ($props as $prop) {
+    $prop_name = $prop->name;
+    $doc = $prop->getDocComment();
+    if (preg_match("/@resource\s/", $doc) > 0) {
+        echo "assign form to property '${prop_name}'\n";
+        //$foo->$prop_name = $form; # ERROR!
+        $prop->setAccessible(TRUE); // only effect this reflector.
+        // Ok. It can set value to this private property.
+        $prop->setValue($foo, $form);
+    }
+}
 
-<span class="c1">//print_r($foo);
-</span><span class="nv">$foo</span><span class="o">-&gt;</span><span class="na">dump</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+//print_r($foo);
+$foo->dump();
+?>
+{% endhighlight %}
 
 
 <p>

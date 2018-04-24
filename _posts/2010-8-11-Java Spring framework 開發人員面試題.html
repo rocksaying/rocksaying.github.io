@@ -18,78 +18,88 @@ permalink: /archives/13401403.html
 今有一 PlainOldClass 類，其定義如下列。
 </p>
 
-<pre class="highlight"><code><span class="kd">class</span> <span class="nc">PlainOldClass</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">value</span><span class="o">;</span>
-    
-    <span class="kd">public</span> <span class="n">PlainOldClass</span><span class="o">(</span><span class="kt">int</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">this</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
 
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">getValue</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">value</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+{% highlight java %}
+class PlainOldClass {
+    private int value;
+    
+    public PlainOldClass(int v) {
+        this.value = v;
+    }
+
+    public int getValue() {
+        return this.value;
+    }
+}
+{% endhighlight %}
 
 <p>
 PlainOldClass 是一個既有類別，試用 Spring framework 的 bean 語法定義它，以1為其初值。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"plainOldClass"</span> <span class="na">class=</span><span class="s">"PlainOldClass"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;constructor-arg&gt;</span>
-        <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
-    <span class="nt">&lt;/constructor-arg&gt;</span>
-<span class="nt">&lt;/bean&gt;</span>
-</code></pre>
+
+{% highlight java %}
+<bean id="plainOldClass" class="PlainOldClass">
+    <constructor-arg>
+        <value>1</value>
+    </constructor-arg>
+</bean>
+{% endhighlight %}
 
 
 <h4>Question 2</h4>
 <p>
 在應用程式的 Spring 配置文件中，有下列 bean 定義。
 </p>
-<pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"newClass"</span> <span class="na">class=</span><span class="s">"NewClass"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"value"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;ref</span> <span class="na">bean=</span><span class="s">"plainOldClass"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;/property&gt;</span>
-<span class="nt">&lt;/bean&gt;</span>
-</code></pre>
+
+{% highlight java %}
+<bean id="newClass" class="NewClass">
+    <property name="value">
+        <ref bean="plainOldClass"/>
+    </property>
+</bean>
+{% endhighlight %}
 
 
 <p>
 應用程式包含一個 ExampleComponent 元件，其定義如下列。
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">org.springframework.beans.factory.annotation.Autowired</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.springframework.stereotype.Component</span><span class="o">;</span>
 
-<span class="nd">@Component</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ExampleComponent</span> <span class="o">{</span>
+{% highlight java %}
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-	<span class="nd">@Autowired</span>
-	<span class="kd">private</span> <span class="n">NewClass</span> <span class="n">c</span><span class="o">;</span>
+@Component
+public class ExampleComponent {
+
+	@Autowired
+	private NewClass c;
 	
-	<span class="kd">public</span> <span class="kt">int</span> <span class="n">test</span><span class="o">()</span> <span class="o">{</span>
-	    <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
-	<span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+	public int test() {
+	    return c.getValue();
+	}
+}
+{% endhighlight %}
 
 
 <p>
 根據上述 Spring framework 的 bean 定義內容以及 ExampleComponent 的內容，試以 Java 語言寫出可用的 NewClass 類別。
 </p>
 
-<pre class="highlight"><code><span class="kd">class</span> <span class="nc">NewClass</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">PlainOldClass</span> <span class="n">value</span><span class="o">;</span>
-    <span class="kd">public</span> <span class="n">setValue</span><span class="o">(</span><span class="n">PlainOldClass</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">this</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
 
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">getValue</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">value</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+{% highlight java %}
+class NewClass {
+    private PlainOldClass value;
+    public setValue(PlainOldClass v) {
+        this.value = v;
+    }
+
+    public int getValue() {
+        return this.value.getValue();
+    }
+}
+{% endhighlight %}
 
 
 <h4>Question 3</h4>
@@ -98,16 +108,18 @@ PlainOldClass 是一個既有類別，試用 Spring framework 的 bean 語法定
 承前兩題，試描述 Spring framework 做了哪些事，使得 ExampleComponent 之中不需要寫出如何初始化 c 的程式碼。
 </p>
 
-<pre class="highlight"><code><span class="c1">//根據 bean plainOldClass</span>
-<span class="n">plainOldClass</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PlainOldClass</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
 
-<span class="c1">//根據 bean newClass</span>
-<span class="n">newClass</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NewClass</span><span class="o">();</span>
-<span class="n">newClass</span><span class="o">.</span><span class="na">setValue</span><span class="o">(</span><span class="n">plainOldClass</span><span class="o">);</span>
+{% highlight java %}
+//根據 bean plainOldClass
+plainOldClass = new PlainOldClass(1);
 
-<span class="c1">//根據 @Autowired  </span>
-<span class="n">component</span><span class="o">.</span><span class="na">c</span> <span class="o">=</span> <span class="n">newClass</span><span class="o">;</span>
-</code></pre>
+//根據 bean newClass
+newClass = new NewClass();
+newClass.setValue(plainOldClass);
+
+//根據 @Autowired  
+component.c = newClass;
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

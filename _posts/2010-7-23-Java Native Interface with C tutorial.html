@@ -75,9 +75,11 @@ Programmer's Guide and Specification - Chapter 2 Getting Started</a>
 根據本文所需的文件內容，我將上述的工具操作指令，寫入一份 Makefile ，如下列 (ps. 我不喜歡用 ant)。為了方便理解各工具的操作對象，我沒有使用巨集語法。
 </p>
 
-<pre class="highlight"><code><span class="c"># Makefile: jni</span>
-<span class="nv">JNI_INCLUDE</span><span class="o">=</span>/usr/lib/jvm/default-java/include
-<span class="nv">JNI_LIB</span><span class="o">=</span>/usr/lib/jvm/default-java/lib
+
+{% highlight sh %}
+# Makefile: jni
+JNI_INCLUDE=/usr/lib/jvm/default-java/include
+JNI_LIB=/usr/lib/jvm/default-java/lib
 
 build: libHello.so
 
@@ -89,7 +91,7 @@ hello-glue.h: blog/rock/Hello.class
 	touch hello-glue.h
 
 libHello.so: blog/rock/Hello.class hello-glue.h hello-native.c
-	gcc -I<span class="k">$(</span>JNI_INCLUDE<span class="k">)</span> -L<span class="k">$(</span>JNI_LIB<span class="k">)</span> <span class="se">\</span>
+	gcc -I$(JNI_INCLUDE) -L$(JNI_LIB) \
 	    -fPIC -shared -o libHello.so hello-native.c
 
 sig: blog/rock/Hello.class
@@ -97,8 +99,7 @@ sig: blog/rock/Hello.class
 
 clean:
 	rm -f blog/rock/Hello.class libHello.so hello-glue.h
-
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -123,57 +124,58 @@ clean:
 <h6>
 blog/rock/Hello.java
 </h6>
-<pre class="highlight"><code><span class="kn">package</span> <span class="n">blog</span><span class="o">.</span><span class="na">rock</span><span class="o">;</span>
 
-<span class="kd">class</span> <span class="nc">Hello</span> <span class="o">{</span>
-    <span class="c1">//匯入此類別時，一併載入包含原生方法的共享函數庫。</span>
-    <span class="kd">static</span> <span class="o">{</span>
-        <span class="c1">//此例的共享函數庫文件名稱是 libHello.so，故此處給的參數是 "Hello".</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">"Hello"</span><span class="o">);</span>
-    <span class="o">}</span>
+{% highlight java %}
+package blog.rock;
 
-    <span class="kd">private</span> <span class="n">String</span> <span class="n">message1</span><span class="o">;</span> <span class="c1">//Accessing Strings</span>
-    <span class="kd">private</span> <span class="kt">char</span><span class="o">[]</span> <span class="n">message2</span><span class="o">;</span> <span class="c1">//Accessing Arrays of Primitive Types</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">x</span><span class="o">;</span> <span class="c1">//Accessing Primitive Type and Field.</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">y</span><span class="o">;</span> <span class="c1">//Class field.</span>
+class Hello {
+    //匯入此類別時，一併載入包含原生方法的共享函數庫。
+    static {
+        //此例的共享函數庫文件名稱是 libHello.so，故此處給的參數是 "Hello".
+        System.loadLibrary("Hello");
+    }
 
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kt">boolean</span> <span class="n">say</span><span class="o">(</span><span class="n">String</span> <span class="n">msg</span><span class="o">,</span> <span class="kt">int</span> <span class="n">x</span><span class="o">);</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="n">Hello</span> <span class="n">setMessage1</span><span class="o">(</span><span class="n">String</span> <span class="n">msg</span><span class="o">);</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="n">String</span> <span class="n">getMessage1</span><span class="o">();</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="n">Hello</span> <span class="n">setMessage2</span><span class="o">(</span><span class="kt">char</span><span class="o">[]</span> <span class="n">msg</span><span class="o">);</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kt">char</span><span class="o">[]</span> <span class="n">getMessage2</span><span class="o">();</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="n">Hello</span> <span class="n">setX</span><span class="o">(</span><span class="kt">int</span> <span class="n">v</span><span class="o">);</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kt">int</span> <span class="n">getX</span><span class="o">();</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">setY</span><span class="o">(</span><span class="kt">int</span> <span class="n">v</span><span class="o">);</span>
-    <span class="kd">public</span> <span class="kd">native</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">getY</span><span class="o">();</span>
+    private String message1; //Accessing Strings
+    private char[] message2; //Accessing Arrays of Primitive Types
+    private int x; //Accessing Primitive Type and Field.
+    private static int y; //Class field.
+
+    public native boolean say(String msg, int x);
+    public native Hello setMessage1(String msg);
+    public native String getMessage1();
+    public native Hello setMessage2(char[] msg);
+    public native char[] getMessage2();
+    public native Hello setX(int v);
+    public native int getX();
+    public native static void setY(int v);
+    public native static int getY();
     
-    <span class="c1">//Java 對照組</span>
-    <span class="kd">public</span> <span class="kt">boolean</span> <span class="n">jsay</span><span class="o">(</span><span class="n">String</span> <span class="n">msg</span><span class="o">,</span> <span class="kt">int</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"[J] msg: "</span> <span class="o">+</span> <span class="n">msg</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"[J] x: "</span> <span class="o">+</span> <span class="n">x</span><span class="o">);</span>
-        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
-    <span class="o">}</span>
+    //Java 對照組
+    public boolean jsay(String msg, int x) {
+        System.out.println("[J] msg: " + msg);
+        System.out.println("[J] x: " + x);
+        return true;
+    }
 
-    <span class="c1">//這只是用來測試的方法。</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">String</span> <span class="n">s</span><span class="o">;</span>
-        <span class="kt">char</span><span class="o">[]</span> <span class="n">msg2</span> <span class="o">=</span> <span class="o">{</span><span class="sc">'c'</span><span class="o">,</span> <span class="sc">'h'</span><span class="o">,</span> <span class="sc">'a'</span><span class="o">,</span> <span class="sc">'r'</span><span class="o">};</span>
-        <span class="n">Hello</span> <span class="n">h</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Hello</span><span class="o">();</span>
+    //這只是用來測試的方法。
+    public static void main(String[] args) {
+        String s;
+        char[] msg2 = {'c', 'h', 'a', 'r'};
+        Hello h = new Hello();
 
-        <span class="n">h</span><span class="o">.</span><span class="na">say</span><span class="o">(</span><span class="s">"world"</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-        <span class="n">h</span><span class="o">.</span><span class="na">jsay</span><span class="o">(</span><span class="s">"world"</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="na">setMessage1</span><span class="o">(</span><span class="s">"rock"</span><span class="o">).</span><span class="na">getMessage1</span><span class="o">();</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="s">"h.message1: "</span> <span class="o">+</span> <span class="n">s</span> <span class="o">);</span>
-        <span class="n">h</span><span class="o">.</span><span class="na">setMessage2</span><span class="o">(</span><span class="n">msg2</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">h</span><span class="o">.</span><span class="na">getMessage2</span><span class="o">()</span> <span class="o">);</span>
-        <span class="n">h</span><span class="o">.</span><span class="na">setX</span><span class="o">(</span><span class="mi">11</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="s">"h.x: "</span> <span class="o">+</span> <span class="n">h</span><span class="o">.</span><span class="na">getX</span><span class="o">()</span> <span class="o">);</span>
-        <span class="n">Hello</span><span class="o">.</span><span class="na">setY</span><span class="o">(</span><span class="mi">21</span><span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="s">"Hello.y: "</span> <span class="o">+</span> <span class="n">Hello</span><span class="o">.</span><span class="na">getY</span><span class="o">()</span> <span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-
-</code></pre>
+        h.say("world", 1);
+        h.jsay("world", 1);
+        s = h.setMessage1("rock").getMessage1();
+        System.out.println( "h.message1: " + s );
+        h.setMessage2(msg2);
+        System.out.println( h.getMessage2() );
+        h.setX(11);
+        System.out.println( "h.x: " + h.getX() );
+        Hello.setY(21);
+        System.out.println( "Hello.y: " + Hello.getY() );
+    }
+}
+{% endhighlight %}
 
 <p>
 C/C++ 透過JNI的反射方法存取個體欄位與方法，無視存取等級，public/protect/private 皆無妨礙。
@@ -214,100 +216,102 @@ C/C++ 透過JNI的反射方法存取個體欄位與方法，無視存取等級�
 <h6>
 hello-native.c
 </h6>
-<pre class="highlight"><code><span class="cp">#include "hello-glue.h"
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-</span>
-<span class="cm">/*
+
+{% highlight c %}
+#include "hello-glue.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+/*
  * Class:     blog_rock_Hello
  * Method:    say
  * Signature: (Ljava/lang/String;I)Z
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jboolean</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_say</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">msg</span><span class="p">,</span> <span class="n">jint</span> <span class="n">x</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jboolean JNICALL Java_blog_rock_Hello_say
+  (JNIEnv *env, jobject this, jstring msg, jint x)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    setMessage1
  * Signature: (Ljava/lang/String;)Lblog/rock/Hello;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jobject</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setMessage1</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">msg</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jobject JNICALL Java_blog_rock_Hello_setMessage1
+  (JNIEnv *env, jobject this, jstring msg)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    getMessage1
  * Signature: ()Ljava/lang/String;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jstring</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getMessage1</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jstring JNICALL Java_blog_rock_Hello_getMessage1
+  (JNIEnv *env, jobject this)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    setMessage2
  * Signature: ([C)Lblog/rock/Hello;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jobject</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setMessage2</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jcharArray</span> <span class="n">msg</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jobject JNICALL Java_blog_rock_Hello_setMessage2
+  (JNIEnv *env, jobject this, jcharArray msg)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    getMessage2
  * Signature: ()[C
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jcharArray</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getMessage2</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jcharArray JNICALL Java_blog_rock_Hello_getMessage2
+  (JNIEnv *env, jobject this)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    setX
  * Signature: (I)Lblog/rock/Hello;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jobject</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setX</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span> <span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jint</span> <span class="n">v</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jobject JNICALL Java_blog_rock_Hello_setX
+  (JNIEnv *env , jobject this, jint v)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    getX
  * Signature: ()I
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getX</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jint JNICALL Java_blog_rock_Hello_getX
+  (JNIEnv *env, jobject this)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    setY
  * Signature: (I)V
- */</span>
-<span class="n">JNIEXPORT</span> <span class="kt">void</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setY</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jint</span> <span class="n">v</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
+ */
+JNIEXPORT void JNICALL Java_blog_rock_Hello_setY
+  (JNIEnv *env, jclass Hello, jint v)
+{
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    getY
  * Signature: ()I
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getY</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="p">}</span>
-</code></pre>
+ */
+JNIEXPORT jint JNICALL Java_blog_rock_Hello_getY
+  (JNIEnv *env, jclass Hello)
+{
+}
+{% endhighlight %}
 
 
 <p>
@@ -436,16 +440,18 @@ JNI 的資料存取方法，依資料型別分成三大類。基本型別資料(
 字串與陣列之外的所有參考型別 (所有的 Java 類別)，在 JNI 中，都被視為 jobject 型別的資料。在 JNI 存取 jobject 型別資料時，一律要透過 JNI 提供的反射方法。反射取得指定的欄位或方法後，同樣透過反射方法調用那些欄位或方法。如果你曾經使用過 Java 的反射功能 (java.lang.reflect 套件)，你會發覺 JNI 提供的這些方法之使用概念與 java.lang.reflect 套件相同；或者可說 java.lang.reflect 就是把 JNI 提供的這些原始方法包裝起來罷了。下列對照程式碼，清楚地說明了兩者的關係。
 </p>
 
-<pre class="highlight"><code><span class="c1">// C 
-</span>    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"x"</span><span class="p">,</span> <span class="s">"I"</span><span class="p">);</span>
-    <span class="n">jint</span> <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetIntField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">);</span>
 
-<span class="c1">// Java
-</span>    <span class="n">Class</span> <span class="n">cls</span> <span class="o">=</span> <span class="n">this</span><span class="p">.</span><span class="n">getClass</span><span class="p">();</span>
-    <span class="n">Field</span> <span class="n">fid</span> <span class="o">=</span> <span class="n">cls</span><span class="p">.</span><span class="n">getField</span><span class="p">(</span><span class="s">"x"</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="n">fid</span><span class="p">.</span><span class="n">getInt</span><span class="p">(</span><span class="n">this</span><span class="p">);</span>
-</code></pre>
+{% highlight java %}
+// C 
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid = (*env)->GetFieldID(env, cls, "x", "I");
+    jint value = (*env)->GetIntField(env, this, fid);
+
+// Java
+    Class cls = this.getClass();
+    Field fid = cls.getField("x");
+    int value = fid.getInt(this);
+{% endhighlight %}
 
 <p>
 JNI 反射方法所使用的型別簽名資訊，可使用 <code>javap -s -p</code> 查詢。詳情請查看: <a href="http://java.sun.com/docs/books/jni/html/types.html#70113">The Java Native Interface Programmer's Guide and Specification - 12.3 Field Descriptors</a> .
@@ -457,30 +463,32 @@ JNI 反射方法所使用的型別簽名資訊，可使用 <code>javap -s -p</co
 
 <h6>say() - access String and primitive type parameters.
 </h6>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    say
  * Signature: (Ljava/lang/String;I)Z
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jboolean</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_say</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">msg</span><span class="p">,</span> <span class="n">jint</span> <span class="n">x</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">c_msg</span><span class="p">;</span>
+ */
+JNIEXPORT jboolean JNICALL Java_blog_rock_Hello_say
+  (JNIEnv *env, jobject this, jstring msg, jint x)
+{
+    const char *c_msg;
 
-    <span class="c1">//get String type data.
-</span>    <span class="c1">//存取參考型別(Reference type)資料時，需要透過 JNI 提供的特定方法。
-</span>    <span class="n">c_msg</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span> <span class="c1">//need ReleaseStringUTFChars
-</span>    <span class="n">printf</span><span class="p">(</span><span class="s">"[C] msg: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">c_msg</span><span class="p">);</span>
+    //get String type data.
+    //存取參考型別(Reference type)資料時，需要透過 JNI 提供的特定方法。
+    c_msg = (*env)->GetStringUTFChars(env, msg, NULL); //need ReleaseStringUTFChars
+    printf("[C] msg: %s\n", c_msg);
 
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseStringUTFChars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">c_msg</span><span class="p">);</span>
+    (*env)->ReleaseStringUTFChars(env, msg, c_msg);
 
-    <span class="c1">//get Primitive type data.
-</span>    <span class="c1">//存取基本型別資料時，可以直接存取。
-</span>    <span class="n">printf</span><span class="p">(</span><span class="s">"[C] x: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+    //get Primitive type data.
+    //存取基本型別資料時，可以直接存取。
+    printf("[C] x: %d\n", x);
 
-    <span class="k">return</span> <span class="n">JNI_TRUE</span><span class="p">;</span> 
-<span class="p">}</span>
-</code></pre>
+    return JNI_TRUE; 
+}
+{% endhighlight %}
 
 <p>
 JNI 提供了一些常用的常數定義，例如 <dfn>JNI_TRUE</dfn>, <dfn>JNI_FALSE</dfn>。詳見 <a href="http://java.sun.com/docs/books/jni/html/types.html#46915">The Java Native Interface Programmer's Guide and Specification - 12.4 Constants</a> .
@@ -491,40 +499,42 @@ JNI 提供了一些常用的常數定義，例如 <dfn>JNI_TRUE</dfn>, <dfn>JNI_
 <p>
 存取欄位時，需要透過 JNI 提供的反射方法，反射取得指定的欄位ID，再透過反射方法存取欄位內容。型別的簽名資訊請查看 <a href="http://java.sun.com/docs/books/jni/html/types.html#70113">The Java Native Interface Programmer's Guide and Specification - 12.3 Field Descriptors</a> 或以工具 javap 查詢。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    setMessage1
  * Signature: (Ljava/lang/String;)Lblog/rock/Hello;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jobject</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setMessage1</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">msg</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>
-    <span class="c1">//use javap -s -p to see data type signature.
-</span>    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"message1"</span><span class="p">,</span> <span class="s">"Ljava/lang/String;"</span><span class="p">);</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">SetObjectField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">this</span><span class="p">;</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jobject JNICALL Java_blog_rock_Hello_setMessage1
+  (JNIEnv *env, jobject this, jstring msg)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid; // store the field ID
 
-<span class="cm">/*
+    //use javap -s -p to see data type signature.
+    fid = (*env)->GetFieldID(env, cls, "message1", "Ljava/lang/String;");
+    (*env)->SetObjectField(env, this, fid, msg);
+    return this;
+}
+
+/*
  * Class:     blog_rock_Hello
  * Method:    getMessage1
  * Signature: ()Ljava/lang/String;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jstring</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getMessage1</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>    <span class="n">jstring</span> <span class="n">msg</span><span class="p">;</span>
+ */
+JNIEXPORT jstring JNICALL Java_blog_rock_Hello_getMessage1
+  (JNIEnv *env, jobject this)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid; // store the field ID
+    jstring msg;
     
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"message1"</span><span class="p">,</span> <span class="s">"Ljava/lang/String;"</span><span class="p">);</span>
-    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">msg</span><span class="p">;</span>  <span class="c1">//return NULL;
-</span><span class="p">}</span>
-</code></pre>
+    fid = (*env)->GetFieldID(env, cls, "message1", "Ljava/lang/String;");
+    msg = (*env)->GetObjectField(env, this, fid);
+    return msg;  //return NULL;
+}
+{% endhighlight %}
 
 
 <h6>setMessage2()/getMessage2() - access field of array of primitive type.
@@ -532,54 +542,56 @@ JNI 提供了一些常用的常數定義，例如 <dfn>JNI_TRUE</dfn>, <dfn>JNI_
 <p>
 基本型別陣列可以對應的專屬方法 Get&lt;Type&gt;ArrayElements()/Release&lt;Type&gt;ArrayElements() 取得指向其資料內容的指標，但是該內容的記憶體空間不一定是原本的那一塊。所以我們可以透過指標讀取內容，但寫入時並不會影嚮到原本的陣列內容。想要將資料寫入陣列時，需改用 GetPrimitiveArrayCritical()/ReleasePrimitiveArrayCritical() 方法。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    setMessage2
  * Signature: ([C)Lblog/rock/Hello;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jobject</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setMessage2</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jcharArray</span> <span class="n">msg</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>
-    <span class="n">jchar</span> <span class="o">*</span><span class="n">c_msg</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
-    <span class="n">len</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetArrayLength</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"[C] length of msg: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+ */
+JNIEXPORT jobject JNICALL Java_blog_rock_Hello_setMessage2
+  (JNIEnv *env, jobject this, jcharArray msg)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid; // store the field ID
+
+    jchar *c_msg;
+    int len, i;
+    len = (*env)->GetArrayLength(env, msg);
+    printf("[C] length of msg: %d\n", len);
     
-    <span class="n">c_msg</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetCharArrayElements</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    c_msg = (*env)->GetCharArrayElements(env, msg, NULL);
 
-    <span class="n">printf</span><span class="p">(</span><span class="s">"[C] dump char array: "</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"%c"</span><span class="p">,</span> <span class="n">c_msg</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
-    <span class="p">}</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    printf("[C] dump char array: ");
+    for (i = 0; i < len; ++i) {
+        printf("%c", c_msg[i]);
+    }
+    printf("\n");
 
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ReleaseCharArrayElements</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">c_msg</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    (*env)->ReleaseCharArrayElements(env, this, c_msg, 0);
 
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"message2"</span><span class="p">,</span> <span class="s">"[C"</span><span class="p">);</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">SetObjectField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">this</span><span class="p">;</span>
-<span class="p">}</span>
+    fid = (*env)->GetFieldID(env, cls, "message2", "[C");
+    (*env)->SetObjectField(env, this, fid, msg);
+    return this;
+}
 
-<span class="cm">/*
+/*
  * Class:     blog_rock_Hello
  * Method:    getMessage2
  * Signature: ()[C
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jcharArray</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getMessage2</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>    <span class="n">jstring</span> <span class="n">msg</span><span class="p">;</span>
+ */
+JNIEXPORT jcharArray JNICALL Java_blog_rock_Hello_getMessage2
+  (JNIEnv *env, jobject this)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid; // store the field ID
+    jstring msg;
     
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"message2"</span><span class="p">,</span> <span class="s">"[C"</span><span class="p">);</span>
-    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">msg</span><span class="p">;</span>  <span class="c1">//return NULL;
-</span><span class="p">}</span>
-</code></pre>
+    fid = (*env)->GetFieldID(env, cls, "message2", "[C");
+    msg = (*env)->GetObjectField(env, this, fid);
+    return msg;  //return NULL;
+}
+{% endhighlight %}
 
 
 <h6>setX()/getX() - access field of primitive type
@@ -587,37 +599,39 @@ JNI 提供了一些常用的常數定義，例如 <dfn>JNI_TRUE</dfn>, <dfn>JNI_
 <p>
 基本型別的實體欄性，則透過 Get&lt;Type&gt;Field()/Set&lt;Type&gt;Field() 方法存取。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    setX
  * Signature: (I)Lblog/rock/Hello;
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jobject</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setX</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span> <span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">,</span> <span class="n">jint</span> <span class="n">v</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"x"</span><span class="p">,</span> <span class="s">"I"</span><span class="p">);</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">SetIntField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">this</span><span class="p">;</span>
-<span class="p">}</span>
+ */
+JNIEXPORT jobject JNICALL Java_blog_rock_Hello_setX
+  (JNIEnv *env , jobject this, jint v)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid; // store the field ID
 
-<span class="cm">/*
+    fid = (*env)->GetFieldID(env, cls, "x", "I");
+    (*env)->SetIntField(env, this, fid, v);
+    return this;
+}
+
+/*
  * Class:     blog_rock_Hello
  * Method:    getX
  * Signature: ()I
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getX</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">this</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>    
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="s">"x"</span><span class="p">,</span> <span class="s">"I"</span><span class="p">);</span>
-    <span class="k">return</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetIntField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">fid</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+ */
+JNIEXPORT jint JNICALL Java_blog_rock_Hello_getX
+  (JNIEnv *env, jobject this)
+{
+    jclass cls = (*env)->GetObjectClass(env, this);
+    jfieldID fid; // store the field ID
+    
+    fid = (*env)->GetFieldID(env, cls, "x", "I");
+    return (*env)->GetIntField(env, this, fid);
+}
+{% endhighlight %}
 
 
 <h6>
@@ -626,35 +640,37 @@ setY()/getY() - access class field
 <p>
 類別原生方法的第二個參數是類別本身，而不是個體。其他部份都與實體原生方法相同。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
  * Class:     blog_rock_Hello
  * Method:    setY
  * Signature: (I)V
- */</span>
-<span class="n">JNIEXPORT</span> <span class="kt">void</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_setY</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">jint</span> <span class="n">v</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStaticFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">Hello</span><span class="p">,</span> <span class="s">"y"</span><span class="p">,</span> <span class="s">"I"</span><span class="p">);</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">SetStaticIntField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+ */
+JNIEXPORT void JNICALL Java_blog_rock_Hello_setY
+  (JNIEnv *env, jclass Hello, jint v)
+{
+    jfieldID fid; // store the field ID
 
-<span class="cm">/*
+    fid = (*env)->GetStaticFieldID(env, Hello, "y", "I");
+    (*env)->SetStaticIntField(env, Hello, fid, v);
+    return;
+}
+
+/*
  * Class:     blog_rock_Hello
  * Method:    getY
  * Signature: ()I
- */</span>
-<span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="nf">Java_blog_rock_Hello_getY</span>
-  <span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">Hello</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">jfieldID</span> <span class="n">fid</span><span class="p">;</span> <span class="c1">// store the field ID
-</span>    
-    <span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStaticFieldID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">Hello</span><span class="p">,</span> <span class="s">"y"</span><span class="p">,</span> <span class="s">"I"</span><span class="p">);</span>
-    <span class="k">return</span> <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetStaticIntField</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">Hello</span><span class="p">,</span> <span class="n">fid</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+ */
+JNIEXPORT jint JNICALL Java_blog_rock_Hello_getY
+  (JNIEnv *env, jclass Hello)
+{
+    jfieldID fid; // store the field ID
+    
+    fid = (*env)->GetStaticFieldID(env, Hello, "y", "I");
+    return (*env)->GetStaticIntField(env, Hello, fid);
+}
+{% endhighlight %}
 
 
 <h4>
@@ -679,7 +695,7 @@ Java2 新增了一個系統屬性 <var>java.library.path</var>，我們也可以
 <p>
 執行結果當如下列所示:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 rock-desktop:~/workspace/jni-tutorial$ java blog.rock.Hello
 Exception in thread "main" java.lang.UnsatisfiedLinkError: no Hello in java.library.path
 	at java.lang.ClassLoader.loadLibrary(ClassLoader.java:1681)
@@ -699,7 +715,7 @@ h.message1: rock
 char
 h.x: 11
 Hello.y: 21
-</pre>
+</code></pre>
 
 <h4>
 References

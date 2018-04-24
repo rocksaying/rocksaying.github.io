@@ -36,87 +36,89 @@ PHP 也透過 <dfn>magic method</dfn> 中的 <dfn>__set(), __get()</dfn>提供�
 <h5>
 Data.php, 第一個範例
 </h5>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  * Data class
- */</span>
-<span class="k">class</span> <span class="nc">Data</span> <span class="p">{</span>
-    <span class="c1">// PHP5 的自識能力(反射能力)有點弱， property_exists() 並不能判斷
-</span>    <span class="c1">// 這是類別內部的自我探知行為。
-</span>    <span class="c1">// 基於本範例的目的，屬性的存取飾詞只能給 public 。
-</span>    <span class="k">public</span> <span class="nv">$id</span><span class="p">;</span>
-    <span class="k">public</span> <span class="nv">$title</span><span class="p">;</span>
-    <span class="k">public</span> <span class="nv">$content</span><span class="p">;</span>
-    <span class="k">public</span> <span class="nv">$timestamp</span><span class="p">;</span>
+ */
+class Data {
+    // PHP5 的自識能力(反射能力)有點弱， property_exists() 並不能判斷
+    // 這是類別內部的自我探知行為。
+    // 基於本範例的目的，屬性的存取飾詞只能給 public 。
+    public $id;
+    public $title;
+    public $content;
+    public $timestamp;
     
-    <span class="sd">/**
+    /**
      * @param $args 欄位初值
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$args</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-            <span class="c1">// 用 $this 可以動態繫結，用 __CLASS__ 則是靜態繫結。
-</span>            <span class="c1">// 會影響到子類別的行為。
-</span>            <span class="k">if</span> <span class="p">(</span> <span class="nb">property_exists</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$name</span><span class="p">)</span> <span class="p">)</span>
-                <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$name</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+     */
+    public function __construct($args) {
+        foreach ($args as $name => $value) {
+            // 用 $this 可以動態繫結，用 __CLASS__ 則是靜態繫結。
+            // 會影響到子類別的行為。
+            if ( property_exists($this, $name) )
+                $this->$name = $value;
+        }
+    }
+}
 
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
-    <span class="s1">'id'</span><span class="o">=&gt;</span><span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'content'</span> <span class="o">=&gt;</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="s1">'timestamp'</span> <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'c'</span><span class="p">)</span>
-<span class="p">));</span>
+$d = new Data(array(
+    'id'=>1,
+    'title' => 'rock',
+    'content' => 'hello world',
+    'timestamp' => date('c')
+));
 
-<span class="k">echo</span> <span class="s2">"Properties of Data</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nb">get_object_vars</span><span class="p">(</span><span class="nv">$d</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">" ${name}: ${value}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+echo "Properties of Data\n";
+foreach (get_object_vars($d) as $name => $value) {
+    echo " ${name}: ${value}\n";
+}
+echo "\n";
 
-<span class="k">class</span> <span class="nc">DataDao</span> <span class="k">extends</span> <span class="nx">Data</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="nv">$table</span><span class="p">;</span>
+class DataDao extends Data {
+    public $table;
     
-    <span class="sd">/**
+    /**
      * magic method __get, __set 是 PHP5 新增的中介編程能力
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"(magic get)</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="nv">$realname</span> <span class="o">=</span> <span class="nb">strtolower</span><span class="p">(</span><span class="nv">$name</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$realname</span><span class="p">))</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$realname</span><span class="p">;</span>
-        <span class="k">else</span>
-            <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-    <span class="p">}</span>
+     */
+    public function __get($name) {
+        echo "(magic get)\n";
+        $realname = strtolower($name);
+        if (isset($this->$realname))
+            return $this->$realname;
+        else
+            return null;
+    }
     
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"(magic set)</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="nv">$realname</span> <span class="o">=</span> <span class="nb">strtolower</span><span class="p">(</span><span class="nv">$name</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$realname</span><span class="p">))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$realname</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    public function __set($name, $value) {
+        echo "(magic set)\n";
+        $realname = strtolower($name);
+        if (isset($this->$realname))
+            $this->$realname = $value;
+    }
+}
 
-<span class="nv">$d2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataDao</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
-    <span class="s1">'id'</span><span class="o">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'content'</span> <span class="o">=&gt;</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="s1">'timestamp'</span> <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'c'</span><span class="p">),</span>
-    <span class="s1">'table'</span> <span class="o">=&gt;</span> <span class="s1">'Data'</span>
-<span class="p">));</span>
+$d2 = new DataDao(array(
+    'id'=> 1,
+    'title' => 'rock',
+    'content' => 'hello world',
+    'timestamp' => date('c'),
+    'table' => 'Data'
+));
 
-<span class="nv">$d2</span><span class="o">-&gt;</span><span class="na">Content</span> <span class="o">=</span> <span class="s1">'hello php'</span><span class="p">;</span> <span class="c1">// __set
-</span><span class="k">echo</span> <span class="s2">"</span><span class="nv">$d2-&gt;Content</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// __get
+$d2->Content = 'hello php'; // __set
+echo "$d2->Content\n\n"; // __get
 //為了和 public 的資料成員區別，特地用首字大寫表示。
-</span>
-<span class="k">echo</span> <span class="s2">"Properties of DataDao</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nb">get_object_vars</span><span class="p">(</span><span class="nv">$d2</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">" ${name}: ${value}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="cp">?&gt;</span>
-</code></pre>
+echo "Properties of DataDao\n";
+foreach (get_object_vars($d2) as $name => $value) {
+    echo " ${name}: ${value}\n";
+}
+
+?>
+{% endhighlight %}
 
 
 <p>
@@ -134,85 +136,87 @@ Data.php, use ReflectionClass
 使用了 <code>ReflectionClass</code> 的範例如下。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  * Data.php (reflection 版)
  *
  * Data class
- */</span>
-<span class="k">class</span> <span class="nc">Data</span> <span class="p">{</span>
-    <span class="k">protected</span> <span class="nv">$id</span><span class="p">;</span>
-    <span class="k">protected</span> <span class="nv">$title</span><span class="p">;</span>
-    <span class="k">protected</span> <span class="nv">$content</span><span class="p">;</span>
-    <span class="k">protected</span> <span class="nv">$timestamp</span><span class="p">;</span>
+ */
+class Data {
+    protected $id;
+    protected $title;
+    protected $content;
+    protected $timestamp;
     
-    <span class="sd">/**
+    /**
      * @param $args 欄位初值
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$refData</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$args</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span> <span class="nv">$refData</span><span class="o">-&gt;</span><span class="na">hasProperty</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">)</span>
-                <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$name</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
-    <span class="s1">'id'</span><span class="o">=&gt;</span><span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'content'</span> <span class="o">=&gt;</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="s1">'timestamp'</span> <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'c'</span><span class="p">)</span>
-<span class="p">));</span>
-
-<span class="k">echo</span> <span class="s2">"Properties of Data</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$rd</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ReflectionObject</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$rd</span><span class="o">-&gt;</span><span class="na">getProperties</span><span class="p">()</span> <span class="k">as</span> <span class="nv">$property</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">" </span><span class="si">{</span><span class="nv">$property</span><span class="o">-&gt;</span><span class="na">getName</span><span class="p">()}</span><span class="nx">\n</span><span class="s2">"; //cannot access private data's value
+     */
+    public function __construct($args) {
+        $refData = new ReflectionObject($this);
+        foreach ($args as $name => $value) {
+            if ( $refData->hasProperty($name) )
+                $this->$name = $value;
+        }
+    }
 }
-echo "</span><span class="nx">\n</span><span class="s2">";
+
+$d = new Data(array(
+    'id'=>1,
+    'title' => 'rock',
+    'content' => 'hello world',
+    'timestamp' => date('c')
+));
+
+echo "Properties of Data\n";
+$rd = new ReflectionObject($d);
+foreach ($rd->getProperties() as $property) {
+    echo " {$property->getName()}\n"; //cannot access private data's value
+}
+echo "\n";
 
 
 class DataDao extends Data {
-    protected </span><span class="nv">$table</span><span class="s2">;
+    protected $table;
     
     /**
      * magic method __get, __set 是 PHP5 新增的中介編程能力
      */
-    public function __get(</span><span class="nv">$name</span><span class="s2">) {
-        if (isset(</span><span class="nv">$this</span><span class="s2">-&gt;</span><span class="nv">$name</span><span class="s2">))
-            return </span><span class="nv">$this</span><span class="s2">-&gt;</span><span class="nv">$name</span><span class="s2">;
+    public function __get($name) {
+        if (isset($this->$name))
+            return $this->$name;
         else
             return null;
     }
     
-    public function __set(</span><span class="nv">$name</span><span class="s2">, </span><span class="nv">$value</span><span class="s2">) {
-        if (isset(</span><span class="nv">$this</span><span class="s2">-&gt;</span><span class="nv">$name</span><span class="s2">))
-            </span><span class="nv">$this</span><span class="s2">-&gt;</span><span class="nv">$name</span><span class="s2"> = </span><span class="nv">$value</span><span class="s2">;
+    public function __set($name, $value) {
+        if (isset($this->$name))
+            $this->$name = $value;
     }
 }
 
-</span><span class="nv">$d2</span><span class="s2"> = new DataDao(array(
-    'id'=&gt; 1,
-    'title' =&gt; 'rock',
-    'content' =&gt; 'hello world',
-    'timestamp' =&gt; date('c'),
-    'table' =&gt; 'Data'
+$d2 = new DataDao(array(
+    'id'=> 1,
+    'title' => 'rock',
+    'content' => 'hello world',
+    'timestamp' => date('c'),
+    'table' => 'Data'
 ));
 
-</span><span class="nv">$d2-&gt;content</span><span class="s2"> = 'hello php'; // __set
-echo "</span><span class="nv">$d2</span><span class="o">-&gt;</span><span class="na">content</span><span class="nx">\n\n</span><span class="s2">"; // __get
+$d2->content = 'hello php'; // __set
+echo "$d2->content\n\n"; // __get
 
-echo "</span><span class="nx">Properties</span> <span class="nx">of</span> <span class="nx">DataDao\n</span><span class="s2">";
-</span><span class="nv">$rd2</span><span class="s2"> = new ReflectionObject(</span><span class="nv">$d2</span><span class="s2">);
-foreach (</span><span class="nv">$rd2-&gt;getProperties</span><span class="s2">() as </span><span class="nv">$property</span><span class="s2">) {
-    </span><span class="nv">$name</span><span class="s2"> = </span><span class="nv">$property-&gt;getName</span><span class="s2">();
-    echo "</span> <span class="p">{</span><span class="nv">$d2</span><span class="o">-&gt;</span><span class="nv">$name</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">//cannot access private data's value
-</span><span class="p">}</span>
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+echo "Properties of DataDao\n";
+$rd2 = new ReflectionObject($d2);
+foreach ($rd2->getProperties() as $property) {
+    $name = $property->getName();
+    echo " {$d2->$name}\n"; //cannot access private data's value
+}
+echo "\n";
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 
 
@@ -226,86 +230,88 @@ Data.php, use SPL Interface
 事實上，PHP5有更靈活的寫法，可以同時實現資訊隱藏又不需要使用反射個體。進一步地，連屬性的數量(欄位數)都不必限制，可以在建構時動態決定。最重要的是，實現這麼多優點後的程式碼，比前兩種寫法更簡單、更優雅。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  * 更靈活的 Data class
  * 不再限定欄位，並實作 Iterator 讓 foreach 的用法更平順。
- */</span>
-<span class="k">class</span> <span class="nc">Data</span> <span class="k">implements</span> <span class="nx">Iterator</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$props</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+ */
+class Data implements Iterator {
+    private $props = array();
 
-    <span class="sd">/**
+    /**
      * 此資料類別直接透過建構子所接受的 hash table 內容，決定實體的可用資料欄位。
      * 不像另一版本會顯著列出欄位清單。
      *
      * @param $args  Hash table, 資料欄位與初值
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$args</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+     */
+    public function __construct($args) {
+        foreach ($args as $name => $value) {
+            $this->props[$name] = $value;
+        }
+    }
 
-    <span class="sd">/**
+    /**
      * magic method __get, __set 是 PHP5 新增的中介編程能力
-     */</span>      
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">[</span><span class="nv">$name</span><span class="p">]))</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">[</span><span class="nv">$name</span><span class="p">];</span>
-        <span class="k">else</span>
-            <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-    <span class="p">}</span>
+     */      
+    public function __get($name) {
+        if (isset($this->props[$name]))
+            return $this->props[$name];
+        else
+            return null;
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">[</span><span class="nv">$name</span><span class="p">]))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
-    <span class="p">}</span>
+    public function __set($name, $value) {
+        if (isset($this->props[$name]))
+            $this->props[$name] = $value;
+    }
 
-    <span class="sd">/**
+    /**
      * PHP SPL Iterator function.
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">rewind</span><span class="p">(){</span> <span class="nb">reset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">);</span> <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">valid</span><span class="p">(){</span> <span class="k">return</span> <span class="nb">current</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">)</span> <span class="o">?</span> <span class="kc">true</span> <span class="o">:</span> <span class="kc">false</span><span class="p">;</span> <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">current</span><span class="p">(){</span> <span class="k">return</span> <span class="nb">current</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">);</span> <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">key</span><span class="p">(){</span> <span class="k">return</span> <span class="nb">key</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">);</span> <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">next</span><span class="p">(){</span> <span class="nb">next</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">props</span><span class="p">);</span> <span class="p">}</span>
-<span class="p">}</span>
+     */
+    public function rewind(){ reset($this->props); }
+    public function valid(){ return current($this->props) ? true : false; }
+    public function current(){ return current($this->props); }
+    public function key(){ return key($this->props); }
+    public function next(){ next($this->props); }
+}
 
 
-<span class="nv">$d1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
-    <span class="s1">'id'</span><span class="o">=&gt;</span><span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'content'</span> <span class="o">=&gt;</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="s1">'timestamp'</span> <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'c'</span><span class="p">)</span>
-<span class="p">));</span>
+$d1 = new Data(array(
+    'id'=>1,
+    'title' => 'rock',
+    'content' => 'hello world',
+    'timestamp' => date('c')
+));
 
-<span class="k">echo</span> <span class="s2">"Properties of d1</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span> <span class="nv">$d1</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">" ${name}: ${value}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+echo "Properties of d1\n";
+foreach ( $d1 as $name => $value ) {
+    echo " ${name}: ${value}\n";
+}
+echo "\n";
 
 
-<span class="c1">//別種資料結果
-</span><span class="nv">$d2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
-    <span class="s1">'id'</span><span class="o">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'create_timestamp'</span> <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'c'</span><span class="p">),</span>
-    <span class="s1">'update_timestamp'</span> <span class="o">=&gt;</span> <span class="nb">date</span><span class="p">(</span><span class="s1">'c'</span><span class="p">),</span>
-    <span class="s1">'table'</span> <span class="o">=&gt;</span> <span class="s1">'Data'</span><span class="p">,</span>
-    <span class="s1">'gid'</span>   <span class="o">=&gt;</span> <span class="mi">100</span>
-<span class="p">));</span>
+//別種資料結果
+$d2 = new Data(array(
+    'id'=> 1,
+    'title' => 'rock',
+    'create_timestamp' => date('c'),
+    'update_timestamp' => date('c'),
+    'table' => 'Data',
+    'gid'   => 100
+));
 
-<span class="nv">$d2</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="s1">'php'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s2">"</span><span class="nv">$d2-&gt;title</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">;</span>
+$d2->title = 'php';
+echo "$d2->title\n\n";
 
-<span class="k">echo</span> <span class="s2">"Properties of d2</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span> <span class="nv">$d2</span> <span class="k">as</span> <span class="nv">$name</span> <span class="o">=&gt;</span> <span class="nv">$value</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">" ${name}: ${value}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+echo "Properties of d2\n";
+foreach ( $d2 as $name => $value ) {
+    echo " ${name}: ${value}\n";
+}
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 
 <p>

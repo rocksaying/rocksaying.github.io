@@ -15,34 +15,36 @@ permalink: /archives/12418697.html
 <p>因為我了解指標，所以我會直接寫出下列字串反向程式。(OK, 如果主考官想找一個 C 語言程式設計人員，看到下列程式碼，九成就會直接錄用)
 </p>
 
-<pre class="highlight"><code><span class="c1">// strrev.c
-</span><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">;</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="s">"input one string"</span><span class="p">);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+{% highlight c %}
+// strrev.c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char **argv) {
+    char *f, *t, c;
+
+    if (argc < 2) {
+        puts("input one string");
+        return 1;
+    }
     
-    <span class="n">f</span> <span class="o">=</span> <span class="n">t</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    f = t = argv[1];
     
-    <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">t</span><span class="p">)</span> 
-        <span class="n">t</span><span class="o">++</span><span class="p">;</span> 
-    <span class="o">--</span><span class="n">t</span><span class="p">;</span>
+    while (*t) 
+        t++; 
+    --t;
     
-    <span class="k">while</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="o">*</span><span class="n">f</span><span class="p">;</span>
-        <span class="o">*</span><span class="n">f</span><span class="o">++</span> <span class="o">=</span> <span class="o">*</span><span class="n">t</span><span class="p">;</span>
-        <span class="o">*</span><span class="n">t</span><span class="o">--</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">puts</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+    while (t > f) {
+        c = *f;
+        *f++ = *t;
+        *t-- = c;
+    }
+    puts(argv[1]);
     
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>上列程式透過指標指向字串 <var>argv[1]</var>，利用指標搬移字元，所以不用建立額外的字串。
@@ -63,65 +65,67 @@ permalink: /archives/12418697.html
 <p>以 gcc 編譯器為例，只要啟用第一級最佳化 (<dfn>-O</dfn>) 就足夠得到我們想要的結果。我利用 gcc 的組譯功能，得到上列 C 程式碼在第一級最佳化後實際產生的組合語言程式碼。下列:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ gcc -S -O strrev.c
 $ cat strrev.s
-</pre>
-
-<pre class="highlight"><code>	<span class="p">.</span><span class="n">file</span>	<span class="s">"strrev.c"</span>
-	<span class="p">.</span><span class="n">section</span>	<span class="p">.</span><span class="n">rodata</span><span class="p">.</span><span class="n">str1</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span><span class="s">"aMS"</span><span class="p">,</span><span class="err">@</span><span class="n">progbits</span><span class="p">,</span><span class="mi">1</span>
-<span class="p">.</span><span class="n">LC0</span><span class="o">:</span>
-	<span class="p">.</span><span class="n">string</span>	<span class="s">"input one string"</span>
-	<span class="p">.</span><span class="n">text</span>
-<span class="p">.</span><span class="n">globl</span> <span class="n">main</span>
-	<span class="p">.</span><span class="n">type</span>	<span class="n">main</span><span class="p">,</span> <span class="err">@</span><span class="n">function</span>
-<span class="n">main</span><span class="o">:</span>
-<span class="p">.</span><span class="n">LFB34</span><span class="o">:</span>
-	<span class="p">.</span><span class="n">cfi_startproc</span>
-	<span class="n">subq</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">rsp</span>
-	<span class="p">.</span><span class="n">cfi_def_cfa_offset</span> <span class="mi">16</span>
-	<span class="n">cmpl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">edi</span>
-	<span class="n">jg</span>	<span class="p">.</span><span class="n">L2</span>
-	<span class="n">movl</span>	<span class="err">$</span><span class="p">.</span><span class="n">LC0</span><span class="p">,</span> <span class="o">%</span><span class="n">edi</span>
-	<span class="n">call</span>	<span class="n">puts</span>
-	<span class="n">movl</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
-	<span class="n">jmp</span>	<span class="p">.</span><span class="n">L3</span>
-<span class="p">.</span><span class="n">L2</span><span class="o">:</span>
-	<span class="n">addq</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">rsi</span>
-	<span class="n">movq</span>	<span class="p">(</span><span class="o">%</span><span class="n">rsi</span><span class="p">),</span> <span class="o">%</span><span class="n">rdx</span>
-	<span class="n">movq</span>	<span class="o">%</span><span class="n">rdx</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
-	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rdx</span><span class="p">)</span>
-	<span class="n">je</span>	<span class="p">.</span><span class="n">L5</span>
-<span class="p">.</span><span class="n">L10</span><span class="o">:</span>
-	<span class="n">addq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
-	<span class="n">cmpb</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rax</span><span class="p">)</span>
-	<span class="n">jne</span>	<span class="p">.</span><span class="n">L10</span>
-<span class="p">.</span><span class="n">L5</span><span class="o">:</span>
-	<span class="n">subq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
-	<span class="n">cmpq</span>	<span class="o">%</span><span class="n">rax</span><span class="p">,</span> <span class="o">%</span><span class="n">rdx</span>
-	<span class="n">jae</span>	<span class="p">.</span><span class="n">L7</span>
-<span class="p">.</span><span class="n">L8</span><span class="o">:</span>
-	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">rdx</span><span class="p">),</span> <span class="o">%</span><span class="n">ecx</span>
-	<span class="n">movzbl</span>	<span class="p">(</span><span class="o">%</span><span class="n">rax</span><span class="p">),</span> <span class="o">%</span><span class="n">edi</span>
-	<span class="n">movb</span>	<span class="o">%</span><span class="n">dil</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rdx</span><span class="p">)</span>
-	<span class="n">addq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rdx</span>
-	<span class="n">movb</span>	<span class="o">%</span><span class="n">cl</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rax</span><span class="p">)</span>
-	<span class="n">subq</span>	<span class="err">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="n">rax</span>
-	<span class="n">cmpq</span>	<span class="o">%</span><span class="n">rax</span><span class="p">,</span> <span class="o">%</span><span class="n">rdx</span>
-	<span class="n">jb</span>	<span class="p">.</span><span class="n">L8</span>
-<span class="p">.</span><span class="n">L7</span><span class="o">:</span>
-	<span class="n">movq</span>	<span class="p">(</span><span class="o">%</span><span class="n">rsi</span><span class="p">),</span> <span class="o">%</span><span class="n">rdi</span>
-	<span class="n">call</span>	<span class="n">puts</span>
-	<span class="n">movl</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="o">%</span><span class="n">eax</span>
-<span class="p">.</span><span class="n">L3</span><span class="o">:</span>
-	<span class="n">addq</span>	<span class="err">$</span><span class="mi">8</span><span class="p">,</span> <span class="o">%</span><span class="n">rsp</span>
-	<span class="n">ret</span>
-	<span class="p">.</span><span class="n">cfi_endproc</span>
-<span class="p">.</span><span class="n">LFE34</span><span class="o">:</span>
-	<span class="p">.</span><span class="n">size</span>	<span class="n">main</span><span class="p">,</span> <span class="p">.</span><span class="o">-</span><span class="n">main</span>
-	<span class="p">.</span><span class="n">ident</span>	<span class="s">"GCC: (Ubuntu 4.4.3-4ubuntu5) 4.4.3"</span>
-	<span class="p">.</span><span class="n">section</span>	<span class="p">.</span><span class="n">note</span><span class="p">.</span><span class="n">GNU</span><span class="o">-</span><span class="n">stack</span><span class="p">,</span><span class="s">""</span><span class="p">,</span><span class="err">@</span><span class="n">progbits</span>
 </code></pre>
+
+
+{% highlight c %}
+.file	"strrev.c"
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.LC0:
+	.string	"input one string"
+	.text
+.globl main
+	.type	main, @function
+main:
+.LFB34:
+	.cfi_startproc
+	subq	$8, %rsp
+	.cfi_def_cfa_offset 16
+	cmpl	$1, %edi
+	jg	.L2
+	movl	$.LC0, %edi
+	call	puts
+	movl	$1, %eax
+	jmp	.L3
+.L2:
+	addq	$8, %rsi
+	movq	(%rsi), %rdx
+	movq	%rdx, %rax
+	cmpb	$0, (%rdx)
+	je	.L5
+.L10:
+	addq	$1, %rax
+	cmpb	$0, (%rax)
+	jne	.L10
+.L5:
+	subq	$1, %rax
+	cmpq	%rax, %rdx
+	jae	.L7
+.L8:
+	movzbl	(%rdx), %ecx
+	movzbl	(%rax), %edi
+	movb	%dil, (%rdx)
+	addq	$1, %rdx
+	movb	%cl, (%rax)
+	subq	$1, %rax
+	cmpq	%rax, %rdx
+	jb	.L8
+.L7:
+	movq	(%rsi), %rdi
+	call	puts
+	movl	$0, %eax
+.L3:
+	addq	$8, %rsp
+	ret
+	.cfi_endproc
+.LFE34:
+	.size	main, .-main
+	.ident	"GCC: (Ubuntu 4.4.3-4ubuntu5) 4.4.3"
+	.section	.note.GNU-stack,"",@progbits
+{% endhighlight %}
 
 
 <p>自標記 L5 起，C 編譯器就令暫存器 <var>rax</var> 為指標 <var>t</var>，令暫存器 <var>rdx</var> 為指標 <var>f</var>，令暫存器 <var>rcx</var> 的低位元組部份 <var>cl</var> 為變數 <var>c</var>。再使用暫存器 <var>edi</var> 的低位元組部份 <var>dil</var> 作為從兩指標間搬移字元的暫存器；也就是負責 <code>*f = *t</code> 此一記憶體間資料搬移動作的暫存器。

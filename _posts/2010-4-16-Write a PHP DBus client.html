@@ -47,13 +47,13 @@ Ubuntu requied packages: libdbus-1-dev, libxml2-dev, php5-dev (include phpize)
 <p>
 你下載回來的 php-dbus 是一套符合 PHP 標準擴充元件撰寫規範的源碼，故而解開壓縮檔後，僅需要執行四個標準動作，就可以完成編譯與安裝動作。假設我將 php-dbus 源碼壓縮檔的內容解開於 php-dbus 的目錄內，我只需要執行下列動作即可完成安裝。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
  $ cd php-dbus
  $ phpize                   #PHP標準擴充元件源碼組態工具
  $ ./configure
  $ make                     #執行成功後就會得到 dbus.so
  $ sudo make install
-</pre>
+</code></pre>
 
 <p>
 最後的 make install 只是將 dbus.so 複製到 PHP 搜尋擴充元件的目錄內。我們仍然要編輯 php.ini 的 <dfn>extensions</dfn> 區段，加入 <code>extension=dbus.so</code> 的設定，才能啟用 php-dbus 擴充元件。
@@ -103,8 +103,10 @@ watch_rhythmbox_playing.php
 我只用 Rhythmbox D-Bus 服務的 org.gnome.Rhythmbox.Player.getPlayingUri() 方法，以及傾聽 org.gnome.Rhythmbox.Player.playingUriChanged() 訊號。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="cm">/*
+
+{% highlight php %}
+<?php
+/*
 There are two php-dbus bindings.
 1. GREE Labs's
 http://labs.gree.jp/Top/OpenSource/DBus-en.html
@@ -121,44 +123,44 @@ Ubuntu packages: libdbus-1-dev, php5-dev
 Derick's is most useful, but lacks of documents.
 You need to see it's examples.
 http://svn.php.net/viewvc/pecl/dbus/trunk/examples/
-*/</span>
+*/
 
-<span class="nv">$rhythmboxService</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox'</span><span class="p">;</span>
-<span class="nv">$rhythmboxPlayer</span> <span class="o">=</span> <span class="s1">'/org/gnome/Rhythmbox/Player'</span><span class="p">;</span>
-<span class="nv">$rhythmboxPlayerInterface</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox.Player'</span><span class="p">;</span>
-<span class="cm">/*
+$rhythmboxService = 'org.gnome.Rhythmbox';
+$rhythmboxPlayer = '/org/gnome/Rhythmbox/Player';
+$rhythmboxPlayerInterface = 'org.gnome.Rhythmbox.Player';
+/*
 dbus-send --session --print-reply \
     --dest=org.gnome.Rhythmbox \
     /org/gnome/Rhythmbox/Player \
     org.freedesktop.DBus.Introspectable.Introspect
-*/</span>
+*/
 
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SESSION</span><span class="p">);</span>
+$d = new Dbus(Dbus::BUS_SESSION);
 
-<span class="nv">$playerProxy</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
-    <span class="nv">$rhythmboxService</span><span class="p">,</span> <span class="nv">$rhythmboxPlayer</span><span class="p">,</span> <span class="nv">$rhythmboxPlayerInterface</span><span class="p">);</span>
+$playerProxy = $d->createProxy(
+    $rhythmboxService, $rhythmboxPlayer, $rhythmboxPlayerInterface);
 
-<span class="nv">$uri</span> <span class="o">=</span> <span class="nv">$playerProxy</span><span class="o">-&gt;</span><span class="na">getPlayingUri</span><span class="p">();</span>
-<span class="c1">//透過 proxy 實體，呼叫 RhythmboxPlayer-&gt;getPlayingUri()。
+$uri = $playerProxy->getPlayingUri();
+//透過 proxy 實體，呼叫 RhythmboxPlayer->getPlayingUri()。
 //取得它目前正在播放的音樂檔名。
-</span>
-<span class="k">echo</span> <span class="s2">"Rhythmbox is playing: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
 
-<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">addWatch</span><span class="p">(</span><span class="nv">$rhythmboxPlayerInterface</span><span class="p">);</span>
-<span class="c1">//傾聽 RhythmboxPlayer 介面的訊號。
-</span>
-<span class="k">while</span> <span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">waitLoop</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span> <span class="p">)</span>
-        <span class="k">continue</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">matches</span><span class="p">(</span><span class="nv">$rhythmboxPlayerInterface</span><span class="p">,</span> <span class="s1">'playingUriChanged'</span><span class="p">))</span> <span class="p">{</span>
-        <span class="c1">//過濾傾聽 Rhythmbox 改變曲目的訊號。
-</span>        <span class="nv">$uri</span> <span class="o">=</span> <span class="nv">$s</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span>
-        <span class="k">echo</span> <span class="s2">"Rhythmbox changes to play: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+echo "Rhythmbox is playing: ", urldecode($uri), "\n";
 
-<span class="cp">?&gt;</span>
-</code></pre>
+$d->addWatch($rhythmboxPlayerInterface);
+//傾聽 RhythmboxPlayer 介面的訊號。
+
+while (true) {
+    if ( !($s = $d->waitLoop(1000)) )
+        continue;
+    if ($s->matches($rhythmboxPlayerInterface, 'playingUriChanged')) {
+        //過濾傾聽 Rhythmbox 改變曲目的訊號。
+        $uri = $s->getData();
+        echo "Rhythmbox changes to play: ", urldecode($uri), "\n";
+    }
+}
+
+?>
+{% endhighlight %}
 
 
 <h5>
@@ -172,81 +174,83 @@ DBus2 class
 new_watch_rhythmbox_playing.php
 </h6>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php
+/**
  * DBus2 class
  *
  * @license: LGPL
  * @author: rock
- */</span>
-<span class="k">class</span> <span class="nc">Dbus2</span> <span class="k">extends</span> <span class="nx">Dbus</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$type</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">(</span><span class="nv">$type</span><span class="p">);</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-    <span class="p">}</span>
+ */
+class Dbus2 extends Dbus {
+    function __construct($type) {
+        parent::__construct($type);
+        $this->signalReceivers = array();
+    }
 
-    <span class="c1">//self.bus.add_signal_receiver(self.handler, dbus_interface=Hello.interface, signal_name = "SignalSay")
-</span>    <span class="k">function</span> <span class="nf">addSignalReceiver</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$interface</span><span class="p">,</span> <span class="nv">$signal</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span><span class="p">[</span><span class="nv">$interface</span><span class="p">]))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span><span class="p">[</span><span class="nv">$interface</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span><span class="p">[</span><span class="nv">$interface</span><span class="p">][</span><span class="nv">$signal</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$callback</span><span class="p">;</span>
+    //self.bus.add_signal_receiver(self.handler, dbus_interface=Hello.interface, signal_name = "SignalSay")
+    function addSignalReceiver($callback, $interface, $signal) {
+        if (!isset($this->signalReceivers[$interface]))
+            $this->signalReceivers[$interface] = array();
+        $this->signalReceivers[$interface][$signal] = $callback;
 
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">addWatch</span><span class="p">(</span><span class="nv">$interface</span><span class="p">);</span>
-        <span class="c1">//var_dump($this-&gt;signalReceivers);
-</span>    <span class="p">}</span>
+        $this->addWatch($interface);
+        //var_dump($this->signalReceivers);
+    }
 
-    <span class="k">function</span> <span class="nf">mainLoop</span><span class="p">(</span><span class="nv">$time</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">while</span> <span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$s</span> <span class="o">=</span> <span class="k">parent</span><span class="o">::</span><span class="na">waitLoop</span><span class="p">(</span><span class="nv">$time</span><span class="p">);</span>
-            <span class="nv">$called</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="p">)</span> <span class="p">{</span>
-                <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">signalReceivers</span> <span class="k">as</span> <span class="nv">$interface</span> <span class="o">=&gt;</span> <span class="nv">$members</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$members</span> <span class="k">as</span> <span class="nv">$signal</span> <span class="o">=&gt;</span> <span class="nv">$callback</span><span class="p">)</span> <span class="p">{</span>
-                        <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">matches</span><span class="p">(</span><span class="nv">$interface</span><span class="p">,</span> <span class="nv">$signal</span><span class="p">))</span> <span class="p">{</span>
-                            <span class="c1">//echo "matches\n";
-</span>                            <span class="nv">$reply</span> <span class="o">=</span> <span class="nv">$s</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span>
-                            <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$reply</span><span class="p">))</span>
-                                <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$reply</span><span class="p">);</span>
-                            <span class="k">else</span>
-                                <span class="nb">call_user_func</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$reply</span><span class="p">);</span>
-                            <span class="nv">$called</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-                            <span class="k">break</span><span class="p">;</span> <span class="c1">//foreach members
-</span>                        <span class="p">}</span>
-                    <span class="p">}</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="nv">$called</span><span class="p">)</span>
-                        <span class="k">break</span><span class="p">;</span> <span class="c1">//foreach receivers
-</span>                <span class="p">}</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-
-<span class="nv">$rhythmboxService</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox'</span><span class="p">;</span>
-<span class="nv">$rhythmboxPlayer</span> <span class="o">=</span> <span class="s1">'/org/gnome/Rhythmbox/Player'</span><span class="p">;</span>
-<span class="nv">$rhythmboxPlayerInterface</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox.Player'</span><span class="p">;</span>
-
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus2</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SESSION</span><span class="p">);</span> <span class="c1">// use DBus2, not DBus
-</span>
-<span class="nv">$playerProxy</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
-    <span class="nv">$rhythmboxService</span><span class="p">,</span> <span class="nv">$rhythmboxPlayer</span><span class="p">,</span> <span class="nv">$rhythmboxPlayerInterface</span><span class="p">);</span>
-
-<span class="nv">$uri</span> <span class="o">=</span> <span class="nv">$playerProxy</span><span class="o">-&gt;</span><span class="na">getPlayingUri</span><span class="p">();</span>
-
-<span class="k">echo</span> <span class="s2">"Rhythmbox is playing: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    function mainLoop($time) {
+        while (true) {
+            $s = parent::waitLoop($time);
+            $called = false;
+            if ($s) {
+                foreach ($this->signalReceivers as $interface => $members) {
+                    foreach ($members as $signal => $callback) {
+                        if ($s->matches($interface, $signal)) {
+                            //echo "matches\n";
+                            $reply = $s->getData();
+                            if (is_array($reply))
+                                call_user_func_array($callback, $reply);
+                            else
+                                call_user_func($callback, $reply);
+                            $called = true;
+                            break; //foreach members
+                        }
+                    }
+                    if ($called)
+                        break; //foreach receivers
+                }
+            }
+        }
+        return $s;
+    }
+}
 
 
-<span class="k">function</span> <span class="nf">my_callback</span><span class="p">(</span><span class="nv">$uri</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Rhythmbox changes to play: "</span><span class="p">,</span> <span class="nb">urldecode</span><span class="p">(</span><span class="nv">$uri</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+$rhythmboxService = 'org.gnome.Rhythmbox';
+$rhythmboxPlayer = '/org/gnome/Rhythmbox/Player';
+$rhythmboxPlayerInterface = 'org.gnome.Rhythmbox.Player';
 
-<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">addSignalReceiver</span><span class="p">(</span><span class="s1">'my_callback'</span><span class="p">,</span> <span class="nv">$rhythmboxPlayerInterface</span><span class="p">,</span> <span class="s1">'playingUriChanged'</span><span class="p">);</span>
+$d = new Dbus2(Dbus::BUS_SESSION); // use DBus2, not DBus
 
-<span class="nv">$d</span><span class="o">-&gt;</span><span class="na">mainLoop</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+$playerProxy = $d->createProxy(
+    $rhythmboxService, $rhythmboxPlayer, $rhythmboxPlayerInterface);
 
-<span class="cp">?&gt;</span>
-</code></pre>
+$uri = $playerProxy->getPlayingUri();
+
+echo "Rhythmbox is playing: ", urldecode($uri), "\n";
+
+
+function my_callback($uri) {
+    echo "Rhythmbox changes to play: ", urldecode($uri), "\n";
+}
+
+$d->addSignalReceiver('my_callback', $rhythmboxPlayerInterface, 'playingUriChanged');
+
+$d->mainLoop(1000);
+
+?>
+{% endhighlight %}
 
 
 <p>

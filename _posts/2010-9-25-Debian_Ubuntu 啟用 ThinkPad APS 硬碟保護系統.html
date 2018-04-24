@@ -13,19 +13,19 @@ permalink: /archives/13873769.html
 <p>
 安裝:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ sudo apt-get install hdapsd
 
-</pre>
+</code></pre>
 <p>
 安裝後，重新開機。如果你熟悉 Linux 系統，你也可以直接載入 hdaps 模組 (<kdb>insmod hdaps</kdb>)，再啟動 <dfn>/etc/init.d/hdapsd</dfn> ，不須重新開機。開機後查看 dmesg 確認 hdaps 是否成功載入了。出現下列訊息就是載入了。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ dmesg | grep hdaps
 hdaps: device successfully initialized.
 hdaps: driver successfully loaded.
 
-</pre>
+</code></pre>
 <p>
 如果開機時沒有自動載入 hdaps 模組，你可能需要編輯 <dfn>/etc/modules</dfn> ，自行將 hdaps 加入其中。
 </p>
@@ -33,18 +33,20 @@ hdaps: driver successfully loaded.
 確定 hdaps 載入後，我們再進一步確定此功能是否會如預期般運作。首先儲存下列的指令稿，並執行它 (它會一直顯示0，直到你按 Ctrl+C中止它)。接著用手拿起你的小黑，輕輕晃動一下。只要 hdaps 正常運作的話，你就會看到執行中的指令稿顯示 "<em>unload disk heads</em>" 的訊息。房間安靜的話，你還會聽到"卡"地一聲。這就表示 hdaps 確實啟動了 APS 系統保護你的硬碟。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/bin/sh</span>
 
-<span class="k">while </span><span class="nb">true</span>; <span class="k">do
-  </span><span class="nv">v</span><span class="o">=</span><span class="sb">`</span>cat /sys/block/sda/device/unload_heads<span class="sb">`</span>
-  <span class="nb">echo</span> <span class="nv">$v</span>
-  <span class="k">if</span> <span class="o">[</span> <span class="s2">"</span><span class="nv">$v</span><span class="s2">"</span> !<span class="o">=</span> <span class="s2">"0"</span> <span class="o">]</span>; <span class="k">then</span>
-    <span class="c">#break</span>
-    <span class="nb">echo</span> <span class="s2">"unload disk heads"</span>
-  <span class="k">fi
-  </span>sleep 1s
-<span class="k">done</span>
-</code></pre>
+{% highlight sh %}
+#!/bin/sh
+
+while true; do
+  v=`cat /sys/block/sda/device/unload_heads`
+  echo $v
+  if [ "$v" != "0" ]; then
+    #break
+    echo "unload disk heads"
+  fi
+  sleep 1s
+done
+{% endhighlight %}
 
 
 <p>

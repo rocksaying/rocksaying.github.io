@@ -35,27 +35,29 @@ Bjarne Stroustrup 最初設計了一套型別機制，具有類別與繼承能�
 <p>
 Debain/Ubuntu 系統提供了 valac 套件。安裝之後即可使用 Vala 編譯器。接著完成我們的 Vala 版 hello world 吧。
 </p>
-<pre class="highlight"><code><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Hello world</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+{% highlight c# %}
+void main() {
+    stdout.printf("Hello world\n");
     
-    <span class="n">var</span> <span class="n">ht</span> <span class="o">=</span> <span class="n">new</span> <span class="n">HashTable</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">null</span><span class="p">,</span> <span class="n">null</span><span class="p">);</span> <span class="c1">//型別推斷與泛型容器
-</span>    <span class="n">ht</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"a"</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-    <span class="n">ht</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
-    <span class="n">ht</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">"c"</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
-    <span class="n">ht</span><span class="p">.</span><span class="n">foreach</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="c1">//lambda
-</span>        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Key: %s; Value: %u</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="o">*</span><span class="p">)</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">v</span><span class="p">);</span>
-        <span class="c1">// C 編譯器在此可能會發出警告
-</span>    <span class="p">});</span>
-    <span class="n">foreach</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="n">in</span> <span class="n">ht</span><span class="p">.</span><span class="n">get_values</span><span class="p">())</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+    var ht = new HashTable<string, int>(null, null); //型別推斷與泛型容器
+    ht.insert("a", 1);
+    ht.insert("b", 2);
+    ht.insert("c", 10);
+    ht.foreach((k, v) => { //lambda
+        stdout.printf("Key: %s; Value: %u\n", (string*) k, (int) v);
+        // C 編譯器在此可能會發出警告
+    });
+    foreach (int i in ht.get_values()) {
+        stdout.printf("%d\n", i);
+    }
+}
+{% endhighlight %}
 
 <p>
 基本上，你只需要使用 valac 就可以直接產生執行檔。如果你想知道 valac 產生的 C 程式碼內容，請加上 <code>-C</code> 參數，它就只做 Vala 程式碼編譯成 C 程式碼的動作。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ valac hello.vala
 $ ./hello
 Hello world
@@ -68,7 +70,7 @@ Key: c; Value: 10
 
 $ valac -C hello.vala     # 輸出結果為 hello.c
 $ cat hello.c
-</pre>
+</code></pre>
 
 <h4>
 類別與方法
@@ -79,45 +81,46 @@ $ cat hello.c
 <p>
 下列程式碼定義了兩個類別，其中 BClass 繼承 AClass。內容使用了 property 語法以及特殊方法的語法支援，例如定義了 <code>T2 get(T1 k)</code> 方法，就允許我們以 <code>[ k ]</code> 的索引語法取值。相當於 C# 的 indexer method 或是 C++ 的 <code>operator[]</code>。
 </p>
-<pre class="highlight"><code><span class="n">public</span> <span class="n">class</span> <span class="n">AClass</span> <span class="o">:</span> <span class="n">Object</span> <span class="p">{</span>
-    <span class="c1">//property
-</span>    <span class="n">public</span> <span class="kt">int</span> <span class="n">a</span> <span class="p">{</span><span class="n">get</span><span class="p">;</span> <span class="n">set</span><span class="p">;</span> <span class="k">default</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
 
-    <span class="n">public</span> <span class="n">new</span> <span class="kt">int</span> <span class="n">get</span><span class="p">(</span><span class="n">string</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//Method Hiding
-</span>        <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="s">"a"</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="n">a</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight c# %}
+public class AClass : Object {
+    //property
+    public int a {get; set; default = 0; }
 
-<span class="n">public</span> <span class="n">class</span> <span class="n">BClass</span> <span class="o">:</span> <span class="n">AClass</span> <span class="p">{</span>
-    <span class="n">public</span> <span class="kt">int</span> <span class="n">b</span> <span class="p">{</span><span class="n">get</span><span class="p">;</span> <span class="n">set</span><span class="p">;</span> <span class="k">default</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
-    <span class="n">public</span> <span class="n">new</span> <span class="kt">int</span> <span class="n">get</span><span class="p">(</span><span class="n">string</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="s">"b"</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="n">b</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">base</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
-    <span class="p">}</span>
+    public new int get(string key) { //Method Hiding
+        if (key == "a") {
+            return a;
+        }
+        return 0;
+    }
+}
 
-    <span class="c1">//Methods With Syntax Support - string
-</span>    <span class="n">public</span> <span class="n">string</span> <span class="n">to_string</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="err">@</span><span class="s">"{a: $a; b: $b}"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+public class BClass : AClass {
+    public int b {get; set; default = 0; }
+    public new int get(string key) {
+        if (key == "b") {
+            return b;
+        }
+        return base.get(key);
+    }
 
-<span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">var</span> <span class="n">b</span> <span class="o">=</span> <span class="n">new</span> <span class="n">BClass</span><span class="p">();</span>
-    <span class="n">b</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
-    <span class="n">b</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
+    //Methods With Syntax Support - string
+    public string to_string() {
+        return @"{a: $a; b: $b}";
+    }
+}
+
+void main() {
+    var b = new BClass();
+    b.a = 100;
+    b.b = 200;
     
-    <span class="c1">//Methods With Syntax Support - Indexer
-</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%d, %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">b</span><span class="p">[</span><span class="s">"a"</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="s">"b"</span><span class="p">]);</span> 
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"%d, %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">b</span><span class="p">);</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">puts</span><span class="p">(</span><span class="err">@</span><span class="s">"$b</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-<span class="p">}</span>
-
-</code></pre>
+    //Methods With Syntax Support - Indexer
+    stdout.printf("%d, %d\n", b["a"], b["b"]); 
+    stdout.printf("%d, %d\n", b.a, b.b);
+    stdout.puts(@"$b\n");
+}
+{% endhighlight %}
 
 
 <p>
@@ -127,7 +130,7 @@ $ cat hello.c
 <p>
 當我們產生 C 程式碼後，可以直接使用 gcc 編譯出執行檔。因為我們使用了 GObject ，所以還要告知 gcc 去哪找尋 GObject 所需的 header files 與 lib 。在大多數的主流 Linux 散佈版本中，我們都可以執行 <code>pkg-config --cflags --libs gobject-2.0</code> 得到 gcc 所需的額外參數 (<span class="note">pkg-config 是 GNOME 開發套件的一部份</span>)。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ valac -C class.vala
 $ cat class.c
 
@@ -137,13 +140,13 @@ $ ./class
 100, 200
 {a: 100; b: 200}
 
-</pre>
+</code></pre>
 
 <div class="note">
 <p>
 如果你的 shell 不支援指令輸出替換語法，你需要先以 pkg-config 取得參數內容，再手動添加到 gcc 的參數中。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ pkg-config --cflags --libs gobject-2.0
 -pthread -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
 -pthread -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0  
@@ -154,7 +157,7 @@ $ gcc -pthread -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
    -pthread -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 \
    -o class class.c
 
-</pre>
+</code></pre>
 </div>
 
 <h4>
@@ -166,50 +169,54 @@ $ gcc -pthread -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
 <p>
 我先寫一份 C 程式碼文件，它實作了一個 md5sum() 的函數，此函數將呼叫 openssl 函數庫(<span class="note">在Debain/Ubuntu中，這是預裝項目，連接器所需參數為 <code>-lcrypto</code></span>) 提供的 MD5() 產生字串的 Digest 內容，並轉為以16進位代碼顯示的字串。
 </p>
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;openssl/md5.h&gt;
-</span>
-<span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span>
-<span class="nf">md5sum</span><span class="p">(</span><span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">len</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">md</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"d = [%s], len = [%lu]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
-    <span class="c1">//unsigned char bufstr[MD5_DIGEST_LENGTH * 2 + 1];
-</span>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">MD5_DIGEST_LENGTH</span><span class="p">];</span>
-    
-    <span class="n">MD5</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
 
-    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p1</span><span class="p">,</span> <span class="o">*</span><span class="n">p2</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">p1</span> <span class="o">=</span> <span class="n">buf</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">md</span><span class="p">;</span> 
-         <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MD5_DIGEST_LENGTH</span><span class="p">;</span> 
-         <span class="o">++</span><span class="n">i</span><span class="p">,</span> <span class="o">++</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="o">+=</span><span class="mi">2</span><span class="p">)</span> 
-    <span class="p">{</span>
-        <span class="n">sprintf</span><span class="p">(</span><span class="n">p2</span><span class="p">,</span> <span class="s">"%02x"</span><span class="p">,</span> <span class="o">*</span><span class="n">p1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
-    <span class="c1">//printf("%s\n", md);
-</span>    <span class="k">return</span> <span class="n">md</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight c# %}
+#include <stdio.h>
+#include <openssl/md5.h>
+
+unsigned char *
+md5sum(const unsigned char *d, unsigned long len, unsigned char *md)
+{
+    printf("d = [%s], len = [%lu]\n", d, len);
+    //unsigned char bufstr[MD5_DIGEST_LENGTH * 2 + 1];
+    unsigned char buf[MD5_DIGEST_LENGTH];
+    
+    MD5(d, len, buf);
+
+    int i;
+    unsigned char *p1, *p2;
+    for (i = 0, p1 = buf, p2 = md; 
+         i < MD5_DIGEST_LENGTH; 
+         ++i, ++p1, p2+=2) 
+    {
+        sprintf(p2, "%02x", *p1);
+    }
+    *p2 = '\0';
+    //printf("%s\n", md);
+    return md;
+}
+{% endhighlight %}
 
 
 <p>
 再寫一份調用 md5sum() 函數的 Vala 程式碼。
 </p>
-<pre class="highlight"><code><span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">=</span> <span class="mi">32</span><span class="p">;</span>
 
-<span class="p">[</span><span class="n">CCode</span> <span class="p">(</span><span class="n">cname</span><span class="o">=</span><span class="s">"md5sum"</span><span class="p">)]</span>
-<span class="k">static</span> <span class="k">extern</span> <span class="n">unowned</span> <span class="n">uchar</span><span class="o">*</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">uchar</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="n">ulong</span> <span class="n">len</span><span class="p">,</span> <span class="n">uchar</span> <span class="o">*</span><span class="n">md</span><span class="p">);</span>
+{% highlight c# %}
+const uint MD5_DIGEST_STRING_LENGTH = 32;
 
-<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"hello 石頭成"</span><span class="p">;</span>
-    <span class="n">var</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">to_utf8</span><span class="p">();</span>
-    <span class="n">var</span> <span class="n">mdbuf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">uchar</span><span class="p">[</span><span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+[CCode (cname="md5sum")]
+static extern unowned uchar* md5sum(uchar *d, ulong len, uchar *md);
 
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"1[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf</span><span class="p">.</span><span class="n">length</span><span class="p">,</span> <span class="n">mdbuf</span><span class="p">)</span> <span class="p">);</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"2[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">mdbuf</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+void main() {
+    var s = "hello 石頭成";
+    var buf = s.to_utf8();
+    var mdbuf = new uchar[MD5_DIGEST_STRING_LENGTH + 1];
+
+    stdout.printf("1[%s]\n", (string) md5sum(buf, buf.length, mdbuf) );
+    stdout.printf("2[%s]\n", (string) mdbuf);
+}
+{% endhighlight %}
 
 <p>
 <dfn>CCode</dfn> 是 Vala 專屬的 attribute (<span class="note">C#/Vala 的 attribute 作用與 Java 的 annotation 類似，都可以調整某些編譯行為</span>)，主要用於調整 Vala 產生的 C 程式碼內容。在此，我用 <dfn>extern</dfn> 宣告 md5sum() 是使用外部程式語言定義的函數，並用 CCode 的 cname 參數，告知 valac 此函數在外部語言中的符號名稱叫 md5sum 。
@@ -217,14 +224,14 @@ $ gcc -pthread -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
 <p>
 最後，我將 test-md5.vala 與 md5sum.c 一併交給 valac 編譯。並用 <code>-X -lcrypto</code> 傳遞額外要給 gcc 的連接器參數。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ valac -X -lcrypt test-md5.vala md5sum.c
 $ ./test-md5
 d = [hello 石頭成], len = [15]
 1[19d63df7a195f5a3a847bd3a54831b97]
 2[19d63df7a195f5a3a847bd3a54831b97]
 
-</pre>
+</code></pre>
 
 <h4>
 參考文件

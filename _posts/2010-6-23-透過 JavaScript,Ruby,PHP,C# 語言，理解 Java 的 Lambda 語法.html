@@ -16,15 +16,17 @@ permalink: /archives/12742243.html
 <!--more-->
 <h5>Java</h5>
 
-<pre class="highlight"><code><span class="kt">int</span> <span class="n">i1</span> <span class="o">=</span> <span class="err">#</span><span class="o">()(</span><span class="mi">3</span><span class="o">).();</span>
-<span class="n">assertTrue</span><span class="o">(</span><span class="mi">3</span> <span class="o">==</span> <span class="n">i1</span><span class="o">);</span>
 
-<span class="n">Integer</span> <span class="n">i2</span> <span class="o">=</span> <span class="err">#</span><span class="o">()(</span><span class="mi">3</span><span class="o">).();</span>
-<span class="n">assertTrue</span><span class="o">(</span><span class="mi">3</span> <span class="o">==</span> <span class="n">i2</span><span class="o">);</span>
+{% highlight java %}
+int i1 = #()(3).();
+assertTrue(3 == i1);
 
-<span class="kt">int</span> <span class="n">i3</span> <span class="o">=</span> <span class="err">#</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">)(</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">).(</span><span class="mi">3</span><span class="o">);</span>
-<span class="n">assertTrue</span><span class="o">(</span><span class="mi">4</span> <span class="o">==</span> <span class="n">i3</span><span class="o">);</span>
-</code></pre>
+Integer i2 = #()(3).();
+assertTrue(3 == i2);
+
+int i3 = #(int x)( x + 1 ).(3);
+assertTrue(4 == i3);
+{% endhighlight %}
 
 
 <p>Java 的 lambda 語法看來怪怪的？我熟悉的程式語言還算屈指可數，兩手並用就算得出來，我看到這語法是楞了一下，這還是 Java 嗎？專精 Java 的程序員看了更是不習慣，我同事第一眼還以為這是 jQuery 。
@@ -35,15 +37,17 @@ permalink: /archives/12742243.html
 
 <h5>JavaScript</h5>
 
-<pre class="highlight"><code><span class="nx">i1</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">})()</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">i1</span><span class="p">)</span>
 
-<span class="nx">i2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">}()</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">i2</span><span class="p">)</span>
+{% highlight javascript %}
+i1 = (function(){return 3})()
+print(i1)
 
-<span class="nx">i3</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">x</span><span class="p">){</span><span class="k">return</span> <span class="nx">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}(</span><span class="mi">3</span><span class="p">);</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">i3</span><span class="p">)</span>
-</code></pre>
+i2 = function(){return 3}()
+print(i2)
+
+i3 = function(x){return x + 1}(3);
+print(i3)
+{% endhighlight %}
 
 
 <p>JavaScript 不會主動將函式的最後一行結果視為回傳值，必須以 return 回傳。其他細項可參閱 <a href="{{ site.baseurl }}/archives/2718420.html">The practice of anonymous recursion function in JavaScript</a> 。
@@ -82,20 +86,22 @@ PHP5.3 / PHP6
 <p>PHP5 到了 5.3版以後才增加匿名函數的語法，基本上照抄 JavaScript。細項請參閱 <a href="{{ site.baseurl }}/archives/10833753.html">PHP 5.3/6 新增功能 - Closures</a> 。此外，基於 PHP 的語法限制，它不允許你在定義後直接以 <code>()運算子</code> 調用匿名函數。但是它可以直接作為其他函數的參數使用，所以我們可以用 <code>call_user_func()</code> 實現定義後立即調用的目的。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$f1</span> <span class="o">=</span> <span class="k">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">;};</span>
-<span class="nv">$i1</span> <span class="o">=</span> <span class="nv">$f1</span><span class="p">();</span>
-<span class="k">echo</span> <span class="nv">$i1</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
 
-<span class="nv">$i2</span> <span class="o">=</span> <span class="nb">call_user_func</span><span class="p">(</span> <span class="k">function</span><span class="p">(){</span><span class="k">return</span> <span class="mi">3</span><span class="p">;}</span> <span class="p">);</span>
-<span class="k">echo</span> <span class="nv">$i2</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+{% highlight php %}
+<?php
+$f1 = function(){return 3;};
+$i1 = $f1();
+echo $i1, "\n";
 
-<span class="nv">$i3</span> <span class="o">=</span> <span class="nb">call_user_func</span><span class="p">(</span> 
-    <span class="k">function</span><span class="p">(</span><span class="nv">$x</span><span class="p">){</span><span class="k">return</span> <span class="nv">$x</span><span class="o">+</span><span class="mi">1</span><span class="p">;},</span> 
-    <span class="mi">3</span> <span class="p">);</span>
-<span class="k">echo</span> <span class="nv">$i3</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$i2 = call_user_func( function(){return 3;} );
+echo $i2, "\n";
+
+$i3 = call_user_func( 
+    function($x){return $x+1;}, 
+    3 );
+echo $i3, "\n";
+?>
+{% endhighlight %}
 
 
 <h5>
@@ -105,47 +111,51 @@ Ruby
 <p>Ruby 有相當靈活而強大的 closure 與 lambda 能力，與一致的表達語法。模仿本文的 Java 程式碼需要利用 <code>Kernel.proc</code> 實現。細項可參閱 <a href="{{ site.baseurl }}/archives/3547373.html">Ruby block and Proc</a> 。
 </p>
 
-<pre class="highlight"><code><span class="n">i1</span> <span class="o">=</span> <span class="nb">lambda</span><span class="p">{</span><span class="mi">3</span><span class="p">}.</span><span class="nf">call</span>
-<span class="nb">puts</span> <span class="n">i1</span>
 
-<span class="c1"># lambda equivalents to proc</span>
-<span class="n">i2</span> <span class="o">=</span> <span class="nb">proc</span><span class="p">{</span><span class="mi">3</span><span class="p">}.</span><span class="nf">call</span>
-<span class="nb">puts</span> <span class="n">i2</span>
+{% highlight ruby %}
+i1 = lambda{3}.call
+puts i1
 
-<span class="n">i3</span> <span class="o">=</span> <span class="nb">proc</span><span class="p">{</span><span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}.</span><span class="nf">call</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="nb">puts</span> <span class="n">i3</span>
-</code></pre>
+# lambda equivalents to proc
+i2 = proc{3}.call
+puts i2
+
+i3 = proc{|x| x + 1}.call(3)
+puts i3
+{% endhighlight %}
 
 
 <h5>
 C# 3.0
 </h5>
 
-<pre class="highlight"><code><span class="n">using</span> <span class="n">System</span><span class="p">;</span>
 
-<span class="n">public</span> <span class="n">class</span> <span class="n">Hello</span>
-<span class="p">{</span>
-    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">Main</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="n">Func</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">f1</span> <span class="o">=</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="mi">3</span><span class="p">;</span>
-        <span class="n">var</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">f1</span><span class="p">();</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i1</span><span class="p">);</span>
-        
-        <span class="c1">//Sorry, I don't know how to do like this.
-</span>        <span class="c1">//int i2 = (() =&gt; 3)();
-</span>        <span class="c1">//Thanks to laneser.
-</span>        <span class="n">var</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Func</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">();</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i2</span><span class="p">);</span>
+{% highlight c# %}
+using System;
 
-        <span class="n">Func</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">f3</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-        <span class="n">var</span> <span class="n">i3</span> <span class="o">=</span> <span class="n">f3</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
-        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i3</span><span class="p">);</span>
+public class Hello
+{
+    public static void Main()
+    {
+        Func<int> f1 = () => 3;
+        var i1 = f1();
+        Console.WriteLine(i1);
         
-        <span class="c1">// LINQ use case:
-</span>        <span class="c1">// var results = from(table).where(x =&gt; x &gt; 100).select();
-</span>    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+        //Sorry, I don't know how to do like this.
+        //int i2 = (() => 3)();
+        //Thanks to laneser.
+        var i2 = new Func<int>( () => 3) ();
+        Console.WriteLine(i2);
+
+        Func<int, int> f3 = (x) => x+1;
+        var i3 = f3(3);
+        Console.WriteLine(i3);
+        
+        // LINQ use case:
+        // var results = from(table).where(x => x > 100).select();
+    }
+}
+{% endhighlight %}
 
 <p>
 單獨使用時， C# 的 lambda 語法看來也很奇怪。但若放入 LINQ 敘述中就不同了。渾然天成，仿彿一體。MSDN 有關於 C# Lambda 語法的詳細說明，請參閱 <a href="http://msdn.microsoft.com/en-us/library/bb397687.aspx">Lambda Expressions (C# Programming Guide) @ MSDN</a> 。

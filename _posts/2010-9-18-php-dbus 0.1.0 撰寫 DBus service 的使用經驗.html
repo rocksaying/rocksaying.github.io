@@ -25,22 +25,23 @@ PHP 類別內的靜態方法將自動被視為 DBus 個體介面的方法。
 此服務將註冊三個 DBus 個體，並且各自定義了一個 DBus 介面。
 而這三個 DBus 介面都是由同一個 PHP 類別所註冊。
 </p>
-<pre class="highlight"><code>class DbusEchoInterface {
+
+{% highlight php %}
+class DbusEchoInterface {
     static function Echo() {
         return "hello";
     }
 }
 
-$bus-&gt;requestName('blog.rock');
+$bus->requestName('blog.rock');
 
 // DBus 個體 '/blog/rock/obj1' 定義了介面 'blog.rock.Echo'.
-$bus-&gt;registerObject('/blog/rock/obj1', 'blog.rock.Echo', 'DbusEchoInterface');
+$bus->registerObject('/blog/rock/obj1', 'blog.rock.Echo', 'DbusEchoInterface');
 // DBus 個體 '/blog/rock/obj2' 定義了介面 'blog.rock.Echo'.
-$bus-&gt;registerObject('/blog/rock/obj2', 'blog.rock.Echo', 'DbusEchoInterface');
+$bus->registerObject('/blog/rock/obj2', 'blog.rock.Echo', 'DbusEchoInterface');
 // DBus 個體 '/blog/rock/abc' 定義了介面 'blog.abc.Hello'.
-$bus-&gt;registerObject('/blog/rock/abc',  'blog.abc.Hello', 'DbusEchoInterface');
-
-</code></pre>
+$bus->registerObject('/blog/rock/abc',  'blog.abc.Hello', 'DbusEchoInterface');
+{% endhighlight %}
 
 
 <p>設計介面方法時，基本上和設計一般的 PHP 類別方法相同，在參數列指示傳入的參數名稱，透過 return 回傳值。
@@ -72,7 +73,9 @@ PHP 的陣列有兩種型式，一種是純數字索引的傳統陣列，另一�
 </h5>
 <p>如果你想直接回傳多個值，而不透過陣列，那麼你必須使用一個 <dfn>DbusSet</dfn> 個體包裹它們。此外，<dfn>DbusSet</dfn> 目前有 bug 。它不會複製要回傳值的內容，故被呼叫的方法結束後，放置在 <dfn>DbusSet</dfn> 內的回傳值，其內容所在的記憶體空間也被釋放了。以至於呼叫者要取得回傳值時，將取不到正確值，甚或是發生違法存取記憶體的錯誤。故而，你要放在 <dfn>DbusSet</dfn> 內的回傳值，必須是一個全域變數或是一個類別的靜態變數。如下所示:
 </p>
-<pre class="highlight"><code>    static $result_b;
+
+{% highlight php %}
+static $result_b;
     static function EchoTwo($a) {
         echo "Two";
         //BUG: (php-dbus 0.1.0) It does not copy value into set.
@@ -81,7 +84,7 @@ PHP 的陣列有兩種型式，一種是純數字索引的傳統陣列，另一�
         self::$result_b = 2; //put in a static variable.
         return new DBusSet($a, self::$result_b);
     }
-</code></pre>
+{% endhighlight %}
 
 
 <h4>
@@ -90,14 +93,16 @@ DBusSignal
 
 <p>DBus Signal 被 php-dbus 實作為一個獨立的類別 <dfn>DbusSignal</dfn>。要在某個 DBus 介面上實現一個 Signal 的方式是在你新增 <dfn>DbusSignal</dfn> 個體時，指定這個訊號要附加的介面名稱。另一方面，為了方便 DBus 個體可以主動發出訊號，最好是將你配置的 <dfn>DbusSignal</dfn> 個體指派給 DBus 類別的靜態成員。如此一來，你就可以透過該靜態成員，呼叫 DbusSignal 個體的 <dfn>send()</dfn> 方法送出訊號。如下所示。
 </p>
-<pre class="highlight"><code>// add signal 'Signal1' to interface 'blog.rock.Echo'
+
+{% highlight php %}
+// add signal 'Signal1' to interface 'blog.rock.Echo'
 // of object '/blog/rock/obj1'
 class DbusEchoInterface {
     static $signal1;
 
     static function emit() {
         // 在 DBus 個體內部透過成員主動發出訊號
-        self::$signal1-&gt;send();
+        self::$signal1->send();
     }
 }
 
@@ -111,9 +116,8 @@ DbusEchoInterface::$signal1 = new DbusSignal(
 );
 
 //送出訊號。
-DbusEchoInterface::$signal1-&gt;send();
-
-</code></pre>
+DbusEchoInterface::$signal1->send();
+{% endhighlight %}
 
 
 <h4>
@@ -127,53 +131,55 @@ Introspect
 <p>在本文中，我使用一個固定的 XML 文件描述本文實作的範例服務。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// interface and methods, see:
+
+{% highlight php %}
+<?php
+// interface and methods, see:
 //http://svn.php.net/viewvc/pecl/dbus/trunk/examples/request-name.php?view=markup
-</span>
-<span class="k">class</span> <span class="nc">DbusIntrospectableInterface</span> <span class="p">{</span>
-    <span class="k">static</span> <span class="nv">$introspect_xml</span> <span class="o">=&lt;&lt;&lt;</span><span class="nx">INTROSPECT_XML</span>
-<span class="o">&lt;!</span><span class="nx">DOCTYPE</span> <span class="nx">node</span> <span class="nx">PUBLIC</span> <span class="s2">"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"</span>
-<span class="s2">"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd"</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">node</span><span class="o">&gt;</span>
-  <span class="o">&lt;</span><span class="k">interface</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"org.freedesktop.DBus.Introspectable"</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">method</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"Introspect"</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"data"</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"out"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"s"</span><span class="o">/&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">method</span><span class="o">&gt;</span>
-  <span class="o">&lt;/</span><span class="k">interface</span><span class="o">&gt;</span>
-  <span class="o">&lt;</span><span class="k">interface</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"blog.rock"</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">method</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"EchoZero"</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"out"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"i"</span><span class="o">/&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">method</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">method</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"EchoOne"</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"name"</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"in"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"s"</span><span class="o">/&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"out"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"s"</span><span class="o">/&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">method</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">method</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"EchoTwo"</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"name"</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"in"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"s"</span><span class="o">/&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"out"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"s"</span><span class="o">/&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"out"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"i"</span><span class="o">/&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">method</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">method</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"EchoArray"</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">direction</span><span class="o">=</span><span class="s2">"out"</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"as"</span><span class="o">/&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">method</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">signal</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"Singal1"</span><span class="o">&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">signal</span><span class="o">&gt;</span>
-    <span class="o">&lt;</span><span class="nx">signal</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"Singal2"</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="nx">arg</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"s"</span><span class="o">/&gt;</span>
-    <span class="o">&lt;/</span><span class="nx">signal</span><span class="o">&gt;</span>
-  <span class="o">&lt;/</span><span class="k">interface</span><span class="o">&gt;</span>
-<span class="o">&lt;/</span><span class="nx">node</span><span class="o">&gt;</span>
-<span class="nx">INTROSPECT_XML</span><span class="p">;</span>
 
-    <span class="k">static</span> <span class="k">function</span> <span class="nf">Introspect</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">DbusIntrospectableInterface</span><span class="o">::</span><span class="nv">$introspect_xml</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+class DbusIntrospectableInterface {
+    static $introspect_xml =<<<INTROSPECT_XML
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg name="data" direction="out" type="s"/>
+    </method>
+  </interface>
+  <interface name="blog.rock">
+    <method name="EchoZero">
+      <arg direction="out" type="i"/>
+    </method>
+    <method name="EchoOne">
+      <arg name="name" direction="in" type="s"/>
+      <arg direction="out" type="s"/>
+    </method>
+    <method name="EchoTwo">
+      <arg name="name" direction="in" type="s"/>
+      <arg direction="out" type="s"/>
+      <arg direction="out" type="i"/>
+    </method>
+    <method name="EchoArray">
+      <arg direction="out" type="as"/>
+    </method>
+    <signal name="Singal1">
+    </signal>
+    <signal name="Singal2">
+      <arg type="s"/>
+    </signal>
+  </interface>
+</node>
+INTROSPECT_XML;
 
-<span class="c1">//echo DbusIntrospectableInterface::Introspect();
-</span><span class="cp">?&gt;</span>
-</code></pre>
+    static function Introspect() {
+        return DbusIntrospectableInterface::$introspect_xml;
+    }
+}
+
+//echo DbusIntrospectableInterface::Introspect();
+?>
+{% endhighlight %}
 
 
 <h4>
@@ -182,26 +188,28 @@ Introspect
 <p>
 我在 《<a href="{{ site.baseurl }}/archives/12193781.html">Write a PHP DBus client</a>》一文中，便已示範過如何撰寫 DBus 客戶端以及傾聽服務的訊號。請自行前往閱讀。在此僅提供一個傾聽本文示範服務之訊號的客戶端程式。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">//http://svn.php.net/viewvc/pecl/dbus/trunk/examples/signal-watch.php?view=markup
-</span><span class="nv">$bus</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span> <span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SESSION</span> <span class="p">);</span>
 
-<span class="nv">$bus</span><span class="o">-&gt;</span><span class="na">addWatch</span><span class="p">(</span> <span class="s1">'blog.rock'</span> <span class="p">);</span>
-<span class="k">while</span> <span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$s</span> <span class="o">=</span> <span class="nv">$bus</span><span class="o">-&gt;</span><span class="na">waitLoop</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$s</span><span class="p">)</span>
-        <span class="k">continue</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">matches</span><span class="p">(</span><span class="s1">'blog.rock'</span><span class="p">,</span> <span class="s1">'Signal1'</span><span class="p">))</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"get signal 1</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">matches</span><span class="p">(</span><span class="s1">'blog.rock'</span><span class="p">,</span> <span class="s1">'Signal2'</span><span class="p">))</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"get signal 2</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="nb">var_dump</span><span class="p">(</span><span class="nv">$s</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">());</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+//http://svn.php.net/viewvc/pecl/dbus/trunk/examples/signal-watch.php?view=markup
+$bus = new Dbus( Dbus::BUS_SESSION );
 
-<span class="cp">?&gt;</span>
-</code></pre>
+$bus->addWatch( 'blog.rock' );
+while (true) {
+    $s = $bus->waitLoop(1000);
+    if (!$s)
+        continue;
+    if ($s->matches('blog.rock', 'Signal1')) {
+        echo "get signal 1\n";
+    }
+    if ($s->matches('blog.rock', 'Signal2')) {
+        echo "get signal 2\n";
+        var_dump($s->getData());
+    }
+}
+
+?>
+{% endhighlight %}
 
 
 <h4>
@@ -211,95 +219,97 @@ Service sample
 <p>
 綜合以上所述，實作一個完整可用的 DBus 服務。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'my_introspectable.php'</span><span class="p">;</span>
 
-<span class="c1">// interface and methods, see:
+{% highlight php %}
+<?php
+require_once 'my_introspectable.php';
+
+// interface and methods, see:
 //http://svn.php.net/viewvc/pecl/dbus/trunk/examples/request-name.php?view=markup
-</span><span class="k">class</span> <span class="nc">DbusEchoInterface</span> <span class="p">{</span>
-    <span class="k">static</span> <span class="k">function</span> <span class="nf">EchoZero</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"Zero"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">static</span> <span class="k">function</span> <span class="nf">EchoOne</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"One"</span><span class="p">;</span>
-        <span class="k">return</span> <span class="s2">"Hello "</span> <span class="o">.</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="p">}</span>
+class DbusEchoInterface {
+    static function EchoZero() {
+        echo "Zero";
+        return 0;
+    }
+    static function EchoOne($name) {
+        echo "One";
+        return "Hello " . $name;
+    }
 
-    <span class="k">static</span> <span class="nv">$result_b</span><span class="p">;</span>
-    <span class="k">static</span> <span class="k">function</span> <span class="nf">EchoTwo</span><span class="p">(</span><span class="nv">$a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"Two"</span><span class="p">;</span>
-        <span class="c1">//BUG: (php-dbus 0.1.0) It does not copy value into set.
-</span>        <span class="c1">// If you put local variables in set, it would not return correct values.
-</span>        <span class="c1">//return new DbusSet($a, 2);
-</span>        <span class="nx">self</span><span class="o">::</span><span class="nv">$result_b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-        <span class="k">return</span> <span class="k">new</span> <span class="nx">DBusSet</span><span class="p">(</span><span class="nv">$a</span><span class="p">,</span> <span class="nx">self</span><span class="o">::</span><span class="nv">$result_b</span><span class="p">);</span>
-    <span class="p">}</span>
+    static $result_b;
+    static function EchoTwo($a) {
+        echo "Two";
+        //BUG: (php-dbus 0.1.0) It does not copy value into set.
+        // If you put local variables in set, it would not return correct values.
+        //return new DbusSet($a, 2);
+        self::$result_b = 2;
+        return new DBusSet($a, self::$result_b);
+    }
 
-    <span class="k">static</span> <span class="k">function</span> <span class="nf">EchoArray</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"Array"</span><span class="p">;</span>
-        <span class="c1">//notice: dbus array cound not contain elements of multiple type.
-</span>        <span class="k">return</span> <span class="k">array</span><span class="p">(</span><span class="s2">"array"</span><span class="p">,</span> <span class="s2">"echo"</span><span class="p">);</span>
-    <span class="p">}</span>
+    static function EchoArray() {
+        echo "Array";
+        //notice: dbus array cound not contain elements of multiple type.
+        return array("array", "echo");
+    }
 
-<span class="c1">// signals, see:
+// signals, see:
 //http://svn.php.net/viewvc/pecl/dbus/trunk/examples/signal-send.php?view=markup
-</span>    <span class="k">static</span> <span class="k">function</span> <span class="nf">TestSignal</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"emit signal"</span><span class="p">;</span>
-        <span class="nx">self</span><span class="o">::</span><span class="nv">$Signal1</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">();</span>
-        <span class="nx">self</span><span class="o">::</span><span class="nv">$Signal2</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">(</span><span class="s2">"signal2"</span><span class="p">);</span>
-    <span class="p">}</span>
+    static function TestSignal() {
+        echo "emit signal";
+        self::$Signal1->send();
+        self::$Signal2->send("signal2");
+    }
 
-    <span class="k">static</span> <span class="nv">$Signal1</span><span class="p">;</span>
-    <span class="k">static</span> <span class="nv">$Signal2</span><span class="p">;</span>
-<span class="p">}</span>
+    static $Signal1;
+    static $Signal2;
+}
 
-<span class="c1">// connect to SessionBus
-</span><span class="nv">$bus</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span> <span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SESSION</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+// connect to SessionBus
+$bus = new Dbus( Dbus::BUS_SESSION, true);
 
-<span class="nb">define</span><span class="p">(</span><span class="s1">'SERVICE_NAME'</span><span class="p">,</span> <span class="s1">'blog.rock'</span><span class="p">);</span>
-<span class="nb">define</span><span class="p">(</span><span class="s1">'OBJECT_PATH'</span><span class="p">,</span> <span class="s1">'/blog/rock'</span><span class="p">);</span>
-<span class="nb">define</span><span class="p">(</span><span class="s1">'MAIN_INTERFACE'</span><span class="p">,</span> <span class="s1">'blog.rock'</span><span class="p">);</span>
+define('SERVICE_NAME', 'blog.rock');
+define('OBJECT_PATH', '/blog/rock');
+define('MAIN_INTERFACE', 'blog.rock');
 
-<span class="nb">define</span><span class="p">(</span><span class="s1">'INTROSPECTABLE_INTERFACE'</span><span class="p">,</span> <span class="s1">'org.freedesktop.DBus.Introspectable'</span><span class="p">);</span>
+define('INTROSPECTABLE_INTERFACE', 'org.freedesktop.DBus.Introspectable');
 
-<span class="c1">// request service name.
-</span><span class="nv">$bus</span><span class="o">-&gt;</span><span class="na">requestName</span><span class="p">(</span><span class="nx">SERVICE_NAME</span><span class="p">);</span>
+// request service name.
+$bus->requestName(SERVICE_NAME);
 
-<span class="c1">// add signal
-</span><span class="nx">DbusEchoInterface</span><span class="o">::</span><span class="nv">$Signal1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DbusSignal</span><span class="p">(</span>
-    <span class="nv">$bus</span><span class="p">,</span>
-    <span class="nx">OBJECT_PATH</span><span class="p">,</span>
-    <span class="nx">MAIN_INTERFACE</span><span class="p">,</span>
-    <span class="s1">'Signal1'</span>
-<span class="p">);</span>
+// add signal
+DbusEchoInterface::$Signal1 = new DbusSignal(
+    $bus,
+    OBJECT_PATH,
+    MAIN_INTERFACE,
+    'Signal1'
+);
 
-<span class="nx">DbusEchoInterface</span><span class="o">::</span><span class="nv">$Signal2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DbusSignal</span><span class="p">(</span>
-    <span class="nv">$bus</span><span class="p">,</span>
-    <span class="nx">OBJECT_PATH</span><span class="p">,</span>
-    <span class="nx">MAIN_INTERFACE</span><span class="p">,</span>
-    <span class="s1">'Signal2'</span>
-<span class="p">);</span>
+DbusEchoInterface::$Signal2 = new DbusSignal(
+    $bus,
+    OBJECT_PATH,
+    MAIN_INTERFACE,
+    'Signal2'
+);
 
-<span class="c1">// register object path and interface.
-</span><span class="nv">$bus</span><span class="o">-&gt;</span><span class="na">registerObject</span><span class="p">(</span><span class="nx">OBJECT_PATH</span><span class="p">,</span> <span class="nx">MAIN_INTERFACE</span><span class="p">,</span> <span class="s1">'DbusEchoInterface'</span><span class="p">);</span>
+// register object path and interface.
+$bus->registerObject(OBJECT_PATH, MAIN_INTERFACE, 'DbusEchoInterface');
 
-<span class="nv">$bus</span><span class="o">-&gt;</span><span class="na">registerObject</span><span class="p">(</span><span class="nx">OBJECT_PATH</span><span class="p">,</span> <span class="nx">INTROSPECTABLE_INTERFACE</span><span class="p">,</span> <span class="s1">'DbusIntrospectableInterface'</span><span class="p">);</span>
+$bus->registerObject(OBJECT_PATH, INTROSPECTABLE_INTERFACE, 'DbusIntrospectableInterface');
 
-<span class="c1">// register another interface...
-//$bus-&gt;registerObject('/nl/test', 'nl.another.test', 'AnotherService');
-</span>
-<span class="k">while</span> <span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">try</span> <span class="p">{</span>
-        <span class="nv">$bus</span><span class="o">-&gt;</span><span class="na">waitLoop</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-        <span class="k">echo</span> <span class="s1">'.'</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="nv">$e</span><span class="o">-&gt;</span><span class="na">getMessage</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+// register another interface...
+//$bus->registerObject('/nl/test', 'nl.another.test', 'AnotherService');
+
+while (true) {
+    try {
+        $bus->waitLoop(1000);
+        echo '.';
+    }
+    catch (Exception $e) {
+        echo $e->getMessage();
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>
@@ -308,27 +318,27 @@ Service sample
 <p>
 開啟第一個終端機，執行 sample-service.php，放置play.
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 # 終端機1
 $ php sample-service.php
 ....Zero.....One..........Two...............Array...
-</pre>
+</code></pre>
 
 <p>
 開啟第二個終端機，執行 wait-signal.php, 放置play.
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 # 終端機2
 $ php wait-signal.php
 get signal 1
 get signal 2
 string(7) "signal2"
-</pre>
+</code></pre>
 
 <p>
 開啟第三個終端機，用 dbus-send 向 sample-service 要求服務，並觀察前兩個終端機輸出的訊息。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 # 終端機3
 $ dbus-send --session --print-reply --dest=blog.rock \
   /blog/rock org.freedesktop.DBus.Introspectable.Introspect
@@ -357,7 +367,7 @@ method return sender=:1.79 -> dest=:1.85 reply_serial=2
 $ dbus-send --session --print-reply --dest=blog.rock \
   /blog/rock blog.rock.TestSignal
 
-</pre>
+</code></pre>
 
 
 <h4>

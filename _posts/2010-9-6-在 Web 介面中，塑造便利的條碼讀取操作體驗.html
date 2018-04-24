@@ -81,63 +81,65 @@ OccultReader.js
 我用 JavaScript 實作了一個 OccultReader ，它實現了上述三點：掩蔽控制項、資料讀取以及保持輸入焦點。透過它便可以將 Web 頁面上的一個文字輸入框掩蔽起來；當條碼機讀取到資料後，會調用我們指定的處理函數。
 </p>
 
-<pre class="highlight"><code><span class="c1">// Copyright (c) 2010 rock 遊手好閒的石頭成
-</span>
-<span class="c1">// Licensed by GNU LGPL.
-</span>
-<span class="nx">OccultReader</span> <span class="o">=</span> <span class="k">new</span> <span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">control</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">onchange_handler</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
 
-    <span class="cm">/**
+{% highlight javascript %}
+// Copyright (c) 2010 rock 遊手好閒的石頭成
+
+// Licensed by GNU LGPL.
+
+OccultReader = new (function() {
+    var control = false;
+    var onchange_handler = false;
+
+    /**
      * id: id of element.
      * args:
      *  style
      *  onchange_handler = function(value)
-     */</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">setControl</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">control</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+     */
+    this.setControl = function(id, args) {
+        control = document.getElementById(id);
 
-        <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">&amp;&amp;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">onchange_handler</span><span class="p">)</span>
-            <span class="nx">onchange_handler</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">onchange_handler</span><span class="p">;</span>
+        if (args && args.onchange_handler)
+            onchange_handler = args.onchange_handler;
 
-        <span class="nx">control</span><span class="p">.</span><span class="nx">onchange</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span> <span class="nx">onchange_handler</span> <span class="p">)</span> <span class="p">{</span>
-                <span class="nx">onchange_handler</span><span class="p">(</span><span class="nx">control</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="k">else</span> <span class="p">{</span>
-                <span class="nx">alert</span><span class="p">(</span><span class="s2">"Input: "</span> <span class="o">+</span> <span class="nx">control</span><span class="p">.</span><span class="nx">value</span> <span class="o">+</span>
-                    <span class="s2">"\n using args.onchange_handler to set this handler."</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="nx">control</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span> <span class="c1">//reset data
-</span>
-        <span class="p">}</span>
+        control.onchange = function() {
+            if ( onchange_handler ) {
+                onchange_handler(control.value);
+            }
+            else {
+                alert("Input: " + control.value +
+                    "\n using args.onchange_handler to set this handler.");
+            }
+            control.value = ""; //reset data
 
-        <span class="c1">//keep focus.
-</span>
-        <span class="nx">control</span><span class="p">.</span><span class="nx">onblur</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-            <span class="nx">setTimeout</span><span class="p">(</span><span class="s2">"document.getElementById('"</span> <span class="o">+</span>
-                <span class="nx">control</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">"').focus();"</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
-        <span class="p">}</span>
+        }
 
-        <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">&amp;&amp;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">style</span> <span class="k">in</span> <span class="nx">args</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nx">control</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">style</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">style</span><span class="p">[</span><span class="nx">style</span><span class="p">];</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="kd">with</span> <span class="p">(</span><span class="nx">control</span><span class="p">.</span><span class="nx">style</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nx">color</span> <span class="o">=</span> <span class="nx">background</span> <span class="o">=</span> <span class="s2">"white"</span><span class="p">;</span>
-                <span class="nx">border</span> <span class="o">=</span> <span class="s2">"0"</span><span class="p">;</span>
-                <span class="nx">width</span> <span class="o">=</span> <span class="s2">"1px"</span><span class="p">;</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
+        //keep focus.
 
-        <span class="nx">control</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-        <span class="nx">control</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">});</span>
-</code></pre>
+        control.onblur = function() {
+            setTimeout("document.getElementById('" +
+                control.id + "').focus();", 100);
+        }
+
+        if (args && args.style) {
+            for (var style in args.style) {
+                control.style[style] = args.style[style];
+            }
+        }
+        else {
+            with (control.style) {
+                color = background = "white";
+                border = "0";
+                width = "1px";
+            }
+        }
+
+        control.value = "";
+        control.focus();
+    }
+});
+{% endhighlight %}
 
 
 <p>
@@ -155,63 +157,65 @@ isbn_report.php
 以下是我實作的 ISBN 查詢系統範例。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$isbn_list</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'9787101070743'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'春秋左傳注'</span><span class="p">,</span> <span class="s1">'楊伯峻'</span><span class="p">,</span> <span class="s1">'Jan 01, 2009'</span><span class="p">),</span>
-    <span class="s1">'9789570809909'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'讀易三種'</span><span class="p">,</span> <span class="s1">'屈萬里'</span><span class="p">,</span> <span class="s1">'Jun 01, 1983'</span><span class="p">)</span>
-<span class="p">);</span>
 
-<span class="nv">$isbn</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'isbn'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">'isbn'</span><span class="p">]</span> <span class="o">:</span> <span class="k">FALSE</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/^\w+$/'</span><span class="p">,</span> <span class="nv">$isbn</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="nv">$isbn</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
+{% highlight javascript %}
+<?php
+$isbn_list = array(
+    '9787101070743' => array('春秋左傳注', '楊伯峻', 'Jan 01, 2009'),
+    '9789570809909' => array('讀易三種', '屈萬里', 'Jun 01, 1983')
+);
 
-<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"OccultReader.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
-<span class="kd">function</span> <span class="nx">form_post</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"isbn"</span><span class="p">).</span><span class="nx">value</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"form1"</span><span class="p">).</span><span class="nx">submit</span><span class="p">();</span>
-<span class="p">}</span>
+$isbn = isset($_POST['isbn']) ? $_POST['isbn'] : FALSE;
+if (preg_match('/^\w+$/', $isbn) == 0)
+    $isbn = FALSE;
+?>
 
-<span class="kd">function</span> <span class="nx">body_loaded</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">OccultReader</span><span class="p">.</span><span class="nx">setControl</span><span class="p">(</span><span class="s2">"isbn_entry"</span><span class="p">,</span>
-        <span class="p">{</span> <span class="na">onchange_handler</span><span class="p">:</span> <span class="nx">form_post</span> <span class="p">}</span>
-        <span class="p">);</span>
-<span class="p">}</span>
-<span class="nt">&lt;/script&gt;</span>
+<script type="text/javascript" src="OccultReader.js"></script>
+<script type="text/javascript">
+function form_post(v) {
+    document.getElementById("isbn").value = v;
+    document.getElementById("form1").submit();
+}
 
-<span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">"Content-Type"</span> <span class="na">content=</span><span class="s">"text/html; charset=UTF-8"</span> <span class="nt">/&gt;</span>
+function body_loaded() {
+    OccultReader.setControl("isbn_entry",
+        { onchange_handler: form_post }
+        );
+}
+</script>
 
-<span class="nt">&lt;body</span> <span class="na">onload=</span><span class="s">"body_loaded();"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;h1&gt;</span>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<body onload="body_loaded();">
+<h1>
 書籍查詢 (ISBN Read and Report)
-<span class="nt">&lt;/h1&gt;</span>
+</h1>
 
-<span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="nv">$isbn</span><span class="p">)</span><span class="o">:</span> <span class="cp">?&gt;</span>
-    <span class="nt">&lt;h2&gt;</span>書籍條碼: <span class="cp">&lt;?=</span><span class="nv">$isbn</span><span class="cp">?&gt;</span><span class="nt">&lt;/h2&gt;</span>
+<?php if ($isbn): ?>
+    <h2>書籍條碼: <?=$isbn?></h2>
 
-    <span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">]))</span><span class="o">:</span> <span class="cp">?&gt;</span>
-        <span class="nt">&lt;p&gt;&lt;em&gt;</span>無此書籍資訊。<span class="nt">&lt;/em&gt;&lt;/p&gt;</span>
-    <span class="cp">&lt;?php</span> <span class="k">else</span><span class="o">:</span> <span class="cp">?&gt;</span>
-        <span class="nt">&lt;p&gt;</span>書名: <span class="cp">&lt;?=</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span><span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
-        <span class="nt">&lt;p&gt;</span>作者: <span class="cp">&lt;?=</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">][</span><span class="mi">1</span><span class="p">];</span><span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
-        <span class="nt">&lt;p&gt;</span>出版日期: <span class="cp">&lt;?=</span><span class="nv">$isbn_list</span><span class="p">[</span><span class="nv">$isbn</span><span class="p">][</span><span class="mi">2</span><span class="p">];</span><span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
-    <span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span>
+    <?php if (!isset($isbn_list[$isbn])): ?>
+        <p><em>無此書籍資訊。</em></p>
+    <?php else: ?>
+        <p>書名: <?=$isbn_list[$isbn][0];?></p>
+        <p>作者: <?=$isbn_list[$isbn][1];?></p>
+        <p>出版日期: <?=$isbn_list[$isbn][2];?></p>
+    <?php endif; ?>
 
-    <span class="nt">&lt;hr/&gt;</span>
-<span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span>
+    <hr/>
+<?php endif; ?>
 
-<span class="nt">&lt;p&gt;</span>
+<p>
 請將書籍背面的條碼放到條碼讀取區中。
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;p&gt;</span>等待中...<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"isbn_entry"</span> <span class="na">type=</span><span class="s">"text"</span> <span class="nt">/&gt;</span>
+</p>
+<p>等待中...</p>
+<input id="isbn_entry" type="text" />
 
-<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span> <span class="na">action=</span><span class="s">"isbn_report.php"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"isbn"</span> <span class="na">name=</span><span class="s">"isbn"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-</code></pre>
+<form id="form1" action="isbn_report.php" method="post">
+<input id="isbn" name="isbn" type="hidden" />
+</form>
+</body>
+{% endhighlight %}
 
 
 <p>

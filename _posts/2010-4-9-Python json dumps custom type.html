@@ -44,7 +44,9 @@ cls keyword argument
 容器係指 Python 內建型別中的 <dfn>list</dfn>, <dfn>tuple</dfn>, <dfn>dict</dfn> 。json.dumps() 有能力一一取出容器中的元素，並進一步轉換元素的內容。但若容器中具有自定型別的元素，則你至少要以 <dfn>default</dfn> 指定自定的序列化方法，否則它將擲出 <dfn>TypeError</dfn> 。
 </p>
 
-<pre class="highlight"><code># encoding: utf-8
+
+{% highlight python %}
+# encoding: utf-8
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -77,7 +79,7 @@ try:
     print json.dumps(d)
 except TypeError, err:
     print str(err)
-#TypeError: &lt;__main__.T1 object at 0x7fd6ffa7ee50&gt; is not JSON serializable
+#TypeError: <__main__.T1 object at 0x7fd6ffa7ee50> is not JSON serializable
 
 # 1. 使用自定的序列化函數
 def my_json_encode(o):
@@ -97,8 +99,7 @@ class my_json_encoder(json.JSONEncoder):
         return my_json_encode(o)
 
 print json.dumps(d, cls=my_json_encoder)
-
-</code></pre>
+{% endhighlight %}
 
 
 <h5>
@@ -111,7 +112,9 @@ print json.dumps(d, cls=my_json_encoder)
 下列範例利用 Python 的名稱空間能力，將自定型別與搭配的 JSONEncoder 編碼類別放在一起(sample2.py)。而使用者放在另一個源碼文件(sample3.py)。
 </p>
 
-<pre class="highlight"><code># encoding: utf-8
+
+{% highlight python %}
+# encoding: utf-8
 '''
 sample2.py
 '''
@@ -155,12 +158,13 @@ class JSONEncoder(json.JSONEncoder):
             'dict': o.dict,
             'tuple': o.tuple
         }
-        return result        
+        return result
+{% endhighlight %}
 
-</code></pre>
 
 
-<pre class="highlight"><code># encoding: utf-8
+{% highlight python %}
+# encoding: utf-8
 '''
 sample3.py
 '''
@@ -175,15 +179,14 @@ import sample2
 if __name__ == '__main__':
     d = sample2.C()
     #print json.dumps(d)
-    #TypeError: &lt;__main__.C object at 0x7f5c1db0ed50&gt; is not JSON serializable
+    #TypeError: <__main__.C object at 0x7f5c1db0ed50> is not JSON serializable
 
     # 1. by default
     print json.dumps(d, default=sample2.C.json_serialize)
     
     # 2. by cls; 利用名稱空間，區分不同模組的 JSONEncoder。
     print json.dumps(d, cls=sample2.JSONEncoder)
-
-</code></pre>
+{% endhighlight %}
 
 <p>
 由於 <var>d</var> 本身的資料型態就是 json.JSONEncoder 不認得的，所以它會直接把 <var>d</var> 傳給 C.json_serializer() 。附帶一提，在此你必須寫成 <code> default=C.json_serializer</code>，不能寫 <code>default=d.json_serializer</code>。

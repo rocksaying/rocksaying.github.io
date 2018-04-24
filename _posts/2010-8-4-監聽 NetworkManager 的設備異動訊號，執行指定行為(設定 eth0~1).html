@@ -25,115 +25,104 @@ eth0:1  inet addr:10.1.2.3
 考慮到系統的普及性，這個小程式 (eth0.1.up) 是用 Python 寫的。我個人認為，就語法易學度與軟體普及度來看，在 Linux 桌面環境上，python 足以取代 perl 做為撰寫 script 程式的首選了。在 Debian/Ubuntu 桌面環境上，執行這個小程式的相關套件，都是預設安裝項目。通常不必再額外安裝套件便可使用。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python
-</span>
-<span class="c">### BEGIN INIT INFO
-</span>
-<span class="c"># Provides: eth0.1.up
-</span>
-<span class="c"># Required-Start: network-manager
-</span>
-<span class="c"># Required-Stop:
-</span>
-<span class="c"># Default-Start:
-</span>
-<span class="c"># Default-Stop:
-</span>
-<span class="c"># Short-Description: Raise eth0:1 network interface.
-</span>
-<span class="c">### END INIT INFO
-</span>
+{% highlight python %}
+#!/usr/bin/python
+### BEGIN INIT INFO
+# Provides: eth0.1.up
+# Required-Start: network-manager
+# Required-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: Raise eth0:1 network interface.
+### END INIT INFO
+# usage:
+#  -foreground (or --foreground): run in foreground
 
-<span class="c"># usage:
-</span>
-<span class="c">#  -foreground (or --foreground): run in foreground
-</span>
+LAN_SETTINGS = {
+    'eth0': {
+        'address': "10.1.2.3",
+        'netmask': "255.255.255.0"
+    }
+}
 
-<span class="n">LAN_SETTINGS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s">'eth0'</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s">'address'</span><span class="p">:</span> <span class="s">"10.1.2.3"</span><span class="p">,</span>
-        <span class="s">'netmask'</span><span class="p">:</span> <span class="s">"255.255.255.0"</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+ETH_V1_UP="/sbin/ifconfig %s:1 inet %s netmask %s up"
 
-<span class="n">ETH_V1_UP</span><span class="o">=</span><span class="s">"/sbin/ifconfig </span><span class="si">%</span><span class="s">s:1 inet </span><span class="si">%</span><span class="s">s netmask </span><span class="si">%</span><span class="s">s up"</span>
+import os,sys
+import dbus, gobject
+from dbus.mainloop.glib import DBusGMainLoop
 
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">dbus</span><span class="o">,</span> <span class="nn">gobject</span>
-<span class="kn">from</span> <span class="nn">dbus.mainloop.glib</span> <span class="kn">import</span> <span class="n">DBusGMainLoop</span>
+if len(sys.argv) > 1 and sys.argv[1].endswith("-foreground"):
+    print "Foreground mode running..."
+else:
+    #run this program in background.
 
-<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">"-foreground"</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">"Foreground mode running..."</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="c">#run this program in background.
-</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fork</span><span class="p">()</span>
-    <span class="k">except</span> <span class="nb">OSError</span><span class="p">:</span>
-        <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">pid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    try:
+        pid = os.fork()
+    except OSError:
+        sys.exit(1)
+    if pid > 0:
+        sys.exit(0)
 
-<span class="n">NetworkManagerServiceName</span> <span class="o">=</span> <span class="s">"org.freedesktop.NetworkManager"</span>
-<span class="n">NetworkManagerObjectPath</span> <span class="o">=</span> <span class="s">"/org/freedesktop/NetworkManager"</span>
-<span class="n">NetworkManagerInterface</span> <span class="o">=</span> <span class="s">"org.freedesktop.NetworkManager"</span>
-<span class="n">NetworkManagerDeviceInterface</span> <span class="o">=</span> <span class="s">"org.freedesktop.NetworkManager.Device"</span>
-<span class="n">DBusPropertiesInterface</span><span class="o">=</span><span class="s">"org.freedesktop.DBus.Properties"</span>
+NetworkManagerServiceName = "org.freedesktop.NetworkManager"
+NetworkManagerObjectPath = "/org/freedesktop/NetworkManager"
+NetworkManagerInterface = "org.freedesktop.NetworkManager"
+NetworkManagerDeviceInterface = "org.freedesktop.NetworkManager.Device"
+DBusPropertiesInterface="org.freedesktop.DBus.Properties"
 
-<span class="n">NM_DEVICE_STATE_ACTIVATED</span><span class="o">=</span><span class="mi">8</span>
+NM_DEVICE_STATE_ACTIVATED=8
 
-<span class="k">class</span> <span class="nc">ActivatedHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_instance</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device_instance</span> <span class="o">=</span> <span class="n">device_instance</span>
-        <span class="n">props</span> <span class="o">=</span> <span class="n">device_instance</span><span class="o">.</span><span class="n">GetAll</span><span class="p">(</span><span class="n">NetworkManagerDeviceInterface</span><span class="p">,</span>
-            <span class="n">dbus_interface</span><span class="o">=</span><span class="n">DBusPropertiesInterface</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s">'Interface'</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device_instance</span><span class="o">.</span><span class="n">connect_to_signal</span><span class="p">(</span><span class="s">"StateChanged"</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">,</span>
-            <span class="n">dbus_interface</span><span class="o">=</span><span class="n">NetworkManagerDeviceInterface</span><span class="p">)</span>
+class ActivatedHandler(object):
+    def __init__(self, device_instance):
+        self.device_instance = device_instance
+        props = device_instance.GetAll(NetworkManagerDeviceInterface,
+            dbus_interface=DBusPropertiesInterface)
+        self.name = props['Interface']
+        self.device_instance.connect_to_signal("StateChanged",
+            self.handler,
+            dbus_interface=NetworkManagerDeviceInterface)
 
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">old_state</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">new_state</span> <span class="o">==</span> <span class="n">NM_DEVICE_STATE_ACTIVATED</span><span class="p">:</span>
-            <span class="c">#print "%s activated" % self.name
-</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">ETH_V1_UP</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s">'address'</span><span class="p">],</span>
-                <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="s">'netmask'</span><span class="p">]))</span>
+    def handler(self, new_state, old_state, reason):
+        if new_state == NM_DEVICE_STATE_ACTIVATED:
+            #print "%s activated" % self.name
 
-<span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
+            os.system(ETH_V1_UP % (self.name,
+                LAN_SETTINGS[self.name]['address'],
+                LAN_SETTINGS[self.name]['netmask']))
 
-<span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">nm_instance</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">NetworkManagerServiceName</span><span class="p">,</span> <span class="n">NetworkManagerObjectPath</span><span class="p">)</span>
-<span class="k">except</span> <span class="n">dbus</span><span class="o">.</span><span class="n">DBusException</span><span class="p">:</span>
-    <span class="k">print</span> <span class="s">"connect to NetworkManager error."</span>
-    <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+DBusGMainLoop(set_as_default=True)
+loop = gobject.MainLoop()
 
-<span class="n">handlers</span> <span class="o">=</span> <span class="p">{}</span>
+bus = dbus.SystemBus()
+try:
+    nm_instance = bus.get_object(NetworkManagerServiceName, NetworkManagerObjectPath)
+except dbus.DBusException:
+    print "connect to NetworkManager error."
+    sys.exit(1)
 
-<span class="n">devices</span> <span class="o">=</span> <span class="n">nm_instance</span><span class="o">.</span><span class="n">GetDevices</span><span class="p">(</span><span class="n">dbus_interface</span><span class="o">=</span><span class="n">NetworkManagerInterface</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">devices</span><span class="p">:</span>
-    <span class="n">device_instance</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">NetworkManagerServiceName</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="n">device_instance</span><span class="o">.</span><span class="n">GetAll</span><span class="p">(</span><span class="n">NetworkManagerDeviceInterface</span><span class="p">,</span>
-        <span class="n">dbus_interface</span><span class="o">=</span><span class="n">DBusPropertiesInterface</span><span class="p">)</span>
-    <span class="n">device_name</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s">'Interface'</span><span class="p">]</span> <span class="c"># eg. "eth0"
-</span>
-    <span class="k">if</span> <span class="n">device_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LAN_SETTINGS</span><span class="p">:</span>
-        <span class="k">continue</span>
-    <span class="k">if</span> <span class="n">props</span><span class="p">[</span><span class="s">'State'</span><span class="p">]</span> <span class="o">==</span> <span class="n">NM_DEVICE_STATE_ACTIVATED</span><span class="p">:</span>
-        <span class="c">#print "%s activated" % device_name
-</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">ETH_V1_UP</span> <span class="o">%</span> <span class="p">(</span><span class="n">device_name</span><span class="p">,</span>
-            <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="n">device_name</span><span class="p">][</span><span class="s">'address'</span><span class="p">],</span>
-            <span class="n">LAN_SETTINGS</span><span class="p">[</span><span class="n">device_name</span><span class="p">][</span><span class="s">'netmask'</span><span class="p">]))</span>
-    <span class="n">handlers</span><span class="p">[</span><span class="n">device_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ActivatedHandler</span><span class="p">(</span><span class="n">device_instance</span><span class="p">)</span>
+handlers = {}
 
-<span class="n">devices</span> <span class="o">=</span> <span class="bp">False</span>
-<span class="c">#print "Working..."
-</span>
-<span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-</code></pre>
+devices = nm_instance.GetDevices(dbus_interface=NetworkManagerInterface)
+for device in devices:
+    device_instance = bus.get_object(NetworkManagerServiceName, device)
+    props = device_instance.GetAll(NetworkManagerDeviceInterface,
+        dbus_interface=DBusPropertiesInterface)
+    device_name = props['Interface'] # eg. "eth0"
+
+    if device_name not in LAN_SETTINGS:
+        continue
+    if props['State'] == NM_DEVICE_STATE_ACTIVATED:
+        #print "%s activated" % device_name
+
+        os.system(ETH_V1_UP % (device_name,
+            LAN_SETTINGS[device_name]['address'],
+            LAN_SETTINGS[device_name]['netmask']))
+    handlers[device_name] = ActivatedHandler(device_instance)
+
+devices = False
+#print "Working..."
+
+loop.run()
+{% endhighlight %}
 
 <p>
 NetworkManager 的 D-Bus 服務，稱得上是目前 D-Bus 服務提供者的經典設計。它可以為每個連接設備實體化一個專責的 D-Bus 服務個體，因此我們首先需要透過主服務介面的 GetDevices() 方法查詢目前活動中的 D-Bus 服務個體的路徑(object path)。再透過此路徑，去接收 eth0 設備的狀態異動訊號(<dfn>StateChanged</dfn> signal)。每當狀態改變為 <dfn>NM_DEVICE_STATE_ACTIVATED</dfn> (設備已啟用)之後，便調用外部程式 ifconfig 設定 eth0:1 。
@@ -151,15 +140,15 @@ set in rc.local
 <p>
 最簡單的方式，就是手動編譯 /etc/rc.local ，把它的執行指令加到 /etc/rc.local 內。例如:
 </p>
-<pre class="highlight"><code><span class="c"># rc.local
-</span>
 
-<span class="c"># Enable eth0:1 virtual network interface.
-</span>
+{% highlight sh %}
+# rc.local
+
+# Enable eth0:1 virtual network interface.
 /etc/init.d/eth0.1.up
 
-<span class="nb">exit </span>0
-</code></pre>
+exit 0
+{% endhighlight %}
 
 
 <p>
@@ -172,7 +161,7 @@ set by update-rc.d
 <p>
 第二種作法，就是使用指令 update-rc.d ，將 eth0.1.up 加到 rc?.d 的啟動清單中。通常自定的指令稿都給予第99號啟動順序。如下例:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ sudo update-rc.d eth0.1.up defaults 99
  Adding system startup for /etc/init.d/eth0.1.up ...
    /etc/rc0.d/K99eth0.1.up -> ../init.d/eth0.1.up
@@ -182,7 +171,7 @@ $ sudo update-rc.d eth0.1.up defaults 99
    /etc/rc3.d/S99eth0.1.up -> ../init.d/eth0.1.up
    /etc/rc4.d/S99eth0.1.up -> ../init.d/eth0.1.up
    /etc/rc5.d/S99eth0.1.up -> ../init.d/eth0.1.up
-</pre>
+</code></pre>
 <p>
 注意，使用 update-rc.d 時，指令稿必須儲放於 /etc/init.d 目錄內 ，否則 update-rc.d 找不到。
 </p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13345505.html</div>

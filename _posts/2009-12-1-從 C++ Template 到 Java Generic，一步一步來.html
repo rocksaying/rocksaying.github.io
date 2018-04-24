@@ -22,77 +22,79 @@ Java 實作了泛型(generic)機制以實現 C++ 樣板(template) 的一部份�
 有 N, M, S 三個類別，這三個類別沒有繼承關係。但是在操作形式上卻有相當高的重複性，很多地方只是型別不同，程式結構完全一樣。幾乎是剪貼、複製後，再代換型別名稱就完工的情形。正是泛型派得上用場的情形。樣板類別 Cx 就是重複的程式碼內容。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
-</span><span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
 
-<span class="n">template</span><span class="o">&lt;</span><span class="n">class</span> <span class="n">DataType</span><span class="p">,</span> <span class="n">class</span> <span class="n">ReturnType</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">Cx</span> <span class="p">{</span>
-  <span class="n">private</span><span class="o">:</span>
-    <span class="n">DataType</span> <span class="n">data</span><span class="p">;</span>
+{% highlight c %}
+#include <iostream>
+using namespace std;
 
-  <span class="n">public</span><span class="o">:</span>
-    <span class="n">Cx</span><span class="p">(</span><span class="n">DataType</span><span class="o">&amp;</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span> <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span> <span class="p">}</span>
+template<class DataType, class ReturnType>
+class Cx {
+  private:
+    DataType data;
 
-    <span class="n">ReturnType</span> <span class="n">getData</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">value</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+  public:
+    Cx(DataType& v) { data = v; }
 
-<span class="n">class</span> <span class="n">N</span> <span class="p">{</span>
-  <span class="n">private</span><span class="o">:</span>
-    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+    ReturnType getData() {
+        return data.value();
+    }
+};
 
-  <span class="n">public</span><span class="o">:</span>
-    <span class="n">N</span><span class="p">()</span> <span class="p">{</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
-    <span class="n">N</span><span class="p">(</span><span class="kt">int</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span> <span class="n">n</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span> <span class="p">}</span>
+class N {
+  private:
+    int n;
 
-    <span class="kt">int</span> <span class="n">value</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">n</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+  public:
+    N() { n = 0; }
+    N(int v) { n = v; }
 
-<span class="n">class</span> <span class="n">M</span> <span class="p">{</span>
-  <span class="n">private</span><span class="o">:</span>
-    <span class="kt">int</span> <span class="n">m</span><span class="p">;</span>
+    int value() {
+        return -n;
+    }
+};
 
-  <span class="n">public</span><span class="o">:</span>
-    <span class="n">M</span><span class="p">()</span> <span class="p">{</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
-    <span class="n">M</span><span class="p">(</span><span class="kt">int</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span> <span class="n">m</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span> <span class="p">}</span>
+class M {
+  private:
+    int m;
 
-    <span class="kt">int</span> <span class="n">value</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">m</span> <span class="o">*</span> <span class="mi">10</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+  public:
+    M() { m = 0; }
+    M(int v) { m = v; }
 
-<span class="n">class</span> <span class="n">S</span> <span class="p">{</span>
-<span class="n">private</span><span class="o">:</span>
-    <span class="n">string</span> <span class="n">s</span><span class="p">;</span>
+    int value() {
+        return m * 10;
+    }
+};
 
-<span class="n">public</span><span class="o">:</span>
-    <span class="n">S</span><span class="p">()</span> <span class="p">{</span> <span class="n">s</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span> <span class="p">}</span>
-    <span class="n">S</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span> <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span> <span class="p">}</span>
+class S {
+private:
+    string s;
 
-    <span class="n">string</span> <span class="n">value</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+public:
+    S() { s = ""; }
+    S(const char* v) { s = v; }
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">N</span> <span class="n">n</span> <span class="o">=</span> <span class="n">N</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-    <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;*</span> <span class="n">cn</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">n</span> <span class="p">);</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">cn</span><span class="o">-&gt;</span><span class="n">getData</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    string value() {
+        return s;
+    }
+};
 
-    <span class="n">M</span> <span class="n">m</span> <span class="o">=</span> <span class="n">M</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-    <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;*</span> <span class="n">cm</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">m</span> <span class="p">);</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">cm</span><span class="o">-&gt;</span><span class="n">getData</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+int main() {
+    N n = N(1);
+    Cx<N, int>* cn = new Cx<N, int>( n );
+    cout << cn->getData() << endl;
 
-    <span class="n">S</span> <span class="n">s</span> <span class="o">=</span> <span class="n">S</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span>
-    <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;*</span> <span class="n">cs</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">s</span> <span class="p">);</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">cs</span><span class="o">-&gt;</span><span class="n">getData</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    M m = M(1);
+    Cx<M, int>* cm = new Cx<M, int>( m );
+    cout << cm->getData() << endl;
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    S s = S("hello");
+    Cx<S, string>* cs = new Cx<S, string>( s );
+    cout << cs->getData() << endl;
+
+    return 0;
+}
+{% endhighlight %}
 
 
 
@@ -103,95 +105,107 @@ Java 實作了泛型(generic)機制以實現 C++ 樣板(template) 的一部份�
 </p>
 
 <h6>Cx.java</h6>
-<pre class="highlight"><code><span class="c1">//revision: 1</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Cx</span><span class="o">&lt;</span><span class="n">DataType</span><span class="o">,</span> <span class="n">ReturnType</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">DataType</span> <span class="n">data</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">Cx</span><span class="o">(</span><span class="n">DataType</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
+{% highlight java %}
+//revision: 1
+public class Cx<DataType, ReturnType> {
+    private DataType data;
 
-    <span class="kd">public</span> <span class="n">ReturnType</span> <span class="n">getData</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="na">value</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public Cx(DataType v) {
+        data = v;
+    }
+
+    public ReturnType getData() {
+        return data.value();
+    }
+};
+{% endhighlight %}
 
 
 <h6>N.java</h6>
-<pre class="highlight"><code><span class="c1">//revision: 1</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">N</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">n</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">N</span><span class="o">()</span> <span class="o">{</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="o">}</span>
-    <span class="kd">public</span> <span class="n">N</span><span class="o">(</span><span class="kt">int</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span> <span class="n">n</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span> <span class="o">}</span>
+{% highlight java %}
+//revision: 1
+public class N {
+    private int n;
 
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">value</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">n</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public N() { n = 0; }
+    public N(int v) { n = v; }
+
+    public int value() {
+        return -n;
+    }
+};
+{% endhighlight %}
 
 
 <h6>M.java</h6>
-<pre class="highlight"><code><span class="c1">//revision: 1</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">M</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="kt">int</span> <span class="n">m</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">M</span><span class="o">()</span> <span class="o">{</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="o">}</span>
-    <span class="kd">public</span> <span class="n">M</span><span class="o">(</span><span class="kt">int</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span> <span class="n">m</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span> <span class="o">}</span>
+{% highlight java %}
+//revision: 1
+public class M {
+    private int m;
 
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">value</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">m</span> <span class="o">*</span> <span class="mi">10</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public M() { m = 0; }
+    public M(int v) { m = v; }
+
+    public int value() {
+        return m * 10;
+    }
+};
+{% endhighlight %}
 
 
 <h6>S.java</h6>
-<pre class="highlight"><code><span class="c1">//revision: 1</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">S</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">String</span> <span class="n">s</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">S</span><span class="o">()</span> <span class="o">{</span> <span class="n">s</span> <span class="o">=</span> <span class="s">""</span><span class="o">;</span> <span class="o">}</span>
-    <span class="kd">public</span> <span class="n">S</span><span class="o">(</span><span class="n">String</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span> <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span> <span class="o">}</span>
+{% highlight java %}
+//revision: 1
+public class S {
+    private String s;
 
-    <span class="kd">public</span> <span class="n">String</span> <span class="n">value</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">s</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public S() { s = ""; }
+    public S(String v) { s = v; }
+
+    public String value() {
+        return s;
+    }
+};
+{% endhighlight %}
 
 
 <h6>Main.java</h6>
-<pre class="highlight"><code><span class="c1">//revision: 1</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">N</span> <span class="n">n</span> <span class="o">=</span> <span class="k">new</span> <span class="n">N</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;(</span> <span class="n">n</span> <span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cn</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
 
-        <span class="n">M</span> <span class="n">m</span> <span class="o">=</span> <span class="k">new</span> <span class="n">M</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">cm</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;(</span> <span class="n">m</span> <span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cm</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
+{% highlight java %}
+//revision: 1
+public class Main {
+    public static void main(String[] args) {
+        N n = new N(1);
+        Cx<N, int> cn = new Cx<N, int>( n );
+        System.out.println( cn.getData() );
 
-        <span class="n">S</span> <span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">S</span><span class="o">(</span><span class="s">"hello"</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">cs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;(</span> <span class="n">s</span> <span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cs</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+        M m = new M(1);
+        Cx<M, int> cm = new Cx<M, int>( m );
+        System.out.println( cm.getData() );
+
+        S s = new S("hello");
+        Cx<S, String> cs = new Cx<S, String>( s );
+        System.out.println( cs.getData() );
+    }
+}
+{% endhighlight %}
 
 
 <p>
 類別 N, M, S 編譯都沒問題，但是編譯 Cx 時 javac 告訴我不知道 <code>data.value</code>這個符號是什麼？
 </p>
 
-<pre class="highlight"><code>    <span class="kd">public</span> <span class="n">ReturnType</span> <span class="nf">getData</span><span class="p">(</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="na">value</span><span class="o">();</span>
-        <span class="c1">//error:   ^  cannot find symbol</span>
-    <span class="o">}</span>
-</code></pre>
+
+{% highlight java %}
+public ReturnType getData() {
+        return data.value();
+        //error:   ^  cannot find symbol
+    }
+{% endhighlight %}
 
 
 <p>
@@ -201,47 +215,51 @@ Java 實作了泛型(generic)機制以實現 C++ 樣板(template) 的一部份�
 樣板基本上是把整個定義內容視為一個程式碼原型，編譯時再將參數中列出的類別符號，代換掉程式碼中的符號。我們可以把這個動作比擬為 script 對字串的竄寫動作。我用 PHP 來模擬示範。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">//Cx&lt;N, int&gt;* cn = new Cx&lt;N, int&gt;( n );
-</span><span class="nv">$DataType</span> <span class="o">=</span> <span class="s1">'N'</span><span class="p">;</span>
-<span class="nv">$ReturnType</span> <span class="o">=</span> <span class="s1">'int'</span><span class="p">;</span>
 
-<span class="c1">//template&lt;class DataType, class ReturnType&gt;
-</span><span class="nv">$template_DataType_ReturnType</span> <span class="o">=&lt;&lt;&lt;</span><span class="nx">CX</span>
-<span class="k">class</span> <span class="nc">Cx__</span><span class="err">$</span><span class="p">{</span><span class="nx">DataType</span><span class="p">}</span><span class="nx">__</span><span class="err">$</span><span class="p">{</span><span class="nx">ReturnType</span><span class="p">}</span> <span class="p">{</span> <span class="c1">//模擬 template 產生的新類別簽名
-</span>  <span class="k">private</span><span class="o">:</span>
-    <span class="err">$</span><span class="p">{</span><span class="nx">DataType</span><span class="p">}</span> <span class="nx">data</span><span class="p">;</span>
+{% highlight c %}
+<?php
+//Cx<N, int>* cn = new Cx<N, int>( n );
+$DataType = 'N';
+$ReturnType = 'int';
 
-  <span class="k">public</span><span class="o">:</span>
-    <span class="nx">Cx</span><span class="p">(</span><span class="err">$</span><span class="p">{</span><span class="nx">DataType</span><span class="p">}</span><span class="o">&amp;</span> <span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span> <span class="p">}</span>
+//template<class DataType, class ReturnType>
+$template_DataType_ReturnType =<<<CX
+class Cx__${DataType}__${ReturnType} { //模擬 template 產生的新類別簽名
+  private:
+    ${DataType} data;
 
-    <span class="err">$</span><span class="p">{</span><span class="nx">ReturnType</span><span class="p">}</span> <span class="nx">getData</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">data</span><span class="o">.</span><span class="nx">value</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-<span class="nx">CX</span><span class="p">;</span>
+  public:
+    Cx(${DataType}& v) { data = v; }
 
-<span class="k">echo</span> <span class="nv">$template_DataType_ReturnType</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    ${ReturnType} getData() {
+        return data.value();
+    }
+};
+CX;
+
+echo $template_DataType_ReturnType
+?>
+{% endhighlight %}
 
 
 <p>
 輸出結果是一個新的類別的程式碼。
 </p>
 
-<pre class="highlight"><code><span class="n">class</span> <span class="n">Cx__N__int</span> <span class="p">{</span> <span class="c1">//模擬 template 產生的新類別簽名
-</span>  <span class="nl">private:</span>
-    <span class="n">N</span> <span class="n">data</span><span class="p">;</span>
 
-  <span class="n">public</span><span class="o">:</span>
-    <span class="n">Cx</span><span class="p">(</span><span class="n">N</span><span class="o">&amp;</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span> <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span> <span class="p">}</span>
+{% highlight c %}
+class Cx__N__int { //模擬 template 產生的新類別簽名
+  private:
+    N data;
 
-    <span class="kt">int</span> <span class="n">getData</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">value</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</code></pre>
+  public:
+    Cx(N& v) { data = v; }
+
+    int getData() {
+        return data.value();
+    }
+};
+{% endhighlight %}
 
 
 <p>
@@ -269,30 +287,34 @@ C++ 編譯器(或者是前置處理器)先將樣板內容進行如上所模擬�
 我再加一個介面 <code>IDataType</code> 作為 <code>DataType</code> 的泛型吧。
 </p>
 
-<pre class="highlight"><code><span class="c1">//revision: 2</span>
-<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">IDataType</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">value</span><span class="o">();</span>
-<span class="o">}</span>
-</code></pre>
+
+{% highlight java %}
+//revision: 2
+public interface IDataType {
+    public int value();
+}
+{% endhighlight %}
 
 <br/>
 
-<pre class="highlight"><code><span class="c1">//revision: 2</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Cx</span><span class="o">&lt;</span><span class="n">DataType</span> <span class="kd">extends</span> <span class="n">IDataType</span><span class="o">,</span> <span class="n">ReturnType</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">DataType</span> <span class="n">data</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">Cx</span><span class="o">(</span><span class="n">DataType</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
+{% highlight java %}
+//revision: 2
+public class Cx<DataType extends IDataType, ReturnType> {
+    private DataType data;
 
-    <span class="kd">public</span> <span class="n">ReturnType</span> <span class="n">getData</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="na">value</span><span class="o">();</span>
-        <span class="c1">//error: incompatible types</span>
-        <span class="c1">//found   : int</span>
-        <span class="c1">//required: ReturnType</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public Cx(DataType v) {
+        data = v;
+    }
+
+    public ReturnType getData() {
+        return data.value();
+        //error: incompatible types
+        //found   : int
+        //required: ReturnType
+    }
+};
+{% endhighlight %}
 
 
 
@@ -307,56 +329,62 @@ C++ 編譯器(或者是前置處理器)先將樣板內容進行如上所模擬�
 接著修改 Cx，把 Cx 泛型定義中的 <code>ReturnType</code> 再傳給 <code>IDataType&lt;?&gt;</code> 。
 </p>
 
-<pre class="highlight"><code><span class="c1">// revision: 3</span>
-<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">IDataType</span><span class="o">&lt;</span><span class="n">ReturnType</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="n">ReturnType</span> <span class="n">value</span><span class="o">();</span>
-<span class="o">}</span>
-</code></pre>
+
+{% highlight java %}
+// revision: 3
+public interface IDataType<ReturnType> {
+    public ReturnType value();
+}
+{% endhighlight %}
 
 <br/>
 
-<pre class="highlight"><code><span class="c1">// revision: 3</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Cx</span><span class="o">&lt;</span><span class="n">DataType</span> <span class="kd">extends</span> <span class="n">IDataType</span><span class="o">&lt;</span><span class="n">ReturnType</span><span class="o">&gt;,</span> <span class="n">ReturnType</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">DataType</span> <span class="n">data</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">Cx</span><span class="o">(</span><span class="n">DataType</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
+{% highlight java %}
+// revision: 3
+public class Cx<DataType extends IDataType<ReturnType>, ReturnType> {
+    private DataType data;
 
-    <span class="kd">public</span> <span class="n">ReturnType</span> <span class="n">getData</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="na">value</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public Cx(DataType v) {
+        data = v;
+    }
+
+    public ReturnType getData() {
+        return data.value();
+    }
+};
+{% endhighlight %}
 
 
 <p>
 Ok, 這次 javac 沒再抱怨了，泛型的主要內容沒錯。接下來編譯 Main。
 </p>
 
-<pre class="highlight"><code><span class="c1">//revision: 1</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">N</span> <span class="n">n</span> <span class="o">=</span> <span class="k">new</span> <span class="n">N</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;(</span> <span class="n">n</span> <span class="o">);</span>
-        <span class="c1">//    ^  unexpected type</span>
-        <span class="c1">//found   : int</span>
-        <span class="c1">//required: reference</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cn</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
 
-        <span class="n">M</span> <span class="n">m</span> <span class="o">=</span> <span class="k">new</span> <span class="n">M</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">cm</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="o">,</span> <span class="kt">int</span><span class="o">&gt;(</span> <span class="n">m</span> <span class="o">);</span>
-        <span class="c1">//    ^  unexpected type</span>
-        <span class="c1">//found   : int</span>
-        <span class="c1">//required: reference</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cm</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
+{% highlight java %}
+//revision: 1
+public class Main {
+    public static void main(String[] args) {
+        N n = new N(1);
+        Cx<N, int> cn = new Cx<N, int>( n );
+        //    ^  unexpected type
+        //found   : int
+        //required: reference
+        System.out.println( cn.getData() );
 
-        <span class="n">S</span> <span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">S</span><span class="o">(</span><span class="s">"hello"</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">cs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;(</span> <span class="n">s</span> <span class="o">);</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cs</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+        M m = new M(1);
+        Cx<M, int> cm = new Cx<M, int>( m );
+        //    ^  unexpected type
+        //found   : int
+        //required: reference
+        System.out.println( cm.getData() );
+
+        S s = new S("hello");
+        Cx<S, String> cs = new Cx<S, String>( s );
+        System.out.println( cs.getData() );
+    }
+}
+{% endhighlight %}
 
 <p>
 不接受 int 類別作為參數，但是接受 String 類別作為參數。
@@ -368,26 +396,28 @@ Ok, 這次 javac 沒再抱怨了，泛型的主要內容沒錯。接下來編譯
 所以原始型態的 int 要改成參考型態的 Integer 。
 </p>
 
-<pre class="highlight"><code><span class="c1">//revision: 4</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">N</span> <span class="n">n</span> <span class="o">=</span> <span class="k">new</span> <span class="n">N</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">N</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;(</span> <span class="n">n</span> <span class="o">);</span>
-        <span class="c1">// ^  type parameter N is not within its bound</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cn</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
 
-        <span class="n">M</span> <span class="n">m</span> <span class="o">=</span> <span class="k">new</span> <span class="n">M</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">cm</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">M</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;(</span> <span class="n">m</span> <span class="o">);</span>
-        <span class="c1">// ^  type parameter M is not within its bound</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cm</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
+{% highlight java %}
+//revision: 4
+public class Main {
+    public static void main(String[] args) {
+        N n = new N(1);
+        Cx<N, Integer> cn = new Cx<N, Integer>( n );
+        // ^  type parameter N is not within its bound
+        System.out.println( cn.getData() );
 
-        <span class="n">S</span> <span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">S</span><span class="o">(</span><span class="s">"hello"</span><span class="o">);</span>
-        <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">cs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cx</span><span class="o">&lt;</span><span class="n">S</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;(</span> <span class="n">s</span> <span class="o">);</span>
-        <span class="c1">// ^  type parameter S is not within its bound</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span> <span class="n">cs</span><span class="o">.</span><span class="na">getData</span><span class="o">()</span> <span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+        M m = new M(1);
+        Cx<M, Integer> cm = new Cx<M, Integer>( m );
+        // ^  type parameter M is not within its bound
+        System.out.println( cm.getData() );
+
+        S s = new S("hello");
+        Cx<S, String> cs = new Cx<S, String>( s );
+        // ^  type parameter S is not within its bound
+        System.out.println( cs.getData() );
+    }
+}
+{% endhighlight %}
 
 
 <p>
@@ -404,48 +434,54 @@ Ok, 這次 javac 沒再抱怨了，泛型的主要內容沒錯。接下來編譯
 原本這三個類別之間沒有關係，但改寫至此， Java 強迫我們拉上關係，讓這三個類別實現了同一個介面。此非我所願，幸好在這個範例中的影嚮不大。得過且過吧。
 </p>
 
-<pre class="highlight"><code><span class="c1">//revision: 5</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">N</span> <span class="kd">implements</span> <span class="n">IDataType</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">Integer</span> <span class="n">n</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">N</span><span class="o">()</span> <span class="o">{</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="o">}</span>
-    <span class="kd">public</span> <span class="n">N</span><span class="o">(</span><span class="n">Integer</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span> <span class="n">n</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span> <span class="o">}</span>
+{% highlight java %}
+//revision: 5
+public class N implements IDataType<Integer> {
+    private Integer n;
 
-    <span class="kd">public</span> <span class="n">Integer</span> <span class="n">value</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">n</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public N() { n = 0; }
+    public N(Integer v) { n = v; }
 
-<br/>
-
-<pre class="highlight"><code><span class="c1">//revision: 5</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">M</span> <span class="kd">implements</span> <span class="n">IDataType</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">Integer</span> <span class="n">m</span><span class="o">;</span>
-
-    <span class="kd">public</span> <span class="n">M</span><span class="o">()</span> <span class="o">{</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="o">}</span>
-    <span class="kd">public</span> <span class="n">M</span><span class="o">(</span><span class="n">Integer</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span> <span class="n">m</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span> <span class="o">}</span>
-
-    <span class="kd">public</span> <span class="n">Integer</span> <span class="n">value</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">m</span> <span class="o">*</span> <span class="mi">10</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public Integer value() {
+        return -n;
+    }
+};
+{% endhighlight %}
 
 <br/>
 
-<pre class="highlight"><code><span class="c1">//revision: 5</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">S</span> <span class="kd">implements</span> <span class="n">IDataType</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">String</span> <span class="n">s</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">S</span><span class="o">()</span> <span class="o">{</span> <span class="n">s</span> <span class="o">=</span> <span class="s">""</span><span class="o">;</span> <span class="o">}</span>
-    <span class="kd">public</span> <span class="n">S</span><span class="o">(</span><span class="n">String</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span> <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span> <span class="o">}</span>
+{% highlight java %}
+//revision: 5
+public class M implements IDataType<Integer> {
+    private Integer m;
 
-    <span class="kd">public</span> <span class="n">String</span> <span class="n">value</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">s</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public M() { m = 0; }
+    public M(Integer v) { m = v; }
+
+    public Integer value() {
+        return m * 10;
+    }
+};
+{% endhighlight %}
+
+<br/>
+
+
+{% highlight java %}
+//revision: 5
+public class S implements IDataType<String> {
+    private String s;
+
+    public S() { s = ""; }
+    public S(String v) { s = v; }
+
+    public String value() {
+        return s;
+    }
+};
+{% endhighlight %}
 
 
 <pre class="language-text">
@@ -465,22 +501,24 @@ hello
 Java 的泛型語法不改要程序員先跳過火圈才能吃到香蕉的本色，我<em>只跳了兩個圈圈</em>就重構完成這個很單純的範例程式。
 不過現實可沒那麼輕鬆，至少在我日前負責的案子中，有幾處地方我就放棄用泛型去重構它們，那簡直是自討苦吃。舉個例子來說，我想在 Cx 泛型中增加一個無參數的預設建構子，如下列:
 </p>
-<pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Cx</span><span class="o">&lt;</span><span class="n">DataType</span> <span class="kd">extends</span> <span class="n">IDataType</span><span class="o">&lt;</span><span class="n">ReturnType</span><span class="o">&gt;,</span> <span class="n">ReturnType</span><span class="o">&gt;</span> <span class="o">{</span>
-    <span class="kd">private</span> <span class="n">DataType</span> <span class="n">data</span><span class="o">;</span>
 
-    <span class="kd">public</span> <span class="n">Cx</span><span class="o">()</span> <span class="o">{</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataType</span><span class="o">();</span>
-    <span class="o">}</span>
+{% highlight java %}
+public class Cx<DataType extends IDataType<ReturnType>, ReturnType> {
+    private DataType data;
 
-    <span class="kd">public</span> <span class="n">Cx</span><span class="o">(</span><span class="n">DataType</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
+    public Cx() {
+        data = new DataType();
+    }
 
-    <span class="kd">public</span> <span class="n">ReturnType</span> <span class="n">getData</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="na">value</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">};</span>
-</code></pre>
+    public Cx(DataType v) {
+        data = v;
+    }
+
+    public ReturnType getData() {
+        return data.value();
+    }
+};
+{% endhighlight %}
 
 <p>
 我增加了第4~6行的預設建構子，看起來非常簡單、非常合理、不應該受到任何刁難的需求，但是 javac 高舉手中的法杖發出刺目紅光對我大喊: <q>Unexcepted type!</q>。我就是不可以直接 new 一個參數化型別的實例。但是 C++ 樣板可以這麼做，一點都不廢話。

@@ -62,23 +62,27 @@ ECMAScript Language Specification, page 4
 <h5>
 1.配置一個名稱叫 <dfn>F</dfn> 的建構者。
 </h5>
-<pre class="highlight"><code>    <span class="kd">function</span> <span class="nx">F</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">//增加成員並賦予初值</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//公開成員 a</span>
-        <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>  <span class="c1">//私有成員 b</span>
-    <span class="p">}</span>
-</code></pre>
+
+{% highlight javascript %}
+function F() {
+        //增加成員並賦予初值
+        this.a = null; //公開成員 a
+        var b = null;  //私有成員 b
+    }
+{% endhighlight %}
 
 
 <h5>
 2.配置一個新函數，指派給變量 <dfn>F</dfn>。
 </h5>
-<pre class="highlight"><code>    <span class="nx">F</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="c1">//增加成員並賦予初值</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//公開成員 a</span>
-        <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>  <span class="c1">//私有成員 b</span>
-    <span class="p">};</span>
-</code></pre>
+
+{% highlight javascript %}
+F = new Function() {
+        //增加成員並賦予初值
+        this.a = null; //公開成員 a
+        var b = null;  //私有成員 b
+    };
+{% endhighlight %}
 
 
 <p>
@@ -165,24 +169,26 @@ ECMAScript Language Specification, page 37
 例如針對 <var>content</var> 屬性，就定義一個叫 <code>content(value)</code> 的存取函數(<span class="note">在本文中是中介編程自動定義</span>)。
 其運作內容如下:
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">NewData</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">props</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="na">content</span><span class="p">:</span> <span class="s1">''</span>
-    <span class="p">}</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">content</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">value</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>     <span class="c1">//未傳遞參數,視為 getter</span>
-            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">content</span><span class="p">;</span>
-        <span class="k">else</span>                        <span class="c1">//有參數,視為 setter</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">content</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight javascript %}
+function NewData() {
+    this.props = {
+        content: ''
+    }
 
-<span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">NewData</span><span class="p">;</span>
-<span class="nx">n</span><span class="p">.</span><span class="nx">content</span><span class="p">(</span><span class="s2">"abc"</span><span class="p">);</span> <span class="c1">// setter</span>
-<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">content</span><span class="p">();</span> <span class="c1">// getter</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
-</code></pre>
+    this.content = function(value) {
+        if (value == undefined)     //未傳遞參數,視為 getter
+            return this.props.content;
+        else                        //有參數,視為 setter
+            this.props.content = value;
+    }
+}
+
+var n = new NewData;
+n.content("abc"); // setter
+var s = n.content(); // getter
+print(s);
+{% endhighlight %}
 
 <p>
 本文透過中介編程自動產生了指定屬性的預設存取器函數，故而在源碼中看不到如上例般明顯示存取函數定義。
@@ -193,122 +199,124 @@ ECMAScript Language Specification, page 37
 data.js, 本文範例用源碼
 <a name="source"></a>
 </h4>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight javascript %}
+/*
 function Class() {
 }
-*/</span>
-<span class="nx">Class</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">;</span>
+*/
+Class = new Function;
 
-<span class="cm">/**
+/**
  * 上面先配置一個空的建構者，名叫 Class 。
  * 底下才是 Class 這個建構者所定義的可繼承方法。
- */</span>
+ */
 
-<span class="cm">/**
+/**
  * 第一個中介編程技巧。
  * 透過函數個體與匿名函數，我自定了一個 foreach 語法。
  * 不過我沒有把這個 foreach 能力塞到最基底的 Object 類別中，所以 foreach 只作用於
  * Class 的衍生類別中。
- */</span>
-<span class="nx">Class</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">foreach</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">f</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+ */
+Class.prototype.foreach = function(f) {
+    for (var p in this.props) {
+        f(p, this.props[p]);
+    }
+}
 
-<span class="cm">/**
+/**
  * 第二個中介編程技巧。
  * 我自定的 accessor 語法是如下，接受一個 hash table 指示要套用預設存取器的屬性
  * 清單。
  * 例如: accessor( {name1:1, name2:'abc'} )
  *
  * @prarm props 要使用預設存取器的屬性列表(hash table).
- */</span>
-<span class="nx">Class</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">accessor</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">sourceText</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nx">p</span> <span class="k">in</span> <span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">sourceText</span> <span class="o">=</span> <span class="s2">"  \
+ */
+Class.prototype.accessor = function(props) {
+    var p, sourceText;
+    for (p in props) {
+        sourceText = "  \
             if (v == undefined) \
                 return this.props.{XXX}; \
             else    \
                 this.props.{XXX} = v;   \
-            "</span><span class="p">;</span>
+            ";
 
-        <span class="k">this</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s2">"v"</span><span class="p">,</span> <span class="nx">sourceText</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/{XXX}/g</span><span class="p">,</span> <span class="nx">p</span><span class="p">));</span>
-        <span class="c1">// Script解譯器會自動將上面的源碼解釋為:</span>
-        <span class="c1">//  this[p] = function(v) {</span>
-        <span class="c1">//      if (v == undefined)</span>
-        <span class="c1">//          return this.props.?</span>
-        <span class="c1">//      else</span>
-        <span class="c1">//          this.props.? = v;</span>
-        <span class="c1">//  }</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+        this[p] = new Function("v", sourceText.replace(/{XXX}/g, p));
+        // Script解譯器會自動將上面的源碼解釋為:
+        //  this[p] = function(v) {
+        //      if (v == undefined)
+        //          return this.props.?
+        //      else
+        //          this.props.? = v;
+        //  }
+    }
+}
 
-<span class="kd">function</span> <span class="nx">Data</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
+function Data(args) {
+    if (args == undefined)
+        return;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">props</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="na">id</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-        <span class="na">title</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-        <span class="na">content</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-        <span class="na">timestamp</span><span class="p">:</span> <span class="kc">true</span>
-    <span class="p">}</span>
+    this.props = {
+        id: true,
+        title: true,
+        content: true,
+        timestamp: true
+    }
 
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">])</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="nx">Data</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">;</span>
-<span class="c1">//定義 Data 的原型是 Class 。亦即定義 Data 為 Class 的衍生類</span>
-
-
-<span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">({</span>
-    <span class="na">id</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="na">title</span><span class="p">:</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="na">content</span><span class="p">:</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="na">timestamp</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">()</span>
-<span class="p">});</span>
+    for (var p in args) {
+        if (this.props[p])
+            this.props[p] = args[p];
+    }
+}
+Data.prototype = new Class;
+//定義 Data 的原型是 Class 。亦即定義 Data 為 Class 的衍生類
 
 
-<span class="c1">// 得益於中介編程，在此使用自定的 foreach 語法:</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Properties of Data"</span><span class="p">);</span>
-<span class="nx">d</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">value</span><span class="p">){</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">" : "</span> <span class="o">+</span> <span class="nx">value</span> <span class="p">);</span>
-<span class="p">});</span>
+var d = new Data({
+    id: 1,
+    title: 'rock',
+    content: 'hello world',
+    timestamp: (new Date()).toLocaleString()
+});
 
 
-<span class="kd">function</span> <span class="nx">DataDao</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">args</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
-
-    <span class="nx">Data</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">args</span><span class="p">);</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">table</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">table</span><span class="p">;</span>
-
-    <span class="k">this</span><span class="p">.</span><span class="nx">accessor</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">DataDao</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Data</span><span class="p">;</span>
+// 得益於中介編程，在此使用自定的 foreach 語法:
+print("Properties of Data");
+d.foreach( function(name, value){
+    print( name + " : " + value );
+});
 
 
-<span class="kd">var</span> <span class="nx">d2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DataDao</span><span class="p">({</span>
-    <span class="s1">'id'</span><span class="p">:</span>  <span class="mi">1</span><span class="p">,</span>
-    <span class="s1">'title'</span><span class="p">:</span> <span class="s1">'rock'</span><span class="p">,</span>
-    <span class="s1">'content'</span><span class="p">:</span> <span class="s1">'hello world'</span><span class="p">,</span>
-    <span class="s1">'timestamp'</span><span class="p">:</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">()).</span><span class="nx">toLocaleString</span><span class="p">(),</span>
-    <span class="s1">'table'</span><span class="p">:</span> <span class="s1">'Data'</span>
-<span class="p">});</span>
+function DataDao(args) {
+    if (args == undefined)
+        return;
 
-<span class="nx">print</span><span class="p">(</span><span class="s2">"\n---- Accessor demo ----"</span><span class="p">);</span>
-<span class="nx">d2</span><span class="p">.</span><span class="nx">content</span><span class="p">(</span><span class="s1">'hello javascript'</span><span class="p">);</span> <span class="c1">// setter</span>
-<span class="nx">print</span><span class="p">(</span> <span class="nx">d2</span><span class="p">.</span><span class="nx">content</span><span class="p">()</span> <span class="p">);</span> <span class="c1">//getter</span>
+    Data.call(this, args);
+    this.props.table = args.table;
 
-<span class="nx">print</span><span class="p">(</span><span class="s2">"\nProperties of DataDao"</span><span class="p">);</span>
-<span class="nx">d2</span><span class="p">.</span><span class="nx">foreach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="nx">name</span> <span class="o">+</span> <span class="s2">" : "</span> <span class="o">+</span> <span class="nx">value</span> <span class="p">);</span>
-<span class="p">});</span>
-</code></pre>
+    this.accessor(this.props);
+}
+DataDao.prototype = new Data;
+
+
+var d2 = new DataDao({
+    'id':  1,
+    'title': 'rock',
+    'content': 'hello world',
+    'timestamp': (new Date()).toLocaleString(),
+    'table': 'Data'
+});
+
+print("\n---- Accessor demo ----");
+d2.content('hello javascript'); // setter
+print( d2.content() ); //getter
+
+print("\nProperties of DataDao");
+d2.foreach( function(name, value) {
+    print( name + " : " + value );
+});
+{% endhighlight %}
 
 
 <p class="note">
