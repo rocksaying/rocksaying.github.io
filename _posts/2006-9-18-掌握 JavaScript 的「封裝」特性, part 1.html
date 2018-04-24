@@ -31,64 +31,66 @@ ECMAScript 的「封裝」概觀
 <h4>
 Sample code
 </h4>
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">body</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="cm">/*
+
+{% highlight javascript %}
+<html>
+<body>
+<script type="text/javascript">
+/*
 See also: ECMA-262 chapter.13 Function Definition.
-*/</span>
-<span class="kd">function</span> <span class="nx">A</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">y</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+*/
+function A() {
+    var x = 1;
+    var y = 1;
+    this.z = 1;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">setX</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">x</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
-    <span class="p">}</span>
+    this.setX = function(v) {
+        x = v;
+    }
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">getX</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">x</span><span class="p">;</span>
-    <span class="p">}</span>
+    this.getX = function() {
+        return x;
+    }
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">setZ</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
-    <span class="p">}</span>
+    this.setZ = function(v) {
+        this.z = v;
+    }
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">getZ</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">z</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    this.getZ = function() {
+        return this.z;
+    }
+}
 
-<span class="nx">A</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">setY</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">y</span> <span class="o">=</span> <span class="s1">'y of global variable is '</span> <span class="o">+</span> <span class="nx">v</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="s1">'y of property is '</span> <span class="o">+</span> <span class="nx">v</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">A</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getY</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="s1">';'</span> <span class="o">+</span> <span class="nx">y</span><span class="p">;</span>
-<span class="p">}</span>
+A.prototype.setY = function(v) {
+    y = 'y of global variable is ' + v;
+    this.y = 'y of property is ' + v;
+}
+A.prototype.getY = function() {
+    return this.y + ';' + y;
+}
 
-<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">();</span>
-<span class="kd">var</span> <span class="nx">a2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">A</span><span class="p">();</span>
+var a = new A();
+var a2 = new A();
 
-<span class="nx">a</span><span class="p">.</span><span class="nx">setX</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
-<span class="nx">a</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"private member 'x' of 'a' (variable 'x' in object 'a') = "</span> <span class="o">+</span> <span class="nx">a</span><span class="p">.</span><span class="nx">getX</span><span class="p">());</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"public member 'x' of 'a' (property 'x' of object 'a') = "</span> <span class="o">+</span> <span class="nx">a</span><span class="p">.</span><span class="nx">x</span><span class="p">);</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"private member 'x' of 'a2' = "</span> <span class="o">+</span> <span class="nx">a2</span><span class="p">.</span><span class="nx">getX</span><span class="p">());</span>
+a.setX(2);
+a.x = 3;
+window.alert("private member 'x' of 'a' (variable 'x' in object 'a') = " + a.getX());
+window.alert("public member 'x' of 'a' (property 'x' of object 'a') = " + a.x);
+window.alert("private member 'x' of 'a2' = " + a2.getX());
 
-<span class="nx">a</span><span class="p">.</span><span class="nx">setZ</span><span class="p">(</span><span class="s1">'C2'</span><span class="p">);</span>
-<span class="nx">a</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="s1">'C3'</span><span class="p">;</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s2">"property 'z' of object 'a' = "</span> <span class="o">+</span> <span class="nx">a</span><span class="p">.</span><span class="nx">getZ</span><span class="p">());</span>
+a.setZ('C2');
+a.z = 'C3';
+window.alert("property 'z' of object 'a' = " + a.getZ());
 
-<span class="nx">a</span><span class="p">.</span><span class="nx">setY</span><span class="p">(</span><span class="s1">'5'</span><span class="p">);</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">getY</span><span class="p">());</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">y</span><span class="p">);</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+a.setY('5');
+window.alert(a.getY());
+window.alert(y);
+window.alert(a.y);
 
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/body&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/html&gt;</span><span class="err">
-</span></code></pre>
+</script>
+</body>
+</html>
+{% endhighlight %}
 
 <p>
 在第 7-27 行中，是 A function object 的定義，其 scope 就是第 7-27 行的區域。第 8-9 中定義了兩個區域變數 x,y ，第 10 行是 A 的 z property 。第 12-14 行定義了一個 function object 並將之指派為 A 的 setX property, 也就是 setX method ，其他皆同。而第 29-35 行，則是在 A 的 scope 外定義兩個 function objects - setY,getY - ，並透過 A 的 prototype property ，將 setY/getY 指派為 A 的 method 。透過 prototype property 所指派的成員，是被參考同一條 prototype chain (<span class="note">ECMA-262 section 4.2.1 "Objects"</span>) 的個體所共享，也就是會被繼承。而直接指派的成員，則是該個體獨有的。

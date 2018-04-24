@@ -2,10 +2,9 @@
 title: Load and Execute JavaScript on Demand, by createElement
 category: programming
 old-category: JavaScript
-tags: []
+tags: [ajax, javascript]
 permalink: /archives/2741057.html
 ---
-<div name="tags" class="tags">Tags: ajax javascript</div>
 <p>
 在《<a href="{{ site.baseurl }}/archives/2716520.html">Load and Execute JavaScript on Demand</a>》一文中，我說明了利用 <code>XMLHttpRequest</code> 動態載入外部 JavaScript 程式的技巧。然而那技巧是用於應付某些特殊情境之手段，其限制與特點如下列所示：
 </p>
@@ -35,31 +34,35 @@ External JavaScript Files</a>)。
 
 <fieldset>
 <legend>test_v1.js</legend>
-<pre class="highlight"><code><span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'This external JavaScript file is loaded!'</span><span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+window.alert('This external JavaScript file is loaded!');
+{% endhighlight %}
 
 </fieldset>
 
 <p>
 下列示範 <code>document.createElement('script')</code> 載入外部 JavaScript 程式的基本型式，並嘗試以《<a href="{{ site.baseurl }}/archives/2530004.html">Rendering images with title and box</a>》所採取的方法掌握外部程式載入狀況。
 </p>
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">dynamicLoadJs1</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">js</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
-    <span class="nx">js</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'text/javascript'</span><span class="p">;</span>
-    <span class="nx">js</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'test_v1.js'</span><span class="p">;</span>
-    <span class="nx">js</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// not work in IE
-</span>
-        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Loaded'</span><span class="p">)</span>
-        <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'js.complete is '</span> <span class="o">+</span> <span class="nx">js</span><span class="p">.</span><span class="nx">complete</span><span class="p">);</span>
-    <span class="p">};</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'head'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">js</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onload'</span><span class="p">,</span> <span class="nx">dynamicLoadJs1</span><span class="p">);</span>
-<span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="nx">dynamicLoadJs1</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span></code></pre>
+{% highlight javascript %}
+<script type="text/javascript">
+function dynamicLoadJs1() {
+    var js = document.createElement('script');
+    js.type = 'text/javascript';
+    js.src = 'test_v1.js';
+    js.onload = function() { // not work in IE
+
+        window.alert('Loaded')
+        window.alert('js.complete is ' + js.complete);
+    };
+    document.getElementsByTagName('head')[0].appendChild(js);
+}
+
+if (window.attachEvent) window.attachEvent('onload', dynamicLoadJs1);
+else window.addEventListener('load', dynamicLoadJs1, false);
+</script>
+{% endhighlight %}
 
 
 <p>
@@ -70,44 +73,48 @@ External JavaScript Files</a>)。
 根據上述發現的問題進行修正。首先，我在主控端定義一個狀態值 <var>loadingScripts</var> 表示要載入的外部程式數目，並以 <code>setInterval</code> 設定輪詢動作。藉由查詢 <var>loadingScripts</var> 之值或一個應該由外部程式定義之項目是否已定義這兩種狀態之變化掌握載入狀況。修正後的動態載入型式如下列。
 </p>
 
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">dynamicLoadJs2</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nb">window</span><span class="p">.</span><span class="nx">loadingScript</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">js</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
-    <span class="nx">js</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'text/javascript'</span><span class="p">;</span>
-    <span class="nx">js</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s1">'test_v2.js'</span><span class="p">;</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'head'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">js</span><span class="p">);</span>
 
-    <span class="kd">var</span> <span class="nx">interval</span> <span class="o">=</span> <span class="nx">setInterval</span><span class="p">(</span>
-        <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">((</span><span class="nb">window</span><span class="p">.</span><span class="nx">loadingScript</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
-                <span class="p">(</span><span class="nx">externalData</span><span class="p">))</span>
-            <span class="p">{</span>
-                <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">interval</span><span class="p">);</span>
-                <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'Loaded and external = '</span> <span class="o">+</span> <span class="nx">externalData</span><span class="p">);</span>
-            <span class="p">}</span>
-        <span class="p">},</span>
-        <span class="mi">100</span> <span class="cm">/* poll per 0.1 second*/</span>
-    <span class="p">);</span>
-<span class="p">}</span>
-<span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onload'</span><span class="p">,</span> <span class="nx">dynamicLoadJs2</span><span class="p">);</span>
-<span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="nx">dynamicLoadJs2</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span></code></pre>
+{% highlight javascript %}
+<script type="text/javascript">
+function dynamicLoadJs2() {
+    window.loadingScript = 1;
+    var js = document.createElement('script');
+    js.type = 'text/javascript';
+    js.src = 'test_v2.js';
+    document.getElementsByTagName('head')[0].appendChild(js);
+
+    var interval = setInterval(
+        function() {
+            if ((window.loadingScript == 0) ||
+                (externalData))
+            {
+                clearInterval(interval);
+                window.alert('Loaded and external = ' + externalData);
+            }
+        },
+        100 /* poll per 0.1 second*/
+    );
+}
+if (window.attachEvent) window.attachEvent('onload', dynamicLoadJs2);
+else window.addEventListener('load', dynamicLoadJs2, false);
+</script>
+{% endhighlight %}
 
 <p>
 外部程式則要在其最後一行將 <var>loadingScripts</var> 之值減一。
 </p>
 <fieldset>
 <legend>test_v2.js</legend>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">externalFunc</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="kd">var</span> <span class="nx">externalData</span> <span class="o">=</span> <span class="s1">'Abc'</span><span class="p">;</span>
+{% highlight javascript %}
+function externalFunc() {
+    window.alert('hello');
+}
 
-<span class="nb">window</span><span class="p">.</span><span class="nx">loadingScripts</span><span class="o">--</span><span class="p">;</span>
-</code></pre>
+var externalData = 'Abc';
+
+window.loadingScripts--;
+{% endhighlight %}
 
 </fieldset>
 

@@ -5,7 +5,6 @@ old-category: JavaScript
 tags: [javascript]
 permalink: /archives/2718420.html
 ---
-<div class="tags" style="display:none">javascript</div>
 <p>
 匿名遞迴函數在 JavaScript 中之實踐途徑。所謂遞迴函數即函數在其內部調用自己的函數，為了能夠自我調用，我們通常會為函數命名以便以名稱調用之。然而在某些語言中，其語言特性足以實踐匿名函數之遞迴。
 </p>
@@ -17,49 +16,53 @@ permalink: /archives/2718420.html
 <p>
 首先，我取《為部落格加上「加入xx分享書籤」的按鈕》中一段遞迴函數程式碼作為本文範例。
 </p>
-<pre class="highlight"><code>    <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">((</span><span class="kd">function</span> <span class="nx">getInnerText</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">)</span> <span class="k">return</span> <span class="s1">''</span><span class="p">;</span>
-      <span class="kd">var</span> <span class="nx">t</span><span class="o">=</span><span class="p">[];</span>
-      <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span> <span class="nx">n</span><span class="p">;</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeType</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">);</span>
-        <span class="k">else</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">getInnerText</span><span class="p">(</span><span class="nx">n</span><span class="p">));</span>
-      <span class="p">}</span>
-      <span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-    <span class="p">})((</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-      <span class="kd">var</span> <span class="nx">ds</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'div'</span><span class="p">);</span>
-      <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">className</span> <span class="o">==</span> <span class="s1">'main'</span><span class="p">)</span>
-          <span class="k">return</span> <span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-      <span class="p">}</span>
-    <span class="p">})()).</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4000</span><span class="o">-</span><span class="nx">u</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span><span class="p">));</span>
-</code></pre>
+
+{% highlight javascript %}
+var d = encodeURIComponent((function getInnerText(node) {
+      if (!node) return '';
+      var t=[];
+      for (var n = node.firstChild; n; n = n.nextSibling) {
+        if (n.nodeType == 3) t.push(n.nodeValue);
+        else t.push(getInnerText(n));
+      }
+      return t.join('');
+    })((function() {
+      var ds = document.getElementsByTagName('div');
+      for (var i = 0; i < ds.length; ++i) {
+        if (ds[i].className == 'main')
+          return ds[i];
+      }
+    })()).substring(0, 4000-u.length-t.length));
+{% endhighlight %}
 
 <p>
 該程式碼係以遞迴函數取出網頁中指定節點的所有 <code>TextNode</code> 的字串內容。為便於說明，先移除不需要的動作，並拆開成結構分明的敘述形式。
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">getElementsByClassName</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ds</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">className</span> <span class="o">==</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="kd">var</span> <span class="nx">divMain</span> <span class="o">=</span> <span class="nx">getElementsByClassName</span><span class="p">(</span><span class="s1">'div'</span><span class="p">,</span> <span class="s1">'main'</span><span class="p">);</span>
+{% highlight javascript %}
+function getElementsByClassName(tagName, className) {
+    var ds = document.getElementsByTagName(tagName, className);
+    for (var i = 0; i < ds.length; ++i) {
+        if (ds[i].className == className) {
+            return ds[i];
+        }
+    }
+}
 
-<span class="kd">function</span> <span class="nx">getInnerText</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">)</span> <span class="k">return</span> <span class="s1">''</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">t</span><span class="o">=</span><span class="p">[];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span> <span class="nx">n</span><span class="p">;</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeType</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">);</span>
-        <span class="k">else</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">getInnerText</span><span class="p">(</span><span class="nx">n</span><span class="p">));</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-<span class="p">}</span>
+var divMain = getElementsByClassName('div', 'main');
 
-<span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nx">getInnerText</span><span class="p">(</span><span class="nx">divMain</span><span class="p">);</span>
-</code></pre>
+function getInnerText(node) {
+    if (!node) return '';
+    var t=[];
+    for (var n = node.firstChild; n; n = n.nextSibling) {
+        if (n.nodeType == 3) t.push(n.nodeValue);
+        else t.push(getInnerText(n));
+    }
+    return t.join('');
+}
+
+var d = getInnerText(divMain);
+{% endhighlight %}
 
 <p>
 在 JavaScript 中，函數也是一個 object ，以關鍵字 <code>function</code> 就可定義一個 Function object 及其內容。關鍵字 <code>function</code> 之後的符號則是此函數的名稱。如果沒有指定名稱，那麼這個函數就是一個匿名函數 (anonymous function) 。匿名函數的使用時機通常用於：一、做為一個引數傳給另一個函數，而另一個函數就藉參數名稱調用該匿名函數；二、被指派給 object 的屬性，使該屬性成為一個函數成員 (function member, method) (<cite>See also: <a href="{{ site.baseurl }}/archives/2165837.html">掌握 JavaScript 的「封裝」特性</a></cite>)。到此為止是 Function object 及匿名函數的知識基礎。
@@ -71,15 +74,17 @@ JavaScript 定義函數之語法有一個隱而不顯的意義。所謂「定義
 <p>
 此外，本例中此函數只被調用這麼一次，故一併改寫成匿名函數。展示匿名函數的第三種使用時機：以程式區塊的形式包括住一段程式碼及區域變數，實踐局部性之資料隔離。
 </p>
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">divMain</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">ds</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="nx">tagName</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">className</span> <span class="o">==</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">})(</span><span class="s1">'div'</span><span class="p">,</span> <span class="s1">'main'</span><span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+var divMain = (function(tagName, className) {
+    var ds = document.getElementsByTagName(tagName);
+    for (var i = 0; i < ds.length; ++i) {
+        if (ds[i].className == className) {
+            return ds[i];
+        }
+    }
+})('div', 'main');
+{% endhighlight %}
 
 <p>
 到此為止，我們應該可以掌握到匿名函數及 <code>operator( )</code> 的使用方式。最後我們要解決的問題是匿名函數如何在其內部調用自己以實踐遞迴動作。
@@ -87,40 +92,44 @@ JavaScript 定義函數之語法有一個隱而不顯的意義。所謂「定義
 <p>
 直覺上，我們想到是否可以用 <var>this</var> 調用自己？答案是不行。依 ECMAScript/JavaScript 之規範指出，當 Function object 不是作為一個函數成員被調用時 (包含 <code>new</code> ) ，<var>this</var> 將指涉 <var>Global object</var> 而不是函數自身。在其他場合中，我們唯有透過 <code>Function.call()/Function.apply()</code> 調用函數，才能改變 <var>this</var> 之指涉對象 (See also: <cite><a href="{{ site.baseurl }}/archives/2532303.html">Function.prototype.call() and Function.prototype.apply()</a></cite>)。底下先示範一個簡單的範式。
 </p>
-<pre class="highlight"><code><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">();</span>
-<span class="p">}).</span><span class="nx">call</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">alert</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-<span class="p">});</span>
-</code></pre>
+
+{% highlight javascript %}
+(function() {
+    this();
+}).call(function() {
+    alert(this);
+});
+{% endhighlight %}
 
 <p>
 本文至此已經展示了實踐匿名遞迴函數的三個知識基礎。上列範式中定義了兩個匿名函數，第一個匿名函數在定義時同時調用其 <code>call()</code> 行為；第二個匿名函數則做為一個引數傳給第一個匿名函數的 <code>call()</code> 行為。此時第一個匿名函數中的 <var>this</var> 就是指涉第二個匿名函數了。只需再把 <var>this</var> 作為 <code>this.call()/this.apply()</code> 的引數，就能實踐遞迴動作。下列即最終實作結果。
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span>
-<span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">[</span><span class="nx">node</span><span class="p">]);</span>
-<span class="p">}).</span><span class="nx">apply</span><span class="p">(</span>
-    <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">)</span> <span class="k">return</span> <span class="s1">''</span><span class="p">;</span>
-        <span class="kd">var</span> <span class="nx">t</span><span class="o">=</span><span class="p">[];</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span> <span class="nx">n</span><span class="p">;</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeType</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">);</span>
-            <span class="k">else</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">[</span><span class="nx">n</span><span class="p">]));</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="p">[(</span><span class="kd">function</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">ds</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">);</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">className</span> <span class="o">==</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-                <span class="k">return</span> <span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">})(</span><span class="s1">'div'</span><span class="p">,</span> <span class="s1">'main'</span><span class="p">)]</span>
-<span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+var d =
+(function(node) {
+    return this.apply(this, [node]);
+}).apply(
+    function(node) {
+        if (!node) return '';
+        var t=[];
+        for (var n = node.firstChild; n; n = n.nextSibling) {
+            if (n.nodeType == 3) t.push(n.nodeValue);
+            else t.push(this.apply(this, [n]));
+        }
+        return t.join('');
+    },
+    [(function(tagName, className) {
+        var ds = document.getElementsByTagName(tagName, className);
+        for (var i = 0; i < ds.length; ++i) {
+            if (ds[i].className == className) {
+                return ds[i];
+            }
+        }
+    })('div', 'main')]
+);
+{% endhighlight %}
 
 <p>
 容我提醒，這是一個詭技，是我對 ECMAScript/JavaScript 之語言特性所做的自我挑戰，實務上並不建議使用此一詭技。

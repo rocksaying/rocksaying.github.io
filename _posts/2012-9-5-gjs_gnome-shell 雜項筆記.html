@@ -25,11 +25,13 @@ gjs 相關的內容實在太散亂了。
 <p>命令列參數可由全域變數 <var>ARGV</var> 取得。
 </p>
 
-<pre class="highlight"><code><span class="nx">print</span><span class="p">(</span><span class="s2">"Length of arguments: "</span> <span class="o">+</span> <span class="nx">ARGV</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ARGV</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="nx">ARGV</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight javascript %}
+print("Length of arguments: " + ARGV.length);
+for (var i = 0; i < ARGV.length; ++i) {
+    print(ARGV[i]);
+}
+{% endhighlight %}
 
 
 <h4>指定 GIRepository 資源版本</h4>
@@ -40,10 +42,12 @@ gjs 相關的內容實在太散亂了。
 可用 <code>imports.gi.versions.??? = "version number";</code> 指定。
 </p>
 
-<pre class="highlight"><code><span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">versions</span><span class="p">.</span><span class="nx">Gtk</span> <span class="o">=</span> <span class="s1">'2.0'</span><span class="p">;</span> <span class="c1">// specify GIRepository of GTK to version 2.0.</span>
 
-<span class="nx">print</span><span class="p">(</span><span class="s2">"It will load GTK version "</span> <span class="o">+</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">versions</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">);</span>
-</code></pre>
+{% highlight javascript %}
+imports.gi.versions.Gtk = '2.0'; // specify GIRepository of GTK to version 2.0.
+
+print("It will load GTK version " + imports.gi.versions.Gtk);
+{% endhighlight %}
 
 
 <h4>執行外部程式</h4>
@@ -60,18 +64,20 @@ gjs 相關的內容實在太散亂了。
     </li>
 </ul>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">command</span><span class="p">(</span><span class="nx">cmd</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">.</span><span class="nx">spawn_command_line_sync</span><span class="p">(</span><span class="nx">cmd</span><span class="p">);</span>
-    <span class="c1">//print(results);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="k">return</span> <span class="nx">results</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">command</span><span class="p">(</span><span class="s1">'uname -a'</span><span class="p">);</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Exit status: "</span> <span class="o">+</span> <span class="nx">results</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Output content: "</span> <span class="o">+</span> <span class="nx">results</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-</code></pre>
+{% highlight javascript %}
+function command(cmd) {
+    var results = imports.gi.GLib.spawn_command_line_sync(cmd);
+    //print(results);
+    if (!results[0])
+        return false;
+    return results;
+}
+
+var results = command('uname -a');
+print("Exit status: " + results[3]);
+print("Output content: " + results[1]);
+{% endhighlight %}
 
 
 <hr/>

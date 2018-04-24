@@ -5,7 +5,6 @@ old-category: JavaScript
 tags: [javascript,繼承]
 permalink: /archives/2087071.html
 ---
-<div class="tags" style="display:none">javascript 繼承</div>
 <p>
 當衍生類別 (derived class) 繼承了基底類別 (base class) 的成員時，常常忘了要初始 (配置) 那些成員，亦即呼叫基底類別的建構函數。這是 OOP 初學者，也是 JavaScript programmer 在實作繼承關係時易犯的毛病。
 </p>
@@ -14,31 +13,33 @@ permalink: /archives/2087071.html
 <p>
 在「<a href="http://www.ithome.com.tw/plog/index.php?op=ViewArticle&articleId=1219&blogId=257">物件properties在繼承時出問題？？？</a>」一文中，該作者反應的問題，其實是 OOP 初學者易犯的毛病。觀看該作者的 source code ，不難看出問題出在何處，用 C++ 的說法來解釋，就是作者在實作衍生類別時，忘了初始 (配置) 繼承自基底類別的成員。 JavaScript 並沒有類別繼承的概念，反而它是用一個已存在的 object 生成 (new) 一個新的 object ，個體成員是以類似 C++ 中的 copy constructor 方式建立的。因此，一個衍生個體 (derived object) 中屬於 Object Type (<span class="note"> See also: Standard ECMA-262 3rd Edition ch.8.6</span>) 的成員，必定與基底個體 (base object) 參考同一份實體。如果衍生個體要擁有私有內容，則必須另行配置，亦即呼叫基底個體的建構函數。然而 JavaScript 本身並沒有提供一個便利的內建方法可用，需要自己寫。幸好這並不難。一個簡單有效的方法是，在建構子中，先配置一個暫時性的基底個體，然後將此暫時性個體的成員內容，一一指派給自己 (this) 的成員。因此，改寫「<a href="http://www.ithome.com.tw/plog/index.php?op=ViewArticle&articleId=1219&blogId=257">物件properties在繼承時出問題？？？</a>」一文中的程式碼如下，即為該作者所要求的結果。
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">mother</span> <span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">fname</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">mother</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">setfname</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">str</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">fname</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">str</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="kd">function</span> <span class="nx">son</span> <span class="p">(</span><span class="nx">title</span><span class="p">)</span> <span class="p">{</span>
-<span class="k">this</span><span class="p">.</span><span class="nx">title</span> <span class="o">=</span> <span class="nx">title</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">m</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">mother</span><span class="p">;</span><span class="c1">//配置一個暫時性的基底個體</span>
-    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">m</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">this</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">m</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight javascript %}
+function mother () {
+    this.fname = new Array;
+}
+mother.prototype.setfname = function (str) {
+    this.fname.push(str);
+}
 
-<span class="kd">var</span> <span class="nx">son1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">son</span><span class="p">(</span><span class="s2">"workbee"</span><span class="p">);</span>
-<span class="nx">son1</span><span class="p">.</span><span class="nx">setfname</span><span class="p">(</span><span class="s2">"test"</span><span class="p">);</span>
+function son (title) {
+this.title = title;
+var m = new mother;//配置一個暫時性的基底個體
+    for(var i in m) {
+        this[i] = m[i];
+    }
+}
 
-<span class="kd">var</span> <span class="nx">son2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">son</span><span class="p">(</span><span class="s2">"manager"</span><span class="p">);</span>
-<span class="nx">son2</span><span class="p">.</span><span class="nx">setfname</span><span class="p">(</span><span class="s2">"test2"</span><span class="p">);</span>
+var son1 = new son("workbee");
+son1.setfname("test");
 
-<span class="nx">alert</span><span class="p">(</span><span class="nx">son</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">fname</span><span class="p">);</span>
-<span class="nx">alert</span><span class="p">(</span><span class="nx">son1</span><span class="p">.</span><span class="nx">fname</span><span class="p">);</span>
-<span class="nx">alert</span><span class="p">(</span><span class="nx">son2</span><span class="p">.</span><span class="nx">fname</span><span class="p">);</span>
-</code></pre>
+var son2 = new son("manager");
+son2.setfname("test2");
+
+alert(son.prototype.fname);
+alert(son1.fname);
+alert(son2.fname);
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

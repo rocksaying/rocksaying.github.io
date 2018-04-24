@@ -2,10 +2,9 @@
 title: The practice of anonymous recursion function in JavaScript, by callee
 category: programming
 old-category: JavaScript
-tags: [javascript]
+tags: [javascript,prototype,function,arguments]
 permalink: /archives/2721669.html
 ---
-<div class="tags" style="display:none">javascript</div>
 <p>
 我在前文《<a href="{{ site.baseurl }}/archives/2718420.html">The practice of anonymous recursion function in JavaScript,</a>》寫完之後，又到 Google 找尋是否有其它解法，結果讓我找到用 <var>callee</var> 的作法。這作法更簡單。
 </p>
@@ -21,26 +20,28 @@ A property is created with name <var>callee</var> and property attributes {DontE
 <p>
 好吧，寫程式前不先找 Google 拜碼頭，結果就是多繞一段路。規範中明言 (<strong>雖然只有兩行</strong>) ， <var>callee</var> 指涉對象就是函數自身，因此用不著 <var>this</var> 了。我們只要將函數的 <var>arguments.callee</var> 屬性做為運算元參與 <code>operator( )</code> 運算即可。整個匿名遞迴函數改寫如下：
 </p>
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span>
-<span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">)</span> <span class="k">return</span> <span class="s1">''</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">t</span><span class="o">=</span><span class="p">[];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">firstChild</span><span class="p">;</span> <span class="nx">n</span><span class="p">;</span> <span class="nx">n</span> <span class="o">=</span> <span class="nx">n</span><span class="p">.</span><span class="nx">nextSibling</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeType</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">n</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">);</span>
-        <span class="k">else</span> <span class="nx">t</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">callee</span><span class="p">(</span><span class="nx">n</span><span class="p">));</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-<span class="p">})(</span>
-    <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">ds</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="nx">tagName</span><span class="p">,</span> <span class="nx">className</span><span class="p">);</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">className</span> <span class="o">==</span> <span class="nx">className</span><span class="p">)</span> <span class="p">{</span>
-                <span class="k">return</span> <span class="nx">ds</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">})(</span><span class="s1">'div'</span><span class="p">,</span> <span class="s1">'main'</span><span class="p">)</span>
-<span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+var d =
+(function(node) {
+    if (!node) return '';
+    var t=[];
+    for (var n = node.firstChild; n; n = n.nextSibling) {
+        if (n.nodeType == 3) t.push(n.nodeValue);
+        else t.push(arguments.callee(n));
+    }
+    return t.join('');
+})(
+    (function(tagName, className) {
+        var ds = document.getElementsByTagName(tagName, className);
+        for (var i = 0; i < ds.length; ++i) {
+            if (ds[i].className == className) {
+                return ds[i];
+            }
+        }
+    })('div', 'main')
+);
+{% endhighlight %}
 
 <div class="note">
 關於 <var>arguments</var>：每一個函數被調用時， JavaScript 都會為其 <var>arguments</var> 屬性配置一個 Arguments object 的實例。此實例為一陣列，儲放了此次調用行為的引數。故 <var>arguments[0]</var> 是第一個引數， <var>arguments[arguments.length-1]</var> 是最後一個引數。除此之外， JavaScript 還會設定此 Arugments object 之實例 (即 <var>arguments</var>) 的 <var>callee</var> 屬性指涉此次被調用的函數。

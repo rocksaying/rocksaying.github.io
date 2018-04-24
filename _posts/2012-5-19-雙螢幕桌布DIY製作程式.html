@@ -20,100 +20,102 @@ permalink: /archives/19490282.html
 程式見下列內容。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
 
-<span class="nv">$horizon</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+{% highlight php %}
+<?php
 
-<span class="nv">$dspinfos</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'height'</span><span class="o">=&gt;</span>  <span class="mi">1200</span><span class="p">,</span>
-        <span class="s1">'width'</span> <span class="o">=&gt;</span>  <span class="mi">1920</span><span class="p">,</span>
-        <span class="s1">'img_path'</span>  <span class="o">=&gt;</span> <span class="s1">'1.jpg'</span>
-    <span class="p">),</span>
-    <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'height'</span><span class="o">=&gt;</span>  <span class="mi">1920</span><span class="p">,</span>
-        <span class="s1">'width'</span> <span class="o">=&gt;</span>  <span class="mi">1200</span><span class="p">,</span>
-        <span class="s1">'img_path'</span>  <span class="o">=&gt;</span> <span class="s1">'2.png'</span>
-    <span class="p">)</span>
-<span class="p">);</span>
+$horizon = true;
 
-<span class="nv">$offset_x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="nv">$offset_y</span> <span class="o">=</span> <span class="mi">360</span><span class="p">;</span>
+$dspinfos = array(
+    array(
+        'height'=>  1200,
+        'width' =>  1920,
+        'img_path'  => '1.jpg'
+    ),
+    array(
+        'height'=>  1920,
+        'width' =>  1200,
+        'img_path'  => '2.png'
+    )
+);
 
-<span class="c1">###########################
-</span>
-<span class="nv">$dsp_height</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="nv">$dsp_width</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+$offset_x = 0;
+$offset_y = 360;
 
-<span class="k">if</span> <span class="p">(</span><span class="nv">$horizon</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$dsp_height</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dspinfos</span> <span class="k">as</span> <span class="nv">$dspinfo</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$dsp_width</span> <span class="o">+=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">];</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nv">$dsp_height</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$dsp_height</span> <span class="o">=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">];</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="nv">$dsp_width</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dspinfos</span> <span class="k">as</span> <span class="nv">$dspinfo</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$dsp_height</span> <span class="o">+=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">];</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nv">$dsp_width</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$dsp_width</span> <span class="o">=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">];</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+###########################
 
-<span class="nv">$src_imgs</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$dspinfos</span> <span class="k">as</span> <span class="nv">$dspinfo</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$img_path</span> <span class="o">=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'img_path'</span><span class="p">];</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/\.jpg$/i'</span><span class="p">,</span> <span class="nv">$img_path</span><span class="p">))</span>
-        <span class="nv">$img</span> <span class="o">=</span> <span class="nb">imagecreatefromjpeg</span><span class="p">(</span><span class="nv">$img_path</span><span class="p">);</span>
-    <span class="k">else</span>
-        <span class="nv">$img</span> <span class="o">=</span> <span class="nb">imagecreatefrompng</span><span class="p">(</span><span class="nv">$img_path</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">)</span> <span class="o">!=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span> <span class="k">or</span> 
-        <span class="nx">images</span><span class="p">(</span><span class="nv">$img</span><span class="p">)</span> <span class="o">!=</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">])</span>
-    <span class="p">{</span>
-        <span class="nv">$timg</span> <span class="o">=</span> <span class="nb">imagecreatetruecolor</span><span class="p">(</span><span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">],</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]);</span>
-        <span class="nb">imagecopyresized</span><span class="p">(</span><span class="nv">$timg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> 
-            <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'width'</span><span class="p">],</span> <span class="nv">$dspinfo</span><span class="p">[</span><span class="s1">'height'</span><span class="p">],</span>
-            <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nb">imagesy</span><span class="p">(</span><span class="nv">$img</span><span class="p">));</span>
-        <span class="nv">$img</span> <span class="o">=</span> <span class="nv">$timg</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="nv">$src_imgs</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$img</span><span class="p">;</span>
-<span class="p">}</span>
+$dsp_height = 0;
+$dsp_width = 0;
 
-<span class="nv">$wimg</span> <span class="o">=</span> <span class="nb">imagecreatetruecolor</span><span class="p">(</span><span class="nv">$dsp_width</span><span class="p">,</span> <span class="nv">$dsp_height</span><span class="p">);</span>
+if ($horizon) {
+    $dsp_height = 0;
+    foreach ($dspinfos as $dspinfo) {
+        $dsp_width += $dspinfo['width'];
+        if ($dspinfo['height'] > $dsp_height) {
+            $dsp_height = $dspinfo['height'];
+        }
+    }
+}
+else {
+    $dsp_width = 0;
+    foreach ($dspinfos as $dspinfo) {
+        $dsp_height += $dspinfo['height'];
+        if ($dspinfo['width'] > $dsp_width) {
+            $dsp_width = $dspinfo['width'];
+        }
+    }
+}
 
-<span class="nv">$img</span> <span class="o">=</span> <span class="nv">$src_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">imagecopymerge</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span> 
-    <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> 
-    <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nb">imagesy</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="mi">100</span><span class="p">))</span> 
-<span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"merge failed</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+$src_imgs = array();
+foreach ($dspinfos as $dspinfo) {
+    $img_path = $dspinfo['img_path'];
+    if (preg_match('/\.jpg$/i', $img_path))
+        $img = imagecreatefromjpeg($img_path);
+    else
+        $img = imagecreatefrompng($img_path);
+    if (imagesx($img) != $dspinfo['width'] or 
+        images($img) != $dspinfo['height'])
+    {
+        $timg = imagecreatetruecolor($dspinfo['width'], $dspinfo['height']);
+        imagecopyresized($timg, $img, 0, 0, 0, 0, 
+            $dspinfo['width'], $dspinfo['height'],
+            imagesx($img), imagesy($img));
+        $img = $timg;
+    }
+    $src_imgs[] = $img;
+}
 
-<span class="nv">$img</span> <span class="o">=</span> <span class="nv">$src_imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">imagecopymerge</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span>
-    <span class="nv">$dspinfos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'width'</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="nv">$offset_x</span><span class="p">,</span> <span class="nv">$offset_y</span><span class="p">,</span>
-    <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nb">imagesy</span><span class="p">(</span><span class="nv">$img</span><span class="p">)</span> <span class="o">-</span> <span class="nv">$offset_y</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
-<span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"merge failed</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">imagecopymerge</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="nv">$img</span><span class="p">,</span> <span class="nv">$dspinfos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'width'</span><span class="p">],</span>
-    <span class="nv">$dspinfos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'width'</span><span class="p">]</span> <span class="o">-</span> <span class="nv">$offset_y</span><span class="p">,</span>
-    <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="nb">imagesx</span><span class="p">(</span><span class="nv">$img</span><span class="p">),</span> <span class="nv">$offset_y</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
-<span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"merge failed</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+$wimg = imagecreatetruecolor($dsp_width, $dsp_height);
+
+$img = $src_imgs[0];
+if (!imagecopymerge($wimg, $img, 
+    0, 0, 0, 0, 
+    imagesx($img), imagesy($img), 100)) 
+{
+    echo "merge failed\n";
+}
+
+$img = $src_imgs[1];
+if (!imagecopymerge($wimg, $img,
+    $dspinfos[0]['width'], 0,
+    $offset_x, $offset_y,
+    imagesx($img), imagesy($img) - $offset_y, 100))
+{
+    echo "merge failed\n";
+}
+if (!imagecopymerge($wimg, $img, $dspinfos[0]['width'],
+    $dspinfos[0]['width'] - $offset_y,
+    0, 0,
+    imagesx($img), $offset_y, 100))
+{
+    echo "merge failed\n";
+}
 
 
-<span class="nb">imagepng</span><span class="p">(</span><span class="nv">$wimg</span><span class="p">,</span> <span class="s1">'wallpaper.png'</span><span class="p">);</span>
+imagepng($wimg, 'wallpaper.png');
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 
 <p>

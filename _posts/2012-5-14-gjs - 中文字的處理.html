@@ -26,46 +26,47 @@ gjs/gnome-shell 可以在程式碼中使用中文字以及包含中文字的字�
 最後額外附帶 <dfn>GLib.convert</dfn> 的字元集轉碼函數範例。
 </p>
 
-<pre class="highlight"><code>pan class="cp">
+
+{% highlight javascript %}
+pan class="cp">
 #!/usr/bin/gjs
-</span>
-<span class="c1">// case 1: In code.</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"檔案"</span><span class="p">);</span>  <span class="c1">// 輸出結果不正確。</span>
+
+// case 1: In code.
+print("檔案");  // 輸出結果不正確。
 
 
-<span class="c1">// case 2: Gettext.</span>
-<span class="kr">const</span> <span class="nx">GetText</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gettext</span><span class="p">;</span>
-<span class="nx">GetText</span><span class="p">.</span><span class="nx">bindtextdomain</span><span class="p">(</span><span class="s1">'vlc'</span><span class="p">,</span> <span class="s1">'/usr/share/locale'</span><span class="p">);</span>
-<span class="nx">GetText</span><span class="p">.</span><span class="nx">textdomain</span><span class="p">(</span><span class="s1">'vlc'</span><span class="p">);</span> <span class="c1">// 借用 vlc 這套軟體的訊息包。</span>
-<span class="kr">const</span> <span class="nx">_</span> <span class="o">=</span> <span class="nx">GetText</span><span class="p">.</span><span class="nx">gettext</span><span class="p">;</span>
+// case 2: Gettext.
+const GetText = imports.gettext;
+GetText.bindtextdomain('vlc', '/usr/share/locale');
+GetText.textdomain('vlc'); // 借用 vlc 這套軟體的訊息包。
+const _ = GetText.gettext;
 
-<span class="nx">print</span><span class="p">(</span><span class="nx">_</span><span class="p">(</span><span class="s1">'File'</span><span class="p">));</span>  <span class="c1">// 正確。</span>
+print(_('File'));  // 正確。
 
-<span class="c1">// case 3: Read from file.</span>
-<span class="kr">const</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
+// case 3: Read from file.
+const GLib = imports.gi.GLib;
 
-<span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">GLib</span><span class="p">.</span><span class="nx">file_get_contents</span><span class="p">(</span><span class="s2">"gjs-chinese.js"</span><span class="p">);</span> <span class="c1">// 讀取檔案內容</span>
-<span class="k">if</span> <span class="p">(</span><span class="nx">results</span> <span class="o">&amp;&amp;</span> <span class="nx">results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="nx">results</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>  <span class="c1">// 正確。</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"Failed to read from file"</span><span class="p">);</span>
-<span class="p">}</span>
+var results = GLib.file_get_contents("gjs-chinese.js"); // 讀取檔案內容
+if (results && results[0]) {
+    print(results[1]);  // 正確。
+}
+else {
+    print("Failed to read from file");
+}
 
-<span class="c1">// 測試文字轉碼函數是否可發揮作用</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">GLib</span><span class="p">.</span><span class="nx">convert</span><span class="p">(</span><span class="s2">"檔案"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">));</span> 
-<span class="c1">// 沒影響，輸出錯誤。</span>
+// 測試文字轉碼函數是否可發揮作用
+print(GLib.convert("檔案", -1, 'utf-8', 'utf-8')); 
+// 沒影響，輸出錯誤。
 
-<span class="c1">//print(GLib.convert("檔案", -1, 'unicode', 'utf-8')); </span>
-<span class="c1">// Error: Failed to convert UTF-8 string to JS string: 轉換輸入資料時遇到不正確的位元組組合</span>
+//print(GLib.convert("檔案", -1, 'unicode', 'utf-8')); 
+// Error: Failed to convert UTF-8 string to JS string: 轉換輸入資料時遇到不正確的位元組組合
 
-<span class="nx">print</span><span class="p">(</span><span class="nx">GLib</span><span class="p">.</span><span class="nx">utf16_to_utf8</span><span class="p">(</span><span class="s1">'檔案'</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">));</span> 
-<span class="c1">// 沒有內容，函數認為輸入內容不是utf-16編碼。</span>
+print(GLib.utf16_to_utf8('檔案', -1)); 
+// 沒有內容，函數認為輸入內容不是utf-16編碼。
 
-<span class="nx">print</span><span class="p">(</span><span class="nx">GLib</span><span class="p">.</span><span class="nx">locale_to_utf8</span><span class="p">(</span><span class="s1">'檔案'</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">));</span> 
-<span class="c1">// 沒影響，輸出錯誤。</span>
-
-</code></pre>
+print(GLib.locale_to_utf8('檔案', -1)); 
+// 沒影響，輸出錯誤。
+{% endhighlight %}
 
 
 <h5>結論</h5>
