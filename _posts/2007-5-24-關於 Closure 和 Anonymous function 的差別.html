@@ -18,29 +18,31 @@ jaceju 在 <a href="http://blog.roodo.com/jaceju/archives/3274481.html">Anonymou
 JavaScript 語法支持匿名函數(Anonymous function)[<span class="note">參考<a href="{{ site.baseurl }}/archives/2718420.html">The practice of anonymous recursion function in JavaScript</a>以了解匿名函數在 JavaScript 中的應用</span>]，但不支持封絕(Closure)</a>[<span class="note"><a href="{{ site.baseurl }}/archives/3088893.html">我稱為封絕</a>，也有人稱它閉鎖空間或閉包，還是記住 Closure 這個詞吧</span>]。 JavaScript 必須使用一些技巧實現 Closure ，因此我們反而容易看出這兩者的差別。
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">fs</span> <span class="o">=</span> <span class="p">[];</span>
-<span class="kd">function</span> <span class="nx">run_fs</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">fs</span><span class="p">[</span><span class="nx">j</span><span class="p">];</span> <span class="nx">f</span><span class="p">;</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">fs</span><span class="p">[</span><span class="o">++</span><span class="nx">j</span><span class="p">])</span> <span class="p">{</span>
-        <span class="nx">f</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="nx">print</span><span class="p">(</span><span class="s1">'Pure anonymous function\n'</span><span class="p">);</span>
-<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">fs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span><span class="nx">print</span><span class="p">(</span><span class="nx">i</span><span class="p">);}</span>
-<span class="p">}</span>
-<span class="nx">run_fs</span><span class="p">();</span>
+{% highlight javascript %}
+var i = 0;
+var fs = [];
+function run_fs() {
+    for (var j = 0, f = fs[j]; f; f = fs[++j]) {
+        f();
+    }
+}
 
-<span class="nx">print</span><span class="p">(</span><span class="s1">'Closure\n'</span><span class="p">);</span>
-<span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">fs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//closure.</span>
-        <span class="k">return</span> <span class="kd">function</span><span class="p">(){</span><span class="nx">print</span><span class="p">(</span><span class="nx">i</span><span class="p">);}</span>
-    <span class="p">})(</span><span class="nx">i</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">run_fs</span><span class="p">();</span>
-</code></pre>
+print('Pure anonymous function\n');
+for (i = 0; i < 3; ++i) {
+    fs[i] = function(){print(i);}
+}
+run_fs();
+
+print('Closure\n');
+for (i = 0; i < 3; ++i) {
+    fs[i] = (function(i) {
+        //closure.
+        return function(){print(i);}
+    })(i);
+}
+run_fs();
+{% endhighlight %}
 
 
 <p>
@@ -69,19 +71,21 @@ Closure
 <hr/>
 <p>補充一份參考文件。由 Martin Fowler 寫的 《<a href="http://martinfowler.com/bliki/Closure.html">Closure</a>》。Fowler 也寫了一個 JavaScript 的例子。因為他寫的例子有點長，我改了一個簡潔版，如下所示:
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">Employee</span><span class="p">()</span> <span class="p">{</span>
-<span class="p">}</span>
 
-<span class="kd">function</span> <span class="nx">paidMore</span><span class="p">(</span><span class="nx">amount</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span> <span class="k">return</span> <span class="nx">e</span><span class="p">.</span><span class="nx">salary</span> <span class="o">&gt;</span> <span class="nx">amount</span><span class="p">;</span> <span class="p">};</span>
-<span class="p">}</span>
+{% highlight javascript %}
+function Employee() {
+}
 
-<span class="kd">var</span> <span class="nx">highPaid</span> <span class="o">=</span> <span class="nx">paidMore</span><span class="p">(</span><span class="mi">150</span><span class="p">);</span>
+function paidMore(amount) {
+	return function(e){ return e.salary > amount; };
+}
 
-<span class="kd">var</span> <span class="nx">john</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Employee</span><span class="p">();</span>
-<span class="nx">john</span><span class="p">.</span><span class="nx">salary</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">highPaid</span><span class="p">(</span><span class="nx">john</span><span class="p">));</span>
-</code></pre>
+var highPaid = paidMore(150);
+
+var john = new Employee();
+john.salary = 200;
+print(highPaid(john));
+{% endhighlight %}
 
 
 <p>

@@ -21,39 +21,40 @@ permalink: /archives/14644791.html
 首先，我們先來看看典型的擱置式 I/O 處理模式。請看 blocking_io_without_signal.py。
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span>
 
-<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
-            <span class="k">return</span>
+{% highlight python %}
+import os,sys,multiprocessing,signal,time
+
+def sub_process(pipe):
+    while True:
+        rc = pipe.recv()
+        print("sub process recv: %s" % rc)
+        if rc == "END":
+            return
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+if __name__ == "__main__":
+    rpipe, wpipe = multiprocessing.Pipe(False)
 
-    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-
-</code></pre>
+    sub_process = multiprocessing.Process(target=sub_process, args=(rpipe,))
+    sub_process.start()
+    time.sleep(5)
+    wpipe.send("fool")
+    time.sleep(5)
+    wpipe.send("END")
+    sub_process.join()
+{% endhighlight %}
 
 
 <p>
 這個範例程式，規劃了一對管道端子，分別交給父行程與子行程持有。父行程寫入資料，子行程等待讀取資料。當子行程讀到一行 "END" 之後，則結束子行程。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ python blocking_io_without_signal.py 
 sub process recv: fool
 sub process recv: END
-</pre>
+</code></pre>
 
 <p>
 程式執行5秒後輸出第一行 fool，再過5秒後輸出第二行 END。兩行程結束。
@@ -63,47 +64,48 @@ sub process recv: END
 接著，我要往這個典型的處理程式中，加入訊號。最常見的狀況，就是應用 <dfn>SIGALRM</dfn> 實現計時器的場合。在這個場合中，等待管道輸入資料的擱置中讀取行為，將會因此被訊號 <dfn>SIGALRM</dfn> 提前打斷。加入 SIGALRM 計時器的範例程式: unsafe_blocking_io_with_signal.py。
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span>
 
-<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">alarm_timer</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"alarm(</span><span class="si">%</span><span class="s">d)"</span> <span class="o">%</span> <span class="n">signum</span><span class="p">)</span>
+{% highlight python %}
+import os,sys,multiprocessing,signal,time
+
+def sub_process(pipe):
+    def alarm_timer(signum, func):
+        print("alarm(%d)" % signum)
         
-    <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">alarm_timer</span><span class="p">)</span>
-    <span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    signal.signal(signal.SIGALRM, alarm_timer)
+    signal.setitimer(signal.ITIMER_REAL, 1, 1)
 
-    <span class="c">#signal.siginterrupt(signal.SIGALRM, False)</span>
-    <span class="c"># this does not work perfectly.</span>
+    #signal.siginterrupt(signal.SIGALRM, False)
+    # this does not work perfectly.
 
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
-            <span class="k">return</span>
-
-
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-    <span class="c"># this will be interrupted by any signal.</span>
-    <span class="c"># If you are an expert Unix/POSIX programmer, you will invoke sigaction() </span>
-    <span class="c"># with SA_RESTART to avoid this behaviour. That is modern way.</span>
-    <span class="c"># But Python does not provide this way, therefore you need to use </span>
-    <span class="c"># traditional way.</span>
-    <span class="c"># See also:</span>
-    <span class="c"># http://bugs.python.org/msg102725</span>
-
-    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-
-</code></pre>
+    while True:
+        rc = pipe.recv()
+        print("sub process recv: %s" % rc)
+        if rc == "END":
+            return
 
 
-<pre class="language-term">
+if __name__ == "__main__":
+    rpipe, wpipe = multiprocessing.Pipe(False)
+    # this will be interrupted by any signal.
+    # If you are an expert Unix/POSIX programmer, you will invoke sigaction() 
+    # with SA_RESTART to avoid this behaviour. That is modern way.
+    # But Python does not provide this way, therefore you need to use 
+    # traditional way.
+    # See also:
+    # http://bugs.python.org/msg102725
+
+    sub_process = multiprocessing.Process(target=sub_process, args=(rpipe,))
+    sub_process.start()
+    time.sleep(5)
+    wpipe.send("fool")
+    time.sleep(5)
+    wpipe.send("END")
+    sub_process.join()
+{% endhighlight %}
+
+
+<pre><code class="language-term">
 $ python unsafe_blocking_io_with_signal.py 
 alarm(14)
 Process Process-1:
@@ -116,7 +118,7 @@ Traceback (most recent call last):
     rc = pipe.recv()
 IOError: [Errno 4] Interrupted system call
 
-</pre>
+</code></pre>
 
 <p>
 執行後，你將發現子行程未如預期般地於5秒後讀取資料。事實上，它在執行一秒後，就被系統打斷了。原因就是系統觸發了訊號 <dfn>SIGALRM</dfn>。
@@ -140,144 +142,145 @@ Python 的 <dfn>multiprocessing.Pipe</dfn> 是一個工廠方法，它會生產�
 完整的實作範例，為 safe_blocking_io_with_signal.py。
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span>
 
-<span class="k">class</span> <span class="nc">SignalSafeConnection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="n">handle</span>
+{% highlight python %}
+import os,sys,multiprocessing,signal,time
 
-    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="c"># this is a traditional skill of unix programming,</span>
-        <span class="c"># but be careful to use it.</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c"># unexcepted error, re-raise</span>
-                    <span class="k">raise</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">return</span> <span class="n">rc</span>
+class SignalSafeConnection(object):
+    def __init__(self, handle):
+        self.handle = handle
 
-    <span class="k">def</span> <span class="nf">recv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c"># unexcepted error, re-raise</span>
-                    <span class="k">raise</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">return</span> <span class="n">rc</span>
+    def send(self, obj):
+        # this is a traditional skill of unix programming,
+        # but be careful to use it.
+        while True:
+            try:
+                rc = self.handle.send(obj)
+            except (OSError, IOError) as e:
+                if e.errno == 4:
+                    print("SIGIO, Interrupted system call, restart")
+                    continue
+                else:
+                    # unexcepted error, re-raise
+                    raise
+            else:
+                break
+        return rc
 
-    <span class="k">def</span> <span class="nf">fileno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
+    def recv(self):
+        while True:
+            try:
+                rc = self.handle.recv()
+            except (OSError, IOError) as e:
+                if e.errno == 4:
+                    print("SIGIO, Interrupted system call, restart")
+                    continue
+                else:
+                    # unexcepted error, re-raise
+                    raise
+            else:
+                break
+        return rc
+
+    def fileno(self):
+        return self.handle.fileno()
     
-    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="bp">None</span>
+    def close(self):
+        self.handle.close()
+        self.handle = None
     
-    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">timeout</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">current_time</span> <span class="o">&gt;</span> <span class="n">end_time</span><span class="p">:</span>
-                        <span class="n">rc</span> <span class="o">=</span> <span class="bp">False</span>
-                        <span class="k">break</span>
-                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
-                    <span class="n">timeout</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">current_time</span>
-                    <span class="k">continue</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c"># unexcepted error, re-raise</span>
-                    <span class="k">raise</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">return</span> <span class="n">rc</span>
+    def poll(self, timeout=0):
+        end_time = time.time() + timeout
+        while True:
+            try:
+                rc = self.handle.poll(timeout)
+            except (OSError, IOError) as e:
+                if e.errno == 4:
+                    current_time = time.time()
+                    if current_time > end_time:
+                        rc = False
+                        break
+                    print("SIGIO, Interrupted system call, restart")
+                    timeout = end_time - current_time
+                    continue
+                else:
+                    # unexcepted error, re-raise
+                    raise
+            else:
+                break
+        return rc
     
-    <span class="k">def</span> <span class="nf">send_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">buffer</span><span class="p">):</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">send_bytes</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c"># unexcepted error, re-raise</span>
-                    <span class="k">raise</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">return</span> <span class="n">rc</span>
+    def send_bytes(self, buffer):
+        while True:
+            try:
+                rc = self.handle.send_bytes(buffer)
+            except (OSError, IOError) as e:
+                if e.errno == 4:
+                    print("SIGIO, Interrupted system call, restart")
+                    continue
+                else:
+                    # unexcepted error, re-raise
+                    raise
+            else:
+                break
+        return rc
 
-    <span class="k">def</span> <span class="nf">recv_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxlength</span><span class="p">):</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">send_bytes</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="nb">OSError</span><span class="p">,</span> <span class="nb">IOError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-                    <span class="k">print</span><span class="p">(</span><span class="s">"SIGIO, Interrupted system call, restart"</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c"># unexcepted error, re-raise</span>
-                    <span class="k">raise</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">return</span> <span class="n">rc</span>
-
-
-<span class="k">def</span> <span class="nf">SignalSafePipe</span><span class="p">(</span><span class="n">duplex</span><span class="p">):</span>
-    <span class="n">pipe1</span><span class="p">,</span> <span class="n">pipe2</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="n">duplex</span><span class="p">)</span>
-    <span class="n">sspipe1</span> <span class="o">=</span> <span class="n">SignalSafeConnection</span><span class="p">(</span><span class="n">pipe1</span><span class="p">)</span>
-    <span class="n">sspipe2</span> <span class="o">=</span> <span class="n">SignalSafeConnection</span><span class="p">(</span><span class="n">pipe2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">sspipe1</span><span class="p">,</span> <span class="n">sspipe2</span>
+    def recv_bytes(self, maxlength):
+        while True:
+            try:
+                rc = self.handle.send_bytes(buffer)
+            except (OSError, IOError) as e:
+                if e.errno == 4:
+                    print("SIGIO, Interrupted system call, restart")
+                    continue
+                else:
+                    # unexcepted error, re-raise
+                    raise
+            else:
+                break
+        return rc
 
 
-<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">alarm_timer</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"alarm(</span><span class="si">%</span><span class="s">d)"</span> <span class="o">%</span> <span class="n">signum</span><span class="p">)</span>
+def SignalSafePipe(duplex):
+    pipe1, pipe2 = multiprocessing.Pipe(duplex)
+    sspipe1 = SignalSafeConnection(pipe1)
+    sspipe2 = SignalSafeConnection(pipe2)
+    return sspipe1, sspipe2
+
+
+def sub_process(pipe):
+    def alarm_timer(signum, func):
+        print("alarm(%d)" % signum)
         
-    <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">alarm_timer</span><span class="p">)</span>
-    <span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    signal.signal(signal.SIGALRM, alarm_timer)
+    signal.setitimer(signal.ITIMER_REAL, 1, 1)
 
-    <span class="c">#signal.siginterrupt(signal.SIGALRM, False)</span>
-    <span class="c"># this does not work perfectly.</span>
+    #signal.siginterrupt(signal.SIGALRM, False)
+    # this does not work perfectly.
 
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
-            <span class="k">return</span>
-
-
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="c">#rpipe, wpipe = multiprocessing.Pipe(False)</span>
-
-    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">SignalSafePipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-
-    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-
-</code></pre>
+    while True:
+        rc = pipe.recv()
+        print("sub process recv: %s" % rc)
+        if rc == "END":
+            return
 
 
-<pre class="language-term">
+if __name__ == "__main__":
+    #rpipe, wpipe = multiprocessing.Pipe(False)
+
+    rpipe, wpipe = SignalSafePipe(False)
+
+    sub_process = multiprocessing.Process(target=sub_process, args=(rpipe,))
+    sub_process.start()
+    time.sleep(5)
+    wpipe.send("fool")
+    time.sleep(5)
+    wpipe.send("END")
+    sub_process.join()
+{% endhighlight %}
+
+
+<pre><code class="language-term">
 $ python safe_blocking_io_with_signal.py 
 alarm(14)
 SIGIO, Interrupted system call, restart
@@ -288,7 +291,7 @@ SIGIO, Interrupted system call, restart
     ... (省略)
 sub process recv: END
 
-</pre>
+</code></pre>
 
 <p>
 程式執行5秒後輸出第一行 fool，再過5秒後輸出第二行 END。在等待的同時，計時器也會每秒觸發一次，這讓我們可以在等待的過程中，抽空做別的事情。這就是 process, pipe, signal 三者合作下進行多工作業程式設計的傳統技藝。
@@ -304,38 +307,39 @@ sub process recv: END
 例如 unsafe_blocking_io_with_signal.py 的內容，<em>在沒有意外的情況下</em>，完全可以使用 <dfn>threading.Timer</dfn> 取代 <dfn>signal.setitimer</dfn>。如下列所示:
 </p>
 
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">multiprocessing</span><span class="o">,</span><span class="nn">signal</span><span class="o">,</span><span class="nn">time</span><span class="o">,</span><span class="nn">threading</span>
 
-<span class="k">def</span> <span class="nf">sub_process</span><span class="p">(</span><span class="n">pipe</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">alarm_timer</span><span class="p">(</span><span class="n">interval</span><span class="p">):</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">"sub process alarm"</span><span class="p">)</span>
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+{% highlight python %}
+import os,sys,multiprocessing,signal,time,threading
+
+def sub_process(pipe):
+    def alarm_timer(interval):
+        while True:
+            print("sub process alarm")
+            time.sleep(interval)
         
-    <span class="c">#signal.signal(signal.SIGALRM, alarm_timer)</span>
-    <span class="c">#signal.setitimer(signal.ITIMER_REAL, 1, 1)</span>
-    <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">alarm_timer</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
-    <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    #signal.signal(signal.SIGALRM, alarm_timer)
+    #signal.setitimer(signal.ITIMER_REAL, 1, 1)
+    t = threading.Timer(1, alarm_timer, args=(1,))
+    t.start()
 
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"sub process recv: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">rc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">rc</span> <span class="o">==</span> <span class="s">"END"</span><span class="p">:</span>
-            <span class="k">return</span>
+    while True:
+        rc = pipe.recv()
+        print("sub process recv: %s" % rc)
+        if rc == "END":
+            return
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="n">rpipe</span><span class="p">,</span> <span class="n">wpipe</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+if __name__ == "__main__":
+    rpipe, wpipe = multiprocessing.Pipe(False)
 
-    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">sub_process</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">rpipe</span><span class="p">,))</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"fool"</span><span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">wpipe</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">"END"</span><span class="p">)</span>
-    <span class="n">sub_process</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-
-</code></pre>
+    sub_process = multiprocessing.Process(target=sub_process, args=(rpipe,))
+    sub_process.start()
+    time.sleep(5)
+    wpipe.send("fool")
+    time.sleep(5)
+    wpipe.send("END")
+    sub_process.join()
+{% endhighlight %}
 
 
 <p>
