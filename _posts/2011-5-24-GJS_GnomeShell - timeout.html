@@ -12,50 +12,51 @@ mainloop 除了主要事件來源外，還提供了兩種可添加的事件來�
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="kr">const</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
-<span class="c1">//if (Mainloop == null)</span>
-<span class="c1">//    Mainloop = imports.seed.mainloop; // a simulate one. </span>
 
-<span class="kd">var</span> <span class="nx">event_source1_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"repeat..."</span><span class="p">);</span>
+{% highlight javascript %}
+const GLib = imports.gi.GLib;
+var Mainloop = imports.mainloop;
+//if (Mainloop == null)
+//    Mainloop = imports.seed.mainloop; // a simulate one. 
+
+var event_source1_id = Mainloop.timeout_add(500, function(){
+    print("repeat...");
     
-    <span class="c1">// if return true, it will run again.</span>
-    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">});</span>
+    // if return true, it will run again.
+    return true;
+});
 
-<span class="kd">var</span> <span class="nx">event_source2_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"run only once..."</span><span class="p">);</span>
+var event_source2_id = Mainloop.timeout_add(500, function(){
+    print("run only once...");
     
-    <span class="c1">// if return false, it will be remove from mainloop.</span>
-    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-<span class="p">});</span>
+    // if return false, it will be remove from mainloop.
+    return false;
+});
 
-<span class="kd">var</span> <span class="nx">idle_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">idle_source_id</span> <span class="o">=</span> <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">idle_add</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nx">print</span><span class="p">(</span><span class="s2">"idle..."</span> <span class="o">+</span> <span class="nx">idle_count</span><span class="p">);</span>
-        <span class="nx">idle_count</span><span class="o">++</span><span class="p">;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">idle_count</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">// remove this source.</span>
-        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-    <span class="p">},</span>
-    <span class="nx">GLib</span><span class="p">.</span><span class="nx">PRIORITY_DEFAULT_IDLE</span><span class="p">);</span>
+var idle_count = 0;
+var idle_source_id = Mainloop.idle_add(function() {
+        print("idle..." + idle_count);
+        idle_count++;
+        if (idle_count > 10)
+            return false; // remove this source.
+        return true;
+    },
+    GLib.PRIORITY_DEFAULT_IDLE);
 
-<span class="nx">Mainloop</span><span class="p">.</span><span class="nx">timeout_add_seconds</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">event_source1_id</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">print</span><span class="p">(</span><span class="s2">"stop repeat"</span><span class="p">);</span>
-        <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">source_remove</span><span class="p">(</span><span class="nx">event_source1_id</span><span class="p">);</span>
-        <span class="nx">print</span><span class="p">(</span><span class="s2">"after 2 seconds, this will quit"</span><span class="p">);</span>
-        <span class="nx">event_source1_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="nx">print</span><span class="p">(</span><span class="s2">"quit"</span><span class="p">);</span>
-        <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">quit</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">});</span>
+Mainloop.timeout_add_seconds(2, function(){
+    if (event_source1_id > 0) {
+        print("stop repeat");
+        Mainloop.source_remove(event_source1_id);
+        print("after 2 seconds, this will quit");
+        event_source1_id = 0;
+    }
+    else {
+        print("quit");
+        Mainloop.quit('');
+    }
+    return true;
+});
 
-<span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-
-</code></pre>
+Mainloop.run('');
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/15700221.html</div>

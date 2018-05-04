@@ -17,19 +17,21 @@ The solution is simple. We simply take the extension name from <var>$_FILES['use
 <p>
 The following is a sample. There is a file field named 'SpreadsheetFile' in the form. PHP will put information of this uploaded file in <var>$_FILES['SpreadsheetFile']</var>.
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_FILES</span><span class="p">[</span><span class="s1">'SpreadsheetFile'</span><span class="p">])</span>
-    <span class="k">and</span> <span class="nb">is_uploaded_file</span><span class="p">(</span><span class="nv">$_FILES</span><span class="p">[</span><span class="s1">'SpreadsheetFile'</span><span class="p">][</span><span class="s1">'tmp_name'</span><span class="p">]))</span>
-<span class="p">{</span>
-	<span class="c1">//print("{$_FILES['SpreadsheetFile']['name']} uploaded.\n");
-</span>	<span class="nv">$listFilePath</span> <span class="o">=</span> <span class="nv">$_FILES</span><span class="p">[</span><span class="s1">'SpreadsheetFile'</span><span class="p">][</span><span class="s1">'tmp_name'</span><span class="p">];</span>
-	<span class="nv">$listFileExt</span> <span class="o">=</span> <span class="nb">pathinfo</span><span class="p">(</span><span class="nv">$_FILES</span><span class="p">[</span><span class="s1">'SpreadsheetFile'</span><span class="p">][</span><span class="s1">'name'</span><span class="p">],</span> <span class="nx">PATHINFO_EXTENSION</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">require_once</span> <span class="s1">'SpreadsheetReader/SpreadsheetReaderFactory.php'</span><span class="p">;</span>
+{% highlight php %}
+<?php
+if (isset($_FILES['SpreadsheetFile'])
+    and is_uploaded_file($_FILES['SpreadsheetFile']['tmp_name']))
+{
+	//print("{$_FILES['SpreadsheetFile']['name']} uploaded.\n");
+	$listFilePath = $_FILES['SpreadsheetFile']['tmp_name'];
+	$listFileExt = pathinfo($_FILES['SpreadsheetFile']['name'], PATHINFO_EXTENSION);
+}
 
-<span class="nv">$reader</span> <span class="o">=</span> <span class="nx">SpreadsheetReaderFactory</span><span class="o">::</span><span class="na">reader</span><span class="p">(</span><span class="nv">$listFileExt</span><span class="p">);</span>
-<span class="nv">$sheets</span> <span class="o">=</span> <span class="nv">$reader</span><span class="o">-&gt;</span><span class="na">read</span><span class="p">(</span><span class="nv">$listFilePath</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+require_once 'SpreadsheetReader/SpreadsheetReaderFactory.php';
+
+$reader = SpreadsheetReaderFactory::reader($listFileExt);
+$sheets = $reader->read($listFilePath);
+?>
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2878923.html</div>

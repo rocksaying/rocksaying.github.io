@@ -10,18 +10,19 @@ permalink: /archives/1031693.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="k">select</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">shop</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pluno</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pname</span><span class="p">,</span> 
-<span class="k">sum</span><span class="p">(</span><span class="n">pos324_tamt</span><span class="p">.</span><span class="n">qty</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_qty</span><span class="p">,</span>
-<span class="k">sum</span><span class="p">(</span><span class="n">pos324_tamt</span><span class="p">.</span><span class="n">tamt</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_tamt</span>
-<span class="k">from</span> <span class="p">(</span>
-    <span class="k">select</span> <span class="n">pos324</span><span class="p">.</span><span class="n">shop</span><span class="p">,</span> <span class="n">pos104</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">pos116</span><span class="p">.</span><span class="n">pluno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">pname</span><span class="p">,</span> <span class="n">pos324</span><span class="p">.</span><span class="n">qty</span><span class="p">,</span> <span class="p">(</span><span class="n">pos324</span><span class="p">.</span><span class="n">qty</span><span class="o">*</span><span class="n">pos324</span><span class="p">.</span><span class="n">sale_price</span><span class="p">)</span> <span class="k">as</span> <span class="n">tamt</span> <span class="k">from</span> <span class="n">pos324</span> 
-    <span class="k">inner</span> <span class="k">join</span> <span class="p">(</span><span class="n">pos116</span> <span class="k">inner</span> <span class="k">join</span> <span class="n">pos110</span> <span class="k">on</span> <span class="n">pos116</span><span class="p">.</span><span class="n">pluno</span> <span class="o">=</span> <span class="n">pos110</span><span class="p">.</span><span class="n">pluno</span><span class="p">)</span> <span class="k">on</span> <span class="n">pos324</span><span class="p">.</span><span class="n">pluno</span> <span class="o">=</span> <span class="n">pos116</span><span class="p">.</span><span class="n">pluno</span> 
-    <span class="k">inner</span> <span class="k">join</span> <span class="n">pos104</span> <span class="k">on</span> <span class="n">pos324</span><span class="p">.</span><span class="n">shop</span> <span class="o">=</span> <span class="n">pos104</span><span class="p">.</span><span class="n">shop</span>
-<span class="k">where</span> <span class="n">pos324</span><span class="p">.</span><span class="n">ecrdate</span> <span class="o">&gt;=</span> <span class="s1">'20060101'</span> <span class="k">and</span> <span class="n">pos324</span><span class="p">.</span><span class="n">ecrdate</span> <span class="o">&lt;=</span> <span class="s1">'20060119'</span><span class="p">)</span> <span class="k">as</span> <span class="n">pos324_tamt</span>
-<span class="k">group</span> <span class="k">by</span> <span class="n">pos324_tamt_shop</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pluno</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pname</span>
-<span class="k">order</span> <span class="k">by</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">shop</span><span class="p">,</span> <span class="n">pos324_tamt</span><span class="p">.</span><span class="n">pluno</span>
- 
-</code></pre>
+
+{% highlight sql %}
+select pos324_tamt.shop, pos324_tamt.sname, pos324_tamt.pluno, pos324_tamt.pname, 
+sum(pos324_tamt.qty) as total_qty,
+sum(pos324_tamt.tamt) as total_tamt
+from (
+    select pos324.shop, pos104.sname, pos116.pluno, pos110.pname, pos324.qty, (pos324.qty*pos324.sale_price) as tamt from pos324 
+    inner join (pos116 inner join pos110 on pos116.pluno = pos110.pluno) on pos324.pluno = pos116.pluno 
+    inner join pos104 on pos324.shop = pos104.shop
+where pos324.ecrdate >= '20060101' and pos324.ecrdate <= '20060119') as pos324_tamt
+group by pos324_tamt_shop, pos324_tamt.sname, pos324_tamt.pluno, pos324_tamt.pname
+order by pos324_tamt.shop, pos324_tamt.pluno
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

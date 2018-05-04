@@ -24,8 +24,10 @@ What I want to do is that if user request 'http://localhost/ci/blogs/index.xml',
 <h5>
 MY_URI
 </h5>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s1">'BASEPATH'</span><span class="p">))</span> <span class="k">exit</span><span class="p">(</span><span class="s1">'No direct script access allowed'</span><span class="p">);</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
+/**
  * MY_URI library for CodeIgniter
  *
  * @author		rock
@@ -34,11 +36,11 @@ MY_URI
  * @link		http://blog.roodo.com/rocksaying
  * @since		Version 1.0
  * @filesource
- */</span>
+ */
 
-<span class="c1">// ------------------------------------------------------------------------
-</span>
-<span class="sd">/**
+// ------------------------------------------------------------------------
+
+/**
  * MY_URI Class
  *
  * Parses URIs and determines routing
@@ -53,39 +55,39 @@ MY_URI
  * If request 'blogs/index.pdf', load 'views/index.pdf.php' to render PDF document.
  * and so on.      
  *
- */</span>
+ */
 
-<span class="k">class</span> <span class="nc">MY_URI</span> <span class="k">extends</span> <span class="nx">CI_URI</span> <span class="p">{</span>
-	<span class="k">var</span> <span class="nv">$requestExt</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>   <span class="c1">// The request extension name.
-</span>
-	<span class="sd">/**
+class MY_URI extends CI_URI {
+	var $requestExt = false;   // The request extension name.
+
+	/**
 	 * Explode the URI Segments. The individual segments will
-	 * be stored in the $this-&gt;segments array.	
+	 * be stored in the $this->segments array.	
 	 *
 	 * @access	private
 	 * @return	void
-	 */</span>		
-	<span class="k">function</span> <span class="nf">_explode_segments</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">foreach</span><span class="p">(</span><span class="nb">explode</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s2">"|/*(.+?)/*$|"</span><span class="p">,</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">1"</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uri_string</span><span class="p">))</span> <span class="k">as</span> <span class="nv">$val</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="c1">// Filter segments for security
-</span>			<span class="nv">$val</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_filter_uri</span><span class="p">(</span><span class="nv">$val</span><span class="p">));</span>
+	 */		
+	function _explode_segments()
+	{
+		foreach(explode("/", preg_replace("|/*(.+?)/*$|", "\\1", $this->uri_string)) as $val)
+		{
+			// Filter segments for security
+			$val = trim($this->_filter_uri($val));
 			
-			<span class="k">if</span> <span class="p">(</span><span class="nv">$val</span> <span class="o">!=</span> <span class="s1">''</span><span class="p">)</span>
-				<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$val</span><span class="p">;</span>
-		<span class="p">}</span>
+			if ($val != '')
+				$this->segments[] = $val;
+		}
 
-		<span class="nv">$refLastSegment</span> <span class="o">=&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">[</span><span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">segments</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
-		<span class="k">if</span> <span class="p">(</span> <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/(.+)\.(\w+)$/'</span><span class="p">,</span> <span class="nv">$refLastSegment</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-			<span class="nv">$refLastSegment</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requestExt</span> <span class="o">=</span> <span class="nb">strtolower</span><span class="p">(</span><span class="nv">$matches</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
+		$refLastSegment =& $this->segments[count($this->segments)-1];
+		if ( preg_match('/(.+)\.(\w+)$/', $refLastSegment, $matches) ) {
+			$refLastSegment = $matches[1];
+			$this->requestExt = strtolower($matches[2]);
+		}
+	}
 
-	<span class="c1">// --------------------------------------------------------------------
-</span>	
-	<span class="sd">/**
+	// --------------------------------------------------------------------
+	
+	/**
 	 * Fetch the file extension.
 	 * 
 	 * If user request 'http://localhost/ci_test/index.php/control/index.xml',
@@ -93,23 +95,25 @@ MY_URI
 	 *
 	 * @access	public
 	 * @return	string
-	 */</span>
-	<span class="k">function</span> <span class="nf">extension</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requestExt</span><span class="p">;</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-<span class="c1">// END URI Class
-</span><span class="cp">?&gt;</span>
-</code></pre>
+	 */
+	function extension()
+	{
+		return $this->requestExt;
+	}
+}
+// END URI Class
+?>
+{% endhighlight %}
 
 
 
 <h5>
 MY_Loader
 </h5>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">defined</span><span class="p">(</span><span class="s1">'BASEPATH'</span><span class="p">))</span> <span class="k">exit</span><span class="p">(</span><span class="s1">'No direct script access allowed'</span><span class="p">);</span>
-<span class="sd">/**
+
+{% highlight php %}
+<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
+/**
  * MY_Loader library for CodeIgniter
  *
  * @author		rock
@@ -118,17 +122,17 @@ MY_Loader
  * @link		http://blog.roodo.com/rocksaying
  * @since		Version 1.0
  * @filesource
- */</span>
+ */
 
-<span class="c1">// ------------------------------------------------------------------------
-</span>
-<span class="sd">/**
+// ------------------------------------------------------------------------
+
+/**
  * MY_Loader Class
  *
  * Loads views and files
- */</span>
-<span class="k">class</span> <span class="nc">MY_Loader</span> <span class="k">extends</span> <span class="nx">CI_Loader</span> <span class="p">{</span>
-	<span class="sd">/**
+ */
+class MY_Loader extends CI_Loader {
+	/**
 	 * Loader
 	 *
 	 * This function is used to load views and files.
@@ -138,91 +142,91 @@ MY_Loader
 	 * @access	private
 	 * @param	array
 	 * @return	void
-	 */</span>
-	<span class="k">function</span> <span class="nf">_ci_load</span><span class="p">(</span><span class="nv">$_ci_data</span><span class="p">)</span>
-	<span class="p">{</span>
-		<span class="nv">$CI</span> <span class="o">=&amp;</span> <span class="nx">get_instance</span><span class="p">();</span>
-		<span class="o">@</span><span class="k">include</span><span class="p">(</span><span class="nx">APPPATH</span><span class="o">.</span><span class="s1">'config/mimes'</span><span class="o">.</span><span class="nx">EXT</span><span class="p">);</span>
-		<span class="nv">$docExt</span> <span class="o">=</span> <span class="nv">$CI</span><span class="o">-&gt;</span><span class="na">uri</span><span class="o">-&gt;</span><span class="na">extension</span><span class="p">();</span>
+	 */
+	function _ci_load($_ci_data)
+	{
+		$CI =& get_instance();
+		@include(APPPATH.'config/mimes'.EXT);
+		$docExt = $CI->uri->extension();
 
-		<span class="c1">// Set the default data variables
-</span>		<span class="k">foreach</span> <span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'_ci_view'</span><span class="p">,</span> <span class="s1">'_ci_vars'</span><span class="p">,</span> <span class="s1">'_ci_path'</span><span class="p">,</span> <span class="s1">'_ci_return'</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$_ci_val</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="nv">$$_ci_val</span> <span class="o">=</span> <span class="p">(</span> <span class="o">!</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_ci_data</span><span class="p">[</span><span class="nv">$_ci_val</span><span class="p">]))</span> <span class="o">?</span> <span class="k">FALSE</span> <span class="o">:</span> <span class="nv">$_ci_data</span><span class="p">[</span><span class="nv">$_ci_val</span><span class="p">];</span>
-		<span class="p">}</span>
+		// Set the default data variables
+		foreach (array('_ci_view', '_ci_vars', '_ci_path', '_ci_return') as $_ci_val)
+		{
+			$$_ci_val = ( ! isset($_ci_data[$_ci_val])) ? FALSE : $_ci_data[$_ci_val];
+		}
 
-		<span class="c1">// Set the path to the requested file
-</span>		<span class="nv">$_ci_ext</span> <span class="o">=</span> <span class="nb">pathinfo</span><span class="p">(</span><span class="nv">$_ci_view</span><span class="p">,</span> <span class="nx">PATHINFO_EXTENSION</span><span class="p">);</span>
-		<span class="k">if</span> <span class="p">(</span><span class="nv">$_ci_path</span> <span class="o">==</span> <span class="s1">''</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="c1">//$_ci_file = ($_ci_ext == '') ? $_ci_view.EXT : $_ci_view;
-</span>			<span class="k">if</span> <span class="p">(</span><span class="nv">$_ci_ext</span> <span class="o">==</span> <span class="s1">''</span><span class="p">)</span> <span class="p">{</span>
-				<span class="nv">$_ci_file</span> <span class="o">=</span> <span class="nv">$_ci_view</span> 
-					<span class="o">.</span> <span class="p">(</span><span class="nv">$docExt</span> <span class="o">?</span> <span class="s1">'.'</span> <span class="o">.</span> <span class="nv">$docExt</span> <span class="o">:</span> <span class="s1">''</span><span class="p">)</span> 
-					<span class="o">.</span> <span class="nx">EXT</span><span class="p">;</span>
-			<span class="p">}</span>
-			<span class="k">else</span> <span class="p">{</span>
-				<span class="nv">$_ci_file</span> <span class="o">=</span> <span class="nv">$_ci_view</span><span class="p">;</span> 
-			<span class="p">}</span>
+		// Set the path to the requested file
+		$_ci_ext = pathinfo($_ci_view, PATHINFO_EXTENSION);
+		if ($_ci_path == '')
+		{
+			//$_ci_file = ($_ci_ext == '') ? $_ci_view.EXT : $_ci_view;
+			if ($_ci_ext == '') {
+				$_ci_file = $_ci_view 
+					. ($docExt ? '.' . $docExt : '') 
+					. EXT;
+			}
+			else {
+				$_ci_file = $_ci_view; 
+			}
 			
-			<span class="nv">$_ci_path</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_view_path</span> <span class="o">.</span> <span class="nv">$_ci_file</span><span class="p">;</span>
+			$_ci_path = $this->_ci_view_path . $_ci_file;
 			
-			<span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nb">file_exists</span><span class="p">(</span><span class="nv">$_ci_path</span><span class="p">)</span> <span class="k">and</span> <span class="nv">$docExt</span> <span class="o">==</span> <span class="s1">'html'</span><span class="p">)</span> <span class="p">{</span>
-				<span class="nv">$_ci_path</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_view_path</span> <span class="o">.</span> <span class="nv">$_ci_view</span> <span class="o">.</span> <span class="nx">EXT</span><span class="p">;</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-		<span class="k">else</span>
-		<span class="p">{</span>
-			<span class="nv">$_ci_x</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_ci_path</span><span class="p">);</span>
-			<span class="nv">$_ci_file</span> <span class="o">=</span> <span class="nb">end</span><span class="p">(</span><span class="nv">$_ci_x</span><span class="p">);</span>
-		<span class="p">}</span>
+			if ( !file_exists($_ci_path) and $docExt == 'html') {
+				$_ci_path = $this->_ci_view_path . $_ci_view . EXT;
+			}
+		}
+		else
+		{
+			$_ci_x = explode('/', $_ci_path);
+			$_ci_file = end($_ci_x);
+		}
 		
-		<span class="k">if</span> <span class="p">(</span> <span class="o">!</span> <span class="nb">file_exists</span><span class="p">(</span><span class="nv">$_ci_path</span><span class="p">))</span>
-		<span class="p">{</span>
-			<span class="nx">show_error</span><span class="p">(</span><span class="s1">'Unable to load the requested file: '</span><span class="o">.</span><span class="nv">$_ci_file</span><span class="p">);</span>
-		<span class="p">}</span>
+		if ( ! file_exists($_ci_path))
+		{
+			show_error('Unable to load the requested file: '.$_ci_file);
+		}
 	
-		<span class="k">if</span> <span class="p">(</span> <span class="nv">$docExt</span> <span class="k">and</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$mimes</span><span class="p">[</span><span class="nv">$docExt</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
-			<span class="nx">show_error</span><span class="p">(</span><span class="s1">'The requested document type is not accepted: '</span><span class="o">.</span><span class="nv">$docExt</span><span class="p">);</span>
-		<span class="p">}</span>
+		if ( $docExt and !isset($mimes[$docExt]) ) {
+			show_error('The requested document type is not accepted: '.$docExt);
+		}
 
-		<span class="k">if</span> <span class="p">(</span> <span class="nv">$docExt</span> <span class="k">and</span> <span class="nv">$_ci_ext</span> <span class="o">==</span> <span class="s1">''</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nv">$mimeType</span> <span class="o">=</span> <span class="nv">$mimes</span><span class="p">[</span><span class="nv">$docExt</span><span class="p">];</span>
-			<span class="nv">$CI</span><span class="o">-&gt;</span><span class="na">output</span><span class="o">-&gt;</span><span class="na">set_header</span><span class="p">(</span><span class="s1">'Content-type: '</span> <span class="o">.</span> <span class="nv">$mimeType</span><span class="p">);</span>
-			<span class="nx">log_message</span><span class="p">(</span><span class="s1">'debug'</span><span class="p">,</span> <span class="s1">'File MIME Type: '</span> <span class="o">.</span> <span class="nv">$mimeType</span><span class="p">);</span>
-		<span class="p">}</span>
+		if ( $docExt and $_ci_ext == '') {
+			$mimeType = $mimes[$docExt];
+			$CI->output->set_header('Content-type: ' . $mimeType);
+			log_message('debug', 'File MIME Type: ' . $mimeType);
+		}
 
-		<span class="c1">// This allows anything loaded using $this-&gt;load (views, files, etc.)
-</span>		<span class="c1">// to become accessible from within the Controller and Model functions.
-</span>		<span class="c1">// Only needed when running PHP 5
-</span>		
-		<span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_is_instance</span><span class="p">())</span>
-		<span class="p">{</span>
-			<span class="nv">$_ci_CI</span> <span class="o">=&amp;</span> <span class="nx">get_instance</span><span class="p">();</span>
-			<span class="k">foreach</span> <span class="p">(</span><span class="nb">get_object_vars</span><span class="p">(</span><span class="nv">$_ci_CI</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$_ci_key</span> <span class="o">=&gt;</span> <span class="nv">$_ci_var</span><span class="p">)</span>
-			<span class="p">{</span>
-				<span class="k">if</span> <span class="p">(</span> <span class="o">!</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$_ci_key</span><span class="p">))</span>
-				<span class="p">{</span>
-					<span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$_ci_key</span> <span class="o">=&amp;</span> <span class="nv">$_ci_CI</span><span class="o">-&gt;</span><span class="nv">$_ci_key</span><span class="p">;</span>
-				<span class="p">}</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
+		// This allows anything loaded using $this->load (views, files, etc.)
+		// to become accessible from within the Controller and Model functions.
+		// Only needed when running PHP 5
+		
+		if ($this->_ci_is_instance())
+		{
+			$_ci_CI =& get_instance();
+			foreach (get_object_vars($_ci_CI) as $_ci_key => $_ci_var)
+			{
+				if ( ! isset($this->$_ci_key))
+				{
+					$this->$_ci_key =& $_ci_CI->$_ci_key;
+				}
+			}
+		}
 
-		<span class="cm">/*
+		/*
 		 * Extract and cache variables
 		 *
-		 * You can either set variables using the dedicated $this-&gt;load_vars()
+		 * You can either set variables using the dedicated $this->load_vars()
 		 * function or via the second parameter of this function. We'll merge
 		 * the two types and cache them so that views that are embedded within
 		 * other views can have access to these variables.
-		 */</span>	
-		<span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$_ci_vars</span><span class="p">))</span>
-		<span class="p">{</span>
-			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_cached_vars</span> <span class="o">=</span> <span class="nb">array_merge</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_cached_vars</span><span class="p">,</span> <span class="nv">$_ci_vars</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="nb">extract</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_cached_vars</span><span class="p">);</span>
+		 */	
+		if (is_array($_ci_vars))
+		{
+			$this->_ci_cached_vars = array_merge($this->_ci_cached_vars, $_ci_vars);
+		}
+		extract($this->_ci_cached_vars);
 				
-		<span class="cm">/*
+		/*
 		 * Buffer the output
 		 *
 		 * We buffer the output for two reasons:
@@ -233,33 +237,33 @@ MY_Loader
 		 * show the elapsed page load time.  Unless we
 		 * can intercept the content right before it's sent to
 		 * the browser and then stop the timer it won't be accurate.
-		 */</span>
-		<span class="nb">ob_start</span><span class="p">();</span>
+		 */
+		ob_start();
 				
-		<span class="c1">// If the PHP installation does not support short tags we'll
-</span>		<span class="c1">// do a little string replacement, changing the short tags
-</span>		<span class="c1">// to standard PHP echo statements.
-</span>		
-		<span class="k">if</span> <span class="p">((</span><span class="nx">bool</span><span class="p">)</span> <span class="o">@</span><span class="nb">ini_get</span><span class="p">(</span><span class="s1">'short_open_tag'</span><span class="p">)</span> <span class="o">===</span> <span class="k">FALSE</span> <span class="nx">AND</span> <span class="nx">config_item</span><span class="p">(</span><span class="s1">'rewrite_short_tags'</span><span class="p">)</span> <span class="o">==</span> <span class="k">TRUE</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="k">echo</span> <span class="k">eval</span><span class="p">(</span><span class="s1">'?&gt;'</span><span class="o">.</span><span class="nb">preg_replace</span><span class="p">(</span><span class="s2">"/;*\s*\?&gt;/"</span><span class="p">,</span> <span class="s2">"; ?&gt;"</span><span class="p">,</span> <span class="nb">str_replace</span><span class="p">(</span><span class="s1">'&lt;?='</span><span class="p">,</span> <span class="s1">'&lt;?php echo '</span><span class="p">,</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="nv">$_ci_path</span><span class="p">)))</span><span class="o">.</span><span class="s1">'&lt;?php '</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="k">else</span>
-		<span class="p">{</span>
-			<span class="k">include</span><span class="p">(</span><span class="nv">$_ci_path</span><span class="p">);</span>
-		<span class="p">}</span>
+		// If the PHP installation does not support short tags we'll
+		// do a little string replacement, changing the short tags
+		// to standard PHP echo statements.
 		
-		<span class="nx">log_message</span><span class="p">(</span><span class="s1">'debug'</span><span class="p">,</span> <span class="s1">'File loaded: '</span><span class="o">.</span><span class="nv">$_ci_path</span><span class="p">);</span>
+		if ((bool) @ini_get('short_open_tag') === FALSE AND config_item('rewrite_short_tags') == TRUE)
+		{
+			echo eval('?>'.preg_replace("/;*\s*\?>/", "; ?>", str_replace('<?=', '<?php echo ', file_get_contents($_ci_path))).'<?php ');
+		}
+		else
+		{
+			include($_ci_path);
+		}
 		
-		<span class="c1">// Return the file data if requested
-</span>		<span class="k">if</span> <span class="p">(</span><span class="nv">$_ci_return</span> <span class="o">===</span> <span class="k">TRUE</span><span class="p">)</span>
-		<span class="p">{</span>		
-			<span class="nv">$buffer</span> <span class="o">=</span> <span class="nb">ob_get_contents</span><span class="p">();</span>
-			<span class="o">@</span><span class="nb">ob_end_clean</span><span class="p">();</span>
-			<span class="k">return</span> <span class="nv">$buffer</span><span class="p">;</span>
-		<span class="p">}</span>
+		log_message('debug', 'File loaded: '.$_ci_path);
+		
+		// Return the file data if requested
+		if ($_ci_return === TRUE)
+		{		
+			$buffer = ob_get_contents();
+			@ob_end_clean();
+			return $buffer;
+		}
 
-		<span class="cm">/*
+		/*
 		 * Flush the buffer... or buff the flusher?
 		 *
 		 * In order to permit views to be nested within
@@ -268,21 +272,21 @@ MY_Loader
 		 * it can be seen and included properly by the first included
 		 * template and any subsequent ones. Oy!
 		 *
-		 */</span>	
-		<span class="k">if</span> <span class="p">(</span><span class="nb">ob_get_level</span><span class="p">()</span> <span class="o">&gt;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_ci_ob_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="nb">ob_end_flush</span><span class="p">();</span>
-		<span class="p">}</span>
-		<span class="k">else</span>
-		<span class="p">{</span>
-			<span class="c1">// PHP 4 requires that we use a global
-</span>			<span class="k">global</span> <span class="nv">$OUT</span><span class="p">;</span>
-			<span class="nv">$OUT</span><span class="o">-&gt;</span><span class="na">append_output</span><span class="p">(</span><span class="nb">ob_get_contents</span><span class="p">());</span>
-			<span class="o">@</span><span class="nb">ob_end_clean</span><span class="p">();</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-<span class="c1">// END Loader Class
-</span><span class="cp">?&gt;</span>
-</code></pre>
+		 */	
+		if (ob_get_level() > $this->_ci_ob_level + 1)
+		{
+			ob_end_flush();
+		}
+		else
+		{
+			// PHP 4 requires that we use a global
+			global $OUT;
+			$OUT->append_output(ob_get_contents());
+			@ob_end_clean();
+		}
+	}
+}
+// END Loader Class
+?>
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/5573545.html</div>

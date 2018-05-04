@@ -52,21 +52,23 @@ mysql_free_result() only needs to be called if you are concerned about how much 
 有碼有真相，來一段測試過程。首先查詢一個上萬筆的記錄結果，然後 sleep() 暫停 PHP 程式執行。再以 top(Unix) 或 工作管理員(windows) 觀看 PHP 程式查詢前後使用的記憶體變化量，就知道查詢的資料結果是被儲存在哪了。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$link</span> <span class="o">=</span> <span class="nb">mysql_connect</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="s1">'mysql_user'</span><span class="p">,</span> <span class="s1">'mysql_password'</span><span class="p">);</span>
 
-<span class="nv">$query</span> <span class="o">=</span> <span class="s1">'SELECT * FROM my_table'</span><span class="p">;</span> <span class="c1">//有幾萬筆資料的查詢結果
-</span>
-<span class="nv">$resource</span> <span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span><span class="nv">$query</span><span class="p">,</span> <span class="nv">$link</span><span class="p">);</span>
+{% highlight php %}
+<?php
+$link = mysql_connect('localhost', 'mysql_user', 'mysql_password');
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">120</span><span class="p">);</span> <span class="c1">//暫停2分鐘
-</span>
-<span class="nb">mysql_free_result</span><span class="p">(</span><span class="nv">$resource</span><span class="p">);</span>
+$query = 'SELECT * FROM my_table'; //有幾萬筆資料的查詢結果
 
-<span class="nb">sleep</span><span class="p">(</span><span class="mi">120</span><span class="p">);</span>
+$resource = mysql_query($query, $link);
 
-<span class="cp">?&gt;</span>
-</code></pre>
+sleep(120); //暫停2分鐘
+
+mysql_free_result($resource);
+
+sleep(120);
+
+?>
+{% endhighlight %}
 
 
 
@@ -91,21 +93,23 @@ mysql 的function 並不是只有 fetch_array ....<br/>
 一個經驗老道的 PHP programmer ，會定義一個 <a href="http://www.php.net/~helly/php/ext/spl/classArrayObject.html">SPL::ArrayObject</a> 的衍生類別，將 resource 及存取函數都封裝進去。(關於 SPL::ArrayObject 亦可參閱我的另一篇文章: <a href="{{ site.baseurl }}/archives/3532653.html">SPL: Use ArrayObject and ArrayIterator to Overload Operators of Array</a>) 
 </p>
 
-<pre class="highlight"><code>$resource = mysql_query($query);
+
+{% highlight php %}
+$resource = mysql_query($query);
 
 class ResultSet extends ArrayObject {
     protected $resource;
 
     public function __construct($resource) {
-        $this-&gt;resource = $resource;
+        $this->resource = $resource;
     }
     
     public function count() {
-        return mysql_num_rows($this-&gt;resource);
+        return mysql_num_rows($this->resource);
     }
 
     public function offsetGet($index) {
-        return mysql_result($this-&gt;resource, $index);
+        return mysql_result($this->resource, $index);
     }  
 }
 
@@ -117,7 +121,7 @@ echo count($dbResultSet);
 $record = mysql_result($resource, 0);
 
 $record = $dbResultSet[0];
-</code></pre>
+{% endhighlight %}
 
 
 <p>

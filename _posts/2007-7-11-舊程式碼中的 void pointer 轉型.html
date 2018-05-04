@@ -17,12 +17,14 @@ permalink: /archives/3641993.html
 <p>
 首先看一下程式碼，《<a href="{{ site.baseurl }}/archives/3556355.html">程式語言中的介面</a>》一文中的是修改過的，而 <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib-20010331</a> 是原本的舊程式碼。取兩段列示於下:
 </p>
-<pre class="highlight"><code><span class="cm">/* 轉型動作1 */</span>
-<span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">length</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">buffer_length</span><span class="p">;</span> <span class="cm">/* 舊程式碼。 */</span>
 
-<span class="cm">/* 轉型動作2 */</span>
-<span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">length</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_length</span><span class="p">;</span> <span class="cm">/* 修改後。 */</span>
-</code></pre>
+{% highlight c %}
+/* 轉型動作1 */
+tmp->striobj.length  = (void*) buffer_length; /* 舊程式碼。 */
+
+/* 轉型動作2 */
+tmp->striobj.length  = (size_t (*)(const void*)) buffer_length; /* 修改後。 */
+{% endhighlight %}
 
 
 <p>

@@ -27,35 +27,37 @@ PHP 有兩組簡便的資料壓縮函數，即採用 ZLIB 壓縮格式的 gzcomp
 <p>
 綜合以上說明，一個簡單的範例如下:
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$o</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-    <span class="k">for</span><span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$o</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$i</span><span class="o">*</span><span class="mi">100</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="nv">$o</span> <span class="o">=</span> <span class="nb">unserialize</span><span class="p">(</span> <span class="nb">gzinflate</span><span class="p">(</span> <span class="nb">base64_decode</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">])</span> <span class="p">)</span> <span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">echo</span> <span class="s1">'&lt;pre&gt;'</span><span class="p">;</span>
-<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$o</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'Length of serialized object: '</span><span class="p">,</span> <span class="nb">strlen</span><span class="p">(</span><span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">),</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'Length of serialized object compressed by deflate: '</span><span class="p">,</span>
-    <span class="nb">gzdeflate</span><span class="p">(</span><span class="nb">strlen</span><span class="p">(</span><span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">)),</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'Length of serialized object compressed by zlib: '</span><span class="p">,</span>
-    <span class="nb">gzcompress</span><span class="p">(</span><span class="nb">strlen</span><span class="p">(</span><span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">)),</span> <span class="s1">'&lt;br/&gt;'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'In most case, the length of data compressed by deflate will shorter than compressed by zlib.&lt;br/&gt;'</span><span class="p">;</span>
+{% highlight php %}
+<?php
+if( !isset($_POST['serialized_obj']) ) {
+    $o = array();
+    for($i = 0; $i < 100; $i++) {
+        $o[$i] = $i*100;
+    }
+}
+else {
+    $o = unserialize( gzinflate( base64_decode($_POST['serialized_obj']) ) );
+}
 
-<span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nb">base64_encode</span><span class="p">(</span> <span class="nb">gzdeflate</span><span class="p">(</span> <span class="nb">serialize</span><span class="p">(</span><span class="nv">$o</span><span class="p">)</span> <span class="p">)</span> <span class="p">);</span>
+echo '<pre>';
+var_dump($o);
+echo '</pre>';
+echo 'Length of serialized object: ', strlen(serialize($o), '<br/>';
+echo 'Length of serialized object compressed by deflate: ',
+    gzdeflate(strlen(serialize($o)), '<br/>';
+echo 'Length of serialized object compressed by zlib: ',
+    gzcompress(strlen(serialize($o)), '<br/>';
+echo 'In most case, the length of data compressed by deflate will shorter than compressed by zlib.<br/>';
 
-<span class="cp">?&gt;</span>
-<span class="nt">&lt;form&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"serialized_obj"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?=</span><span class="nv">$serialized_obj</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;button</span> <span class="na">name=</span><span class="s">"postback"</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>submit<span class="nt">&lt;/button&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-</code></pre>
+$serialized_obj = base64_encode( gzdeflate( serialize($o) ) );
+
+?>
+<form>
+    <input name="serialized_obj" type="hidden" value="<?=$serialized_obj?>"/>
+    <button name="postback" type="submit">submit</button>
+</form>
+{% endhighlight %}
 
 
 <h3>應用 JSON </h3>
@@ -66,50 +68,52 @@ PHP 有兩組簡便的資料壓縮函數，即採用 ZLIB 壓縮格式的 gzcomp
 最後要留意的事項是 magic_quotes_gpc 的影嚮。儲存在網頁表單中的 serialized object ，在提交回 server 時，若 magic_quotes_gpc 設定為 On ，則 PHP 會主動在 serialized object 的資料內容中加上必要的斜線字元 (slash, \) 。必須以 stripslashes() 將之去除，才可以 unserialization 。細心的人會注意到，在範例一，並沒有加上 stripslashes() 的動作。這並非失誤。因為範例一最後儲存的是 base64_encode() 的編碼字串，而這種格式的字串中，並未包含任何會被加上斜線字元的字元。亦即回傳的資料內容並不會受到 magic_quotes_gpc 的影嚮，所以並不需要 stripslashes() 。
 </p>
 <h3>範例二</h3>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$o</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-    <span class="k">for</span><span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$o</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$i</span><span class="o">*</span><span class="mi">100</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span> <span class="nb">get_magic_quotes_gpc</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nb">stripslashes</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">]);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">'serialized_obj'</span><span class="p">];</span>
-    <span class="p">}</span>
-    <span class="nv">$o</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="s1">'/\"/'</span><span class="p">,</span> <span class="s2">"'"</span><span class="p">,</span> <span class="nv">$serialized_obj</span><span class="p">)</span> <span class="p">);</span>
-<span class="p">}</span>
 
-<span class="k">echo</span> <span class="s1">'&lt;pre&gt;'</span><span class="p">;</span>
-<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$o</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
-<span class="nv">$serialized_obj</span> <span class="o">=</span> <span class="nb">json_encode</span><span class="p">(</span> <span class="nv">$o</span> <span class="p">);</span>
-<span class="cp">?&gt;</span>
-<span class="nt">&lt;form</span> <span class="na">id=</span><span class="s">"form1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;select</span> <span class="na">id=</span><span class="s">"DropDownList1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;/select&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"serialized_obj"</span> <span class="na">name=</span><span class="s">"serialized_obj"</span> <span class="na">type=</span><span class="s">"hidden"</span>
-        <span class="na">value=</span><span class="s">"</span><span class="cp">&lt;?=</span><span class="nb">preg_replace</span><span class="p">(</span><span class="s2">"/'/"</span><span class="p">,</span> <span class="s1">'"'</span><span class="p">,</span> <span class="nv">$serialized_obj</span><span class="p">)</span><span class="cp">?&gt;</span><span class="s">"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;button</span> <span class="na">name=</span><span class="s">"postback"</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">&gt;</span>submit<span class="nt">&lt;/button&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span><span class="err">
+{% highlight php %}
+<?php
+if( !isset($_POST['serialized_obj']) ) {
+    $o = array();
+    for($i = 0; $i < 100; $i++) {
+        $o[$i] = $i*100;
+    }
+}
+else {
+    if( get_magic_quotes_gpc() ) {
+        $serialized_obj = stripslashes($_POST['serialized_obj']);
+    }
+    else {
+        $serialized_obj = $_POST['serialized_obj'];
+    }
+    $o = json_decode( preg_replace('/\"/', "'", $serialized_obj) );
+}
+
+echo '<pre>';
+var_dump($o);
+echo '</pre>';
+$serialized_obj = json_encode( $o );
+?>
+<form id="form1">
+    <select id="DropDownList1">
+    </select>
+    <input id="serialized_obj" name="serialized_obj" type="hidden"
+        value="<?=preg_replace("/'/", '"', $serialized_obj)?>"/>
+    <button name="postback" type="submit">submit</button>
+</form>
+<script type="text/javascript">
 YAHOO.util.Event.addListener(
     window,
     "load",
     function() {
-        var o = </span><span class="cp">&lt;?=</span><span class="nv">$serialized_obj</span><span class="cp">?&gt;</span><span class="p">;</span>
-        <span class="c1">//var o = eval( '('+document.getElementById('serialized_obj').value()+')' );</span>
-        <span class="kd">var</span> <span class="nx">list1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'DropDownList1'</span><span class="p">);</span>
-        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">list1</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="nx">o</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> <span class="nx">i</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">);</span>
-<span class="nt">&lt;/script&gt;</span>
-</code></pre>
+        var o = <?=$serialized_obj?>;
+        //var o = eval( '('+document.getElementById('serialized_obj').value()+')' );
+        var list1 = document.getElementById('DropDownList1');
+        for(var i = 0; i < 100; i++) {
+            list1.options[i] = new Option(o[i], i);
+        }
+    }
+);
+</script>
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

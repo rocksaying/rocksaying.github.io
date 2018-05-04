@@ -28,16 +28,18 @@ permalink: /archives/5569813.html
 <p>
 再看一個更具體的例子。控制元件 <var>Human</var> 有一個行為 <code>query</code> 可以查詢某人的資料，第一個參數是人名，最後一個參數是查詢結果的資料格式。
 </p>
-<pre class="highlight"><code>class Human {
+
+{% highlight php %}
+class Human {
     function query( $name, $docType='html') {
-        $result = $db-&gt;query("name={$name}");
+        $result = $db->query("name={$name}");
         
         $view = 'human.' . $docType;
         
         showView($view);        
     }
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -47,37 +49,41 @@ permalink: /archives/5569813.html
 <fieldset>
 <legend>human/query/rock/html</legend>
 回傳:<br/>
-<pre class="highlight"><code>    <span class="nt">&lt;html&gt;</span>
-        <span class="nt">&lt;title&gt;</span>Rock<span class="nt">&lt;/title&gt;</span>
-        <span class="nt">&lt;table&gt;</span>
-            <span class="nt">&lt;tr&gt;</span>
-                <span class="nt">&lt;td&gt;</span>Name<span class="nt">&lt;/td&gt;</span>
-                <span class="nt">&lt;td&gt;</span>rock<span class="nt">&lt;/td&gt;</span>
-            <span class="nt">&lt;/tr&gt;</span>
-            <span class="nt">&lt;tr&gt;</span>
-                <span class="nt">&lt;td&gt;</span>Address<span class="nt">&lt;/td&gt;</span>
-                <span class="nt">&lt;td&gt;</span>Taiwan<span class="nt">&lt;/td&gt;</span>
-            <span class="nt">&lt;/tr&gt;</span>
-            <span class="nt">&lt;tr&gt;</span>
-                <span class="nt">&lt;td&gt;</span>Age<span class="nt">&lt;/td&gt;</span>
-                <span class="nt">&lt;td&gt;</span>??<span class="nt">&lt;/td&gt;</span>
-            <span class="nt">&lt;/tr&gt;</span>
-        <span class="nt">&lt;/table&gt;</span>
-    <span class="nt">&lt;/html&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<html>
+        <title>Rock</title>
+        <table>
+            <tr>
+                <td>Name</td>
+                <td>rock</td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td>Taiwan</td>
+            </tr>
+            <tr>
+                <td>Age</td>
+                <td>??</td>
+            </tr>
+        </table>
+    </html>
+{% endhighlight %}
 
 </fieldset>
 
 <fieldset>
 <legend>human/query/rock/xml</legend>
 回傳:<br/>
-<pre class="highlight"><code>    <span class="cp">&lt;?xml version="1.0" encoding="windows-1250"?&gt;</span>
-    <span class="nt">&lt;human&gt;</span>
-        <span class="nt">&lt;name&gt;</span>rock<span class="nt">&lt;/name&gt;</span>
-        <span class="nt">&lt;address&gt;</span>Taiwan<span class="nt">&lt;/address&gt;</span>
-        <span class="nt">&lt;age&gt;</span>??<span class="nt">&lt;/age&gt;</span>
-    <span class="nt">&lt;/human&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?xml version="1.0" encoding="windows-1250"?>
+    <human>
+        <name>rock</name>
+        <address>Taiwan</address>
+        <age>??</age>
+    </human>
+{% endhighlight %}
 
 </fieldset>
 
@@ -106,38 +112,40 @@ human/query/rock.xml
 撰寫程式碼時，我則在控制元件的建構子中設定文件格式。以 CodeIgniter Framework 為例，我通常會以下列所示的方式撰寫控制元件。
 </p>
 
-<pre class="highlight"><code>class Human extends Controller {
+
+{% highlight php %}
+class Human extends Controller {
     protected $docType;
 
     protected $mimeTypeTable = array(
-        'html' =&gt; 'text/html',
-        'xml'  =&gt; 'application/xml',
-        'json' =&gt; 'application/json'
+        'html' => 'text/html',
+        'xml'  => 'application/xml',
+        'json' => 'application/json'
     );
 
     function __construct() {
         parent::__construct();
 
-        $rsegc = $this-&gt;uri-&gt;total_rsegments();
-        if ($rsegc &gt; $this-&gt;uri-&gt;total_segments()) {
-            $this-&gt;docType = $this-&gt;uri-&gt;rsegment($rsegc);
+        $rsegc = $this->uri->total_rsegments();
+        if ($rsegc > $this->uri->total_segments()) {
+            $this->docType = $this->uri->rsegment($rsegc);
         }
         else {
-            $this-&gt;docType = 'html'; //default
+            $this->docType = 'html'; //default
         }
     }
 
     function query( $name ) {
-        $result = $db-&gt;query("name={$name}");
+        $result = $db->query("name={$name}");
         
-        $viewFile = 'humanQuery.' . $this-&gt;docType;
+        $viewFile = 'humanQuery.' . $this->docType;
 
-        $this-&gt;output-&gt;set_header(
-            'Content-type: ' . $this-&gt;mimeTypeTable[$this-&gt;docType]);
-        $this-&gt;load-&gt;view($viewFile);        
+        $this->output->set_header(
+            'Content-type: ' . $this->mimeTypeTable[$this->docType]);
+        $this->load->view($viewFile);        
     }
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>

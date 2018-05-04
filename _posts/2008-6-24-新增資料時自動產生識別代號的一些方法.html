@@ -19,17 +19,19 @@ permalink: /archives/6223035.html
 <p>
 首先說明 <code>MAX(id)+1</code> 的方式。理論上，這個方式適用於各種 SQL 資料庫系統。至少我在 PostgreSQL, MS SQL Server 上一直這樣用。
 </p>
-<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span>
-    <span class="n">id</span> <span class="n">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
-    <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<span class="p">);</span>
 
-<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
-<span class="k">VALUES</span> <span class="p">(</span>
-	<span class="p">(</span><span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> <span class="k">MAX</span><span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">THEN</span> <span class="mi">1</span> <span class="k">ELSE</span> <span class="k">MAX</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="k">END</span> <span class="k">FROM</span> <span class="n">testid</span><span class="p">),</span>
-	<span class="s1">'abc'</span>
-<span class="p">);</span>
-</code></pre>
+{% highlight text %}
+CREATE TABLE testid (
+    id INT PRIMARY KEY,
+    content CHAR(10)
+);
+
+INSERT INTO testid (id, content)
+VALUES (
+	(SELECT CASE WHEN MAX(id) IS NULL THEN 1 ELSE MAX(id)+1 END FROM testid),
+	'abc'
+);
+{% endhighlight %}
 
 <p>
 這個語法是用子查詢敘述呼叫 <code>MAX()</code> 找出目前 <var>id</var> 欄位的最大值再加1，然後將此子查詢的結果做為主查詢中插入 <var>id</var> 欄位的值。
@@ -92,18 +94,20 @@ Anyway, 當我發覺 MySQL 的鎖定能力有限時，我也不打算在這上�
 </table>
 
 <h5>Example</h5>
-<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span> <span class="n">SERIAL</span> <span class="k">UNIQUE</span><span class="p">,</span> <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
-<span class="c1">-- PostgreSQL, SERIAL is also apply NOT NULL constraint automatically.
-</span>
-<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span> <span class="n">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">IDENTITY</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
-<span class="c1">-- MS SQL Server
-</span>
-<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">testid</span> <span class="p">(</span><span class="n">id</span> <span class="n">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span> <span class="n">content</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
-<span class="c1">-- MySQL, there can be only one auto column and it must be defined as a key.
-</span>
-<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">testid</span> <span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
-<span class="c1">-- You don't need to specify the value of id.
-</span></code></pre>
+
+{% highlight text %}
+CREATE TABLE testid (id SERIAL UNIQUE, content CHAR(10));
+-- PostgreSQL, SERIAL is also apply NOT NULL constraint automatically.
+
+CREATE TABLE testid (id INT NOT NULL IDENTITY(1,1), content CHAR(10));
+-- MS SQL Server
+
+CREATE TABLE testid (id INT PRIMARY KEY AUTO_INCREMENT, content CHAR(10));
+-- MySQL, there can be only one auto column and it must be defined as a key.
+
+INSERT INTO testid (content) VALUES ('abc');
+-- You don't need to specify the value of id.
+{% endhighlight %}
 
 
 <p>

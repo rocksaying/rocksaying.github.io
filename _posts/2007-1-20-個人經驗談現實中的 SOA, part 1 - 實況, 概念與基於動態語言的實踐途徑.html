@@ -61,27 +61,31 @@ SOA 的基本概念，是將一個已上線的系統 (system) 視為一個類別
 <p>
 程序員將整個系統視為一個個體封裝起來，透過公開行為調用之概念，其程式碼應該像這樣:
 </p>
-<pre class="highlight"><code><span class="n">class</span> <span class="n">PcxxxxSupplyManagerService</span> <span class="p">{</span>
-    <span class="n">protected</span> <span class="n">SOAService</span> <span class="n">pcxxxx</span><span class="p">;</span>
-    <span class="n">public</span> <span class="n">Product</span> <span class="n">getProduct</span><span class="p">(</span><span class="n">ProductId</span> <span class="n">id</span><span class="p">);</span>
-    <span class="n">public</span> <span class="n">ProductId</span> <span class="n">createProduct</span><span class="p">(</span><span class="n">Product</span> <span class="n">product</span><span class="p">);</span>
-    <span class="n">public</span> <span class="n">boolean</span> <span class="n">updateProduct</span><span class="p">(</span><span class="n">Product</span> <span class="n">product</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight text %}
+class PcxxxxSupplyManagerService {
+    protected SOAService pcxxxx;
+    public Product getProduct(ProductId id);
+    public ProductId createProduct(Product product);
+    public boolean updateProduct(Product product);
+}
+{% endhighlight %}
 
 <p>
 如果我要先知道他的系統是如何實作的，亦即我要先繼承以接觸到該系統的實作細節，才能實作我要的功能。而我在實作過程中必須調用父類別的保護方法與成員，才能完成工作。那程式碼就變成這樣:
 </p>
-<pre class="highlight"><code><span class="n">class</span> <span class="n">PcxxxxService</span> <span class="p">{</span> <span class="c1">//某系統實作內容
-</span><span class="p">}</span>
 
-<span class="n">class</span> <span class="n">PcxxxxSupplyManagerService</span> <span class="o">:</span> <span class="n">PcxxxxService</span><span class="p">{</span>
-    <span class="n">protected</span> <span class="n">SOAService</span> <span class="n">pcxxxx</span><span class="p">;</span>
-    <span class="n">public</span> <span class="n">Product</span> <span class="n">getProduct</span><span class="p">(</span><span class="n">ProductId</span> <span class="n">id</span><span class="p">);</span>
-    <span class="n">public</span> <span class="n">ProductId</span> <span class="n">createProduct</span><span class="p">(</span><span class="n">Product</span> <span class="n">product</span><span class="p">);</span>
-    <span class="n">public</span> <span class="n">boolean</span> <span class="n">updateProduct</span><span class="p">(</span><span class="n">Product</span> <span class="n">product</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight text %}
+class PcxxxxService { //某系統實作內容
+}
+
+class PcxxxxSupplyManagerService : PcxxxxService{
+    protected SOAService pcxxxx;
+    public Product getProduct(ProductId id);
+    public ProductId createProduct(Product product);
+    public boolean updateProduct(Product product);
+}
+{% endhighlight %}
 
 <p>
 兩者的差異在於，前者維持兩系統／服務元件之關係為「使用關係」，後者卻是「繼承關係」。從前文對 SOA 的概念說明來看，在 SOA 中的各服務元件之關係應該是鬆散耦合的「使用關係」。我實踐 SOA 概念組合新的資訊作業流程時，我不必知道原有的那些資訊系統內部如何實作，甚至我也不必取得特定的 API 。我僅僅是透過公開行為「使用」那些原有資訊系統。

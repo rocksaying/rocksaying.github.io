@@ -37,7 +37,7 @@ daemon
 基本上，程式人員需要讀取上述檔案的內容，找到 <var>IBUS_ADDRESS</var> 這一欄的內容，這就是 ibus-daemon 車站的地址。乘客要到這個地址搭 IBus。下例是以 dbus-send 搭上 IBus 查詢 IBus 主介面內容與切換到中文行列30輸入法的範例。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ cat ~/.config/ibus/bus/652062d949d803b309ab55a9xxxxxxxx-unix-0
 # This file is created by ibus-daemon, please do not modify it
 IBUS_ADDRESS=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em>
@@ -57,7 +57,7 @@ $ dbus-send --address=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em> 
   --print-reply --dest=org.freedesktop.IBus <em>/org/freedesktop/IBus/InputContext_65</em> \
   org.freedesktop.IBus.InputContext.SetEngine string:"array"
 
-</pre>
+</code></pre>
 
 <ul>
     <li>IBus 的服務名稱是: <dfn>org.freedesktop.IBus</dfn>。</li>
@@ -70,27 +70,28 @@ $ dbus-send --address=<em>unix:abstract=/tmp/dbus-wwy2lqST5r,guid=d8dae579</em> 
 IBus 的安裝套件中，包含了專供 Python 使用的 ibus 庫。Python 可以直接引入 ibus 庫來控制，不需要了解如何取得 idbus-daemon 的地址。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python</span>
 
-<span class="kn">import</span> <span class="nn">ibus</span>
-<span class="kn">import</span> <span class="nn">time</span>
+{% highlight python %}
+#!/usr/bin/python
+import ibus
+import time
 
-<span class="n">bus</span> <span class="o">=</span> <span class="n">ibus</span><span class="o">.</span><span class="n">Bus</span><span class="p">()</span>
+bus = ibus.Bus()
 
-<span class="n">input_context_path</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">current_input_contxt</span><span class="p">()</span>  <span class="c"># incorrect spelling?</span>
-<span class="n">input_context</span> <span class="o">=</span> <span class="n">ibus</span><span class="o">.</span><span class="n">inputcontext</span><span class="o">.</span><span class="n">InputContext</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">input_context_path</span><span class="p">)</span>
+input_context_path = bus.current_input_contxt()  # incorrect spelling?
+input_context = ibus.inputcontext.InputContext(bus, input_context_path)
 
-<span class="c">#mock_engine = ibus.EngineDesc(name='array')</span>
-<span class="c">#input_context.set_engine(mock_engine)</span>
+#mock_engine = ibus.EngineDesc(name='array')
+#input_context.set_engine(mock_engine)
 
-<span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="n">bus</span><span class="o">.</span><span class="n">list_active_engines</span><span class="p">():</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"Set input engine to: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">engine</span><span class="o">.</span><span class="n">longname</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"description: </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">engine</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
-    <span class="n">input_context</span><span class="o">.</span><span class="n">set_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">3.0</span><span class="p">)</span>
+for engine in bus.list_active_engines():
+    print("Set input engine to: %s" % engine.longname)
+    print("description: %s" % engine.description)
+    input_context.set_engine(engine)
+    time.sleep(3.0)
 
-<span class="n">input_context</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
-</code></pre>
+input_context.disable()
+{% endhighlight %}
 
 
 <p>

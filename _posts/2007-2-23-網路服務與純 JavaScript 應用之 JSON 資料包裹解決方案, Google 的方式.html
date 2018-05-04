@@ -16,34 +16,38 @@ Google 查詢服務回傳的資料格式是它自家的 GData 文件 (<span clas
 <!--more-->
 <h4>Google 的方式</h4>
 <p>前文 (<a href="{{ site.baseurl }}/archives/2749975.html">網路服務與純 JavaScript 應用之 JSON 資料包裹解決方案</a>) 將 JSON 資料包裹在指派變數的程式碼。 Google 採用了更簡單的方式 (<span class="note">Google 的 GData APIs 以 <a href="http://code.google.com/apis/gdata/json.html">Using JSON with Google Data APIs</a> 所說的方式，讓使用者可以 JavaScript 建立網頁應用工具</span>)，其將 JSON 資料視為引數，傳遞給使用者指定的回呼函數 (callback) 。回呼函數的名稱需以查詢字串的方式添加在查詢服務的 URL 格式 (此時的 URL 格式不符合嚴謹的 REST 格式)，例如：<var>http://example.com/ID/bookmark.js?callback=queryHandler</var> ，而查詢服務依使用者指定的函數名稱回傳下列程式碼：</p>
-<pre class="highlight"><code><span class="nx">queryHandler</span><span class="p">(</span>
-    <span class="p">{</span>   <span class="cm">/*JSON data*/</span>
-        <span class="s1">'title'</span> <span class="p">:</span> <span class="s1">'書籤標題'</span><span class="p">,</span>
-        <span class="s1">'link'</span> <span class="p">:</span> <span class="s1">'http://example.com/'</span><span class="p">,</span>
-        <span class="s1">'description'</span> <span class="p">:</span> <span class="s1">'書籤說明、引述...'</span>
-    <span class="p">}</span>
-<span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+queryHandler(
+    {   /*JSON data*/
+        'title' : '書籤標題',
+        'link' : 'http://example.com/',
+        'description' : '書籤說明、引述...'
+    }
+);
+{% endhighlight %}
 
 <p>
 對照前文最後一段範例程式碼，則使用者載入方式便是將回呼函數名稱添加在第10行 restJs.src 的 URL 之後，並且可以省去輪詢動作 (第13到21行) 。
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">queryHemidemiUsersHandler</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'有 '</span> <span class="o">+</span> <span class="nx">Hemidemi</span><span class="p">.</span><span class="nx">users</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span> <span class="s1">' 人收藏此文章。'</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="kd">function</span> <span class="nx">queryHemidemiUsers</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">restId</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">URL</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">restUrl</span> <span class="o">=</span> <span class="s1">'http://www.hemidemi.com/bookmark/'</span> <span class="o">+</span> <span class="nx">restId</span> <span class="o">+</span> <span class="s1">'/users.js'</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">restJs</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
-    <span class="nx">restJs</span><span class="p">.</span><span class="nx">type</span> <span class="o">=</span> <span class="s1">'text/javascript'</span><span class="p">;</span>
-    <span class="nx">restJs</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">restUrl</span> <span class="o">+</span> <span class="s1">'?callback=queryHemidemiUsersHandler'</span><span class="p">;</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'head'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">restJs</span><span class="p">);</span>
-<span class="p">}</span>
+{% highlight javascript %}
+function queryHemidemiUsersHandler() {
+    window.alert('有 ' + Hemidemi.users.items.length + ' 人收藏此文章。');
+}
 
-<span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="nb">window</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onload'</span><span class="p">,</span> <span class="nx">queryHemidemiUsers</span><span class="p">);</span>
-<span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="nx">queryHemidemiUsers</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
-</code></pre>
+function queryHemidemiUsers() {
+    var restId = encodeURIComponent(document.URL);
+    var restUrl = 'http://www.hemidemi.com/bookmark/' + restId + '/users.js';
+    var restJs = document.createElement('script');
+    restJs.type = 'text/javascript';
+    restJs.src = restUrl + '?callback=queryHemidemiUsersHandler';
+    document.getElementsByTagName('head')[0].appendChild(restJs);
+}
+
+if (window.attachEvent) window.attachEvent('onload', queryHemidemiUsers);
+else window.addEventListener('load', queryHemidemiUsers, false);
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

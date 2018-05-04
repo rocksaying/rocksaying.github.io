@@ -32,77 +32,81 @@ cf 的<a href="{{ site.baseurl }}/archives/3679815.html#comment-11558653">回應
 <p>
 下列範例用到了 C99 後加入的 Overload 功能。如果不使用 Overload ，那麼函數名稱通常要分別寫成: <code>max_i(), max_f(), max_c(), print_i(), print_f(), print_c()</code> 等相似的名稱。那是更為傳統的寫法。
 </p>
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-</span>
-<span class="kt">int</span> <span class="nf">max</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">// Overload max()
-</span><span class="kt">float</span> <span class="nf">max</span><span class="p">(</span><span class="kt">float</span> <span class="n">n</span><span class="p">,</span> <span class="kt">float</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">// Overload max()
-</span><span class="kt">char</span> <span class="nf">max</span><span class="p">(</span><span class="kt">char</span> <span class="n">n</span><span class="p">,</span> <span class="kt">char</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">print</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">// Overload print()
-</span><span class="kt">void</span> <span class="nf">print</span><span class="p">(</span><span class="kt">float</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">// Overload print()
-</span><span class="kt">void</span> <span class="nf">print</span><span class="p">(</span><span class="kt">char</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
-<span class="p">}</span>
+{% highlight c %}
+#include <stdio.h>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">float</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">2</span><span class="p">.</span><span class="mi">321</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">123</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">x</span> <span class="o">=</span> <span class="sc">'x'</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="sc">'y'</span><span class="p">;</span>
+int max(int n, int m) {
+    return (n >= m ? n : m);
+}
+// Overload max()
+float max(float n, float m) {
+    return (n >= m ? n : m);
+}
+// Overload max()
+char max(char n, char m) {
+    return (n >= m ? n : m);
+}
 
-    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">));</span>
-    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">));</span>
-    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">));</span>
+void print(int n) {
+    printf("%d\n", n);
+}
+// Overload print()
+void print(float n) {
+    printf("%f\n", n);
+}
+// Overload print()
+void print(char n) {
+    printf("%c\n", n);
+}
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+int main() {
+    float e = 2.321, f = 1.123;
+    int i = 2, j = 1;
+    char x = 'x', y = 'y';
+
+    print(max(e, f));
+    print(max(i, j));
+    print(max(x, y));
+
+    return 0;
+}
+{% endhighlight %}
 
 
 <h5>使用 Template 後</h5>
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-</span>
-<span class="n">template</span> <span class="o">&lt;</span><span class="kr">typename</span> <span class="n">var</span><span class="o">&gt;</span> <span class="n">var</span> <span class="n">max</span><span class="p">(</span><span class="n">var</span> <span class="n">n</span><span class="p">,</span> <span class="n">var</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">?</span> <span class="n">n</span> <span class="o">:</span> <span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="n">template</span> <span class="o">&lt;</span><span class="kr">typename</span> <span class="n">var</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="n">var</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">// specialized print()
-</span><span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="kt">float</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="c1">// specialized print()
-</span><span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="kt">char</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
-<span class="p">}</span>
+{% highlight c %}
+#include <stdio.h>
 
-<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">float</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">2</span><span class="p">.</span><span class="mi">321</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">123</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">x</span> <span class="o">=</span> <span class="sc">'x'</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="sc">'y'</span><span class="p">;</span>
+template <typename var> var max(var n, var m) {
+    return (n >= m ? n : m);
+}
 
-    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">));</span>
-    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">));</span>
-    <span class="n">print</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">));</span>
+template <typename var> void print(var n) {
+    printf("%d\n", n);
+}
+// specialized print()
+void print(float n) {
+    printf("%f\n", n);
+}
+// specialized print()
+void print(char n) {
+    printf("%c\n", n);
+}
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+int main() {
+    float e = 2.321, f = 1.123;
+    int i = 2, j = 1;
+    char x = 'x', y = 'y';
+
+    print(max(e, f));
+    print(max(i, j));
+    print(max(x, y));
+
+    return 0;
+}
+{% endhighlight %}
 
 <p>
 一個只用基本資料型態的 C 程式，在使用樣板進行泛型設計之後，程式碼內容成功地減肥了。
@@ -113,18 +117,20 @@ cf 的<a href="{{ site.baseurl }}/archives/3679815.html#comment-11558653">回應
 我個人並非以語法區分動態語言和靜態語言，參閱《<a href="{{ site.baseurl }}/archives/3530367.html">如何區分動態語言和靜態語言</a>》。傳統上沒有編譯器的程式語言，如 Ruby, JavaScript, Perl, Python 等，我們目前慣稱為動態語言。這些程式語言的語意通常就有泛型概念。如下列 JavaScript 程式中的 <code>max()</code>，和 C++ 樣板相比，沒什麼不同。
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">max</span><span class="p">(</span><span class="nx">n</span><span class="p">,</span> <span class="nx">m</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">(</span><span class="nx">n</span> <span class="o">&gt;=</span> <span class="nx">m</span> <span class="p">?</span> <span class="nx">n</span> <span class="p">:</span> <span class="nx">m</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="kd">var</span> <span class="nx">e</span> <span class="o">=</span> <span class="mf">2.321</span><span class="p">,</span> <span class="nx">f</span> <span class="o">=</span> <span class="mf">1.123</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="s1">'x'</span><span class="p">,</span> <span class="nx">y</span> <span class="o">=</span> <span class="s1">'y'</span><span class="p">;</span>
+{% highlight c %}
+function max(n, m) {
+    return (n >= m ? n : m);
+}
 
-<span class="nx">print</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">f</span><span class="p">));</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span><span class="p">));</span>
-<span class="nx">print</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">));</span>
-</code></pre>
+var e = 2.321, f = 1.123;
+var i = 2, j = 1;
+var x = 'x', y = 'y';
+
+print(max(e, f));
+print(max(i, j));
+print(max(x, y));
+{% endhighlight %}
 
 
 <p>

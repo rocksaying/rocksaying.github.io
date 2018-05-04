@@ -11,43 +11,45 @@ permalink: /archives/3031499.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="c1">#usage: inser_ga_code.rb  GA_ID  dir</span>
-<span class="nb">require</span> <span class="s1">'Find'</span>
 
-<span class="n">gaID</span> <span class="o">=</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">gaCode</span> <span class="o">=</span> <span class="sx">%Q{
-&lt;script src="http://www.google-analytics.com/urchin.js" type="text/javascript"&gt;
-&lt;/script&gt;
-&lt;script type="text/javascript"&gt;
-_uacct = "</span><span class="si">#{</span><span class="n">gaID</span><span class="si">}</span><span class="sx">";
+{% highlight text %}
+#usage: inser_ga_code.rb  GA_ID  dir
+require 'Find'
+
+gaID = ARGV[0]
+gaCode = %Q{
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+</script>
+<script type="text/javascript">
+_uacct = "#{gaID}";
 urchinTracker();
-&lt;/script&gt;
-}</span>
+</script>
+}
 
-<span class="n">dir</span> <span class="o">=</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="no">Find</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">filepath</span><span class="o">|</span>
-<span class="c1">#%w[c:/index.htm c:/index2.html].each do |filepath|  #for test</span>
-    <span class="k">next</span> <span class="k">if</span> <span class="no">FileTest</span><span class="p">.</span><span class="nf">directory?</span> <span class="n">filepath</span>
-    <span class="k">next</span> <span class="k">if</span> <span class="no">File</span><span class="p">.</span><span class="nf">extname</span><span class="p">(</span><span class="n">filepath</span><span class="p">).</span><span class="nf">scan</span><span class="p">(</span><span class="sr">/\.html?$/i</span><span class="p">).</span><span class="nf">empty?</span>
-    <span class="nb">puts</span> <span class="n">filepath</span>
+dir = ARGV[1]
+Find.find(dir) do |filepath|
+#%w[c:/index.htm c:/index2.html].each do |filepath|  #for test
+    next if FileTest.directory? filepath
+    next if File.extname(filepath).scan(/\.html?$/i).empty?
+    puts filepath
 
-    <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">'rb+'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">fh</span><span class="o">|</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="n">fh</span><span class="p">.</span><span class="nf">read</span>
-        <span class="k">if</span> <span class="no">Regexp</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="sx">%Q(_uacct = "</span><span class="si">#{</span><span class="n">gaID</span><span class="si">}</span><span class="sx">")</span><span class="p">)</span> <span class="o">=~</span> <span class="n">content</span> <span class="k">then</span>
-            <span class="nb">puts</span> <span class="s1">'ok'</span>
-        <span class="k">else</span>
-            <span class="n">i</span> <span class="o">=</span> <span class="n">content</span><span class="p">.</span><span class="nf">rindex</span> <span class="sr">/&lt;\/body&gt;/i</span>
-            <span class="k">next</span> <span class="k">unless</span> <span class="n">i</span>
-            <span class="n">fh</span><span class="p">.</span><span class="nf">pos</span> <span class="o">=</span> <span class="n">i</span>
-            <span class="n">fh</span><span class="p">.</span><span class="nf">print</span> <span class="n">gaCode</span><span class="p">,</span> <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">.</span><span class="nf">.</span><span class="n">content</span><span class="p">.</span><span class="nf">length</span><span class="p">]</span>
-            <span class="c1">#fh.rewind</span>
-            <span class="c1">#newContent = content[0...i] + gaCode + content[i..content.length]</span>
-            <span class="c1">#File.open('index.htm.new', 'w') {|nfh| nfh &lt;&lt; newContent}</span>
-            <span class="nb">puts</span> <span class="s1">'add'</span>
-        <span class="k">end</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-</code></pre>
+    File.open(filepath, 'rb+') do |fh|
+        content = fh.read
+        if Regexp.new(%Q(_uacct = "#{gaID}")) =~ content then
+            puts 'ok'
+        else
+            i = content.rindex /<\/body>/i
+            next unless i
+            fh.pos = i
+            fh.print gaCode, content[i..content.length]
+            #fh.rewind
+            #newContent = content[0...i] + gaCode + content[i..content.length]
+            #File.open('index.htm.new', 'w') {|nfh| nfh << newContent}
+            puts 'add'
+        end
+    end
+end
+{% endhighlight %}
 
 <h4>筆記</h4>
 <ul>

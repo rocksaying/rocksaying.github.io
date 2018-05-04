@@ -43,21 +43,23 @@ sudo ln -s /usr/include/samba-4.0/util /usr/include
 <p>
 不幸的是，定義在 mapi_nameid.h 中的屬性 ID 值也存在不少錯誤。幾乎所有 <code>001f</code> 結尾的 ID 值都應改成 <code>001e</code>。例如:
 </p>
-<pre class="highlight"><code><span class="c1">//#define PidLidEmail1DisplayName                             0x8080001f
-</span><span class="cp">#define PidLidEmail1DisplayName                             0x8080001e
-</span>
-<span class="c1">//#define PidLidEmail1AddressType                             0x8082001f
-</span><span class="cp">#define PidLidEmail1AddressType                             0x8082001e
-</span>
-<span class="c1">//#define PidLidEmail1EmailAddress                            0x8083001f
-</span><span class="cp">#define PidLidEmail1EmailAddress                            0x8083001e
-</span>
-<span class="c1">//#define PidLidEmail1OriginalDisplayName                     0x8084001f
-</span><span class="cp">#define PidLidEmail1OriginalDisplayName                     0x8084001e
-</span>
-<span class="c1">//#define PidLidEmail1EmailType                               0x8087001f
-</span><span class="cp">#define PidLidEmail1EmailType                               0x8087001e
-</span></code></pre>
+
+{% highlight c %}
+//#define PidLidEmail1DisplayName                             0x8080001f
+#define PidLidEmail1DisplayName                             0x8080001e
+
+//#define PidLidEmail1AddressType                             0x8082001f
+#define PidLidEmail1AddressType                             0x8082001e
+
+//#define PidLidEmail1EmailAddress                            0x8083001f
+#define PidLidEmail1EmailAddress                            0x8083001e
+
+//#define PidLidEmail1OriginalDisplayName                     0x8084001f
+#define PidLidEmail1OriginalDisplayName                     0x8084001e
+
+//#define PidLidEmail1EmailType                               0x8087001f
+#define PidLidEmail1EmailType                               0x8087001e
+{% endhighlight %}
 
 <p>
 要怪就怪微軟吧，因為他們放出的 <a href="http://msdn.microsoft.com/en-us/library/cc307725.aspx">Exchange protocols</a> 規格書並未講明這些屬性 ID 值是多少。
@@ -66,18 +68,18 @@ sudo ln -s /usr/include/samba-4.0/util /usr/include
 <p>
 在 /usr/include/libmapi/libmapi.h 亦未定義 <code>PRIx64</code>，請補下列定義程式碼。
 </p>
-<pre class="highlight"><code>
-<span class="cm">/* These are essentially local versions of part of the
-   C99 __STDC_FORMAT_MACROS */</span>
-<span class="cp">#ifndef PRIx64
+
+{% highlight c %}
+/* These are essentially local versions of part of the
+   C99 __STDC_FORMAT_MACROS */
+#ifndef PRIx64
 #if __WORDSIZE == 64
-</span>  <span class="cp">#define PRIx64        "lx"
+  #define PRIx64        "lx"
 #else
-</span>  <span class="cp">#define PRIx64        "llx"
+  #define PRIx64        "llx"
 #endif
 #endif
-</span>
-</code></pre>
+{% endhighlight %}
 
 
 
@@ -92,12 +94,13 @@ Openchange 提供 mapiprofile 此工具建置帳號簡介。然而這個工具�
 <h5>
 mapiprofile.c
 </h5>
-<pre class="highlight"><code>
-	<span class="cm">/* This is only convenient here and should be replaced at some point */</span>
-	<span class="n">mapi_profile_add_string_attr</span><span class="p">(</span><span class="n">profname</span><span class="p">,</span> <span class="s">"codepage"</span><span class="p">,</span> <span class="s">"0x4e4"</span><span class="p">);</span>
-	<span class="n">mapi_profile_add_string_attr</span><span class="p">(</span><span class="n">profname</span><span class="p">,</span> <span class="s">"language"</span><span class="p">,</span> <span class="n">lcid</span> <span class="p">);</span>
-	<span class="n">mapi_profile_add_string_attr</span><span class="p">(</span><span class="n">profname</span><span class="p">,</span> <span class="s">"method"</span><span class="p">,</span> <span class="s">"0x409"</span><span class="p">);</span>
-</code></pre>
+
+{% highlight c %}
+/* This is only convenient here and should be replaced at some point */
+	mapi_profile_add_string_attr(profname, "codepage", "0x4e4");
+	mapi_profile_add_string_attr(profname, "language", lcid );
+	mapi_profile_add_string_attr(profname, "method", "0x409");
+{% endhighlight %}
 
 <p>
 Codepage 決定字元集 (charset)，Method 決定內碼 (encoding)，Language 僅僅表示本地用符號。在中日韓(CJK)語系環境中，Codepage 與 method 才是最重要的參數。Language 基本無用。Mapiprofile 卻將 Codepage 與 method 寫死。在未經修正的情形下，它不能應用於中日韓環境。簡單地說，如果沒有經過修改，它的預設狀態無法支援中文系統。
@@ -119,19 +122,21 @@ Openchage 字元轉碼程序是錯的
 <p>
 以下為我個人抓出的內碼對照表之一份小表，第一欄是正確的 UTF-8 內碼，第二欄是 Openchange 輸出的錯誤內碼:
 </p>
-<pre class="highlight"><code><span class="k">static</span> <span class="n">_sCode_oCode_t</span> <span class="n">secterC383</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x9C</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC2\xA3</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x8E</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x84</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x92</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x86</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x90</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x89</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x9A</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\x9C</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x94</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\xB6</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x96</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\xBB</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\x98</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xC3\xBF</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="s">"</span><span class="se">\xC7\xB9</span><span class="s">"</span><span class="p">,</span> <span class="s">"</span><span class="se">\xC3\x83\xE2\x95\xA3</span><span class="s">"</span><span class="p">},</span>
-	<span class="p">{</span><span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">}</span>
-<span class="p">};</span>
-</code></pre>
+
+{% highlight c %}
+static _sCode_oCode_t secterC383[] = {
+	{"\xC7\x9C", "\xC3\x83\xC2\xA3"},
+	{"\xC7\x8E", "\xC3\x83\xC3\x84"},
+	{"\xC7\x92", "\xC3\x83\xC3\x86"},
+	{"\xC7\x90", "\xC3\x83\xC3\x89"},
+	{"\xC7\x9A", "\xC3\x83\xC3\x9C"},
+	{"\xC7\x94", "\xC3\x83\xC3\xB6"},
+	{"\xC7\x96", "\xC3\x83\xC3\xBB"},
+	{"\xC7\x98", "\xC3\x83\xC3\xBF"},
+	{"\xC7\xB9", "\xC3\x83\xE2\x95\xA3"},
+	{NULL, NULL}
+};
+{% endhighlight %}
 
 <p>
 我彙整了 BIG5 與 GB2312 兩份字元集約一萬五千多字後，編製出來的內碼對照表約有600KB，這是經過編譯後的大小。

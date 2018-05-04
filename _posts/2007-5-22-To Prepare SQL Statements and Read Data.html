@@ -19,15 +19,16 @@ permalink: /archives/3321763.html
 測試案例。這是一份 SQL 指令稿，採用標準 SQL 語法定義變數，並代入查詢敘述中。
 這份指令稿中包含了兩道查詢敘述，故會得到兩份結果表。
 </p>
-<pre class="highlight"><code><span class="k">DECLARE</span> <span class="o">@</span><span class="n">start_date</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-<span class="k">SET</span> <span class="o">@</span><span class="n">start_date</span> <span class="o">=</span> <span class="s1">'2007-02-01'</span><span class="p">;</span>
 
-<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">orders</span>
-<span class="k">WHERE</span> <span class="n">sdate</span> <span class="o">=</span> <span class="o">@</span><span class="n">start_date</span> <span class="k">AND</span> <span class="n">edate</span> <span class="o">=</span> <span class="o">@</span><span class="n">end_date</span> <span class="k">AND</span> <span class="n">note</span> <span class="k">LIKE</span> <span class="o">@</span><span class="n">note</span><span class="p">;</span>
+{% highlight php %}
+DECLARE @start_date varchar(10);
+SET @start_date = '2007-02-01';
 
-<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">customers</span> <span class="k">WHERE</span> <span class="n">customer</span> <span class="o">=</span> <span class="o">@</span><span class="n">customer_id</span>
+SELECT * FROM orders
+WHERE sdate = @start_date AND edate = @end_date AND note LIKE @note;
 
-</code></pre>
+SELECT * FROM customers WHERE customer = @customer_id
+{% endhighlight %}
 
 </fieldset>
 
@@ -37,40 +38,42 @@ permalink: /archives/3321763.html
 分別建立兩份表，一份是要代換的變數名稱(<var>$patterns</var>)，一份是變數值(<var>$replacements</var>)。
 接著以 <code>preg_replace()</code> 完成 SQL 敘述的變數代換動作。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$start_date</span> <span class="o">=</span> <span class="s1">'2007-01-01'</span><span class="p">;</span> <span class="c1">//假設這些變數是使用者輸入的資料
-</span><span class="nv">$end_date</span> <span class="o">=</span> <span class="s1">'2007-04-30'</span><span class="p">;</span>
-<span class="nv">$customer_id</span> <span class="o">=</span> <span class="mi">101</span><span class="p">;</span>
 
-<span class="nv">$sheetsFilePath</span> <span class="o">=</span> <span class="s1">'test.sql'</span><span class="p">;</span> <span class="c1">//外部 SQL 指令稿
-</span>
-<span class="nv">$s</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="nv">$sheetsFilePath</span><span class="p">);</span>
+{% highlight php %}
+<?php
+$start_date = '2007-01-01'; //假設這些變數是使用者輸入的資料
+$end_date = '2007-04-30';
+$customer_id = 101;
 
-<span class="nb">preg_match_all</span><span class="p">(</span><span class="s1">'/@(\w+)/'</span><span class="p">,</span> <span class="nv">$s</span><span class="p">,</span> <span class="nv">$m</span><span class="p">);</span>
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+$sheetsFilePath = 'test.sql'; //外部 SQL 指令稿
 
-<span class="nv">$patterns</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="nv">$replacements</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$$name</span><span class="p">))</span>
-        <span class="k">continue</span><span class="p">;</span> <span class="cm">/*Not Replace*/</span>
-    <span class="nv">$patterns</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'/@'</span> <span class="o">.</span> <span class="nv">$name</span> <span class="o">.</span> <span class="s1">'([^\w])/'</span><span class="p">;</span>
-    <span class="nv">$replacements</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">is_numeric</span><span class="p">(</span><span class="nv">$$name</span><span class="p">)</span> <span class="o">?</span> <span class="nv">$$name</span> <span class="o">:</span> <span class="s2">"'</span><span class="si">{</span><span class="nv">$$name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span> <span class="o">.</span> <span class="s1">'$1'</span><span class="p">;</span>
-<span class="p">}</span>
+$s = file_get_contents($sheetsFilePath);
 
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$patterns</span><span class="p">);</span>
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$replacements</span><span class="p">);</span>
+preg_match_all('/@(\w+)/', $s, $m);
+print_r($m[1]);
 
-<span class="cm">/*
+$patterns = array();
+$replacements = array();
+foreach ($m[1] as $name) {
+    if (!isset($$name))
+        continue; /*Not Replace*/
+    $patterns[$name] = '/@' . $name . '([^\w])/';
+    $replacements[$name] = (is_numeric($$name) ? $$name : "'{$$name}'") . '$1';
+}
+
+print_r($patterns);
+print_r($replacements);
+
+/*
 注意: 有一種符合 REGEX 語意但不合 SQL 語意的替代情形，即 @var 被包括在
 單引號中的情形。
 按 SQL 語意，單引號中的 @var 被視為字串內容而非變數。
 按 REGEX 語意，仍然符合替代條件而替換為變數值。
-*/</span>
-<span class="nv">$sqlQuery</span> <span class="o">=</span> <span class="nb">preg_replace</span><span class="p">(</span><span class="nv">$patterns</span><span class="p">,</span> <span class="nv">$replacements</span><span class="p">,</span> <span class="nv">$s</span><span class="p">);</span>
-<span class="k">echo</span> <span class="nv">$sqlQuery</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+*/
+$sqlQuery = preg_replace($patterns, $replacements, $s);
+echo $sqlQuery;
+?>
+{% endhighlight %}
 
 
 <h4>改成函數形式(sql_sheets_read.php)</h4>
@@ -78,42 +81,44 @@ permalink: /archives/3321763.html
 將上述的直述程式重整為函數形式。將每一道查詢指令之結果視為一個試算表(<var>$sheet</var>)，存入一個陣列中。
 最後傳回所有結果的總表(<var>$sheets</var>)。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="o">&amp;</span><span class="nf">sql_sheets_read</span><span class="p">(</span><span class="nv">$pdoDb</span><span class="p">,</span> <span class="nv">$sqlFilePath</span><span class="p">,</span> <span class="nv">$sqlParameters</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">constant</span><span class="p">(</span><span class="s1">'INTERNAL_TEST'</span><span class="p">))</span>
-        <span class="k">global</span> <span class="nv">$testCaseSet</span><span class="p">;</span>
-    <span class="nv">$rcFalse</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nv">$s</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="nv">$sqlFilePath</span><span class="p">)))</span>
-        <span class="k">return</span> <span class="nv">$rcFalse</span><span class="p">;</span>
+{% highlight php %}
+<?php
+function &sql_sheets_read($pdoDb, $sqlFilePath, $sqlParameters) {
+    if (constant('INTERNAL_TEST'))
+        global $testCaseSet;
+    $rcFalse = false;
 
-    <span class="nb">preg_match_all</span><span class="p">(</span><span class="s1">'/SELECT [^;]+/i'</span><span class="p">,</span> <span class="nv">$s</span><span class="p">,</span> <span class="nv">$sqlSet</span><span class="p">);</span>  <span class="c1">//分析查詢指令個數
-</span>    <span class="c1">//print_r($sqlSet);
-</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">get_magic_quotes_gpc</span><span class="p">())</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$sqlParameters</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="o">&amp;</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$v</span> <span class="o">=</span> <span class="nb">addslashes</span><span class="p">(</span><span class="nv">$v</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="c1">//print_r($sqlParameters);
-</span>
-    <span class="nv">$sheets</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>  <span class="c1">//每一道查詢指令之結果將分別存在不同的表格
-</span>    <span class="nv">$indexOfSheets</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$sqlSet</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">as</span> <span class="o">&amp;</span><span class="nv">$sqlText</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">preg_match_all</span><span class="p">(</span><span class="s1">'/@(\w+)/'</span><span class="p">,</span> <span class="nv">$sqlText</span><span class="p">,</span> <span class="nv">$m</span><span class="p">);</span>
-        <span class="c1">//print_r($m[1]);
-</span>
-        <span class="nv">$patterns</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-        <span class="nv">$replacements</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">as</span> <span class="o">&amp;</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$sqlParameters</span><span class="p">[</span><span class="nv">$name</span><span class="p">]))</span>
-                <span class="k">continue</span><span class="p">;</span> <span class="cm">/*Not Replace*/</span>
-            <span class="nv">$patterns</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'/@'</span> <span class="o">.</span> <span class="nv">$name</span> <span class="o">.</span> <span class="s1">'([^\w]|\b)/'</span><span class="p">;</span>
-            <span class="nv">$replacements</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nb">is_numeric</span><span class="p">(</span><span class="nv">$sqlParameters</span><span class="p">[</span><span class="nv">$name</span><span class="p">])</span>
-                    <span class="o">?</span> <span class="nv">$sqlParameters</span><span class="p">[</span><span class="nv">$name</span><span class="p">]</span>
-                    <span class="o">:</span> <span class="s2">"'</span><span class="si">{</span><span class="nv">$sqlParameters</span><span class="p">[</span><span class="nv">$name</span><span class="p">]}</span><span class="s1">'"
-                ) . '</span><span class="err">$</span><span class="mi">1</span><span class="s1">';
+    if (!($s = file_get_contents($sqlFilePath)))
+        return $rcFalse;
+
+    preg_match_all('/SELECT [^;]+/i', $s, $sqlSet);  //分析查詢指令個數
+    //print_r($sqlSet);
+
+    if (get_magic_quotes_gpc()) {
+        foreach ($sqlParameters as $k => &$v) {
+            $v = addslashes($v);
+        }
+    }
+    //print_r($sqlParameters);
+
+    $sheets = array();  //每一道查詢指令之結果將分別存在不同的表格
+    $indexOfSheets = 0;
+    foreach ($sqlSet[0] as &$sqlText) {
+        preg_match_all('/@(\w+)/', $sqlText, $m);
+        //print_r($m[1]);
+
+        $patterns = array();
+        $replacements = array();
+        foreach ($m[1] as &$name) {
+            if (!isset($sqlParameters[$name]))
+                continue; /*Not Replace*/
+            $patterns[$name] = '/@' . $name . '([^\w]|\b)/';
+            $replacements[$name] = (
+                is_numeric($sqlParameters[$name])
+                    ? $sqlParameters[$name]
+                    : "'{$sqlParameters[$name]}'"
+                ) . '$1';
         }
         //print_r($patterns);
         //print_r($replacements);
@@ -124,22 +129,22 @@ permalink: /archives/3321763.html
         按 SQL 語意，單引號中的 @var 被視為字串內容而非變數。
         按 REGEX 語意，仍然符合替代條件而替換為變數值。
         */
-        $sqlQuery = preg_replace($patterns, $replacements, $sqlText) . '</span><span class="p">;</span><span class="s1">';
+        $sqlQuery = preg_replace($patterns, $replacements, $sqlText) . ';';
         //echo $sqlQuery, "\n";
-        if (constant('</span><span class="nx">INTERNAL_TEST</span><span class="s1">'))
+        if (constant('INTERNAL_TEST'))
             PHPUnit_Framework_Assert::assertEquals($sqlQuery,
-                $testCaseSet['</span><span class="nx">sql_sheets_read</span><span class="err">'</span><span class="p">][</span><span class="nv">$indexOfSheets</span><span class="p">]);</span>
+                $testCaseSet['sql_sheets_read'][$indexOfSheets]);
 
-        <span class="nv">$sheet</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">$sheets</span><span class="p">[</span><span class="nv">$indexOfSheets</span><span class="p">];</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$pdoDb</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="nv">$sqlQuery</span><span class="p">)</span> <span class="k">as</span> <span class="o">&amp;</span><span class="nv">$row</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$sheet</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$row</span><span class="p">;</span>
-        <span class="si">}</span><span class="s2">
-        ++</span><span class="nv">$indexOfSheets</span><span class="s2">;
+        $sheet = &$sheets[$indexOfSheets];
+        foreach ($pdoDb->query($sqlQuery) as &$row) {
+            $sheet[] = $row;
+        }
+        ++$indexOfSheets;
     }
-    return </span><span class="nv">$sheets</span><span class="s2">;
+    return $sheets;
 }
-?&gt;
-</span></code></pre>
+?>
+{% endhighlight %}
 
 
 <h4>函數測試案例</h4>
@@ -147,30 +152,32 @@ permalink: /archives/3321763.html
 測試案例使用 <a href="{{ site.baseurl }}/archives/2599757.html">PHPUnit3</a> 做為單元測試工具。
 由於要測試的內容位於函數之中，所以此處採用 PHPUnit 用例中較少見的測試作法。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nb">define</span><span class="p">(</span><span class="s1">'INTERNAL_TEST'</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
-<span class="k">require</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
-<span class="k">require</span> <span class="s1">'sql_sheets_read.php'</span><span class="p">;</span>
 
-<span class="nv">$sp</span><span class="p">[</span><span class="s1">'start_date'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'2007-01-01'</span><span class="p">;</span>
-<span class="nv">$sp</span><span class="p">[</span><span class="s1">'end_date'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'2007-04-30'</span><span class="p">;</span>
-<span class="nv">$sp</span><span class="p">[</span><span class="s1">'customer_id'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">101</span><span class="p">;</span>
-<span class="nv">$sp</span><span class="p">[</span><span class="s1">'note'</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"';SELECT * FROM users"</span><span class="p">;</span>
+{% highlight php %}
+<?php
+define('INTERNAL_TEST', true);
+require 'PHPUnit/Framework.php';
+require 'sql_sheets_read.php';
 
-<span class="nv">$testCaseSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'sql_sheets_read'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s2">"SELECT * FROM orders
-WHERE sdate = '2007-01-01' AND edate = '2007-04-30' AND note LIKE '\';SELECT * FROM users';"</span>
-    <span class="p">,</span>
-    <span class="s2">"SELECT * FROM customers WHERE customer = 101
-;"</span>
-    <span class="p">)</span>
-<span class="p">);</span>
+$sp['start_date'] = '2007-01-01';
+$sp['end_date'] = '2007-04-30';
+$sp['customer_id'] = 101;
+$sp['note'] = "';SELECT * FROM users";
 
-<span class="nv">$sheetsFilePath</span> <span class="o">=</span> <span class="s1">'test.sql'</span><span class="p">;</span>
+$testCaseSet = array(
+    'sql_sheets_read' => array(
+    "SELECT * FROM orders
+WHERE sdate = '2007-01-01' AND edate = '2007-04-30' AND note LIKE '\';SELECT * FROM users';"
+    ,
+    "SELECT * FROM customers WHERE customer = 101
+;"
+    )
+);
 
-<span class="nv">$pdoDb</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="s1">'pgsql:host=localhost port=5432 dbname=testdb user=rock password=mypass'</span><span class="p">);</span>
-<span class="nx">sql_sheets_read</span><span class="p">(</span><span class="nv">$pdoDb</span><span class="p">,</span> <span class="nv">$sheetsFilePath</span><span class="p">,</span> <span class="nv">$sp</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$sheetsFilePath = 'test.sql';
+
+$pdoDb = new PDO('pgsql:host=localhost port=5432 dbname=testdb user=rock password=mypass');
+sql_sheets_read($pdoDb, $sheetsFilePath, $sp);
+?>
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3321763.html</div>

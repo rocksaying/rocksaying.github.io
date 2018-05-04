@@ -32,45 +32,46 @@ permalink: /archives/2112499.html
 此處列出一個 ANSI/ISO C++ 的 Hello world 程式碼 (hello2.cpp) 。 ANSI/ISO C++ 到 1999年的規範標準 (C99) ，在此皆有包含。如第 9,20 行的新式轉型語法，第18-31行使用了 STL 中的 vector 和 string template class 。第33行是第一修訂版中加入的寬字元型態 (wchar_t) ，第34行是 C99 加入的 long doule 型態。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;cstdlib&gt;
-#include &lt;cstring&gt;
-#include &lt;iostream&gt;
-#include &lt;vector&gt;
-#include &lt;string&gt;
-</span>
-<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">hello</span> <span class="o">=</span> <span class="s">"hello world</span><span class="se">\n</span><span class="s">"</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">hello</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">));</span>
-    <span class="n">strcpy</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">hello</span><span class="p">);</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">p</span><span class="p">;</span>
 
-    <span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
+{% highlight c %}
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <vector>
+#include <string>
 
-    <span class="n">bool</span> <span class="n">t</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">t</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+void main() {
+    const char *hello = "hello world\n";
+    char *p = static_cast<char*>(malloc(strlen(hello)+1));
+    strcpy(p, hello);
+    std::cout << p;
 
-    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">ns</span><span class="p">(</span> <span class="mi">10</span> <span class="p">);</span>
-    <span class="k">for</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ns</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">ns</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">for</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iter</span> <span class="o">=</span> <span class="n">ns</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
-        <span class="n">iter</span> <span class="o">!=</span> <span class="n">ns</span><span class="p">.</span><span class="n">end</span><span class="p">();</span>
-        <span class="o">++</span><span class="n">iter</span>
-    <span class="p">)</span> <span class="p">{</span>
-        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">iter</span> <span class="o">&lt;&lt;</span> <span class="sc">' '</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+    using namespace std;
 
-    <span class="n">string</span> <span class="n">helloWorld</span> <span class="o">=</span> <span class="n">string</span><span class="p">(</span><span class="n">hello</span><span class="p">);</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">helloWorld</span><span class="p">;</span>
+    bool t = true;
+    cout << t << '\n';
 
-    <span class="kt">wchar_t</span> <span class="o">*</span><span class="n">p1</span><span class="p">;</span>
-    <span class="kt">long</span> <span class="kt">double</span> <span class="n">lli</span><span class="p">;</span>
+    vector<int> ns( 10 );
+    for(size_t i = 0; i < ns.size(); ++i) {
+        ns[i] = static_cast<int>(i+1);
+    }
+    for(vector<int>::iterator iter = ns.begin();
+        iter != ns.end();
+        ++iter
+    ) {
+        cout << *iter << ' ';
+    }
+    cout << '\n';
 
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+    string helloWorld = string(hello);
+    cout << helloWorld;
 
-</code></pre>
+    wchar_t *p1;
+    long double lli;
+
+    return;
+}
+{% endhighlight %}
 
 <p>
 下圖是 PSPad 編輯 hello2.cpp 時的實際工作畫面以及除錯器工作畫面 (點擊圖片可觀看原尺寸大圖) ，我同時開啟了「工具面板 (Ctrl+F2)」，以及「程式碼瀏覽器 (Shift+Ctrl+E)」。

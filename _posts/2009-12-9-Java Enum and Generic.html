@@ -19,50 +19,54 @@ Enum(列舉) 在 C 語言時代就是賦予常數值可讀意義的簡便方法�
 <p>
 尚未使用 Enum 之前:
 </p>
-<pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">where</span><span class="o">(</span><span class="kt">int</span> <span class="n">type</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
-            <span class="c1">//something</span>
-        <span class="o">}</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
-            <span class="c1">//something</span>
-        <span class="o">}</span>
-        <span class="k">else</span> <span class="o">{</span>
-            <span class="c1">//3,4,5,... 沒意義的值，錯誤的值。</span>
-            <span class="k">return</span> <span class="mi">1</span><span class="o">;</span> <span class="c1">//??</span>
-        <span class="o">}</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="o">;</span> <span class="c1">//什麼意思？</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+
+{% highlight java %}
+public class Main {
+    public int where(int type) {
+        if (type == 1) {
+            //something
+        }
+        else if (type == 2) {
+            //something
+        }
+        else {
+            //3,4,5,... 沒意義的值，錯誤的值。
+            return 1; //??
+        }
+        return 0; //什麼意思？
+    }
+}
+{% endhighlight %}
 
 <p>
 使用 Enum 之後。
 </p>
-<pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main2</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kd">enum</span> <span class="n">WhereType</span> <span class="o">{</span>
-        <span class="n">Asc</span><span class="o">,</span>
-        <span class="n">Desc</span>
-    <span class="o">}</span>
 
-    <span class="kd">public</span> <span class="kd">enum</span> <span class="n">ReturnCode</span> <span class="o">{</span>
-        <span class="n">Ok</span><span class="o">,</span>
-        <span class="n">Error</span>
-    <span class="o">}</span>
+{% highlight java %}
+public class Main2 {
+    public enum WhereType {
+        Asc,
+        Desc
+    }
 
-    <span class="kd">public</span> <span class="n">ReturnCode</span> <span class="n">where</span><span class="o">(</span><span class="n">WhereType</span> <span class="n">type</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">WhereType</span><span class="o">.</span><span class="na">Desc</span><span class="o">)</span> <span class="o">{</span>
-            <span class="c1">//something</span>
-        <span class="o">}</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">WhereType</span><span class="o">.</span><span class="na">Asc</span><span class="o">)</span> <span class="o">{</span>
-            <span class="c1">//something</span>
-        <span class="o">}</span>
-        <span class="c1">//不用再處理 3,4,5 這些錯誤的值。</span>
+    public enum ReturnCode {
+        Ok,
+        Error
+    }
 
-        <span class="k">return</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Ok</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+    public ReturnCode where(WhereType type) {
+        if (type == WhereType.Desc) {
+            //something
+        }
+        else if (type == WhereType.Asc) {
+            //something
+        }
+        //不用再處理 3,4,5 這些錯誤的值。
+
+        return ReturnCode.Ok;
+    }
+}
+{% endhighlight %}
 
 <p>
 在你直接以數值代表參數的某些意義時，你可能要提防方法調用者傳一些預期以外的參數值。你使用 Enum 之後，除了賦予參數值可讀的意義之外，亦強制調用者只能傳你列舉的參數值進來，你不再需要關心非預期的參數值。同理，當你使用 Enum 處理回傳值時，方法調用者也更易懂也能更簡單地處理你的回傳值。
@@ -75,56 +79,59 @@ Enum(列舉) 在 C 語言時代就是賦予常數值可讀意義的簡便方法�
 <p>
 我先列出3個示範用的列舉定義。
 </p>
-<pre class="highlight"><code><span class="kd">public</span> <span class="kd">enum</span> <span class="n">ReturnCode</span> <span class="o">{</span>
-	<span class="n">Error</span><span class="o">,</span>
-	<span class="n">Ok</span>
-<span class="o">}</span>
+
+{% highlight java %}
+public enum ReturnCode {
+	Error,
+	Ok
+}
 
 
-<span class="kd">public</span> <span class="kd">enum</span> <span class="n">HttpStatus</span> <span class="o">{</span>
-	<span class="n">Ok</span><span class="o">,</span>
-	<span class="n">Not_Found</span><span class="o">,</span>
-	<span class="n">Error</span>
-<span class="o">}</span>
+public enum HttpStatus {
+	Ok,
+	Not_Found,
+	Error
+}
 
-<span class="kd">public</span> <span class="kd">enum</span> <span class="n">DaoReturnCode</span> <span class="o">{</span>
-    <span class="n">Ok</span><span class="o">,</span>
-    <span class="n">Not_Found</span><span class="o">,</span>
-	<span class="n">Error</span><span class="o">,</span>
-    <span class="n">Exists</span>
-<span class="o">}</span>
-
-</code></pre>
+public enum DaoReturnCode {
+    Ok,
+    Not_Found,
+	Error,
+    Exists
+}
+{% endhighlight %}
 
 
 <h4>案例一: Enum 作為泛型方法的參數值</h4>
 <p>
 這是最簡單的情形。
 </p>
-<pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-	<span class="kt">void</span> <span class="n">case1</span><span class="o">(</span><span class="n">HttpStatus</span> <span class="n">code</span><span class="o">)</span> <span class="o">{</span>
-		<span class="k">if</span> <span class="o">(</span><span class="n">code</span> <span class="o">==</span> <span class="n">HttpStatus</span><span class="o">.</span><span class="na">Ok</span><span class="o">)</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Ok"</span><span class="o">);</span>
-		<span class="k">else</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Not ok"</span><span class="o">);</span>
 
-        <span class="k">switch</span> <span class="o">(</span><span class="n">code</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">case</span> <span class="nl">Ok:</span>
-                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Ok"</span><span class="o">);</span>
-                <span class="k">break</span><span class="o">;</span>
-            <span class="k">default</span><span class="o">:</span>
-                <span class="k">break</span><span class="o">;</span>
-        <span class="o">}</span>
-	<span class="o">}</span>
+{% highlight java %}
+public class Main {
+	void case1(HttpStatus code) {
+		if (code == HttpStatus.Ok)
+			System.out.println("Ok");
+		else
+			System.out.println("Not ok");
 
-	<span class="o">&lt;</span><span class="n">EnumType</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">genericCase1</span><span class="o">(</span><span class="n">EnumType</span> <span class="n">code</span><span class="o">)</span> <span class="o">{</span>
-		<span class="c1">//if (code == EnumType.Ok) //ERROR</span>
-		<span class="k">if</span> <span class="o">(</span><span class="n">code</span><span class="o">.</span><span class="na">toString</span><span class="o">()</span> <span class="o">==</span> <span class="s">"Ok"</span><span class="o">)</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Ok"</span><span class="o">);</span>
-		<span class="k">else</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Not ok"</span><span class="o">);</span>
+        switch (code) {
+            case Ok:
+                System.out.println("Ok");
+                break;
+            default:
+                break;
+        }
+	}
 
-        <span class="cm">/*ERROR! Java 的 switch 不接受數值或 Enum 以外的型別
+	<EnumType> void genericCase1(EnumType code) {
+		//if (code == EnumType.Ok) //ERROR
+		if (code.toString() == "Ok")
+			System.out.println("Ok");
+		else
+			System.out.println("Not ok");
+
+        /*ERROR! Java 的 switch 不接受數值或 Enum 以外的型別
         switch (code.toString()) {
             case "Ok":
                 System.out.println("Ok");
@@ -132,43 +139,45 @@ Enum(列舉) 在 C 語言時代就是賦予常數值可讀意義的簡便方法�
             default:
                 break;
         }
-        */</span>
-	<span class="o">}</span>
+        */
+	}
 
-	<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-		<span class="n">Main</span> <span class="n">m</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Main</span><span class="o">();</span>
+	public static void main(String[] args) {
+		Main m = new Main();
 
-		<span class="n">m</span><span class="o">.</span><span class="na">case1</span><span class="o">(</span><span class="n">HttpStatus</span><span class="o">.</span><span class="na">Ok</span><span class="o">);</span>
-		<span class="n">m</span><span class="o">.</span><span class="na">genericCase1</span><span class="o">(</span><span class="n">ReturnCode</span><span class="o">.</span><span class="na">Ok</span><span class="o">);</span>
-		<span class="n">m</span><span class="o">.</span><span class="na">genericCase1</span><span class="o">(</span><span class="n">DaoReturnCode</span><span class="o">.</span><span class="na">Ok</span><span class="o">);</span>
-	<span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+		m.case1(HttpStatus.Ok);
+		m.genericCase1(ReturnCode.Ok);
+		m.genericCase1(DaoReturnCode.Ok);
+	}
+}
+{% endhighlight %}
 
 <p>
 <code>case1()</code> 是一般方法，<code>genericCase1()</code> 則是泛型方法。基本上， Enum 作為 Java 的新特殊型別， Java 的泛型並未能提供適切的支援。因此我們要忽略參數 <var>code</var> 是一個 Enum 的事，將它視為一般實體，調用它的 <code>toString()</code> 方法取得它的符號字串，和一般字串比對。這也意味著我們不能用 <code>switch/case</code> 處理列舉項目。
 </p>
 
 <h4>案例二: Enum 作為泛型方法的回傳值</h4>
-<pre class="highlight"><code><span class="kn">import</span> <span class="nn">java.lang.reflect.*</span><span class="o">;</span>
 
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
-	<span class="n">HttpStatus</span> <span class="n">case2</span><span class="o">()</span> <span class="o">{</span>
-		<span class="k">return</span> <span class="n">HttpStatus</span><span class="o">.</span><span class="na">Ok</span><span class="o">;</span>
-	<span class="o">}</span>
+{% highlight java %}
+import java.lang.reflect.*;
 
-<span class="c1">//ERROR.</span>
-<span class="c1">//	&lt;EnumType&gt; EnumType genericCase1() {</span>
-<span class="c1">//		return EnumType.Ok;</span>
-<span class="c1">//	}</span>
+public class Main {
+	HttpStatus case2() {
+		return HttpStatus.Ok;
+	}
 
-	<span class="nd">@SuppressWarnings</span><span class="o">(</span><span class="s">"unchecked"</span><span class="o">)</span>
-	<span class="o">&lt;</span><span class="n">EnumType</span> <span class="kd">extends</span> <span class="n">Enum</span><span class="o">&lt;</span><span class="n">EnumType</span><span class="o">&gt;&gt;</span> <span class="n">EnumType</span> <span class="n">genericCase2</span><span class="o">(</span><span class="n">Class</span><span class="o">&lt;</span><span class="n">EnumType</span><span class="o">&gt;</span> <span class="n">clazz</span><span class="o">)</span> <span class="o">{</span>
-		<span class="k">return</span> <span class="n">Enum</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">clazz</span><span class="o">,</span> <span class="s">"Ok"</span><span class="o">);</span>
+//ERROR.
+//	<EnumType> EnumType genericCase1() {
+//		return EnumType.Ok;
+//	}
 
-	<span class="o">}</span>
-<span class="cm">/* //  Another way:
-	&lt;EnumType&gt; EnumType genericCase2(Class&lt;EnumType&gt; clazz) {
+	@SuppressWarnings("unchecked")
+	<EnumType extends Enum<EnumType>> EnumType genericCase2(Class<EnumType> clazz) {
+		return Enum.valueOf(clazz, "Ok");
+
+	}
+/* //  Another way:
+	<EnumType> EnumType genericCase2(Class<EnumType> clazz) {
 		Field f = null;
 		try {
 			f = clazz.getField("Ok");
@@ -189,22 +198,22 @@ Enum(列舉) 在 C 語言時代就是賦予常數值可讀意義的簡便方法�
 		return rc;
 
 	}
-*/</span>
-	<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-		<span class="n">Main</span> <span class="n">m</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Main</span><span class="o">();</span>
+*/
+	public static void main(String[] args) {
+		Main m = new Main();
 
-		<span class="k">if</span> <span class="o">(</span><span class="n">m</span><span class="o">.</span><span class="na">case2</span><span class="o">()</span> <span class="o">==</span> <span class="n">HttpStatus</span><span class="o">.</span><span class="na">Ok</span><span class="o">)</span> <span class="o">{</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Ok"</span><span class="o">);</span>
-		<span class="o">}</span>
-		<span class="k">if</span> <span class="o">(</span><span class="n">m</span><span class="o">.</span><span class="na">genericCase2</span><span class="o">(</span><span class="n">ReturnCode</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="o">==</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Ok</span><span class="o">)</span> <span class="o">{</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Ok"</span><span class="o">);</span>
-		<span class="o">}</span>
-		<span class="k">if</span> <span class="o">(</span><span class="n">m</span><span class="o">.</span><span class="na">genericCase2</span><span class="o">(</span><span class="n">DaoReturnCode</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="o">==</span> <span class="n">DaoReturnCode</span><span class="o">.</span><span class="na">Ok</span><span class="o">)</span> <span class="o">{</span>
-			<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Ok"</span><span class="o">);</span>
-		<span class="o">}</span>
-	<span class="o">}</span>
-<span class="o">}</span>
-</code></pre>
+		if (m.case2() == HttpStatus.Ok) {
+			System.out.println("Ok");
+		}
+		if (m.genericCase2(ReturnCode.class) == ReturnCode.Ok) {
+			System.out.println("Ok");
+		}
+		if (m.genericCase2(DaoReturnCode.class) == DaoReturnCode.Ok) {
+			System.out.println("Ok");
+		}
+	}
+}
+{% endhighlight %}
 
 
 <p>

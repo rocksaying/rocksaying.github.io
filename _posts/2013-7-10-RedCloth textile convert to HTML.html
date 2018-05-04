@@ -9,38 +9,39 @@ permalink: /archives/25360474.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="c1">#!/usr/bin/ruby</span>
-<span class="c1">#</span>
-<span class="c1"># redcloth2html</span>
-<span class="c1"># required packages: ruby libredcloth-ruby</span>
-<span class="c1">#</span>
-<span class="nb">require</span> <span class="s1">'redcloth'</span>
 
-<span class="k">if</span> <span class="p">(</span><span class="no">ARGV</span><span class="p">.</span><span class="nf">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="k">then</span>
-    <span class="nb">print</span> <span class="s2">"redcloth2html &lt;input&gt; &lt;output&gt;</span><span class="se">\n</span><span class="s2">"</span>
-    <span class="nb">print</span> <span class="s2">"note: - means stdin or stdout.</span><span class="se">\n</span><span class="s2">"</span>
-    <span class="nb">exit</span> <span class="mi">0</span>
-<span class="k">end</span>
+{% highlight python %}
+#!/usr/bin/ruby
+#
+# redcloth2html
+# required packages: ruby libredcloth-ruby
+#
+require 'redcloth'
 
-<span class="k">if</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'-'</span> <span class="k">then</span>
-    <span class="n">infilepath</span> <span class="o">=</span> <span class="s1">'/dev/stdin'</span>
-<span class="k">else</span>
-    <span class="n">infilepath</span> <span class="o">=</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="k">end</span>
+if (ARGV.size < 2) then
+    print "redcloth2html <input> <output>\n"
+    print "note: - means stdin or stdout.\n"
+    exit 0
+end
 
-<span class="k">if</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'-'</span> <span class="k">then</span>
-    <span class="n">outfilepath</span> <span class="o">=</span> <span class="s1">'/dev/stdout'</span>
-<span class="k">else</span>
-    <span class="n">outfilepath</span> <span class="o">=</span> <span class="no">ARGV</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="k">end</span>
+if ARGV[0] == '-' then
+    infilepath = '/dev/stdin'
+else
+    infilepath = ARGV[0]
+end
 
-<span class="n">raw</span> <span class="o">=</span> <span class="no">IO</span><span class="p">.</span><span class="nf">read</span> <span class="n">infilepath</span>
+if ARGV[1] == '-' then
+    outfilepath = '/dev/stdout'
+else
+    outfilepath = ARGV[1]
+end
 
-<span class="n">rc</span> <span class="o">=</span> <span class="no">RedCloth</span><span class="p">.</span><span class="nf">new</span> <span class="n">raw</span>
+raw = IO.read infilepath
 
-<span class="no">File</span><span class="p">.</span><span class="nf">open</span> <span class="n">outfilepath</span><span class="p">,</span> <span class="s1">'w'</span> <span class="k">do</span> <span class="o">|</span><span class="n">outf</span><span class="o">|</span>
-    <span class="n">outf</span><span class="p">.</span><span class="nf">write</span> <span class="n">rc</span><span class="p">.</span><span class="nf">to_html</span>
-<span class="k">end</span>
+rc = RedCloth.new raw
 
-</code></pre>
+File.open outfilepath, 'w' do |outf|
+    outf.write rc.to_html
+end
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/25360474.html</div>

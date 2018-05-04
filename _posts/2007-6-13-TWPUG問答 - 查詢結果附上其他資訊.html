@@ -17,14 +17,16 @@ permalink: /archives/3459603.html
 <h4>SQL way, 少量的對照</h4>
 <p>用 CASE 關鍵字。See also: <a href="{{ site.baseurl }}/archives/1051724.html">使用 CASE 修飾資料內容</a>。</p>
 
-<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
-    <span class="k">CASE</span> <span class="n">name</span>
-        <span class="k">WHEN</span> <span class="s1">'乙'</span> <span class="k">THEN</span> <span class="mi">1</span>
-        <span class="k">WHEN</span> <span class="s1">'丙'</span> <span class="k">THEN</span> <span class="mi">2</span>
-        <span class="k">WHEN</span> <span class="s1">'甲'</span> <span class="k">THEN</span> <span class="mi">3</span>
-    <span class="k">END</span> <span class="k">AS</span> <span class="n">input_seq</span>
-<span class="k">FROM</span> <span class="n">mytable</span><span class="p">;</span>
-</code></pre>
+
+{% highlight php %}
+SELECT id, name,
+    CASE name
+        WHEN '乙' THEN 1
+        WHEN '丙' THEN 2
+        WHEN '甲' THEN 3
+    END AS input_seq
+FROM mytable;
+{% endhighlight %}
 
 
 <h4>Programming way, 大量的對照</h4>
@@ -32,17 +34,19 @@ permalink: /archives/3459603.html
 用關聯陣列建立對照表，再將查詢結果轉入另一個結果陣列後，完成對照關係。
 </p>
 
-<pre class="highlight"><code>$input_seq = array(
-    '乙' =&gt; 1,
-    '丙' =&gt; 2,
-    '甲' =&gt; 3
+
+{% highlight php %}
+$input_seq = array(
+    '乙' => 1,
+    '丙' => 2,
+    '甲' => 3
 );
 
 $query = "SELECT id, name FROM mytable;";
 $results = array();
 $indexOfRow = 0;
-foreach ($pdo-&gt;query($query) as $row) {
-    foreach ($row as $k =&gt; <span class="err">&amp;</span>$v) {
+foreach ($pdo->query($query) as $row) {
+    foreach ($row as $k => &$v) {
         $results[$indexOfRow][$k] = $v;
     }
     $results[$indexOfRow]['input_seq'] = $input_seq[$row['name']];
@@ -50,5 +54,5 @@ foreach ($pdo-&gt;query($query) as $row) {
 }
 
 print_r($results);
-</code></pre>
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3459603.html</div>

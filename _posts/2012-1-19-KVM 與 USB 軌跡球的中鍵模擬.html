@@ -36,76 +36,77 @@ permalink: /archives/18797680.html
 我苦練十餘年的編程功力，這時候就要派上用場了(天之聲: 就為了這點小事...)。所以我利用 Linux 的 HAL 服務，寫了一個軌跡球組態守護程式(daemon)，它會傾聽 HAL 放出的設備新增訊號，一但發現軌跡球被插入了，它就會接著執行中鍵模擬滾輪的設定工作。我終於不必每次按 KVM 切換後還得再動手跑一次設定。程式 trackman_init 的源碼於下列:
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python
-</span>
-<span class="c"># coding: utf-8
-</span>
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
-<span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">gobject</span><span class="o">,</span> <span class="nn">dbus</span>
-<span class="kn">from</span> <span class="nn">dbus.mainloop.glib</span> <span class="kn">import</span> <span class="n">DBusGMainLoop</span>
 
-<span class="n">HAL_SERVICE_NAME</span> <span class="o">=</span> <span class="s">"org.freedesktop.Hal"</span>
-<span class="n">HAL_MANAGER_PATH</span> <span class="o">=</span> <span class="s">"/org/freedesktop/Hal/Manager"</span>
-<span class="n">HAL_MANAGER_IFACE</span> <span class="o">=</span> <span class="s">"org.freedesktop.Hal.Manager"</span>
-<span class="n">HAL_DEVICE_IFACE</span> <span class="o">=</span> <span class="s">"org.freedesktop.Hal.Device"</span>
+{% highlight python %}
+#!/usr/bin/python
+# coding: utf-8
 
-<span class="n">TRACKBALL_PRODUCT_NAME</span> <span class="o">=</span> <span class="s">"Logitech USB Trackball"</span>
+import os,sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+import gobject, dbus
+from dbus.mainloop.glib import DBusGMainLoop
 
-<span class="k">def</span> <span class="nf">init_wheel_emulation</span><span class="p">():</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"init wheel emulation."</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">'xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Button" 8'</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">'xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation" 1'</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">'xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Axes" 6 7 4 5'</span><span class="p">)</span>
+HAL_SERVICE_NAME = "org.freedesktop.Hal"
+HAL_MANAGER_PATH = "/org/freedesktop/Hal/Manager"
+HAL_MANAGER_IFACE = "org.freedesktop.Hal.Manager"
+HAL_DEVICE_IFACE = "org.freedesktop.Hal.Device"
 
-<span class="k">def</span> <span class="nf">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
-    <span class="n">device</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span>
-        <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">HAL_SERVICE_NAME</span><span class="p">,</span> <span class="n">device_path</span><span class="p">),</span>
-        <span class="n">HAL_DEVICE_IFACE</span><span class="p">)</span>
-    <span class="n">info_product</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">"info.product"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">info_product</span> <span class="o">==</span> <span class="n">TRACKBALL_PRODUCT_NAME</span><span class="p">:</span>
-        <span class="c">#init_wheel_emulation()
-</span>
-        <span class="k">return</span> <span class="bp">True</span>
-    <span class="k">return</span> <span class="bp">False</span>
+TRACKBALL_PRODUCT_NAME = "Logitech USB Trackball"
 
-<span class="k">class</span> <span class="nc">DeviceAddedSignalRecipient</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">add_signal_receiver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device_added_handler</span><span class="p">,</span>
-            <span class="n">dbus_interface</span><span class="o">=</span><span class="n">HAL_MANAGER_IFACE</span><span class="p">,</span> <span class="n">signal_name</span> <span class="o">=</span> <span class="s">"DeviceAdded"</span><span class="p">)</span>
+def init_wheel_emulation():
+    print("init wheel emulation.")
+    os.system('xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Button" 8')
+    os.system('xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation" 1')
+    os.system('xinput set-prop "Logitech USB Trackball" "Evdev Wheel Emulation Axes" 6 7 4 5')
 
-    <span class="k">def</span> <span class="nf">device_added_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
-        <span class="c">#print "Signal recivied: %s" % device_path
-</span>
-        <span class="k">if</span> <span class="n">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
-            <span class="n">init_wheel_emulation</span><span class="p">()</span>
+def detect_trackball_device(bus, device_path):
+    device = dbus.Interface(
+        bus.get_object(HAL_SERVICE_NAME, device_path),
+        HAL_DEVICE_IFACE)
+    info_product = device.GetProperty("info.product")
+    if info_product == TRACKBALL_PRODUCT_NAME:
+        #init_wheel_emulation()
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
-    <span class="n">DBusGMainLoop</span><span class="p">(</span><span class="n">set_as_default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">gobject</span><span class="o">.</span><span class="n">MainLoop</span><span class="p">()</span>
-    <span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SystemBus</span><span class="p">()</span>
+        return True
+    return False
 
-    <span class="n">hal_manager</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span>
-        <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">HAL_SERVICE_NAME</span><span class="p">,</span> <span class="n">HAL_MANAGER_PATH</span><span class="p">),</span>
-        <span class="n">HAL_MANAGER_IFACE</span><span class="p">)</span>
+class DeviceAddedSignalRecipient:
+    def __init__(self):
+        self.bus = dbus.SystemBus()
+        self.bus.add_signal_receiver(self.device_added_handler,
+            dbus_interface=HAL_MANAGER_IFACE, signal_name = "DeviceAdded")
 
-    <span class="n">device_paths</span> <span class="o">=</span> <span class="n">hal_manager</span><span class="o">.</span><span class="n">FindDeviceByCapability</span><span class="p">(</span><span class="s">"input.mouse"</span><span class="p">)</span>
+    def device_added_handler(self, device_path):
+        #print "Signal recivied: %s" % device_path
 
-    <span class="k">for</span> <span class="n">device_path</span> <span class="ow">in</span> <span class="n">device_paths</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">detect_trackball_device</span><span class="p">(</span><span class="n">bus</span><span class="p">,</span> <span class="n">device_path</span><span class="p">):</span>
-            <span class="n">init_wheel_emulation</span><span class="p">()</span>
-            <span class="k">break</span>
+        if detect_trackball_device(bus, device_path):
+            init_wheel_emulation()
 
-    <span class="n">recipient</span> <span class="o">=</span> <span class="n">DeviceAddedSignalRecipient</span><span class="p">()</span>
+if __name__ == "__main__":
+    DBusGMainLoop(set_as_default=True)
+    loop = gobject.MainLoop()
+    bus = dbus.SystemBus()
 
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-    <span class="k">except</span> <span class="nb">KeyboardInterrupt</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">"Exit program."</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="nb">exit</span><span class="p">()</span>
-</code></pre>
+    hal_manager = dbus.Interface(
+        bus.get_object(HAL_SERVICE_NAME, HAL_MANAGER_PATH),
+        HAL_MANAGER_IFACE)
+
+    device_paths = hal_manager.FindDeviceByCapability("input.mouse")
+
+    for device_path in device_paths:
+        if detect_trackball_device(bus, device_path):
+            init_wheel_emulation()
+            break
+
+    recipient = DeviceAddedSignalRecipient()
+
+    try:
+        loop.run()
+    except KeyboardInterrupt:
+        print("Exit program.")
+        sys.exit()
+{% endhighlight %}
 
 
 <div class="note">

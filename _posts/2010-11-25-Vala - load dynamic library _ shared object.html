@@ -21,44 +21,46 @@ Vala 有許多途徑可以整合 C 語言程式，例如在《<a href="{{ site.b
 首先，我以 C 語言撰寫一個 <dfn>md5sum()</dfn>，並建立一個儲存這個函數的動態函數庫，命名為 md5sum (<span class="note">在 Unix/Linux 中，這個動態函數庫的檔名慣例是 libmd5sum.so；在 Windows 中則是 md5sum.dll</span>)。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;openssl/md5.h&gt;
-</span>
-<span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span>
-<span class="nf">md5sum</span><span class="p">(</span><span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">len</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">md</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"d = [%s], len = [%lu]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">bufstr</span><span class="p">[</span><span class="n">MD5_DIGEST_LENGTH</span> <span class="o">*</span> <span class="mi">2</span><span class="p">];</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">MD5_DIGEST_LENGTH</span><span class="p">];</span>
-    
-    <span class="n">MD5</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
 
-    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p1</span><span class="p">,</span> <span class="o">*</span><span class="n">p2</span><span class="p">;</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">p1</span> <span class="o">=</span> <span class="n">buf</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">md</span><span class="p">;</span> 
-        <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MD5_DIGEST_LENGTH</span><span class="p">;</span> 
-        <span class="o">++</span><span class="n">i</span><span class="p">,</span> <span class="o">++</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="o">+=</span><span class="mi">2</span><span class="p">)</span> 
-    <span class="p">{</span>
-        <span class="n">sprintf</span><span class="p">(</span><span class="n">p2</span><span class="p">,</span> <span class="s">"%02x"</span><span class="p">,</span> <span class="o">*</span><span class="n">p1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
-    <span class="c1">//printf("%s\n", md);
-</span>
-    <span class="k">return</span> <span class="n">md</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight c %}
+#include <stdio.h>
+#include <openssl/md5.h>
+
+unsigned char *
+md5sum(const unsigned char *d, unsigned long len, unsigned char *md)
+{
+    printf("d = [%s], len = [%lu]\n", d, len);
+    unsigned char bufstr[MD5_DIGEST_LENGTH * 2];
+    unsigned char buf[MD5_DIGEST_LENGTH];
+    
+    MD5(d, len, buf);
+
+    int i;
+    unsigned char *p1, *p2;
+    for (i = 0, p1 = buf, p2 = md; 
+        i < MD5_DIGEST_LENGTH; 
+        ++i, ++p1, p2+=2) 
+    {
+        sprintf(p2, "%02x", *p1);
+    }
+    *p2 = '\0';
+    //printf("%s\n", md);
+
+    return md;
+}
+{% endhighlight %}
 
 
 
 <p>
 接著編譯並產生 libmd5sum.so 。在 Ubuntu 系統中，它需要額外連結 crypto 函數庫。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ make libmd5sum.so
 gcc -shared -fPIC -lcrypto -o libmd5sum.so md5sum.c
 
 $ export LD_LIBRARY_PATH=.
-</pre>
+</code></pre>
 
 <p>
 Linux 系統預設儲放與尋找函數庫的路徑列表是 <em>/usr/lib</em> 以及 <em>/lib</em> (<span class="note">細節請看 manpage ldconfig</span>)。不論是編譯時的連結動作，亦或是執行時的載入動作，預設情形都是往前述的路徑列表中尋找函數庫。但我不打算將剛剛產生的 libmd5sum.so 放在系統指定路徑下。所以我使用環境變數 <dfn>LD_LIBRARY_PATH</dfn> 指定額外的函數庫搜尋路徑為當前路徑。接下來的範例皆沿用此設定。
@@ -75,28 +77,30 @@ Linux 系統預設儲放與尋找函數庫的路徑列表是 <em>/usr/lib</em> �
 link_md5sum.vala 是一個調用 <dfn>md5sum()</dfn> 計算字串雜湊值的範例程式。編譯器可以靜態連結 <dfn>md5sum()</dfn>，也可以動態連結 <dfn>md5sum()</dfn>。差別僅在編譯器的參數，而不需修改程式源碼。
 </p>
 
-<pre class="highlight"><code><span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">=</span> <span class="mi">32</span><span class="p">;</span>
 
-<span class="c1">// link extern symbolic
-</span><span class="p">[</span><span class="n">CCode</span> <span class="p">(</span><span class="n">cname</span><span class="o">=</span><span class="s">"md5sum"</span><span class="p">)]</span>
-<span class="k">static</span> <span class="k">extern</span> <span class="n">unowned</span> <span class="n">uchar</span><span class="o">*</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">uchar</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="n">ulong</span> <span class="n">len</span><span class="p">,</span> <span class="n">uchar</span> <span class="o">*</span><span class="n">md</span><span class="p">);</span>
+{% highlight c# %}
+const uint MD5_DIGEST_STRING_LENGTH = 32;
 
-<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"hello 石頭成"</span><span class="p">;</span>
-    <span class="n">var</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">to_utf8</span><span class="p">();</span>
-    <span class="n">var</span> <span class="n">mdbuf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">uchar</span><span class="p">[</span><span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+// link extern symbolic
+[CCode (cname="md5sum")]
+static extern unowned uchar* md5sum(uchar *d, ulong len, uchar *md);
 
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"1[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf</span><span class="p">.</span><span class="n">length</span><span class="p">,</span> <span class="n">mdbuf</span><span class="p">)</span> <span class="p">);</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"2[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">mdbuf</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+void main() {
+    var s = "hello 石頭成";
+    var buf = s.to_utf8();
+    var mdbuf = new uchar[MD5_DIGEST_STRING_LENGTH + 1];
+
+    stdout.printf("1[%s]\n", (string) md5sum(buf, buf.length, mdbuf) );
+    stdout.printf("2[%s]\n", (string) mdbuf);
+}
+{% endhighlight %}
 
 
 <p>
 在《<a href="{{ site.baseurl }}/archives/13551839.html">Vala 程式語言入門</a>》中示範的編譯動作，就是透過靜態連結的方式調用 <dfn>md5sum()</dfn>。如果將 valac 的參數改為 <code>-X -lmd5sum</code> 並略去 md5usm.c 這個成員檔，最後就會由 gcc 透過動態連結的方式，連結 libmd5sum.so 這個動態函數庫。不需修改任何程式源碼。編譯與執行結果如下所示:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ make link_md5sum
 valac -X -lcrypto -X -L. -X -lmd5sum -o link_md5sum link_md5sum.vala
 
@@ -105,7 +109,7 @@ d = [hello 石頭成], len = [15]
 1[19d63df7a195f5a3a847bd3a54831b97]
 2[19d63df7a195f5a3a847bd3a54831b97]
 
-</pre>
+</code></pre>
 <p>
 如果執行程式時，系統回應找不到 libmd5sum.so (<q>libmd5sum.so: cannot open shared object file: No such file or directory</q>)，這表示你並未使用環境變數 <dfn>LD_LIBRARY_PATH</dfn> 指定額外的函數庫搜尋路徑。系統並不會主動在當前路徑中尋找動態函數庫。
 </p>
@@ -129,56 +133,58 @@ Unix 系統很久以前就實現了動態連結與載入機制，而相關的 AP
 本節的範例程式碼 dlopen_md5sum.vala ，內容如下:
 </p>
 
-<pre class="highlight"><code><span class="c1">// POSIX dlopen functions.
-//#include &lt;dlfcn.h&gt;
-</span><span class="p">[</span><span class="n">CCode</span> <span class="p">(</span><span class="n">cname</span><span class="o">=</span><span class="s">"dlopen"</span><span class="p">)]</span>
-<span class="k">extern</span> <span class="n">unowned</span> <span class="kt">void</span> <span class="o">*</span><span class="n">dlopen</span><span class="p">(</span><span class="n">string</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flag</span><span class="p">);</span>
-<span class="p">[</span><span class="n">CCode</span> <span class="p">(</span><span class="n">cname</span><span class="o">=</span><span class="s">"dlerror"</span><span class="p">)]</span>
-<span class="k">extern</span> <span class="n">unowned</span> <span class="n">string</span> <span class="n">dlerror</span><span class="p">();</span>
-<span class="p">[</span><span class="n">CCode</span> <span class="p">(</span><span class="n">cname</span><span class="o">=</span><span class="s">"dlsym"</span><span class="p">)]</span>
-<span class="k">extern</span> <span class="n">unowned</span> <span class="kt">void</span> <span class="o">*</span><span class="n">dlsym</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">handle</span><span class="p">,</span> <span class="n">string</span> <span class="n">symbol</span><span class="p">);</span>
 
-<span class="k">const</span> <span class="kt">int</span> <span class="n">RTLD_LAZY</span> <span class="o">=</span> <span class="mh">0x00001</span><span class="p">;</span> <span class="cm">/* Lazy function call binding. */</span>
-<span class="c1">// end POSIX dlopen functions.
-</span>
-<span class="c1">//#include &lt;openssl/md5.h&gt;
-</span><span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_LENGTH</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">=</span> <span class="n">MD5_DIGEST_LENGTH</span> <span class="o">*</span> <span class="mi">2</span><span class="p">;</span>
+{% highlight c# %}
+// POSIX dlopen functions.
+//#include <dlfcn.h>
+[CCode (cname="dlopen")]
+extern unowned void *dlopen(string filename, int flag);
+[CCode (cname="dlerror")]
+extern unowned string dlerror();
+[CCode (cname="dlsym")]
+extern unowned void *dlsym(void *handle, string symbol);
 
-<span class="c1">// dynamic load from shared library
-</span><span class="n">delegate</span> <span class="n">unowned</span> <span class="n">uchar</span><span class="o">*</span><span class="n">Chksum</span><span class="p">(</span><span class="n">uchar</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="n">ulong</span> <span class="n">len</span><span class="p">,</span> <span class="n">uchar</span> <span class="o">*</span><span class="n">result</span><span class="p">);</span>
-<span class="n">Chksum</span> <span class="n">md5sum</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+const int RTLD_LAZY = 0x00001; /* Lazy function call binding. */
+// end POSIX dlopen functions.
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="n">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// 動態載入時，程序員要自行處理函數庫的載入工作以及符號的指派工作。
-</span>    <span class="c1">// begin load and link
-</span>    <span class="n">string</span> <span class="n">md5sum_lib_path</span> <span class="o">=</span> 
-        <span class="s">"%s/lib%s.so"</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="n">get_dirname</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s">"md5sum"</span><span class="p">);</span>
-                            <span class="c1">// 共享函數庫與程式同目錄
-</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Load %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">md5sum_lib_path</span><span class="p">);</span>
+//#include <openssl/md5.h>
+const uint MD5_DIGEST_LENGTH = 16;
+const uint MD5_DIGEST_STRING_LENGTH = MD5_DIGEST_LENGTH * 2;
 
-    <span class="n">var</span> <span class="n">module</span> <span class="o">=</span> <span class="n">dlopen</span><span class="p">(</span><span class="n">md5sum_lib_path</span><span class="p">,</span> <span class="n">RTLD_LAZY</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">module</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">dlerror</span><span class="p">());</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+// dynamic load from shared library
+delegate unowned uchar*Chksum(uchar *d, ulong len, uchar *result);
+Chksum md5sum = null;
 
-    <span class="n">md5sum</span> <span class="o">=</span> <span class="p">(</span><span class="n">Chksum</span><span class="p">)</span> <span class="n">dlsym</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s">"md5sum"</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">md5sum</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">dlerror</span><span class="p">());</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="c1">// end load and link
-</span>
-    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"hello 石頭成"</span><span class="p">;</span>
-    <span class="n">var</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">to_utf8</span><span class="p">();</span>
-    <span class="n">var</span> <span class="n">mdbuf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">uchar</span><span class="p">[</span><span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+int main(string[] args) {
+    // 動態載入時，程序員要自行處理函數庫的載入工作以及符號的指派工作。
+    // begin load and link
+    string md5sum_lib_path = 
+        "%s/lib%s.so".printf(Path.get_dirname(args[0]), "md5sum");
+                            // 共享函數庫與程式同目錄
+    stdout.printf("Load %s\n", md5sum_lib_path);
 
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"1[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf</span><span class="p">.</span><span class="n">length</span><span class="p">,</span> <span class="n">mdbuf</span><span class="p">)</span> <span class="p">);</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"2[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">mdbuf</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    var module = dlopen(md5sum_lib_path, RTLD_LAZY);
+    if (module == null) {
+        stdout.printf("error: %s\n", dlerror());
+        return 1;
+    }
+
+    md5sum = (Chksum) dlsym(module, "md5sum");
+    if (md5sum == null) {
+        stdout.printf("error: %s\n", dlerror());
+        return 1;
+    }
+    // end load and link
+
+    var s = "hello 石頭成";
+    var buf = s.to_utf8();
+    var mdbuf = new uchar[MD5_DIGEST_STRING_LENGTH + 1];
+
+    stdout.printf("1[%s]\n", (string) md5sum(buf, buf.length, mdbuf) );
+    stdout.printf("2[%s]\n", (string) mdbuf);
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>
@@ -192,7 +198,7 @@ Unix 系統很久以前就實現了動態連結與載入機制，而相關的 AP
 <p>
 編譯與執行結果如下所示:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ make dlopen_md5sum
 valac -X -ldl -o dlopen_md5sum dlopen_md5sum.vala
 
@@ -202,7 +208,7 @@ d = [hello 石頭成], len = [15]
 1[19d63df7a195f5a3a847bd3a54831b97]
 2[19d63df7a195f5a3a847bd3a54831b97]
 
-</pre>
+</code></pre>
 
 <h5>
 GLib gmodule
@@ -215,53 +221,55 @@ GLib 提供了一個 <a href="http://library.gnome.org/devel/glib/stable/glib-Dy
 本節的範例程式碼 gmodule_open_md5sum.vala ，內容如下:
 </p>
 
-<pre class="highlight"><code><span class="n">using</span> <span class="n">Module</span><span class="p">;</span> <span class="c1">//--pkg gmodule-2.0
-</span>
-<span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_LENGTH</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">uint</span> <span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">=</span> <span class="n">MD5_DIGEST_LENGTH</span> <span class="o">*</span> <span class="mi">2</span><span class="p">;</span>
 
-<span class="c1">// dynamic load from shared library
-</span><span class="n">delegate</span> <span class="n">unowned</span> <span class="n">uchar</span><span class="o">*</span><span class="n">Chksum</span><span class="p">(</span><span class="n">uchar</span> <span class="o">*</span><span class="n">d</span><span class="p">,</span> <span class="n">ulong</span> <span class="n">len</span><span class="p">,</span> <span class="n">uchar</span> <span class="o">*</span><span class="n">result</span><span class="p">);</span>
-<span class="n">Chksum</span> <span class="n">md5sum</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+{% highlight c# %}
+using Module; //--pkg gmodule-2.0
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="n">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// 動態載入時，程序員要自行處理函數庫的載入工作以及符號的指派工作。
-</span>    <span class="c1">// begin load and link
-</span>    <span class="n">string</span> <span class="n">md5sum_lib_path</span> <span class="o">=</span> 
-        <span class="n">Module</span><span class="p">.</span><span class="n">build_path</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="n">get_dirname</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s">"md5sum"</span><span class="p">);</span>
-                          <span class="c1">// 共享函數庫與程式同目錄
-</span>    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"Load %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">md5sum_lib_path</span><span class="p">);</span>
+const uint MD5_DIGEST_LENGTH = 16;
+const uint MD5_DIGEST_STRING_LENGTH = MD5_DIGEST_LENGTH * 2;
 
-    <span class="n">var</span> <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">md5sum_lib_path</span><span class="p">,</span> <span class="n">ModuleFlags</span><span class="p">.</span><span class="n">BIND_LAZY</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">module</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Module</span><span class="p">.</span><span class="n">error</span><span class="p">());</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+// dynamic load from shared library
+delegate unowned uchar*Chksum(uchar *d, ulong len, uchar *result);
+Chksum md5sum = null;
+
+int main(string[] args) {
+    // 動態載入時，程序員要自行處理函數庫的載入工作以及符號的指派工作。
+    // begin load and link
+    string md5sum_lib_path = 
+        Module.build_path(Path.get_dirname(args[0]), "md5sum");
+                          // 共享函數庫與程式同目錄
+    stdout.printf("Load %s\n", md5sum_lib_path);
+
+    var module = Module.open(md5sum_lib_path, ModuleFlags.BIND_LAZY);
+    if (module == null) {
+        stdout.printf("error: %s\n", Module.error());
+        return 1;
+    }
     
-    <span class="kt">void</span> <span class="o">*</span><span class="n">func_point</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">module</span><span class="p">.</span><span class="n">symbol</span><span class="p">(</span><span class="s">"md5sum"</span><span class="p">,</span> <span class="n">out</span> <span class="n">func_point</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">Module</span><span class="p">.</span><span class="n">error</span><span class="p">());</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">md5sum</span> <span class="o">=</span> <span class="p">(</span><span class="n">Chksum</span><span class="p">)</span> <span class="n">func_point</span><span class="p">;</span>
-    <span class="c1">// end load and link
-</span>
-    <span class="n">var</span> <span class="n">s</span> <span class="o">=</span> <span class="s">"hello 石頭成"</span><span class="p">;</span>
-    <span class="n">var</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">to_utf8</span><span class="p">();</span>
-    <span class="n">var</span> <span class="n">mdbuf</span> <span class="o">=</span> <span class="n">new</span> <span class="n">uchar</span><span class="p">[</span><span class="n">MD5_DIGEST_STRING_LENGTH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+    void *func_point = null;
+    if (module.symbol("md5sum", out func_point) != true) {
+        stdout.printf("error: %s\n", Module.error());
+        return 1;
+    }
+    md5sum = (Chksum) func_point;
+    // end load and link
 
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"1[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">md5sum</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf</span><span class="p">.</span><span class="n">length</span><span class="p">,</span> <span class="n">mdbuf</span><span class="p">)</span> <span class="p">);</span>
-    <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"2[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="n">mdbuf</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    var s = "hello 石頭成";
+    var buf = s.to_utf8();
+    var mdbuf = new uchar[MD5_DIGEST_STRING_LENGTH + 1];
+
+    stdout.printf("1[%s]\n", (string) md5sum(buf, buf.length, mdbuf) );
+    stdout.printf("2[%s]\n", (string) mdbuf);
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>
 Module 元件的使用方法與 dlopen 的差異不大，基本上就是把 <dfn>dlopen()</dfn> 換成 <dfn>Module.open()</dfn>、<dfn>dlsym()</dfn> 換成 <dfn>Module.symbol()</dfn>。此外，由於我們使用的是純粹的 Vala 元件，所以編譯時的參數也不需要額外傳遞給 gcc 的選項。編譯與執行結果如下所示:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ make gmodule_open_md5sum
 valac --pkg gmodule-2.0 -o gmodule_open_md5sum gmodule_open_md5sum.vala
 
@@ -271,7 +279,7 @@ d = [hello 石頭成], len = [15]
 1[19d63df7a195f5a3a847bd3a54831b97]
 2[19d63df7a195f5a3a847bd3a54831b97]
 
-</pre>
+</code></pre>
 
 <h4>
 參考資源
@@ -281,26 +289,26 @@ d = [hello 石頭成], len = [15]
 編譯動態函數庫以及連接它的方式，牽涉到許多編譯器參數。為了簡化操作動作，本文所範例的編譯動作我都編在一份 Makefile。下列即為本文的 Makefile 內容。
 </p>
 
-<pre class="highlight"><code>
+
+{% highlight makefile %}
 libmd5sum.so: md5sum.c
-	gcc -shared -fPIC -lcrypto -o <span class="nv">$@</span> <span class="nv">$?</span>
+	gcc -shared -fPIC -lcrypto -o $@ $?
 
 link_md5sum: link_md5sum.vala libmd5sum.so
-	valac -X -lcrypto -X -L. -X -lmd5sum -o <span class="nv">$@</span> <span class="nv">$&lt;</span>
+	valac -X -lcrypto -X -L. -X -lmd5sum -o $@ $<
 
 dlopen_md5sum: dlopen_md5sum.vala libmd5sum.so
-	valac -X -ldl -o <span class="nv">$@</span> <span class="nv">$&lt;</span>
+	valac -X -ldl -o $@ $<
 
 gmodule_open_md5sum: gmodule_open_md5sum.vala libmd5sum.so
-	valac --pkg gmodule-2.0 -o <span class="nv">$@</span> <span class="nv">$&lt;</span>
+	valac --pkg gmodule-2.0 -o $@ $<
 
 c_dlopen_md5sum: c_dlopen_md5sum.c libmd5sum.so
-	gcc -ldl -o <span class="nv">$@</span> <span class="nv">$&lt;</span>
+	gcc -ldl -o $@ $<
 
 clean:
 	rm -f libmd5sum.so link_md5sum dlopen_md5sum gmodule_open_md5sum c_dlopen_md5sum
-
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -311,52 +319,53 @@ clean:
 對 C 語言呼叫 dlopen() 的方法有興趣的讀者，下列為 C 語言範例。此範例與 dlopen_md5sum.vala 的用途相同。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;openssl/md5.h&gt;
-</span>
-<span class="cp">#include &lt;dlfcn.h&gt;
-</span><span class="c1">// POSIX dlopen functions.
-</span>
-<span class="k">typedef</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">uchar</span><span class="p">;</span>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// 動態載入時，程序員要自行處理函數庫的載入工作以及符號的指派工作。
-</span>    <span class="c1">// begin load and link
-</span>    <span class="kt">void</span> <span class="o">*</span><span class="n">module</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">uchar</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">chksum</span><span class="p">)(</span><span class="k">const</span> <span class="n">uchar</span><span class="o">*</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span><span class="p">,</span> <span class="n">uchar</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+{% highlight c %}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/md5.h>
 
-    <span class="n">module</span> <span class="o">=</span> <span class="n">dlopen</span><span class="p">(</span><span class="s">"./libmd5sum.so"</span><span class="p">,</span> <span class="n">RTLD_LAZY</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">module</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">dlerror</span><span class="p">());</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+#include <dlfcn.h>
+// POSIX dlopen functions.
 
-    <span class="n">chksum</span> <span class="o">=</span> <span class="n">dlsym</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s">"md5sum"</span><span class="p">);</span>
+typedef unsigned char uchar;
 
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">chksum</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"error: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">dlerror</span><span class="p">());</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="c1">// end load and link
-</span>
-    <span class="n">uchar</span> <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="s">"hello 石頭成"</span><span class="p">;</span>
-    <span class="n">uchar</span> <span class="n">mdbuf</span><span class="p">[</span><span class="n">MD5_DIGEST_LENGTH</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+int main(void) {
+    // 動態載入時，程序員要自行處理函數庫的載入工作以及符號的指派工作。
+    // begin load and link
+    void *module = NULL;
+    uchar *(*chksum)(const uchar*, unsigned long, uchar*) = NULL;
 
-    <span class="n">printf</span><span class="p">(</span><span class="s">"1[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">chksum</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">mdbuf</span><span class="p">)</span> <span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"2[%s]</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">mdbuf</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
+    module = dlopen("./libmd5sum.so", RTLD_LAZY);
+    if ( !module ) {
+        printf("error: %s\n", dlerror());
+        return 1;
+    }
 
-</code></pre>
+    chksum = dlsym(module, "md5sum");
+
+    if ( !chksum ) {
+        printf("error: %s\n", dlerror());
+        return 1;
+    }
+    // end load and link
+
+    uchar *s = "hello 石頭成";
+    uchar mdbuf[MD5_DIGEST_LENGTH * 2 + 1];
+
+    printf("1[%s]\n", chksum(s, strlen(s), mdbuf) );
+    printf("2[%s]\n", mdbuf);
+    return 0;
+}
+{% endhighlight %}
 
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ make c_dlopen_md5sum
 gcc -ldl -o c_dlopen_md5sum c_dlopen_md5sum.c
 
-</pre>
+</code></pre>
 
 <ul>
     <li><a href="{{ site.baseurl }}/archives/13551839.html">Vala 程式語言入門</a></li>

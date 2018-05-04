@@ -142,30 +142,34 @@ pos803 (進貨單)
 <p>
 全部聯結後再行統計與條件篩選。
 </p>
-<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">unit</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">pos803</span><span class="p">.</span><span class="n">qty</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_qty</span>
-<span class="k">FROM</span> <span class="n">pos110</span>
-<span class="k">INNER</span> <span class="k">JOIN</span> <span class="n">pos803</span>
-<span class="k">ON</span> <span class="n">pos803</span><span class="p">.</span><span class="n">uno</span> <span class="o">=</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span>
-<span class="k">WHERE</span> <span class="n">cno</span> <span class="o">&gt;=</span> <span class="s1">'K0201'</span> <span class="k">AND</span> <span class="n">cno</span> <span class="o">&lt;=</span> <span class="s1">'K0205'</span>
-<span class="k">GROUP</span> <span class="k">BY</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">unit</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
-</code></pre>
+
+{% highlight sql %}
+SELECT pos110.uno, pos110.name, pos803.cost, pos110.unit, sum(pos803.qty) as total_qty
+FROM pos110
+INNER JOIN pos803
+ON pos803.uno = pos110.uno
+WHERE cno >= 'K0201' AND cno <= 'K0205'
+GROUP BY pos110.uno, pos110.name, pos803.cost, pos110.unit;
+&nbsp;
+{% endhighlight %}
 
 
 <h4>Method 2: 使用子查詢</h4>
 <p>
 先以子查詢統計與篩選進貨明細後，再將統計結果與商品主檔聯結。
 </p>
-<pre class="highlight"><code><span class="k">SELECT</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">carry</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="n">pos110</span><span class="p">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">carry</span><span class="p">.</span><span class="n">total_qty</span> <span class="k">FROM</span> <span class="n">pos110</span>
-<span class="k">INNER</span> <span class="k">JOIN</span> <span class="p">(</span>
-	<span class="k">SELECT</span> <span class="n">pos803</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">pos803</span><span class="p">.</span><span class="n">tqy</span><span class="p">)</span> <span class="k">as</span> <span class="n">total_qty</span>
-	<span class="k">FROM</span> <span class="n">pos803</span>
-	<span class="k">WHERE</span> <span class="n">cno</span> <span class="o">&gt;=</span> <span class="s1">'K0201'</span> <span class="k">AND</span> <span class="n">cno</span> <span class="o">&lt;=</span> <span class="s1">'K0205'</span>
-	<span class="k">GROUP</span> <span class="k">BY</span> <span class="n">pos803</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="n">pos803</span><span class="p">.</span><span class="n">cost</span>
-<span class="p">)</span> <span class="k">AS</span> <span class="n">carry</span>
-<span class="k">ON</span> <span class="n">pos110</span><span class="p">.</span><span class="n">uno</span> <span class="o">=</span> <span class="n">carry</span><span class="p">.</span><span class="n">uno</span><span class="p">;</span>
-<span class="o">&amp;</span><span class="n">nbsp</span><span class="p">;</span>
-</code></pre>
+
+{% highlight sql %}
+SELECT pos110.uno, pos110.name, carry.cost, pos110.unit, carry.total_qty FROM pos110
+INNER JOIN (
+	SELECT pos803.uno, pos803.cost, sum(pos803.tqy) as total_qty
+	FROM pos803
+	WHERE cno >= 'K0201' AND cno <= 'K0205'
+	GROUP BY pos803.uno, pos803.cost
+) AS carry
+ON pos110.uno = carry.uno;
+&nbsp;
+{% endhighlight %}
 
 </fieldset>
 

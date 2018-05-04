@@ -12,10 +12,12 @@ Just HTML. 不需要用到 JavaScript. 任何網頁元件只要具有 <code>titl
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="nt">&lt;p</span> <span class="na">title=</span><span class="s">"提示1"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;div&gt;&lt;span</span> <span class="na">title=</span><span class="s">"提示2"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/span&gt;&lt;/div&gt;</span>
-<span class="nt">&lt;table&gt;&lt;tr&gt;&lt;td</span> <span class="na">title=</span><span class="s">"提示3"</span><span class="nt">&gt;</span>某一格<span class="nt">&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<p title="提示1">某一行</p>
+<div><span title="提示2">某一行</span></div>
+<table><tr><td title="提示3">某一格</td></tr></table>
+{% endhighlight %}
 
 
 <p>
@@ -25,23 +27,25 @@ Just HTML. 不需要用到 JavaScript. 任何網頁元件只要具有 <code>titl
 所幸這個看似簡單實則複雜的功能，有許多 JavaScript framework 都實作了。你應該直接選一套來用。我以 <a href="http://developer.yahoo.com/">YUI (Yahoo! UI Library)</a> 作為示範。YUI 實作了一個名為 Tooltip 的功能，說明文件: <a href="http://developer.yahoo.com/yui/container/tooltip/">Yahoo! UI Library: Tooltip</a>。
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;p&gt;</span>跟上面的例子一樣，但要為網頁元件指定 ID。<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">"tip1"</span> <span class="na">title=</span><span class="s">"提示1"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;div&gt;&lt;span</span> <span class="na">id=</span><span class="s">"tip2"</span> <span class="na">title=</span><span class="s">"提示2"</span><span class="nt">&gt;</span>某一行<span class="nt">&lt;/span&gt;&lt;/div&gt;</span>
-<span class="nt">&lt;table&gt;&lt;tr&gt;&lt;td</span> <span class="na">id=</span><span class="s">"tip3"</span> <span class="na">title=</span><span class="s">"提示3"</span><span class="nt">&gt;</span>某一格<span class="nt">&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</span>
 
-<span class="nt">&lt;link</span> <span class="na">rel=</span><span class="s">"stylesheet"</span> <span class="na">type=</span><span class="s">"text/css"</span> <span class="na">href=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/container/assets/container.css"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/yahoo-dom-event/yahoo-dom-event.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/animation/animation-min.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"http://yui.yahooapis.com/2.2.2/build/container/container-min.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+{% highlight php %}
+<p>跟上面的例子一樣，但要為網頁元件指定 ID。</p>
+<p id="tip1" title="提示1">某一行</p>
+<div><span id="tip2" title="提示2">某一行</span></div>
+<table><tr><td id="tip3" title="提示3">某一格</td></tr></table>
 
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.2.2/build/container/assets/container.css">
+<script type="text/javascript" src="http://yui.yahooapis.com/2.2.2/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.2.2/build/animation/animation-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.2.2/build/container/container-min.js"></script>
+
+<script type="text/javascript">
 var myTooltip = [];
 myTooltip['tip1'] = new YAHOO.widget.Tooltip("myTooltip1", { context:"tip1", showdelay:0 } );
 myTooltip['tip2'] = new YAHOO.widget.Tooltip("myTooltip2", { context:"tip2", showdelay:0 } );
 myTooltip['tip3'] = new YAHOO.widget.Tooltip("myTooltip3", { context:"tip3", showdelay:0 } );
-<span class="nt">&lt;/script&gt;</span>
-</code></pre>
+</script>
+{% endhighlight %}
 
 <p>
 雖然 YUI::Tooltip 允許我們以 JavaScript 的方式指定提示文字的內容，但我建議使用 HTML 的 <code>title</code> 屬性完成這件事。一來在 JavaScript 程式碼中不會出現文字內容的 hard code ；二來當使用者的瀏覽器不支援或關閉 JavaScript 功能時，使用者仍然可以透過瀏覽器本身的 tooltip 功能看到提示文字。

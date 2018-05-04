@@ -52,54 +52,55 @@ Google - MapReduce
     MapReduce 的概念源自於並行運算的領域中很普遍的資料處理策略。
     下列的 C 程式碼可以幫助大家理解 MapReduce 的基本概念。
     </p>
-<pre class="highlight"><code><span class="c1">// File name: vector_sum.c
-</span><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;omp.h&gt;
-</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">sumLocal</span><span class="p">,</span> <span class="n">sum</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">vector</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">};</span>
 
-    <span class="n">sum</span> <span class="o">=</span> <span class="n">sumLocal</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="n">omp_set_num_threads</span><span class="p">(</span><span class="n">size</span><span class="p">);</span> <span class="c1">// Try to map vector to 3 pieces.
-</span>    <span class="cp">#pragma omp parallel private(sumLocal)
-</span>    <span class="p">{</span>
-        <span class="cm">/**
+{% highlight c %}
+// File name: vector_sum.c
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int i, j, sumLocal, sum;
+    int size = 3;
+    int vector[3][3] = {3, 4, 1, 6, 3, 4, 7, 5, 9};
+
+    sum = sumLocal = 0;
+    omp_set_num_threads(size); // Try to map vector to 3 pieces.
+    #pragma omp parallel private(sumLocal)
+    {
+        /**
             If there are no accidents, the following information will be divided  
             into (Map) three pieces.
-            for (i=0; i &lt; 1; ++i) {...}
-            for (i=1; i &lt; 2; ++i) {...}
-            for (i=2; i &lt; 3; ++i) {...}
-        **/</span>
-        <span class="cp">#pragma omp for
-</span>        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span>
-                <span class="n">sumLocal</span> <span class="o">+=</span> <span class="n">vector</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">];</span>
-        <span class="p">}</span>
+            for (i=0; i < 1; ++i) {...}
+            for (i=1; i < 2; ++i) {...}
+            for (i=2; i < 3; ++i) {...}
+        **/
+        #pragma omp for
+        for (i=0; i < size; ++i)
+        {
+            for (j=0; j < size; ++j)
+                sumLocal += vector[i][j];
+        }
 
-        <span class="cm">/**
+        /**
             Reduce sumLocal's to sum.
-        **/</span>
-        <span class="cp">#pragma omp critical(update_sum)
-</span>        <span class="p">{</span>
-            <span class="n">sum</span> <span class="o">+=</span> <span class="n">sumLocal</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+        **/
+        #pragma omp critical(update_sum)
+        {
+            sum += sumLocal;
+        }
+    }
 
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Sum = %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+    printf("Sum = %d\n", sum);
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
+    return 0;
+}
+{% endhighlight %}
 
-</code></pre>
-
-<pre class="language-term">
+<pre><code class="language-term">
 $ gcc -openmp -lgomp -o vector_sum vector_sum.c
 $ ./vector_sum
 Sum = 42
-</pre>
+</code></pre>
 
 <p class="note">
 這個 C 程式利用了 <a href="http://www.openmp.org/">OpenMP</a> 進行多緒並行運算。 GCC 需要版本 4.3.2 以上才支援。
@@ -135,20 +136,20 @@ Yahoo - Hadoop
     我們一樣可以建立目錄，也可以將文件從實體檔案系統複製過去，但實際上文件是以 Hadoop 特殊的儲存機制分散在不同 host 的空間中。
     例如:
     </p>
-    <pre class="language-term">
-    $ echo hello > /home/rock/hello.txt
-    
-    # 從本地實體檔案系統中，將 hello.txt 複製到 Hadoop HDFS 的虛擬檔案系統中。
-    $ hadoop fs -put /home/rock/readme.txt /home/rock
-    
-    # 異動本地的 hello.txt
-    $ echo my name is rock >> /home/rock/hello.txt
-    
-    # 現在可以看出這其實是不同的兩份文件了。
-    # 初學者常常在此感到混淆，誤以為這兩個 /home/rock/hello.txt 是同一份文件。
-    $ cat /home/rock/hello.txt
-    $ hadoop fs -cat /home/rock/readme.txt
-    </pre>
+<pre><code class="language-term">
+$ echo hello > /home/rock/hello.txt
+
+# 從本地實體檔案系統中，將 hello.txt 複製到 Hadoop HDFS 的虛擬檔案系統中。
+$ hadoop fs -put /home/rock/readme.txt /home/rock
+
+# 異動本地的 hello.txt
+$ echo my name is rock >> /home/rock/hello.txt
+
+# 現在可以看出這其實是不同的兩份文件了。
+# 初學者常常在此感到混淆，誤以為這兩個 /home/rock/hello.txt 是同一份文件。
+$ cat /home/rock/hello.txt
+$ hadoop fs -cat /home/rock/readme.txt
+</code></pre>
 
     <p>
     Hadoop 還有一個基於 HDFS 的資料庫管理系統實作，稱為 HBase 。HBase 主要用於儲

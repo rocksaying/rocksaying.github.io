@@ -11,60 +11,62 @@ permalink: /archives/18790684.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="c">#!/bin/sh</span>
-do_cc_cmd<span class="o">()</span> <span class="o">{</span>
-  <span class="nv">CC_CMD</span><span class="o">=</span><span class="sb">`</span>grep -m 1 <span class="s2">"// </span><span class="nv">$CC</span><span class="s2">"</span> <span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span> | sed <span class="s2">"s/</span><span class="se">\/\/</span><span class="s2"> //"</span><span class="sb">`</span>
-  <span class="nv">OUTPUT_NAME</span><span class="o">=</span><span class="k">${</span><span class="nv">GEDIT_CURRENT_DOCUMENT_NAME</span><span class="p">%.*</span><span class="k">}</span>
 
-  <span class="k">if</span> <span class="o">[</span> -z <span class="s2">"</span><span class="nv">$CC_CMD</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then
-    </span><span class="nv">CC_CMD</span><span class="o">=</span><span class="s2">"</span><span class="nv">$CC</span><span class="s2"> -o </span><span class="nv">$OUTPUT_NAME</span><span class="s2"> </span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span>
-  <span class="k">fi
+{% highlight c %}
+#!/bin/sh
+do_cc_cmd() {
+  CC_CMD=`grep -m 1 "// $CC" $GEDIT_CURRENT_DOCUMENT_PATH | sed "s/\/\/ //"`
+  OUTPUT_NAME=${GEDIT_CURRENT_DOCUMENT_NAME%.*}
 
-  </span><span class="nb">echo</span> <span class="nv">$CC_CMD</span>
-  <span class="sb">`</span><span class="nv">$CC_CMD</span><span class="sb">`</span>
-  <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then</span>
-    ./<span class="nv">$OUTPUT_NAME</span>
-  <span class="k">fi</span>
-<span class="o">}</span>
+  if [ -z "$CC_CMD" ]; then
+    CC_CMD="$CC -o $OUTPUT_NAME $GEDIT_CURRENT_DOCUMENT_PATH"
+  fi
 
-<span class="k">case</span> <span class="nv">$GEDIT_CURRENT_DOCUMENT_TYPE</span> <span class="k">in</span>
-<span class="s2">"application/x-php"</span><span class="p">)</span>
-  <span class="nb">echo</span> <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span> | grep <span class="s2">"Test.php"</span> &gt; /dev/null
-  <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -eq 0 <span class="o">]</span>; <span class="k">then
-    </span>phpunit <span class="nv">$GEDIT_CURRENT_DOCUMENT_NAME</span>
-  <span class="k">else
-    </span>php <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span>
-  <span class="k">fi</span>
-  <span class="p">;;</span>
-<span class="s2">"text/x-python"</span><span class="p">)</span>
-  python <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
-<span class="s2">"application/x-ruby"</span><span class="p">)</span>
-  ruby <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
-<span class="s2">"application/x-perl"</span><span class="p">)</span>
-  perl <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
-<span class="s2">"application/javascript"</span><span class="p">)</span>
-  gjs <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
-<span class="s2">"application/x-shellscript"</span><span class="p">)</span>
-  sh <span class="s2">"</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">"</span><span class="p">;;</span>
+  echo $CC_CMD
+  `$CC_CMD`
+  if [ $? -eq 0 ]; then
+    ./$OUTPUT_NAME
+  fi
+}
 
-<span class="s2">"text/x-csrc"</span><span class="p">)</span>
-  <span class="nv">CC</span><span class="o">=</span>gcc
+case $GEDIT_CURRENT_DOCUMENT_TYPE in
+"application/x-php")
+  echo "$GEDIT_CURRENT_DOCUMENT_PATH" | grep "Test.php" > /dev/null
+  if [ $? -eq 0 ]; then
+    phpunit $GEDIT_CURRENT_DOCUMENT_NAME
+  else
+    php "$GEDIT_CURRENT_DOCUMENT_PATH"
+  fi
+  ;;
+"text/x-python")
+  python "$GEDIT_CURRENT_DOCUMENT_PATH";;
+"application/x-ruby")
+  ruby "$GEDIT_CURRENT_DOCUMENT_PATH";;
+"application/x-perl")
+  perl "$GEDIT_CURRENT_DOCUMENT_PATH";;
+"application/javascript")
+  gjs "$GEDIT_CURRENT_DOCUMENT_PATH";;
+"application/x-shellscript")
+  sh "$GEDIT_CURRENT_DOCUMENT_PATH";;
+
+"text/x-csrc")
+  CC=gcc
   do_cc_cmd
-  <span class="p">;;</span>
-<span class="s2">"text/x-vala"</span><span class="p">)</span>
-  <span class="nv">CC</span><span class="o">=</span>valac
+  ;;
+"text/x-vala")
+  CC=valac
   do_cc_cmd
-  <span class="p">;;</span>
+  ;;
 
-<span class="k">*</span><span class="p">)</span>
-  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_TYPE</span><span class="s2">]"</span>
-  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_URI</span><span class="s2">]"</span>
-  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_NAME</span><span class="s2">]"</span>
-  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_PATH</span><span class="s2">]"</span>
-  <span class="nb">echo</span> <span class="s2">"[</span><span class="nv">$GEDIT_CURRENT_DOCUMENT_DIR</span><span class="s2">]"</span>
-  <span class="nb">echo</span> <span class="s2">"[</span><span class="k">${</span><span class="nv">GEDIT_CURRENT_DOCUMENT_NAME</span><span class="p">%.*</span><span class="k">}</span><span class="s2">]"</span>
-<span class="k">esac</span>
-</code></pre>
+*)
+  echo "[$GEDIT_CURRENT_DOCUMENT_TYPE]"
+  echo "[$GEDIT_CURRENT_DOCUMENT_URI]"
+  echo "[$GEDIT_CURRENT_DOCUMENT_NAME]"
+  echo "[$GEDIT_CURRENT_DOCUMENT_PATH]"
+  echo "[$GEDIT_CURRENT_DOCUMENT_DIR]"
+  echo "[${GEDIT_CURRENT_DOCUMENT_NAME%.*}]"
+esac
+{% endhighlight %}
 
 
 <p>
@@ -103,15 +105,17 @@ do_cc_cmd<span class="o">()</span> <span class="o">{</span>
 如果第一列註解指示了編譯內容，就會按照指示調用編譯器編譯程式碼。若無指示，則按預設方式編譯，C 程式碼調用 <code>gcc -o $OUTPUT_NAME $GEDIT_CURRENT_DOCUMENT_PATH</code>；Vala 程式碼調用 <code>valac -o $OUTPUT_NAME $GEDIT_CURRENT_DOCUMENT_PATH</code>。
 </p>
 
-<pre class="highlight"><code><span class="c1">// gcc -o helo -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -lglib-2.0 hello.c
+
+{% highlight c %}
+// gcc -o helo -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -lglib-2.0 hello.c
 // 第一行就是編譯方式。
-</span><span class="cp">#include &lt;glib.h&gt;
-</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">g_printf</span><span class="p">(</span><span class="s">"hello</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+#include <glib.h>
+
+int main() {
+    g_printf("hello\n");
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>

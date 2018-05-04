@@ -16,11 +16,13 @@ permalink: /archives/3058219.html
 <p>
 PHP 的 Variable Function 並不具備 <code>eval()</code> 語意。 PHP 將代表函數名稱之變數的內容視為一個字串而非算式。如下列寫法就會發生錯誤:
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$abc</span> <span class="o">=</span> <span class="s1">'file_put_contents("c:/test.txt", "ABC");'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nv">$abc</span><span class="p">(</span><span class="s1">'123'</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?php
+$abc = 'file_put_contents("c:/test.txt", "ABC");';
+echo $abc('123');
+?>
+{% endhighlight %}
 
 
 <p>
@@ -35,71 +37,73 @@ Reflection 在 PHP 中由 extension (by C) 實現而非實作在框架(framework
 <p>
 下列是一個非常簡單的實作品。假設其 URL 為 http://localhost/test/index.php 。它允許我以 http://localhost/test/index.php/<var>class</var>/<var>method</var>/<var>argument</var> 之 URL 形式調用個體方法。
 </p>
-<pre class="highlight"><code><span class="nt">&lt;pre&gt;</span>
-<span class="cp">&lt;?php</span>
-<span class="c1">//require_once 'db.php';
-</span><span class="k">class</span> <span class="nc">Db</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">query</span><span class="p">(</span><span class="nv">$sqlQuery</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="nv">$sqlQuery</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]))</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s1">'INDEX'</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+{% highlight php %}
+<pre>
+<?php
+//require_once 'db.php';
+class Db {
+    public function query($sqlQuery) {
+        echo $sqlQuery;
+    }
+}
 
-<span class="k">echo</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$pathinfoSet</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'PATH_INFO'</span><span class="p">]);</span>
-<span class="nb">array_shift</span><span class="p">(</span><span class="nv">$pathinfoSet</span><span class="p">);</span>
+if (!isset($_SERVER['PATH_INFO'])) {
+    echo 'INDEX';
+    exit(1);
+}
 
-<span class="nv">$className</span> <span class="o">=</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nb">array_shift</span><span class="p">(</span><span class="nv">$pathinfoSet</span><span class="p">));</span>
-<span class="c1">//check class name.
-</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">ctype_alnum</span><span class="p">(</span><span class="nv">$className</span><span class="p">))</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Class '</span><span class="si">{</span><span class="nv">$className</span><span class="si">}</span><span class="s2">' is not found.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">echo</span> <span class="s1">'Class: '</span><span class="p">,</span> <span class="nv">$className</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+echo $_SERVER['PATH_INFO'], "\n";
+$pathinfoSet = explode('/', $_SERVER['PATH_INFO']);
+array_shift($pathinfoSet);
 
-<span class="nv">$methodName</span> <span class="o">=</span> <span class="nb">array_shift</span><span class="p">(</span><span class="nv">$pathinfoSet</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'Method: '</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+$className = ucfirst(array_shift($pathinfoSet));
+//check class name.
+if (!ctype_alnum($className)) {
+    echo "Class '{$className}' is not found.\n";
+    exit(1);
+}
+echo 'Class: ', $className, "\n";
 
-<span class="nv">$arguments</span> <span class="o">=</span> <span class="nv">$pathinfoSet</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'Arguments: '</span><span class="p">,</span> <span class="nb">implode</span><span class="p">(</span><span class="s1">','</span><span class="p">,</span> <span class="nv">$arguments</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+$methodName = array_shift($pathinfoSet);
+echo 'Method: ', $methodName, "\n";
 
-<span class="c1">//check class source file.
+$arguments = $pathinfoSet;
+echo 'Arguments: ', implode(',', $arguments), "\n";
+
+//check class source file.
 //Name convention: class X should be defined in X.php.
-</span><span class="nv">$classFilePath</span> <span class="o">=</span> <span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">)</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span>
-    <span class="o">.</span> <span class="s1">'class'</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="nv">$className</span> <span class="o">.</span> <span class="s1">'.php'</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">is_readable</span><span class="p">(</span><span class="nv">$classFilePath</span><span class="p">))</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Class '</span><span class="si">{</span><span class="nv">$className</span><span class="si">}</span><span class="s2">' is not found.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+$classFilePath = dirname(__FILE__) . DIRECTORY_SEPARATOR
+    . 'class' . DIRECTORY_SEPARATOR . $className . '.php';
+if (!is_readable($classFilePath)) {
+    echo "Class '{$className}' is not found.\n";
+    exit(1);
+}
 
-<span class="c1">//class should not be existed before required!
+//class should not be existed before required!
 //if class is existed, PHP will raise a fatal error
 //(Cannot redeclare class ...) when load class file.
-</span><span class="k">require</span> <span class="nv">$classFilePath</span><span class="p">;</span>
+require $classFilePath;
 
-<span class="c1">//is class defined in $classFilePath
-</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">class_exists</span><span class="p">(</span><span class="nv">$className</span><span class="p">))</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Class '</span><span class="si">{</span><span class="nv">$className</span><span class="si">}</span><span class="s2">' is not found.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+//is class defined in $classFilePath
+if (!class_exists($className)) {
+    echo "Class '{$className}' is not found.\n";
+    exit(1);
+}
 
-<span class="nv">$methodSet</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="k">new</span> <span class="nv">$className</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">);</span>
+$methodSet = array(new $className, $methodName);
 
-<span class="c1">//check method. Notice: I did not check arguments
-</span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">is_callable</span><span class="p">(</span><span class="nv">$methodSet</span><span class="p">))</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"Method </span><span class="si">{</span><span class="nv">$methodName</span><span class="si">}</span><span class="s2"> is not found.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="k">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+//check method. Notice: I did not check arguments
+if (!is_callable($methodSet)) {
+    echo "Method {$methodName} is not found.\n";
+    exit(1);
+}
 
-<span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$methodSet</span><span class="p">,</span> <span class="nv">$arguments</span><span class="p">);</span>
+call_user_func_array($methodSet, $arguments);
 
-<span class="cp">?&gt;</span>
-<span class="nt">&lt;/pre&gt;</span>
-</code></pre>
+?>
+</pre>
+{% endhighlight %}
 
 <p>
 假設 <code>Db</code> 是此框架的資料庫核心類別。若將第37-45行之檢查動作移除，使用者將可透過 http://localhost/test/index.php/db/query/select%20id%20from%20users 之 URL 讀取資料庫內容。故檢查動作不可省略。
@@ -114,14 +118,16 @@ Reflection 在 PHP 中由 extension (by C) 實現而非實作在框架(framework
 <p>
 言歸正傳。下列為一個針對上述實作之可用類別源碼。它必須置於指定的目錄下才可用。在此例中，它應以 <var>X.php</var> 為檔名，且位於 index.php 所在目錄之 <var>class</var> 子目錄中。使用者得透過 http://localhost/test/index.php/X/<var>hello</var>/<var>john</var> 之形式調用 – call <code>$x->hello('john');</code>。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">X</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">hello</span><span class="p">(</span><span class="nv">$name</span><span class="o">=</span><span class="s1">'world'</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s1">'hello '</span><span class="p">,</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?php
+class X {
+    public function hello($name='world') {
+        echo 'hello ', $name;
+    }
+}
+?>
+{% endhighlight %}
 
 
 <p>

@@ -17,725 +17,729 @@ permalink: /archives/4036079.html
 <img src="{{ site.baseurl }}/images/09df92b2.png" alt="WebFlow操作圖例" />
 <h6>FlowNode.js</h6>
 <p>Flow object。資料結構。</p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight javascript %}
+/*
 Copyright (c) 2006 Shih Yuncheng. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License (LGPL) as published by the Free Software Foundation; either
 version 2.1 of the License, or (at your option) any later version.
-*/</span>
+*/
 
-<span class="kd">function</span> <span class="nx">NodeIndex</span><span class="p">(</span><span class="nx">l</span><span class="p">,</span> <span class="nx">n</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">level</span> <span class="o">=</span> <span class="nx">l</span><span class="p">;</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">node</span> <span class="o">=</span> <span class="nx">n</span><span class="p">;</span>
-	<span class="k">return</span> <span class="k">this</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">NodeIndex</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toString</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="s2">"("</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">level</span> <span class="o">+</span> <span class="s2">","</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">node</span> <span class="o">+</span> <span class="s2">")"</span><span class="p">;</span>
-<span class="p">}</span>
+function NodeIndex(l, n) {
+	this.level = l;
+	this.node = n;
+	return this;
+}
+NodeIndex.prototype.toString = function() {
+	return "(" + this.level + "," + this.node + ")";
+}
 
-<span class="kd">function</span> <span class="nx">FlowNode</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+function FlowNode(name) {
+	this.name = name;
 
-	<span class="k">this</span><span class="p">.</span><span class="nx">items</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
-	<span class="c1">//this.items.push(null); //每一新節點的會辦者為 END</span>
-	<span class="c1">//this.backs = new Array();</span>
-	<span class="k">return</span> <span class="k">this</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">FlowNode</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toString</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
-<span class="p">}</span>
+	this.items = new Array();
+	//this.items.push(null); //每一新節點的會辦者為 END
+	//this.backs = new Array();
+	return this;
+}
+FlowNode.prototype.toString = function() {
+	return this.name;
+}
 
-<span class="c1">//每一層級至少有一節點。</span>
-<span class="kd">function</span> <span class="nx">FlowLevel</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">nodes</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">new</span> <span class="nx">FlowNode</span><span class="p">(</span><span class="nx">name</span><span class="p">));</span>
-	<span class="k">return</span> <span class="k">this</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">FlowLevel</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">addNode</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">nodes</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodes</span><span class="p">;</span>
-	<span class="c1">//nodes[nodes.length] = new FlowNode(name);</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">if</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span> <span class="o">==</span> <span class="nx">name</span><span class="p">)</span>
-	        <span class="k">return</span> <span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-	<span class="p">}</span>
-	<span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FlowNode</span><span class="p">(</span><span class="nx">name</span><span class="p">);</span>
-	<span class="nx">nodes</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">node</span><span class="p">);</span>
-	<span class="k">return</span> <span class="nx">node</span><span class="p">;</span>
-<span class="p">}</span>
+//每一層級至少有一節點。
+function FlowLevel(name) {
+	this.nodes = new Array();
+	this.nodes.push(new FlowNode(name));
+	return this;
+}
+FlowLevel.prototype.addNode = function(name) {
+	var nodes = this.nodes;
+	//nodes[nodes.length] = new FlowNode(name);
+	for(var i = 0; i < nodes.length; i++) {
+	    if(nodes[i].name == name)
+	        return nodes[i];
+	}
+	var node = new FlowNode(name);
+	nodes.push(node);
+	return node;
+}
 
-<span class="cm">/*
+/*
   Flow
-*/</span>
-<span class="kd">function</span> <span class="nx">Flow</span><span class="p">()</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">levels</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">new</span> <span class="nx">FlowLevel</span><span class="p">(</span><span class="s2">""</span><span class="p">));</span> <span class="c1">// Node END, Flow.levels[0]</span>
-	<span class="k">return</span> <span class="k">this</span><span class="p">;</span>
-<span class="p">}</span>
+*/
+function Flow() {
+	this.levels = new Array();
+	this.levels.push(new FlowLevel("")); // Node END, Flow.levels[0]
+	return this;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getNodeIndex</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">levels</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">node</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">node</span><span class="p">.</span><span class="nx">name</span> <span class="o">==</span> <span class="s2">""</span><span class="p">)</span>
-	    <span class="k">return</span> <span class="k">new</span> <span class="nx">NodeIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">nodes</span><span class="p">;</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">nodes</span> <span class="o">=</span> <span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">;</span>
-	    <span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">arrayHasItem</span><span class="p">(</span><span class="nx">nodes</span><span class="p">,</span> <span class="nx">node</span><span class="p">);</span>
-	    <span class="k">if</span><span class="p">(</span> <span class="nx">j</span> <span class="o">&gt;=</span><span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-	        <span class="k">return</span> <span class="k">new</span> <span class="nx">NodeIndex</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="nx">j</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-<span class="p">}</span>
+Flow.prototype.getNodeIndex = function(node) {
+	var levels = this.levels;
+	if(node == null || node.name == "")
+	    return new NodeIndex(0,0);
+	var nodes;
+	for(var i=1; i < levels.length; i++) {
+	    nodes = levels[i].nodes;
+	    var j = this.arrayHasItem(nodes, node);
+	    if( j >=0 ) {
+	        return new NodeIndex(i,j);
+		}
+	}
+	return null;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getNodeByName</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">nodeName</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">levels</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">nodeName</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">nodeName</span> <span class="o">==</span> <span class="s2">""</span><span class="p">)</span>
-	    <span class="k">return</span> <span class="nx">levels</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="cm">/*null*/</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">nodes</span><span class="p">;</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">nodes</span> <span class="o">=</span> <span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">;</span>
-	    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	        <span class="k">if</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">name</span> <span class="o">==</span> <span class="nx">nodeName</span><span class="p">)</span> <span class="p">{</span>
-	            <span class="k">return</span> <span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">];</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cm">/*
+Flow.prototype.getNodeByName = function(nodeName) {
+	var levels = this.levels;
+	if(nodeName == null || nodeName == "")
+	    return levels[0].nodes[0]/*null*/;
+	var nodes;
+	for(var i=0; i < levels.length; i++) {
+	    nodes = levels[i].nodes;
+	    for(var j = 0; j < nodes.length; j++) {
+	        if(nodes[j].name == nodeName) {
+	            return nodes[j];
+			}
+		}
+	}
+	return null;
+}
+/*
 Flow.prototype.removeNodeFromItem = function(node) {
 	if(node == null)
 	    return;
 	var levels = this.levels;
 	var nodes;
-	for(var i=1; i &lt; levels.length; i++) {
+	for(var i=1; i < levels.length; i++) {
 	    nodes = levels[i].nodes;
 
-	    for(var j = 0; j &lt; nodes.length; j++) {
+	    for(var j = 0; j < nodes.length; j++) {
 			this.removeItem(i, j, node);
 		}
 	}
 }
-*/</span>
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">replaceNodeInItems</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">replaceWithItems</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">node</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
-	    <span class="k">return</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">levels</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">nodes</span><span class="p">;</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">nodes</span> <span class="o">=</span> <span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">;</span>
+*/
+Flow.prototype.replaceNodeInItems = function(node, replaceWithItems) {
+	if(node == null)
+	    return;
+	var levels = this.levels;
+	var nodes;
+	for(var i=1; i < levels.length; i++) {
+	    nodes = levels[i].nodes;
 
-	    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">k</span> <span class="o">&lt;</span> <span class="nx">replaceWithItems</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">k</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			    <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">hasItem</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="nx">j</span><span class="p">,</span><span class="nx">node</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-		        	<span class="k">this</span><span class="p">.</span><span class="nx">addItem</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span><span class="p">,</span> <span class="nx">replaceWithItems</span><span class="p">[</span><span class="nx">k</span><span class="p">]);</span>
-				<span class="p">}</span>
-		    <span class="p">}</span>
-			<span class="k">this</span><span class="p">.</span><span class="nx">removeItem</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span><span class="p">,</span> <span class="nx">node</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+	    for(var j = 0; j < nodes.length; j++) {
+			for(var k = 0; k < replaceWithItems.length; k++) {
+			    if(this.hasItem(i,j,node) >= 0) {
+		        	this.addItem(i, j, replaceWithItems[k]);
+				}
+		    }
+			this.removeItem(i, j, node);
+		}
+	}
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">insertLevel</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">fromNode</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">levels</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">getNodeByName</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
-	    <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//已存在 (可能在不同層級)</span>
+Flow.prototype.insertLevel = function(indexOfLevel, name, fromNode) {
+	var levels = this.levels;
+	if(indexOfLevel > levels.length)
+		return null;
+	if(this.getNodeByName(name) != null)
+	    return null; //已存在 (可能在不同層級)
 
-	<span class="nx">levels</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">new</span> <span class="nx">FlowLevel</span><span class="p">(</span><span class="nx">name</span><span class="p">));</span>
+	levels.splice(indexOfLevel, 0, new FlowLevel(name));
 
-	<span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+	var node = levels[indexOfLevel].nodes[0];
 
-	<span class="k">if</span><span class="p">(</span><span class="nx">fromNode</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-		<span class="c1">//node.items.pop();</span>
-		<span class="c1">// remove the Node END; 新層級會包含一個新節點，而新節點的會辦者預設為 END</span>
-		<span class="k">while</span><span class="p">(</span><span class="nx">fromNode</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">fromNode</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">pop</span><span class="p">());</span>
-			<span class="c1">//新層級之新節點之會辦者，為處理者的會辦者。</span>
-		<span class="p">}</span>
-		<span class="nx">fromNode</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">node</span><span class="p">);</span>
-		<span class="c1">//將新節點加入處理者的會辦者中</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">];</span>
-<span class="p">}</span>
+	if(fromNode != null) {
+		//node.items.pop();
+		// remove the Node END; 新層級會包含一個新節點，而新節點的會辦者預設為 END
+		while(fromNode.items.length >0) {
+			node.items.push(fromNode.items.pop());
+			//新層級之新節點之會辦者，為處理者的會辦者。
+		}
+		fromNode.items.push(node);
+		//將新節點加入處理者的會辦者中
+	}
+	return levels[indexOfLevel];
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">removeLevel</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">levels</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">!=</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="c1">// NOTE: 層級移除策略未定。暫定只能移除最後一個層級。</span>
+Flow.prototype.removeLevel = function(indexOfLevel) {
+	var levels = this.levels;
+	if(indexOfLevel != levels.length - 1)
+		return false;
+	// NOTE: 層級移除策略未定。暫定只能移除最後一個層級。
 
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-	    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">level</span> <span class="o">=</span> <span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">];</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">level</span><span class="p">.</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
-	    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="c1">//只有一個參與者時，才可移除層級</span>
-	<span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="nx">level</span><span class="p">.</span><span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+	if(indexOfLevel > levels.length)
+	    return false;
+	var level = levels[indexOfLevel];
+	if(level.nodes.length > 1)
+	    return false;
+	//只有一個參與者時，才可移除層級
+	var node = level.nodes[0];
 
-	<span class="k">this</span><span class="p">.</span><span class="nx">replaceNodeInItems</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">);</span>
+	this.replaceNodeInItems(node, node.items);
 
-	<span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+	this.levels.splice(indexOfLevel, 1);
 
-	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">}</span>
+	return true;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">addNode</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">fromNode</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">levels</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">getNodeByName</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//已存在 (可能在不同層級)</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">addNode</span><span class="p">(</span><span class="nx">name</span><span class="p">);</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">fromNode</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">fromNode</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">node</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="c1">//node.items.push(new NodeIndex(0,0));</span>
-		<span class="k">return</span> <span class="nx">node</span><span class="p">;</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+Flow.prototype.addNode = function(indexOfLevel, name, fromNode) {
+	var levels = this.levels;
+	if(indexOfLevel > levels.length)
+		return null;
+	if(this.getNodeByName(name) != null) {
+	    return null; //已存在 (可能在不同層級)
+	}
+	else {
+		var node = this.levels[indexOfLevel].addNode(name);
+		if(fromNode) {
+			fromNode.items.push(node);
+		}
+		//node.items.push(new NodeIndex(0,0));
+		return node;
+	}
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">removeNode</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">||</span> <span class="nx">indexOfNode</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+Flow.prototype.removeNode = function(indexOfLevel, indexOfNode) {
+	if(indexOfLevel > this.levels.length || indexOfNode > this.levels[indexOfLevel].nodes.length)
+		return false;
 
-	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">//一個層級至少要有一個節點。</span>
+	if(this.levels[indexOfLevel].nodes.length <= 1)
+		return false; //一個層級至少要有一個節點。
 
-	<span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">indexOfNode</span><span class="p">];</span>
-	<span class="c1">//只有一個會辦者，且其為 END ，才可移除</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span><span class="c1">//if(node.items.length &lt;= 1 /*&amp;&amp; node.items[0] == null*/) {</span>
-		<span class="k">this</span><span class="p">.</span><span class="nx">replaceNodeInItems</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">);</span>
+	var node = this.levels[indexOfLevel].nodes[indexOfNode];
+	//只有一個會辦者，且其為 END ，才可移除
+	if(node.items.length > 1) {
+	    return false;
+	}
+	else {//if(node.items.length <= 1 /*&& node.items[0] == null*/) {
+		this.replaceNodeInItems(node, node.items);
 
-		<span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">indexOfNode</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">}</span>
+		this.levels[indexOfLevel].nodes.splice(indexOfNode, 1);
+	}
+	return true;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">updateNode</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">,</span> <span class="nx">nodeData</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">||</span> <span class="nx">indexOfNode</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+Flow.prototype.updateNode = function(indexOfLevel, indexOfNode, nodeData) {
+	if(indexOfLevel > this.levels.length || indexOfNode > this.levels[indexOfLevel].nodes.length)
+		return false;
 
-	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">getNodeByName</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">//不存在</span>
-	<span class="p">}</span>
+	if(this.getNodeByName(name) == null) {
+	    return false; //不存在
+	}
 
-	<span class="kd">var</span> <span class="nx">node</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">indexOfNode</span><span class="p">];</span>
-	<span class="kd">var</span> <span class="nx">oldNode</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FlowNode</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">nodeData</span><span class="p">[</span><span class="s1">'name'</span><span class="p">])</span> <span class="p">{</span>
-	    <span class="nx">node</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">nodeData</span><span class="p">[</span><span class="s1">'name'</span><span class="p">];</span>
-	<span class="p">}</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">replaceNodeInItems</span><span class="p">(</span><span class="nx">oldNode</span><span class="p">,</span> <span class="p">[</span><span class="nx">node</span><span class="p">]);</span>
+	var node = this.levels[indexOfLevel].nodes[indexOfNode];
+	var oldNode = new FlowNode(node.name);
+	if(nodeData['name']) {
+	    node.name = nodeData['name'];
+	}
+	this.replaceNodeInItems(oldNode, [node]);
 
-	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">}</span>
+	return true;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">arrayHasItem</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ar</span><span class="p">,</span> <span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ar</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">ar</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">item</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">item</span><span class="p">.</span><span class="nx">name</span> <span class="o">==</span> <span class="s2">""</span><span class="p">))</span>
-			<span class="k">return</span> <span class="nx">i</span><span class="p">;</span>
-		<span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="nx">ar</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nx">item</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-			<span class="k">if</span><span class="p">(</span><span class="nx">ar</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span> <span class="o">==</span> <span class="nx">item</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
-				<span class="k">return</span> <span class="nx">i</span><span class="p">;</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-<span class="p">}</span>
+Flow.prototype.arrayHasItem = function(ar, item) {
+	for(var i = 0; i < ar.length; i++) {
+		if(ar[i] == null && (item == null || item.name == ""))
+			return i;
+		else if(ar[i] != null && item != null) {
+			if(ar[i].name == item.name)
+				return i;
+		}
+	}
+	return -1;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">hasItem</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">,</span> <span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">||</span> <span class="nx">indexOfNode</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-	<span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">arrayHasItem</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">indexOfNode</span><span class="p">].</span><span class="nx">items</span><span class="p">,</span> <span class="nx">item</span><span class="p">);</span>
-<span class="p">}</span>
+Flow.prototype.hasItem = function(indexOfLevel, indexOfNode, item) {
+	if(indexOfLevel > this.levels.length || indexOfNode > this.levels[indexOfLevel].nodes.length)
+		return -1;
+	return this.arrayHasItem(this.levels[indexOfLevel].nodes[indexOfNode].items, item);
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">addItem</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">,</span> <span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">||</span> <span class="nx">indexOfNode</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">indexOfNode</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">items</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">indexOfNode</span><span class="p">].</span><span class="nx">items</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">hasItem</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">,</span> <span class="nx">item</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">}</span>
+Flow.prototype.addItem = function(indexOfLevel, indexOfNode, item) {
+	if(indexOfLevel > this.levels.length || indexOfNode > this.levels[indexOfLevel].nodes.length)
+		return false;
+    if(this.levels[indexOfLevel].nodes[indexOfNode] == null)
+		return false;
+	var items = this.levels[indexOfLevel].nodes[indexOfNode].items;
+	if(this.hasItem(indexOfLevel, indexOfNode, item) <= -1) {
+		items.push(item);
+	}
+	return true;
+}
 
-<span class="nx">Flow</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">removeItem</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">,</span> <span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">indexOfLevel</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">||</span> <span class="nx">indexOfNode</span> <span class="o">&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+Flow.prototype.removeItem = function(indexOfLevel, indexOfNode, item) {
+	if(indexOfLevel > this.levels.length || indexOfNode > this.levels[indexOfLevel].nodes.length)
+		return false;
 
-	<span class="kd">var</span> <span class="nx">items</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">indexOfLevel</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">indexOfNode</span><span class="p">].</span><span class="nx">items</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="nx">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">items</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">name</span> <span class="o">==</span> <span class="s2">""</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">hasItem</span><span class="p">(</span><span class="nx">indexOfLevel</span><span class="p">,</span> <span class="nx">indexOfNode</span><span class="p">,</span> <span class="nx">item</span><span class="p">);</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">items</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cm">/*
+	var items = this.levels[indexOfLevel].nodes[indexOfNode].items;
+	if(items.length <= 1)
+		return false;
+	if(items.length <= 1 && items[0] && items[0].name == "")
+		return false;
+	var i = this.hasItem(indexOfLevel, indexOfNode, item);
+	if(i >= 0) {
+		items.splice(i, 1);
+	}
+	return true;
+}
+/*
 Flow.prototype.nodeEnd = function() {
 	//return this.levels[0].nodes[0];
 	return null;
 }
-*/</span>
-</code></pre>
+*/
+{% endhighlight %}
 
 
 <h6>WebFlow.js</h6>
 <p>流程編輯功能。源碼不展開。</p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight javascript %}
+/*
 Copyright (c) 2006 Shih Yuncheng. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License (LGPL) as published by the Free Software Foundation; either
 version 2.1 of the License, or (at your option) any later version.
-*/</span>
+*/
 
-<span class="kd">function</span> <span class="nx">hiddenFlowMenu1</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function hiddenFlowMenu1() {
+	document.getElementById("FlowMenu1").style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">mouseOverMenuItem</span><span class="p">(</span><span class="nx">menuItem</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">menuItem</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s2">"MenuItemMouseOver"</span><span class="p">;</span>
-<span class="p">}</span>
+function mouseOverMenuItem(menuItem) {
+	menuItem.className = "MenuItemMouseOver";
+}
 
-<span class="kd">function</span> <span class="nx">mouseOutMenuItem</span><span class="p">(</span><span class="nx">menuItem</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">menuItem</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s2">"MenuItem"</span><span class="p">;</span>
-<span class="p">}</span>
+function mouseOutMenuItem(menuItem) {
+	menuItem.className = "MenuItem";
+}
 
-<span class="kd">function</span> <span class="nx">showFlowMenu1</span><span class="p">(</span><span class="nx">obj</span><span class="p">,</span> <span class="nx">l</span><span class="p">,</span> <span class="nx">n</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">menu</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">);</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span> <span class="o">!=</span> <span class="nx">l</span> <span class="o">||</span> <span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span> <span class="o">!=</span> <span class="nx">n</span> <span class="o">||</span> <span class="nx">menu</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">==</span> <span class="s1">'hidden'</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">setCurrentNode</span><span class="p">(</span><span class="nx">l</span><span class="p">,</span><span class="nx">n</span><span class="p">);</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s2">"關卡: "</span> <span class="o">+</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">l</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">n</span><span class="p">];</span> <span class="c1">//+ "(" + l + "," + n + ")";</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;ul&gt;"</span><span class="p">;</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;li onClick='showAddItem();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'&gt;新增關卡&lt;/li&gt;"</span><span class="p">;</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;li onClick='showUpdateNode();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'&gt;修改關卡&lt;/li&gt;"</span><span class="p">;</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;li onClick='showRemoveNode();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'&gt;刪除關卡&lt;/li&gt;"</span><span class="p">;</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;li onClick='showRemoveItem();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'&gt;移除會辦者&lt;/li&gt;"</span><span class="p">;</span>
-		<span class="nx">menu</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;/ul&gt;"</span><span class="p">;</span>
-		<span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">,</span> <span class="nx">obj</span><span class="p">);</span>
-	    <span class="nx">menu</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s1">'visible'</span><span class="p">;</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-	    <span class="nx">menu</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s1">'hidden'</span><span class="p">;</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+function showFlowMenu1(obj, l, n) {
+	var menu = document.getElementById("FlowMenu1");
+	if(currentNodeIndex.level != l || currentNodeIndex.node != n || menu.style.visibility == 'hidden') {
+		setCurrentNode(l,n);
+		menu.innerHTML = "關卡: " + flow.levels[l].nodes[n]; //+ "(" + l + "," + n + ")";
+		menu.innerHTML += "<ul>";
+		menu.innerHTML += "<li onClick='showAddItem();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'>新增關卡</li>";
+		menu.innerHTML += "<li onClick='showUpdateNode();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'>修改關卡</li>";
+		menu.innerHTML += "<li onClick='showRemoveNode();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'>刪除關卡</li>";
+		menu.innerHTML += "<li onClick='showRemoveItem();' onMouseOver='mouseOverMenuItem(this);' onMouseOut='mouseOutMenuItem(this);'>移除會辦者</li>";
+		menu.innerHTML += "</ul>";
+		layoutToElement("FlowMenu1", obj);
+	    menu.style.visibility = 'visible';
+	}
+	else {
+	    menu.style.visibility = 'hidden';
+	}
+}
 
-<span class="kd">function</span> <span class="nx">layoutToElement</span><span class="p">(</span><span class="nx">objId</span><span class="p">,</span> <span class="nx">layoutToObj</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">objId</span><span class="p">);</span>
+function layoutToElement(objId, layoutToObj) {
+	var obj = document.getElementById(objId);
 
-	<span class="k">if</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">cs</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">;</span>
+	if(obj) {
+		var cs = obj.style;
 
-		<span class="c1">//if(cs.visibility == 'hidden') {</span>
-			<span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="nx">layoutToObj</span><span class="p">;</span>
-			<span class="kd">var</span> <span class="nx">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
-			<span class="kd">var</span> <span class="nx">y</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
-			<span class="k">while</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">offsetParent</span><span class="p">)</span> <span class="p">{</span>
-				<span class="nx">x</span><span class="o">+=</span><span class="nx">o</span><span class="p">.</span><span class="nx">offsetLeft</span><span class="p">;</span>
-				<span class="nx">y</span><span class="o">+=</span><span class="nx">o</span><span class="p">.</span><span class="nx">offsetTop</span><span class="p">;</span>
-				<span class="nx">o</span><span class="o">=</span><span class="nx">o</span><span class="p">.</span><span class="nx">offsetParent</span><span class="p">;</span>
-			<span class="p">}</span>
-			<span class="c1">//cs.top=(y+layoutToObj.offsetHeight)+'px';</span>
-			<span class="c1">//cs.left=x+'px';</span>
-			<span class="nx">cs</span><span class="p">.</span><span class="nx">top</span><span class="o">=</span><span class="nx">y</span><span class="o">+</span><span class="s1">'px'</span><span class="p">;</span>
-			<span class="nx">cs</span><span class="p">.</span><span class="nx">left</span><span class="o">=</span><span class="p">(</span><span class="nx">x</span><span class="o">+</span><span class="nx">layoutToObj</span><span class="p">.</span><span class="nx">offsetWidth</span><span class="p">)</span><span class="o">+</span><span class="s1">'px'</span><span class="p">;</span>
-		<span class="c1">//	cs.visibility='visible';</span>
-		<span class="c1">//}</span>
-		<span class="c1">//else {</span>
-		<span class="c1">//	cs.visibility='hidden';</span>
-		<span class="c1">//}</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+		//if(cs.visibility == 'hidden') {
+			var o = layoutToObj;
+			var x=0;
+			var y=0;
+			while(o.offsetParent) {
+				x+=o.offsetLeft;
+				y+=o.offsetTop;
+				o=o.offsetParent;
+			}
+			//cs.top=(y+layoutToObj.offsetHeight)+'px';
+			//cs.left=x+'px';
+			cs.top=y+'px';
+			cs.left=(x+layoutToObj.offsetWidth)+'px';
+		//	cs.visibility='visible';
+		//}
+		//else {
+		//	cs.visibility='hidden';
+		//}
+	}
+}
 
-<span class="kd">function</span> <span class="nx">setCurrentNode</span><span class="p">(</span><span class="nx">l</span><span class="p">,</span> <span class="nx">n</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span> <span class="o">=</span> <span class="nx">l</span><span class="p">;</span>
-	<span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span> <span class="o">=</span> <span class="nx">n</span><span class="p">;</span>
-	<span class="nx">currentNode</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">l</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">n</span><span class="p">];</span>
-<span class="p">}</span>
+function setCurrentNode(l, n) {
+	currentNodeIndex.level = l;
+	currentNodeIndex.node = n;
+	currentNode = flow.levels[l].nodes[n];
+}
 
-<span class="kd">function</span> <span class="nx">getNewLevelName</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewLevel"</span><span class="p">).</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s2">"nodeName"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="k">return</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
-<span class="p">}</span>
+function getNewLevelName() {
+	var textbox = document.getElementById("FlowMenuAddNewLevel").getElementsByName("nodeName")[0];
+	return textbox.value;
+}
 
-<span class="kd">function</span> <span class="nx">cancleAddNewLevel</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewLevel"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-	<span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function cancleAddNewLevel() {
+	var obj = document.getElementById("FlowMenuAddNewLevel");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+	hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">submitAddNewLevel</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewLevel"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="c1">//layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));</span>
-    <span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">flow</span><span class="p">.</span><span class="nx">insertLevel</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span> <span class="nx">currentNode</span><span class="p">);</span>
-	    <span class="nx">renderFlowTable</span><span class="p">();</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+function submitAddNewLevel() {
+	var obj = document.getElementById("FlowMenuAddNewLevel");
+	var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    //layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+    hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+	if(textbox.value != "") {
+	    flow.insertLevel(currentNodeIndex.level+1, textbox.value, currentNode);
+	    renderFlowTable();
+	}
+}
 
-<span class="kd">function</span> <span class="nx">showAddNewLevel</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewLevel"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-    <span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenuAddNewLevel"</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
-<span class="p">}</span>
+function showAddNewLevel() {
+	var obj = document.getElementById("FlowMenuAddNewLevel");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+    layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "visible";
+	textbox.focus();
+}
 
-<span class="kd">function</span> <span class="nx">getNewNodeName</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewNode"</span><span class="p">).</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s2">"nodeName"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="k">return</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
-<span class="p">}</span>
+function getNewNodeName() {
+	var textbox = document.getElementById("FlowMenuAddNewNode").getElementsByName("nodeName")[0];
+	return textbox.value;
+}
 
-<span class="kd">function</span> <span class="nx">cancleAddNewNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-	<span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function cancleAddNewNode() {
+	var obj = document.getElementById("FlowMenuAddNewNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+	hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">submitAddNewNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="c1">//layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));</span>
-    <span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="kd">var</span> <span class="nx">rc</span><span class="p">;</span>
-	    <span class="k">if</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span> <span class="o">&gt;=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span> <span class="p">{</span>
-		    <span class="nx">rc</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">insertLevel</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span> <span class="nx">currentNode</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="k">else</span> <span class="p">{</span>
-		    <span class="nx">rc</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">addNode</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span> <span class="nx">currentNode</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">rc</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">alert</span><span class="p">(</span><span class="s2">"不允許新增，可能已存在。"</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="k">else</span> <span class="p">{</span>
-			<span class="nx">renderFlowTable</span><span class="p">();</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+function submitAddNewNode() {
+	var obj = document.getElementById("FlowMenuAddNewNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    //layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+    hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+	if(textbox.value != "") {
+	    var rc;
+	    if(currentNodeIndex.level >= flow.levels.length -1 ) {
+		    rc = flow.insertLevel(currentNodeIndex.level+1, textbox.value, currentNode);
+		}
+		else {
+		    rc = flow.addNode(currentNodeIndex.level+1, textbox.value, currentNode);
+		}
+		if(rc == null) {
+			alert("不允許新增，可能已存在。");
+		}
+		else {
+			renderFlowTable();
+		}
+	}
+}
 
-<span class="kd">function</span> <span class="nx">hideAddNewNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewNode"</span><span class="p">);</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-	<span class="nx">bodyControler</span><span class="p">.</span><span class="nx">removeClickHandler</span><span class="p">(</span><span class="nx">hideAddNewNode</span><span class="p">);</span>
-<span class="p">}</span>
+function hideAddNewNode() {
+	var obj = document.getElementById("FlowMenuAddNewNode");
+	obj.style.visibility = "hidden";
+	bodyControler.removeClickHandler(hideAddNewNode);
+}
 
-<span class="kd">function</span> <span class="nx">showAddNewNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddNewNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-    <span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenuAddNewNode"</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
-<span class="p">}</span>
+function showAddNewNode() {
+	var obj = document.getElementById("FlowMenuAddNewNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+    layoutToElement("FlowMenuAddNewNode", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "visible";
+	textbox.focus();
+}
 
-<span class="kd">function</span> <span class="nx">cancleUpdateNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuUpdateNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-	<span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function cancleUpdateNode() {
+	var obj = document.getElementById("FlowMenuUpdateNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+	hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">submitUpdateNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuUpdateNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="c1">//layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));</span>
-    <span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">!=</span> <span class="s2">""</span> <span class="o">&amp;&amp;</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">!=</span> <span class="nx">currentNode</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="kd">var</span> <span class="nx">rc</span><span class="p">;</span>
-	    <span class="nx">rc</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">updateNode</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">,</span> <span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="p">,</span> <span class="p">{</span><span class="na">name</span><span class="p">:</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">});</span>
-		<span class="nx">renderFlowTable</span><span class="p">();</span>
-	<span class="p">}</span>
-<span class="p">}</span>
+function submitUpdateNode() {
+	var obj = document.getElementById("FlowMenuUpdateNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    //layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+    hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+	if(textbox.value != "" && textbox.value != currentNode.name) {
+	    var rc;
+	    rc = flow.updateNode(currentNodeIndex.level, currentNodeIndex.node, {name:textbox.value});
+		renderFlowTable();
+	}
+}
 
-<span class="kd">function</span> <span class="nx">showUpdateNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuUpdateNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="nx">currentNode</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
-    <span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenuUpdateNode"</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
-<span class="p">}</span>
+function showUpdateNode() {
+	var obj = document.getElementById("FlowMenuUpdateNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = currentNode.name;
+    layoutToElement("FlowMenuUpdateNode", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "visible";
+	textbox.focus();
+}
 
-<span class="kd">function</span> <span class="nx">getItemName</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddItem"</span><span class="p">).</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s2">"nodeName"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="k">return</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
-<span class="p">}</span>
+function getItemName() {
+	var textbox = document.getElementById("FlowMenuAddItem").getElementsByName("nodeName")[0];
+	return textbox.value;
+}
 
-<span class="kd">function</span> <span class="nx">cancleAddItem</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddItem"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-    <span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function cancleAddItem() {
+	var obj = document.getElementById("FlowMenuAddItem");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+    hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">submitAddItem</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddItem"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="c1">//layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));</span>
-    <span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">rc</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">(</span><span class="nx">flow</span><span class="p">.</span><span class="nx">getNodeByName</span><span class="p">(</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-    	<span class="k">if</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span> <span class="o">&gt;=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span> <span class="p">{</span>
-	    	<span class="nx">rc</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">insertLevel</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span> <span class="nx">currentNode</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="k">else</span> <span class="p">{</span>
-	    	<span class="nx">rc</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">addNode</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span> <span class="nx">currentNode</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-	    <span class="nx">flow</span><span class="p">.</span><span class="nx">addItem</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">,</span> <span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="p">,</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">getNodeByName</span><span class="p">(</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">));</span>
-	<span class="p">}</span>
-	<span class="nx">renderFlowTable</span><span class="p">();</span>
-<span class="p">}</span>
+function submitAddItem() {
+	var obj = document.getElementById("FlowMenuAddItem");
+	var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    //layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+    hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+    var rc;
+    if(flow.getNodeByName(textbox.value) == null) {
+    	if(currentNodeIndex.level >= flow.levels.length -1 ) {
+	    	rc = flow.insertLevel(currentNodeIndex.level+1, textbox.value, currentNode);
+		}
+		else {
+	    	rc = flow.addNode(currentNodeIndex.level+1, textbox.value, currentNode);
+		}
+	}
+	else {
+	    flow.addItem(currentNodeIndex.level, currentNodeIndex.node, flow.getNodeByName(textbox.value));
+	}
+	renderFlowTable();
+}
 
-<span class="kd">function</span> <span class="nx">showAddItem</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuAddItem"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
+function showAddItem() {
+	var obj = document.getElementById("FlowMenuAddItem");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
 
-	<span class="kd">var</span> <span class="nx">nodeList</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"select"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="k">while</span><span class="p">(</span><span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">nodeList</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="s2">"請選擇"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">);</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span>  <span class="p">{</span>
-	        <span class="k">if</span><span class="p">(</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="p">].</span><span class="nx">name</span>
-			  <span class="o">!=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">name</span>
-			  <span class="o">&amp;&amp;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">hasItem</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">,</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="p">,</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-				<span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">name</span><span class="p">,</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">name</span><span class="p">);</span>
-	        <span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="s2">"結案"</span><span class="p">,</span> <span class="s2">""</span><span class="p">);</span>
+	var nodeList = obj.getElementsByTagName("select")[0];
+	while(nodeList.options.length > 0) {
+		nodeList.remove(0);
+	}
+	nodeList.options[0] = new Option("請選擇", "0");
+	for(var i = 1; i < flow.levels.length; i++) {
+	    for(var j = 0; j < flow.levels[i].nodes.length; j++)  {
+	        if(flow.levels[currentNodeIndex.level].nodes[currentNodeIndex.node].name
+			  != flow.levels[i].nodes[j].name
+			  && flow.hasItem(currentNodeIndex.level,currentNodeIndex.node,flow.levels[i].nodes[j]) <= -1) {
+				nodeList.options[nodeList.options.length] = new Option(flow.levels[i].nodes[j].name, flow.levels[i].nodes[j].name);
+	        }
+		}
+	}
+	nodeList.options[nodeList.options.length] = new Option("結案", "");
 
-    <span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenuAddItem"</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
-<span class="p">}</span>
+    layoutToElement("FlowMenuAddItem", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "visible";
+	textbox.focus();
+}
 
-<span class="kd">function</span> <span class="nx">cancleRemoveItem</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuRemoveItem"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-	<span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function cancleRemoveItem() {
+	var obj = document.getElementById("FlowMenuRemoveItem");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
+	hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">submitRemoveItem</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuRemoveItem"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="c1">//layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));</span>
-    <span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-	<span class="c1">//if(textbox.value != "") {</span>
-	<span class="c1">//window.alert(flow.getNodeByName(textbox.value));</span>
-	    <span class="nx">flow</span><span class="p">.</span><span class="nx">removeItem</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">,</span> <span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="p">,</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">getNodeByName</span><span class="p">(</span><span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span><span class="p">));</span>
-	    <span class="nx">renderFlowTable</span><span class="p">();</span>
-	<span class="c1">//}</span>
-<span class="p">}</span>
+function submitRemoveItem() {
+	var obj = document.getElementById("FlowMenuRemoveItem");
+	var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    //layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+    hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+	//if(textbox.value != "") {
+	//window.alert(flow.getNodeByName(textbox.value));
+	    flow.removeItem(currentNodeIndex.level, currentNodeIndex.node, flow.getNodeByName(textbox.value));
+	    renderFlowTable();
+	//}
+}
 
-<span class="kd">function</span> <span class="nx">showRemoveItem</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuRemoveItem"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
+function showRemoveItem() {
+	var obj = document.getElementById("FlowMenuRemoveItem");
+	var textbox = obj.getElementsByTagName("input")[0];
+	textbox.value = "";
 
-	<span class="kd">var</span> <span class="nx">nodeList</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"select"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="k">while</span><span class="p">(</span><span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">nodeList</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="s2">"請選擇"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">);</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">currentNode</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">currentNode</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">currentNode</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span> <span class="o">==</span> <span class="s2">""</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="s2">"結案"</span><span class="p">,</span> <span class="s2">""</span><span class="p">);</span>
-		<span class="p">}</span>
-		<span class="k">else</span> <span class="p">{</span>
-			<span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">nodeList</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">length</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Option</span><span class="p">(</span><span class="nx">currentNode</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">,</span> <span class="nx">currentNode</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
+	var nodeList = obj.getElementsByTagName("select")[0];
+	while(nodeList.options.length > 0) {
+		nodeList.remove(0);
+	}
+	nodeList.options[0] = new Option("請選擇", "0");
+	for(var i = 0; i < currentNode.items.length; i++) {
+		if(currentNode.items[i] == null || currentNode.items[i].name == "") {
+			nodeList.options[nodeList.options.length] = new Option("結案", "");
+		}
+		else {
+			nodeList.options[nodeList.options.length] = new Option(currentNode.items[i].name, currentNode.items[i].name);
+		}
+	}
 
-    <span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenuRemoveItem"</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-	<span class="nx">textbox</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
-<span class="p">}</span>
+    layoutToElement("FlowMenuRemoveItem", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "visible";
+	textbox.focus();
+}
 
-<span class="kd">function</span> <span class="nx">cancleRemoveNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuRemoveNode"</span><span class="p">);</span>
-	<span class="c1">//var textbox = obj.getElementsByTagName("input")[0];</span>
-	<span class="c1">//textbox.value = "";</span>
-	<span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-<span class="p">}</span>
+function cancleRemoveNode() {
+	var obj = document.getElementById("FlowMenuRemoveNode");
+	//var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+	hiddenFlowMenu1();
+	obj.style.visibility = "hidden";
+}
 
-<span class="kd">function</span> <span class="nx">submitRemoveNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuRemoveNode"</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">textbox</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="c1">//layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"hidden"</span><span class="p">;</span>
-	<span class="nx">hiddenFlowMenu1</span><span class="p">();</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
-	    <span class="k">return</span><span class="p">;</span>
-	<span class="k">if</span><span class="p">(</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-    	<span class="nx">flow</span><span class="p">.</span><span class="nx">removeLevel</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-    	<span class="nx">flow</span><span class="p">.</span><span class="nx">removeNode</span><span class="p">(</span><span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">,</span> <span class="nx">currentNodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="p">);</span>
-	<span class="p">}</span>
-    <span class="nx">renderFlowTable</span><span class="p">();</span>
-<span class="p">}</span>
+function submitRemoveNode() {
+	var obj = document.getElementById("FlowMenuRemoveNode");
+	var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    //layoutToElement("FlowMenuAddNewLevel", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "hidden";
+	hiddenFlowMenu1();
+	if(currentNodeIndex.level <= 1)
+	    return;
+	if(flow.levels[currentNodeIndex.level].nodes.length <= 1) {
+    	flow.removeLevel(currentNodeIndex.level);
+	}
+	else {
+    	flow.removeNode(currentNodeIndex.level, currentNodeIndex.node);
+	}
+    renderFlowTable();
+}
 
-<span class="kd">function</span> <span class="nx">showRemoveNode</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenuRemoveNode"</span><span class="p">);</span>
-	<span class="c1">//var textbox = obj.getElementsByTagName("input")[0];</span>
-	<span class="c1">//textbox.value = "";</span>
-    <span class="nx">layoutToElement</span><span class="p">(</span><span class="s2">"FlowMenuRemoveNode"</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"FlowMenu1"</span><span class="p">));</span>
-	<span class="nx">obj</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s2">"visible"</span><span class="p">;</span>
-<span class="p">}</span>
+function showRemoveNode() {
+	var obj = document.getElementById("FlowMenuRemoveNode");
+	//var textbox = obj.getElementsByTagName("input")[0];
+	//textbox.value = "";
+    layoutToElement("FlowMenuRemoveNode", document.getElementById("FlowMenu1"));
+	obj.style.visibility = "visible";
+}
 
-<span class="kd">function</span> <span class="nx">renderFlowTable</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">div</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"div1"</span><span class="p">);</span>
+function renderFlowTable() {
+	var div = document.getElementById("div1");
 
-	<span class="kd">var</span> <span class="nx">offsetX</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">offsetY</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="nx">div</span><span class="p">;</span>
-	<span class="k">while</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">offsetParent</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">offsetX</span> <span class="o">+=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">offsetLeft</span><span class="p">;</span>
-		<span class="nx">offsetY</span> <span class="o">+=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">offsetTop</span><span class="p">;</span>
-		<span class="nx">o</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">offsetParent</span><span class="p">;</span>
-	<span class="p">}</span>
+	var offsetX=0;
+	var offsetY=0;
+	var o = div;
+	while(o.offsetParent) {
+		offsetX += o.offsetLeft;
+		offsetY += o.offsetTop;
+		o = o.offsetParent;
+	}
 
-	<span class="kd">var</span> <span class="nx">nodes</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">maxNodes</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">maxWidth</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="o">+</span><span class="mi">80</span><span class="p">)</span> <span class="o">*</span> <span class="nx">maxNodes</span> <span class="o">-</span> <span class="mi">20</span><span class="p">;</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">"div"</span><span class="p">);</span>
-			<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">className</span> <span class="o">=</span> <span class="s2">"FlowNode"</span><span class="p">;</span>
-		<span class="p">}</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">maxNodes</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
-		    <span class="nx">maxNodes</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
-			<span class="nx">maxWidth</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="o">+</span><span class="mi">80</span><span class="p">)</span> <span class="o">*</span> <span class="nx">maxNodes</span> <span class="o">-</span> <span class="mi">20</span><span class="p">;</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">offsetLeft</span> <span class="o">=</span> <span class="nx">offsetX</span> <span class="o">+</span><span class="p">((</span><span class="nx">maxWidth</span> <span class="o">-</span> <span class="p">((</span><span class="mi">20</span><span class="o">+</span><span class="mi">80</span><span class="p">)</span><span class="o">*</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">20</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span><span class="p">);</span>
-	<span class="p">}</span>
+	var nodes = new Array( flow.levels.length);
+	var maxNodes = 1;
+	var maxWidth = (20+80) * maxNodes - 20;
+	for(var i=0; i < flow.levels.length; i++) {
+	    nodes[i] = new Array(flow.levels[i].nodes.length);
+		for(var j=0; j < flow.levels[i].nodes.length; j++) {
+			nodes[i][j] = document.createElement("div");
+			nodes[i][j].className = "FlowNode";
+		}
+		if(maxNodes < flow.levels[i].nodes.length) {
+		    maxNodes = flow.levels[i].nodes.length;
+			maxWidth = (20+80) * maxNodes - 20;
+		}
+	}
+	for(var i=0; i < flow.levels.length; i++) {
+		nodes[i].offsetLeft = offsetX +((maxWidth - ((20+80)*flow.levels[i].nodes.length - 20)) / 2);
+	}
 
 
-	<span class="nx">jg_doc</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
-	<span class="cm">/*for(var i=0; i &lt; div.childNodes.length; i++) {
+	jg_doc.clear();
+	/*for(var i=0; i < div.childNodes.length; i++) {
 	    div.removeChild(div.childNodes[i]);
-	}*/</span>
+	}*/
 
-	<span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">offsetLeft</span> <span class="o">=</span> <span class="nx">offsetX</span> <span class="o">+</span> <span class="p">((</span><span class="nx">maxWidth</span> <span class="o">-</span> <span class="p">((</span><span class="mi">20</span><span class="o">+</span><span class="mi">80</span><span class="p">)</span><span class="o">*</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">20</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span><span class="p">);</span>
-	<span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s2">"&lt;input type='button' value='結案'/&gt;"</span><span class="p">;</span>
-   	<span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="nx">offsetY</span> <span class="o">+</span> <span class="p">((</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">50</span> <span class="o">+</span> <span class="mi">40</span><span class="p">))</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-   	<span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="nx">offsetX</span> <span class="o">+</span> <span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">offsetLeft</span> <span class="o">+</span> <span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">))</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-   	<span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">80</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-   	<span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">40</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-   	<span class="nx">div</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]);</span>
+	nodes[0].offsetLeft = offsetX + ((maxWidth - ((20+80)*flow.levels[0].nodes.length - 20)) / 2);
+	nodes[0][0].innerHTML = "<input type='button' value='結案'/>";
+   	nodes[0][0].style.top = offsetY + ((flow.levels.length-1) * (50 + 40)) + 'px';
+   	nodes[0][0].style.left = offsetX + (nodes[0].offsetLeft + (20 + 80)) + 'px';
+   	nodes[0][0].getElementsByTagName("input")[0].style['width'] = 80 + 'px';
+   	nodes[0][0].getElementsByTagName("input")[0].style['height'] = 40 + 'px';
+   	div.appendChild(nodes[0][0]);
 
 
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s2">"&lt;input type='button' value='"</span>
-				<span class="o">+</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"' onClick='showFlowMenu1(this,"</span><span class="o">+</span><span class="nx">i</span><span class="o">+</span><span class="s2">","</span><span class="o">+</span><span class="nx">j</span><span class="o">+</span><span class="s2">");'/&gt;"</span><span class="p">;</span><span class="c1">//+ flow.levels[i].nodes[j].items.join(",");</span>
-			<span class="k">if</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">addEventListener</span><span class="p">)</span> <span class="p">{</span>
-				<span class="c1">//nodes[i][j].addEventListener("mouseover", function(event){this.className = 'FlowMenuItemMouseOver';}, false);</span>
-				<span class="c1">//nodes[i][j].addEventListener("mouseout", function(event){this.className = 'FlowMenuItem';}, false);</span>
-			<span class="p">}</span>
-			<span class="k">else</span> <span class="p">{</span> <span class="c1">// M$IE</span>
-				<span class="c1">//nodes[i][j].onmouseover = function(){this.className = 'FlowMenuItemMouseOver';};</span>
-				<span class="c1">//nodes[i][j].onmouseout = function(){this.className = 'FlowMenuItem';};</span>
-			<span class="p">}</span>
-	    	<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">style</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="nx">offsetY</span> <span class="o">+</span><span class="p">((</span><span class="nx">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">50</span> <span class="o">+</span> <span class="mi">40</span><span class="p">))</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-	    	<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">style</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="nx">offsetX</span> <span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">offsetLeft</span> <span class="o">+</span> <span class="p">(</span><span class="nx">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">))</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-	    	<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">80</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-	    	<span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">].</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">style</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">40</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
+	for(var i = 1; i < flow.levels.length; i++) {
+		for(var j = 0; j < flow.levels[i].nodes.length; j++) {
+			nodes[i][j].innerHTML = "<input type='button' value='"
+				+ flow.levels[i].nodes[j] + "' onClick='showFlowMenu1(this,"+i+","+j+");'/>";//+ flow.levels[i].nodes[j].items.join(",");
+			if(nodes[i][j].addEventListener) {
+				//nodes[i][j].addEventListener("mouseover", function(event){this.className = 'FlowMenuItemMouseOver';}, false);
+				//nodes[i][j].addEventListener("mouseout", function(event){this.className = 'FlowMenuItem';}, false);
+			}
+			else { // M$IE
+				//nodes[i][j].onmouseover = function(){this.className = 'FlowMenuItemMouseOver';};
+				//nodes[i][j].onmouseout = function(){this.className = 'FlowMenuItem';};
+			}
+	    	nodes[i][j].style.top = offsetY +((i-1) * (50 + 40)) + 'px';
+	    	nodes[i][j].style.left = offsetX +(nodes[i].offsetLeft + (j+1) * (20 + 80)) + 'px';
+	    	nodes[i][j].getElementsByTagName("input")[0].style['width'] = 80 + 'px';
+	    	nodes[i][j].getElementsByTagName("input")[0].style['height'] = 40 + 'px';
 
-	    	<span class="nx">div</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">j</span><span class="p">]);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
+	    	div.appendChild(nodes[i][j]);
+		}
+	}
 
-	<span class="c1">//var EndNodeIndex = new NodeIndex(flow.levels.length,0);</span>
+	//var EndNodeIndex = new NodeIndex(flow.levels.length,0);
 
-	<span class="nx">jg_doc</span><span class="p">.</span><span class="nx">setColor</span><span class="p">(</span><span class="s2">"#0000ff"</span><span class="p">);</span> <span class="c1">// green</span>
-	<span class="c1">//jg_doc.drawLine(100, 50, 200, 400);</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="c1">//var currentLevelLeft = (maxWidth - ((20+80)*flow.levels[i].nodes.length - 20)) / 2;</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">j</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="kd">var</span> <span class="nx">item</span><span class="p">;</span>
-			<span class="kd">var</span> <span class="nx">nodeIndex</span><span class="p">;</span>
-		    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">k</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">k</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		        <span class="nx">item</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">items</span><span class="p">[</span><span class="nx">k</span><span class="p">];</span>
-				<span class="k">if</span><span class="p">(</span><span class="nx">item</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="nx">item</span><span class="p">.</span><span class="nx">name</span><span class="o">==</span><span class="s2">""</span><span class="p">)</span> <span class="p">{</span>
-				    <span class="c1">//nodeIndex = EndNodeIndex;</span>
-					<span class="nx">jg_doc</span><span class="p">.</span><span class="nx">drawLine</span><span class="p">(</span>
-						<span class="nx">offsetX</span><span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">offsetLeft</span><span class="o">+</span><span class="p">(</span><span class="nx">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span> <span class="o">+</span> <span class="mi">40</span><span class="p">),</span>
-						<span class="nx">offsetY</span><span class="o">+</span><span class="p">((</span><span class="nx">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">50</span> <span class="o">+</span> <span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mi">40</span><span class="p">),</span>
-						<span class="nx">offsetX</span><span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">offsetLeft</span><span class="o">+</span><span class="p">(</span><span class="mi">0</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span><span class="o">+</span><span class="mi">40</span><span class="p">),</span>
-						<span class="nx">offsetY</span><span class="o">+</span><span class="p">((</span><span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">50</span><span class="o">+</span><span class="mi">40</span><span class="p">)));</span>
-				<span class="p">}</span>
-				<span class="k">else</span> <span class="p">{</span>
-					<span class="nx">nodeIndex</span> <span class="o">=</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">getNodeIndex</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
-					<span class="k">if</span><span class="p">(</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">level</span> <span class="o">&gt;</span> <span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-						<span class="nx">jg_doc</span><span class="p">.</span><span class="nx">drawLine</span><span class="p">(</span>
-							<span class="nx">offsetX</span><span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">offsetLeft</span><span class="o">+</span><span class="p">(</span><span class="nx">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span> <span class="o">+</span> <span class="mi">40</span><span class="p">),</span>
-							<span class="nx">offsetY</span><span class="o">+</span><span class="p">((</span><span class="nx">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">50</span> <span class="o">+</span> <span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mi">40</span><span class="p">),</span>
-							<span class="nx">offsetX</span><span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">].</span><span class="nx">offsetLeft</span><span class="o">+</span><span class="p">(</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span><span class="o">+</span><span class="mi">40</span><span class="p">),</span>
-							<span class="nx">offsetY</span><span class="o">+</span><span class="p">((</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">50</span><span class="o">+</span><span class="mi">40</span><span class="p">)));</span>
-					<span class="p">}</span>
-					<span class="k">else</span> <span class="p">{</span>
-						<span class="nx">jg_doc</span><span class="p">.</span><span class="nx">drawLine</span><span class="p">(</span>
-							<span class="nx">offsetX</span><span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">offsetLeft</span><span class="o">+</span><span class="p">(</span><span class="nx">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span> <span class="o">+</span> <span class="mi">40</span><span class="p">),</span>
-							<span class="nx">offsetY</span><span class="o">+</span><span class="p">((</span><span class="nx">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">50</span> <span class="o">+</span> <span class="mi">40</span><span class="p">)),</span>
-							<span class="nx">offsetX</span><span class="o">+</span><span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="p">].</span><span class="nx">offsetLeft</span><span class="o">+</span><span class="p">(</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">node</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span><span class="o">+</span><span class="mi">40</span><span class="p">),</span>
-							<span class="nx">offsetY</span><span class="o">+</span><span class="p">((</span><span class="nx">nodeIndex</span><span class="p">.</span><span class="nx">level</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">50</span><span class="o">+</span><span class="mi">40</span><span class="p">)</span><span class="o">+</span><span class="mi">40</span><span class="p">));</span>
-					<span class="p">}</span>
-				<span class="p">}</span>
-				<span class="c1">//window.alert(item + nodeIndex);</span>
-		    <span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="nx">jg_doc</span><span class="p">.</span><span class="nx">paint</span><span class="p">();</span> <span class="c1">// draws, in this case, directly into the document</span>
+	jg_doc.setColor("#0000ff"); // green
+	//jg_doc.drawLine(100, 50, 200, 400);
+	for(var i = 1; i < flow.levels.length; i++) {
+	    //var currentLevelLeft = (maxWidth - ((20+80)*flow.levels[i].nodes.length - 20)) / 2;
+		for(var j = 0; j < flow.levels[i].nodes.length; j++) {
+			var item;
+			var nodeIndex;
+		    for(var k = 0; k < flow.levels[i].nodes[j].items.length; k++) {
+		        item = flow.levels[i].nodes[j].items[k];
+				if(item == null || item.name=="") {
+				    //nodeIndex = EndNodeIndex;
+					jg_doc.drawLine(
+						offsetX+(nodes[i].offsetLeft+(j+1) * (20 + 80) + 40),
+						offsetY+((i-1)*(50 + 40)+40),
+						offsetX+(nodes[0].offsetLeft+(0+1)*(20 + 80)+40),
+						offsetY+((flow.levels.length-1) * (50+40)));
+				}
+				else {
+					nodeIndex = flow.getNodeIndex(item);
+					if(nodeIndex.level > i) {
+						jg_doc.drawLine(
+							offsetX+(nodes[i].offsetLeft+(j+1) * (20 + 80) + 40),
+							offsetY+((i-1)*(50 + 40)+40),
+							offsetX+(nodes[nodeIndex.level].offsetLeft+(nodeIndex.node+1)*(20 + 80)+40),
+							offsetY+((nodeIndex.level-1) * (50+40)));
+					}
+					else {
+						jg_doc.drawLine(
+							offsetX+(nodes[i].offsetLeft+(j+1) * (20 + 80) + 40),
+							offsetY+((i-1)*(50 + 40)),
+							offsetX+(nodes[nodeIndex.level].offsetLeft+(nodeIndex.node+1)*(20 + 80)+40),
+							offsetY+((nodeIndex.level-1) * (50+40)+40));
+					}
+				}
+				//window.alert(item + nodeIndex);
+		    }
+		}
+	}
+	jg_doc.paint(); // draws, in this case, directly into the document
 
-<span class="p">}</span>
-</code></pre>
+}
+{% endhighlight %}
 
 
 <h6>FlowTableSubmit.js</h6>
@@ -744,301 +748,309 @@ version 2.1 of the License, or (at your option) any later version.
 <p>
 我當時是把內容轉成 JSON 格式後送回伺服端儲存。伺服端是以 C#/ASP.Net 實作。我並未擁有伺服端的著作權，故不發佈伺服端源碼。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight javascript %}
+/*
 Copyright (c) 2006 Shih Yuncheng. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License (LGPL) as published by the Free Software Foundation; either
 version 2.1 of the License, or (at your option) any later version.
-*/</span>
+*/
 
-<span class="kd">function</span> <span class="nx">openString</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"div1"</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s2">"&lt;ol&gt;"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="kd">function</span> <span class="nx">closeString</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"div1"</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;/ol&gt;"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="kd">function</span> <span class="nx">addString</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">div1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"div1"</span><span class="p">);</span>
-	<span class="nx">div1</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;li&gt;"</span> <span class="o">+</span> <span class="nx">v</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">"&lt;br/&gt; Items: "</span><span class="p">;</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">v</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">div1</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">+</span> <span class="s2">","</span><span class="p">;</span>
-	<span class="p">}</span>
-	<span class="nx">div1</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;br/&gt; Backs: "</span><span class="p">;</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">v</span><span class="p">.</span><span class="nx">backs</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">div1</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="nx">v</span><span class="p">.</span><span class="nx">backs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">+</span> <span class="s2">","</span><span class="p">;</span>
-	<span class="p">}</span>
+function openString() {
+	document.getElementById("div1").innerHTML = "<ol>";
+}
+function closeString() {
+	document.getElementById("div1").innerHTML += "</ol>";
+}
+function addString(v) {
+	var div1 = document.getElementById("div1");
+	div1.innerHTML += "<li>" + v.name + "<br/> Items: ";
+	for(var i = 0; i < v.items.length; i++) {
+		div1.innerHTML += v.items[i] + ",";
+	}
+	div1.innerHTML += "<br/> Backs: ";
+	for(var i = 0; i < v.backs.length; i++) {
+		div1.innerHTML += v.backs[i] + ",";
+	}
 
-	<span class="nx">div1</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"&lt;/li&gt;"</span><span class="p">;</span>
-<span class="p">}</span>
+	div1.innerHTML += "</li>";
+}
 
-<span class="kd">function</span> <span class="nx">addRow</span><span class="p">(</span><span class="nx">tableId</span><span class="p">,</span> <span class="nx">level</span><span class="p">,</span> <span class="nx">n</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">table1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">tableId</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"tbody"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+function addRow(tableId, level, n, node) {
+	var table1 = document.getElementById(tableId).getElementsByTagName("tbody")[0];
 
-	<span class="kd">var</span> <span class="nx">tdLevel</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">"td"</span><span class="p">);</span>
-	<span class="nx">tdLevel</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">level</span><span class="p">;</span>
+	var tdLevel = document.createElement("td");
+	tdLevel.innerHTML = level;
 
-	<span class="kd">var</span> <span class="nx">tdName</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">"td"</span><span class="p">);</span>
-	<span class="nx">tdName</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">node</span><span class="p">;</span>
+	var tdName = document.createElement("td");
+	tdName.innerHTML = node;
 
-	<span class="kd">var</span> <span class="nx">tdItems</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">"td"</span><span class="p">);</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">if</span><span class="p">(</span><span class="nx">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
-            <span class="nx">tdItems</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">","</span><span class="p">;</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
-	    	<span class="nx">tdItems</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-		<span class="k">else</span>
-            <span class="nx">tdItems</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">"結案"</span><span class="p">;</span>
-	<span class="p">}</span>
+	var tdItems = document.createElement("td");
+	for(var i = 0; i < node.items.length; i++) {
+	    if(i>0)
+            tdItems.innerHTML += ",";
+		if(node.items[i] != null)
+	    	tdItems.innerHTML += node.items[i];
+		else
+            tdItems.innerHTML += "結案";
+	}
 
-	<span class="kd">var</span> <span class="nx">tr</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">"tr"</span><span class="p">);</span>
-	<span class="nx">tr</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">tdLevel</span><span class="p">);</span>
-	<span class="nx">tr</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">tdName</span><span class="p">);</span>
-	<span class="nx">tr</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">tdItems</span><span class="p">);</span>
-<span class="c1">//	tr.appendChild(tdBacks);</span>
+	var tr = document.createElement("tr");
+	tr.appendChild(tdLevel);
+	tr.appendChild(tdName);
+	tr.appendChild(tdItems);
+//	tr.appendChild(tdBacks);
 
-	<span class="nx">table1</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">tr</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="kd">function</span> <span class="nx">X_renderFlowTable</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"div1"</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span> <span class="o">=</span> <span class="s1">'hidden'</span><span class="p">;</span>
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"table2"</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">visibility</span><span class="o">=</span><span class="s1">'visible'</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">table1</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"table2"</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"tbody"</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="kd">var</span> <span class="nx">trs</span> <span class="o">=</span> <span class="nx">table1</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s2">"tr"</span><span class="p">);</span>
-    <span class="k">while</span><span class="p">(</span><span class="nx">trs</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">table1</span><span class="p">.</span><span class="nx">deleteRow</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">//using Table Object Model;</span>
-	<span class="p">}</span>
+	table1.appendChild(tr);
+}
+function X_renderFlowTable() {
+	document.getElementById("div1").style.visibility = 'hidden';
+	document.getElementById("table2").style.visibility='visible';
+	var table1 = document.getElementById("table2").getElementsByTagName("tbody")[0];
+	var trs = table1.getElementsByTagName("tr");
+    while(trs.length > 1) {
+		table1.deleteRow(1); //using Table Object Model;
+	}
 
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">l</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">l</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">l</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">n</span> <span class="o">&lt;</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">l</span><span class="p">].</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">n</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    	<span class="nx">addRow</span><span class="p">(</span><span class="s2">"table2"</span><span class="p">,</span> <span class="nx">l</span><span class="p">,</span> <span class="nx">n</span><span class="p">,</span> <span class="nx">flow</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">l</span><span class="p">].</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">n</span><span class="p">]);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+	for(var l = 1; l < flow.levels.length; l++) {
+		for(var n = 0; n < flow.levels[l].nodes.length; n++) {
+	    	addRow("table2", l, n, flow.levels[l].nodes[n]);
+		}
+	}
+}
+{% endhighlight %}
 
 
 <h6>WebFlow.sql</h6>
 <p>WebFlow SQL schema.</p>
-<pre class="highlight"><code><span class="c1">-- when insert, the column which IDENTITY could be ignored.
+
+{% highlight javascript %}
+-- when insert, the column which IDENTITY could be ignored.
 -- Note: IDENTITY only in M$ SQL Server, not SQL-92 Standard.
-</span><span class="k">create</span> <span class="k">table</span> <span class="n">WebFlowMaster</span> <span class="p">(</span>
-	<span class="n">WebFlowID</span> <span class="n">int</span> <span class="k">IDENTITY</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">not</span> <span class="k">null</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span>
-	<span class="n">Description</span> <span class="n">text</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="s1">''</span><span class="p">,</span>
-	<span class="n">ModifyEmployee</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>
-	<span class="n">ModifyMemo</span> <span class="n">text</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="s1">''</span><span class="p">,</span>
-	<span class="n">ModifyTime</span> <span class="n">datetime</span> <span class="k">not</span> <span class="k">null</span>
-<span class="p">);</span>
+create table WebFlowMaster (
+	WebFlowID int IDENTITY(1,1) not null primary key,
+	Description text not null default '',
+	ModifyEmployee varchar(50) not null,
+	ModifyMemo text not null default '',
+	ModifyTime datetime not null
+);
 
-<span class="k">create</span> <span class="k">table</span> <span class="n">WebFlowDetail</span> <span class="p">(</span>
-	<span class="n">WebFlowID</span> <span class="n">int</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>
-	<span class="n">FlowLevel</span> <span class="n">int</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>
-	<span class="n">NodeID</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="k">not</span> <span class="k">null</span><span class="p">,</span>
-	<span class="n">ItemIDs</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="k">not</span> <span class="k">null</span>
-	<span class="c1">-- text will not allow to insert with select union in SQLServer.
-</span>	<span class="c1">--SQL Sever線上說明:
-</span>    <span class="c1">--在 SQL Server 版本 7.0 上，execute_statement 無法包含會
-</span>    <span class="c1">--傳回 text 或 image 資料行的延伸預存程序。
-</span>    <span class="c1">--此行為是對先前 SQL Server 版本的一項變更。
-</span><span class="p">);</span>
+create table WebFlowDetail (
+	WebFlowID int not null,
+	FlowLevel int not null,
+	NodeID varchar(50) not null,
+	ItemIDs varchar(1000) not null
+	-- text will not allow to insert with select union in SQLServer.
+	--SQL Sever線上說明:
+    --在 SQL Server 版本 7.0 上，execute_statement 無法包含會
+    --傳回 text 或 image 資料行的延伸預存程序。
+    --此行為是對先前 SQL Server 版本的一項變更。
+);
 
-<span class="c1">--select WFM.WebFlowID.*, N.FlowLevel, N.NodeID, I.ItemID
+--select WFM.WebFlowID.*, N.FlowLevel, N.NodeID, I.ItemID
 --from WebFlowMaster as WFM
 --inner join (WebFlowNode as N inner join WebFlowItem as I
 --  on N.WebFlowID = I.WebFlowID and N.NodeID = I.NodeID)
 --on WFM.WebFlowID = N.WebFlowID
-</span>
-<span class="k">create</span> <span class="k">procedure</span> <span class="n">dt_WebFlowMasterInsert</span> <span class="p">(</span>
-	<span class="o">@</span><span class="n">WebFlowID</span> <span class="n">int</span> <span class="k">output</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">Description</span> <span class="n">text</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyEmployee</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>
-	<span class="o">@</span><span class="n">ModifyMemo</span> <span class="n">text</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyTime</span> <span class="n">datetime</span>
-<span class="p">)</span>
-<span class="k">AS</span>
-<span class="k">BEGIN</span>
-<span class="k">Insert</span> <span class="k">Into</span> <span class="n">WebFlowMaster</span> <span class="p">(</span>
-	<span class="n">Description</span><span class="p">,</span>
-	<span class="n">ModifyEmployee</span><span class="p">,</span>
-	<span class="n">ModifyMemo</span><span class="p">,</span>
-	<span class="n">ModifyTime</span>
-<span class="p">)</span>
-<span class="k">Values</span> <span class="p">(</span>
-	<span class="o">@</span><span class="n">Description</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyEmployee</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyMemo</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyTime</span>
-<span class="p">);</span>
 
-<span class="k">Set</span> <span class="o">@</span><span class="n">WebFlowID</span> <span class="o">=</span> <span class="n">SCOPE_IDENTITY</span><span class="p">();</span>
+create procedure dt_WebFlowMasterInsert (
+	@WebFlowID int output,
+	@Description text,
+	@ModifyEmployee varchar(50),
+	@ModifyMemo text,
+	@ModifyTime datetime
+)
+AS
+BEGIN
+Insert Into WebFlowMaster (
+	Description,
+	ModifyEmployee,
+	ModifyMemo,
+	ModifyTime
+)
+Values (
+	@Description,
+	@ModifyEmployee,
+	@ModifyMemo,
+	@ModifyTime
+);
 
-<span class="k">END</span>
-<span class="k">GO</span>
+Set @WebFlowID = SCOPE_IDENTITY();
 
-<span class="k">create</span> <span class="k">procedure</span> <span class="n">dt_WebFlowMasterUpdate</span> <span class="p">(</span>
-	<span class="o">@</span><span class="n">WebFlowID</span> <span class="n">int</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">Description</span> <span class="n">text</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyEmployee</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>
-	<span class="o">@</span><span class="n">ModifyMemo</span> <span class="n">text</span><span class="p">,</span>
-	<span class="o">@</span><span class="n">ModifyTime</span> <span class="n">datetime</span>
-<span class="p">)</span>
-<span class="k">AS</span>
-<span class="k">BEGIN</span>
-<span class="k">Update</span> <span class="n">WebFlowMaster</span> <span class="k">set</span>
-	<span class="n">Description</span> <span class="o">=</span> <span class="o">@</span><span class="n">Description</span><span class="p">,</span>
-	<span class="n">ModifyEmployee</span> <span class="o">=</span> <span class="o">@</span><span class="n">ModifyEmployee</span><span class="p">,</span>
-	<span class="n">ModifyMemo</span> <span class="o">=</span> <span class="o">@</span><span class="n">ModifyMemo</span><span class="p">,</span>
-	<span class="n">ModifyTime</span> <span class="o">=</span> <span class="o">@</span><span class="n">ModifyTime</span>
-<span class="k">where</span> <span class="n">WebFlowID</span> <span class="o">=</span> <span class="o">@</span><span class="n">WebFlowID</span><span class="p">;</span>
+END
+GO
 
-<span class="k">END</span>
-<span class="k">GO</span>
-</code></pre>
+create procedure dt_WebFlowMasterUpdate (
+	@WebFlowID int,
+	@Description text,
+	@ModifyEmployee varchar(50),
+	@ModifyMemo text,
+	@ModifyTime datetime
+)
+AS
+BEGIN
+Update WebFlowMaster set
+	Description = @Description,
+	ModifyEmployee = @ModifyEmployee,
+	ModifyMemo = @ModifyMemo,
+	ModifyTime = @ModifyTime
+where WebFlowID = @WebFlowID;
+
+END
+GO
+{% endhighlight %}
 
 
 <h6>WebFlow.css</h6>
 <p>視覺元件外觀。</p>
-<pre class="highlight"><code><span class="nc">.FlowNode</span> <span class="p">{</span>
-	<span class="nl">position</span><span class="p">:</span> <span class="nb">absolute</span><span class="p">;</span>
-	<span class="nl">width</span><span class="p">:</span> <span class="m">80px</span><span class="p">;</span>
-	<span class="nl">height</span><span class="p">:</span> <span class="m">40px</span><span class="p">;</span>
-	<span class="nl">border</span><span class="p">:</span> <span class="m">1px</span> <span class="nb">solid</span> <span class="no">black</span><span class="p">;</span>
-	<span class="nl">z-index</span><span class="p">:</span> <span class="m">100</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nc">.FlowMenu1</span> <span class="p">{</span>
-	<span class="nl">position</span><span class="p">:</span><span class="nb">absolute</span><span class="p">;</span>
-	<span class="nl">background-color</span><span class="p">:</span> <span class="no">lightgrey</span><span class="p">;</span>
-	<span class="nl">border</span><span class="p">:</span> <span class="m">1px</span> <span class="nb">solid</span> <span class="no">black</span><span class="p">;</span>
-	<span class="nl">visibility</span><span class="p">:</span> <span class="nb">hidden</span><span class="p">;</span>
-	<span class="nl">z-index</span><span class="p">:</span> <span class="m">500</span><span class="p">;</span>
-	<span class="nl">padding</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-	<span class="nl">width</span><span class="p">:</span> <span class="m">120px</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nc">.FlowSubMenu1</span> <span class="p">{</span>
-	<span class="nl">position</span><span class="p">:</span><span class="nb">absolute</span><span class="p">;</span>
-	<span class="nl">background-color</span><span class="p">:</span> <span class="no">lightgrey</span><span class="p">;</span>
-	<span class="nl">border</span><span class="p">:</span> <span class="m">1px</span> <span class="nb">solid</span> <span class="no">black</span><span class="p">;</span>
-	<span class="nl">visibility</span><span class="p">:</span> <span class="nb">hidden</span><span class="p">;</span>
-	<span class="nl">z-index</span><span class="p">:</span> <span class="m">500</span><span class="p">;</span>
-	<span class="nl">padding</span><span class="p">:</span> <span class="m">10px</span><span class="p">;</span>
-	<span class="nl">width</span><span class="p">:</span> <span class="m">360px</span><span class="p">;</span>
-	<span class="nl">text-align</span><span class="p">:</span> <span class="nb">center</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nc">.MenuItemMouseOver</span> <span class="p">{</span>
-	<span class="nl">background-color</span><span class="p">:</span> <span class="m">#fcfcfc</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight javascript %}
+.FlowNode {
+	position: absolute;
+	width: 80px;
+	height: 40px;
+	border: 1px solid black;
+	z-index: 100;
+}
 
-<span class="nc">.MenuItem</span> <span class="p">{</span>
-	<span class="nl">background-color</span><span class="p">:</span> <span class="no">lightgrey</span><span class="p">;</span>
-<span class="p">}</span>
+.FlowMenu1 {
+	position:absolute;
+	background-color: lightgrey;
+	border: 1px solid black;
+	visibility: hidden;
+	z-index: 500;
+	padding: 10px;
+	width: 120px;
+}
+.FlowSubMenu1 {
+	position:absolute;
+	background-color: lightgrey;
+	border: 1px solid black;
+	visibility: hidden;
+	z-index: 500;
+	padding: 10px;
+	width: 360px;
+	text-align: center;
+}
+.MenuItemMouseOver {
+	background-color: #fcfcfc;
+}
 
-<span class="nf">#div1</span> <span class="p">{</span>
-	<span class="nl">position</span><span class="p">:</span><span class="nb">relative</span><span class="p">;</span>
-	<span class="nl">text-align</span><span class="p">:</span> <span class="nb">center</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nf">#div2</span> <span class="p">{</span>
-	<span class="nl">position</span><span class="p">:</span><span class="nb">absolute</span><span class="p">;</span>
-	<span class="nl">left</span><span class="p">:</span> <span class="m">200px</span><span class="p">;</span>
-	<span class="nl">top</span><span class="p">:</span> <span class="m">20px</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+.MenuItem {
+	background-color: lightgrey;
+}
+
+#div1 {
+	position:relative;
+	text-align: center;
+}
+#div2 {
+	position:absolute;
+	left: 200px;
+	top: 20px;
+}
+{% endhighlight %}
 
 
 <h6>WebFlow.html</h6>
 <p>主程式。</p>
-<pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;head&gt;</span>
-<span class="nt">&lt;link</span> <span class="na">rel=</span><span class="s">"stylesheet"</span> <span class="na">href=</span><span class="s">"WebFlow.css"</span> <span class="na">type=</span><span class="s">"text/css"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"wz_jsgraphics.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"FlowNode.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"WebFlow.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"FlowTableSubmit.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;/head&gt;</span>
 
-<span class="nt">&lt;body</span> <span class="na">onClick=</span><span class="s">"bodyControler.clickHandler();"</span><span class="nt">&gt;</span>
+{% highlight javascript %}
+<html>
+<head>
+<link rel="stylesheet" href="WebFlow.css" type="text/css" />
+<script type="text/javascript" src="wz_jsgraphics.js"></script>
+<script type="text/javascript" src="FlowNode.js"></script>
+<script type="text/javascript" src="WebFlow.js"></script>
+<script type="text/javascript" src="FlowTableSubmit.js"></script>
+</head>
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenu1"</span> <span class="na">class=</span><span class="s">"FlowMenu1"</span><span class="nt">&gt;&lt;/span&gt;</span>
+<body onClick="bodyControler.clickHandler();">
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenuAddNewLevel"</span> <span class="na">class=</span><span class="s">"FlowSubMenu1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;label&gt;</span>關卡名稱: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"nodeName"</span> <span class="nt">/&gt;&lt;/label&gt;&lt;br/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"確定"</span> <span class="na">onClick=</span><span class="s">"submitAddNewLevel();"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"取消"</span> <span class="na">onClick=</span><span class="s">"cancleAddNewLevel();"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;/span&gt;</span>
+<span id="FlowMenu1" class="FlowMenu1"></span>
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenuAddNewNode"</span> <span class="na">class=</span><span class="s">"FlowSubMenu1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;fieldset&gt;</span>
-    <span class="nt">&lt;legend&gt;</span>新增關卡<span class="nt">&lt;/legend&gt;</span>
-    <span class="nt">&lt;label&gt;</span>關卡名稱: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"nodeName"</span> <span class="nt">/&gt;&lt;/label&gt;&lt;br/&gt;</span>
-    <span class="nt">&lt;/fieldset&gt;</span>
-    <span class="nt">&lt;p</span> <span class="na">align=</span><span class="s">"center"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"確定"</span> <span class="na">onClick=</span><span class="s">"submitAddNewNode();"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"取消"</span> <span class="na">onClick=</span><span class="s">"cancleAddNewNode();"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/span&gt;</span>
+<span id="FlowMenuAddNewLevel" class="FlowSubMenu1">
+    <label>關卡名稱: <input type="text" name="nodeName" /></label><br/>
+    <input type="button" value="確定" onClick="submitAddNewLevel();"/>
+    <input type="button" value="取消" onClick="cancleAddNewLevel();" />
+</span>
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenuUpdateNode"</span> <span class="na">class=</span><span class="s">"FlowSubMenu1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;fieldset&gt;</span>
-    <span class="nt">&lt;legend&gt;</span>修改關卡<span class="nt">&lt;/legend&gt;</span>
-    <span class="nt">&lt;label&gt;</span>關卡名稱: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"nodeName"</span> <span class="nt">/&gt;&lt;/label&gt;&lt;br/&gt;</span>
-    <span class="nt">&lt;/fieldset&gt;</span>
-    <span class="nt">&lt;p</span> <span class="na">align=</span><span class="s">"center"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"確定"</span> <span class="na">onClick=</span><span class="s">"submitUpdateNode();"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"取消"</span> <span class="na">onClick=</span><span class="s">"cancleUpdateNode();"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/span&gt;</span>
+<span id="FlowMenuAddNewNode" class="FlowSubMenu1">
+    <fieldset>
+    <legend>新增關卡</legend>
+    <label>關卡名稱: <input type="text" name="nodeName" /></label><br/>
+    </fieldset>
+    <p align="center">
+    <input type="button" value="確定" onClick="submitAddNewNode();"/>
+    <input type="button" value="取消" onClick="cancleAddNewNode();" />
+    </p>
+</span>
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenuAddItem"</span> <span class="na">class=</span><span class="s">"FlowSubMenu1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;fieldset&gt;</span>
-    <span class="nt">&lt;legend&gt;</span>新增會辦者<span class="nt">&lt;/legend&gt;</span>
-    <span class="nt">&lt;label&gt;</span>關卡名稱: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"nodeName"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;select</span> <span class="na">name=</span><span class="s">"nodeList"</span> <span class="na">onChange=</span><span class="s">"if(this.selectedIndex &gt; 0){document.getElementById('FlowMenuAddItem').getElementsByTagName('input')[0].value = this.options[this.selectedIndex].value};"</span><span class="nt">&gt;&lt;/select&gt;&lt;/label&gt;&lt;br/&gt;</span>
-    <span class="nt">&lt;/fieldset&gt;</span>
-    <span class="nt">&lt;p</span> <span class="na">align=</span><span class="s">"center"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"確定"</span> <span class="na">onClick=</span><span class="s">"submitAddItem();"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"取消"</span> <span class="na">onClick=</span><span class="s">"cancleAddItem();"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/span&gt;</span>
+<span id="FlowMenuUpdateNode" class="FlowSubMenu1">
+    <fieldset>
+    <legend>修改關卡</legend>
+    <label>關卡名稱: <input type="text" name="nodeName" /></label><br/>
+    </fieldset>
+    <p align="center">
+    <input type="button" value="確定" onClick="submitUpdateNode();"/>
+    <input type="button" value="取消" onClick="cancleUpdateNode();" />
+    </p>
+</span>
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenuRemoveItem"</span> <span class="na">class=</span><span class="s">"FlowSubMenu1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;fieldset&gt;</span>
-    <span class="nt">&lt;legend&gt;</span>移除會辦者<span class="nt">&lt;/legend&gt;</span>
-    <span class="nt">&lt;label&gt;</span>關卡名稱: <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"nodeName"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;select</span> <span class="na">name=</span><span class="s">"nodeList"</span> <span class="na">onChange=</span><span class="s">"if(this.selectedIndex &gt; 0){document.getElementById('FlowMenuRemoveItem').getElementsByTagName('input')[0].value = this.options[this.selectedIndex].value};"</span><span class="nt">&gt;&lt;/select&gt;&lt;/label&gt;&lt;/label&gt;&lt;br/&gt;</span>
-    <span class="nt">&lt;/fieldset&gt;</span>
-    <span class="nt">&lt;p</span> <span class="na">align=</span><span class="s">"center"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"確定"</span> <span class="na">onClick=</span><span class="s">"submitRemoveItem();"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"取消"</span> <span class="na">onClick=</span><span class="s">"cancleRemoveItem();"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/span&gt;</span>
+<span id="FlowMenuAddItem" class="FlowSubMenu1">
+    <fieldset>
+    <legend>新增會辦者</legend>
+    <label>關卡名稱: <input type="text" name="nodeName" />
+    <select name="nodeList" onChange="if(this.selectedIndex > 0){document.getElementById('FlowMenuAddItem').getElementsByTagName('input')[0].value = this.options[this.selectedIndex].value};"></select></label><br/>
+    </fieldset>
+    <p align="center">
+    <input type="button" value="確定" onClick="submitAddItem();"/>
+    <input type="button" value="取消" onClick="cancleAddItem();" />
+    </p>
+</span>
 
-<span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"FlowMenuRemoveNode"</span> <span class="na">class=</span><span class="s">"FlowSubMenu1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;label&gt;</span>確定刪除?<span class="nt">&lt;/label&gt;&lt;br/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"確定"</span> <span class="na">onClick=</span><span class="s">"submitRemoveNode();"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"button"</span> <span class="na">value=</span><span class="s">"取消"</span> <span class="na">onClick=</span><span class="s">"cancleRemoveNode();"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;/span&gt;</span>
+<span id="FlowMenuRemoveItem" class="FlowSubMenu1">
+    <fieldset>
+    <legend>移除會辦者</legend>
+    <label>關卡名稱: <input type="text" name="nodeName" />
+    <select name="nodeList" onChange="if(this.selectedIndex > 0){document.getElementById('FlowMenuRemoveItem').getElementsByTagName('input')[0].value = this.options[this.selectedIndex].value};"></select></label></label><br/>
+    </fieldset>
+    <p align="center">
+    <input type="button" value="確定" onClick="submitRemoveItem();"/>
+    <input type="button" value="取消" onClick="cancleRemoveItem();" />
+    </p>
+</span>
 
-<span class="nt">&lt;table</span> <span class="na">id=</span><span class="s">"table2"</span> <span class="na">border=</span><span class="s">"1"</span> <span class="na">style=</span><span class="s">'visibility:hidden'</span><span class="nt">&gt;</span>
-<span class="nt">&lt;tboby&gt;</span>
-<span class="nt">&lt;tr&gt;</span>
-	<span class="nt">&lt;td&gt;</span>Level<span class="nt">&lt;/td&gt;</span>
-	<span class="nt">&lt;td&gt;</span>Node<span class="nt">&lt;/td&gt;</span>
-	<span class="nt">&lt;td&gt;</span>Items<span class="nt">&lt;/td&gt;</span>
-<span class="nt">&lt;/tr&gt;</span>
-<span class="nt">&lt;/tbody&gt;</span>
-<span class="nt">&lt;/table&gt;</span>
+<span id="FlowMenuRemoveNode" class="FlowSubMenu1">
+    <label>確定刪除?</label><br/>
+    <input type="button" value="確定" onClick="submitRemoveNode();"/>
+    <input type="button" value="取消" onClick="cancleRemoveNode();" />
+</span>
 
-<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"div1"</span> <span class="na">class=</span><span class="s">"div1"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;/div&gt;</span>
+<table id="table2" border="1" style='visibility:hidden'>
+<tboby>
+<tr>
+	<td>Level</td>
+	<td>Node</td>
+	<td>Items</td>
+</tr>
+</tbody>
+</table>
 
-<span class="nt">&lt;canvas</span> <span class="na">id=</span><span class="s">"div2"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;/canvas&gt;</span>
+<div id="div1" class="div1">
+</div>
 
-<span class="nt">&lt;form&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">'button'</span> <span class="na">value=</span><span class="s">'送出表格'</span> <span class="na">onClick=</span><span class="s">'X_renderFlowTable();'</span><span class="nt">/&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
+<canvas id="div2">
+</canvas>
 
-<span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;</span>
+<form>
+    <input type='button' value='送出表格' onClick='X_renderFlowTable();'/>
+</form>
+
+<script type="text/javascript">
 var currentNode;
 var currentNodeIndex = new NodeIndex(0,0);
 var jg_doc = new jsGraphics("div1");
@@ -1062,36 +1074,36 @@ var bodyControler = {
 	},
 
 	removeClickHandler: function(func) {
-	    for(var i = 0; i <span class="nt">&lt; this._clickHandlers.length</span><span class="err">;</span> <span class="err">i++)</span> <span class="err">{</span>
-	        <span class="err">if(this._clickHandlers[i]</span> <span class="err">===</span> <span class="err">func)</span> <span class="err">{</span>
-	            <span class="err">this._clickHandlers.splice(i,</span> <span class="err">1);</span>
-	            <span class="err">break;</span>
-			<span class="err">}</span>
-		<span class="err">}</span>
-	<span class="err">},</span>
+	    for(var i = 0; i < this._clickHandlers.length; i++) {
+	        if(this._clickHandlers[i] === func) {
+	            this._clickHandlers.splice(i, 1);
+	            break;
+			}
+		}
+	},
 
-	<span class="err">clickHandler:</span> <span class="err">function()</span> <span class="err">{</span>
-		<span class="err">for(var</span> <span class="na">i =</span> <span class="s">0;</span> <span class="err">i</span> <span class="err">&lt;</span> <span class="err">this._clickHandlers.length;</span> <span class="err">i++)</span> <span class="err">{</span>
-		    <span class="err">this._clickHandlers[i]();</span>
-		<span class="err">}</span>
-	<span class="err">}</span>
-<span class="err">};</span>
+	clickHandler: function() {
+		for(var i = 0; i < this._clickHandlers.length; i++) {
+		    this._clickHandlers[i]();
+		}
+	}
+};
 
-<span class="err">/*=============================================*/</span>
+/*=============================================*/
 
-<span class="err">var</span> <span class="na">flow =</span> <span class="s">new</span> <span class="err">Flow();</span>
+var flow = new Flow();
 
-<span class="err">flow.insertLevel(1,</span> <span class="err">"申請人",</span> <span class="err">null);</span>
-<span class="err">flow.addItem(1,0,null);</span>
-<span class="err">//flow.insertLevel(2,</span> <span class="err">"A1",</span> <span class="err">flow.levels[1].nodes[0]);</span>
-<span class="err">//flow.addNode(2,"A2",flow.levels[1].nodes[0])</span>
+flow.insertLevel(1, "申請人", null);
+flow.addItem(1,0,null);
+//flow.insertLevel(2, "A1", flow.levels[1].nodes[0]);
+//flow.addNode(2,"A2",flow.levels[1].nodes[0])
 
-<span class="err">renderFlowTable();</span>
+renderFlowTable();
 
-<span class="err">&lt;/script</span><span class="nt">&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</code></pre>
+</script>
+</body>
+</html>
+{% endhighlight %}
 
 <p>
 這是我一年前在某公司任職時寫的，算是程式雛型。當時最主要的困難點是在瀏覽器頁面上「畫圖／線」。試了包括 SVG 的多種方式後皆不可行，最後還是用 <a href="http://www.walterzorn.com">wz_jsgraphics.js</a> 解決。日後待網頁向量圖形規格確認與普及後，再改寫吧。

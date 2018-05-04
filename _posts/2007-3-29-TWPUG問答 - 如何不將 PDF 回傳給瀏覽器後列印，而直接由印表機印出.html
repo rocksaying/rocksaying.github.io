@@ -33,23 +33,25 @@ permalink: /archives/2927395.html
 <p>
 在 Unix類平台上向來具有以服務需求組合工具的傳統習慣，因此透過 pipe 作業我們便足以完成許多服務。然而在 Windows平台上，或許是受到 GUI 操作方式的影嚮，較缺乏這類便利性。要以程式呼叫外部的 PDF 閱讀器 (通常是 Acrobat Reader) 完成列印作業有些問題。 Acrobat Reader 的執行檔為 acrord32.exe ，指令列選項 /t 便是令 Acrobat Reader 以預設值直接列印 PDF 文件。以下為測試範例。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$pdfFile</span> <span class="o">=</span> <span class="s1">'c:\sample.pdf'</span><span class="p">;</span>
-<span class="nv">$printerName</span> <span class="o">=</span> <span class="s1">'FinePrint'</span><span class="p">;</span> <span class="c1">//印表機名稱
-</span>
-<span class="nv">$acroReaderFileName</span> <span class="o">=</span> <span class="s1">'acrord32.exe'</span><span class="p">;</span>
-<span class="nv">$acroReaderDir</span> <span class="o">=</span> <span class="s1">'C:\Progra~1\Adobe\Acroba~1.0\Reader'</span><span class="p">;</span>
 
-<span class="nv">$acroReaderFilePath</span> <span class="o">=</span>  <span class="nv">$acroReaderDir</span> <span class="o">.</span> <span class="nx">DIRECTORY_SEPARATOR</span> <span class="o">.</span> <span class="nv">$acroReaderFileName</span><span class="p">;</span>
+{% highlight php %}
+<?php
+$pdfFile = 'c:\sample.pdf';
+$printerName = 'FinePrint'; //印表機名稱
 
-<span class="nv">$printCommand</span> <span class="o">=&lt;&lt;&lt;</span><span class="nx">PRINT_COMMAND</span>
-<span class="nv">$acroReaderFilePath</span> <span class="o">/</span><span class="nx">t</span> <span class="s2">"</span><span class="nv">$pdfFile</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$printerName</span><span class="s2">"</span>
-<span class="nx">PRINT_COMMAND</span><span class="p">;</span>
+$acroReaderFileName = 'acrord32.exe';
+$acroReaderDir = 'C:\Progra~1\Adobe\Acroba~1.0\Reader';
 
-<span class="k">echo</span> <span class="nv">$printCommand</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nb">exec</span><span class="p">(</span><span class="nv">$printCommand</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$acroReaderFilePath =  $acroReaderDir . DIRECTORY_SEPARATOR . $acroReaderFileName;
+
+$printCommand =<<<PRINT_COMMAND
+$acroReaderFilePath /t "$pdfFile" "$printerName"
+PRINT_COMMAND;
+
+echo $printCommand, "\n";
+exec($printCommand);
+?>
+{% endhighlight %}
 
 <p>
 從上述測試範例之操作過程中，我們可以注意到 Acrobat Reader 的視窗必須要使用者手動關閉，才能結束整個測試程式。以我們的使用案例之需求來看，這顯然是個問題。同樣呼叫外部程式列印 PDF ，和 Unix類平台相比，在 Windows 平台上做這件事實在是笨拙到令人痛恨。這就是 GUI 的缺點，什麼事都要使用者<strong>親手</strong>去做。
@@ -68,21 +70,23 @@ permalink: /archives/2927395.html
 <p>
 以上述的工具改寫測試範例如下:
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$pdfFile</span> <span class="o">=</span> <span class="s1">'c:\sample.pdf'</span><span class="p">;</span>
-<span class="nv">$printerName</span> <span class="o">=</span> <span class="s1">'FinePrint'</span><span class="p">;</span>
 
-<span class="nv">$acroReaderFilePath</span> <span class="o">=</span>  <span class="s1">'c:\tools\pdfp.exe'</span><span class="p">;</span>
+{% highlight php %}
+<?php
+$pdfFile = 'c:\sample.pdf';
+$printerName = 'FinePrint';
 
-<span class="nv">$printCommand</span> <span class="o">=&lt;&lt;&lt;</span><span class="nx">PRINT_COMMAND</span>
-<span class="nv">$acroReaderFilePath</span> <span class="o">-</span><span class="nx">p</span> <span class="s2">"</span><span class="nv">$printerName</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$pdfFile</span><span class="s2">"</span>
-<span class="nx">PRINT_COMMAND</span><span class="p">;</span>
+$acroReaderFilePath =  'c:\tools\pdfp.exe';
 
-<span class="k">echo</span> <span class="nv">$printCommand</span><span class="p">;</span>
-<span class="nb">exec</span><span class="p">(</span><span class="nv">$printCommand</span><span class="p">);</span>
+$printCommand =<<<PRINT_COMMAND
+$acroReaderFilePath -p "$printerName" "$pdfFile"
+PRINT_COMMAND;
 
-<span class="cp">?&gt;</span>
-</code></pre>
+echo $printCommand;
+exec($printCommand);
+
+?>
+{% endhighlight %}
 
 <p>
 That's work. :)

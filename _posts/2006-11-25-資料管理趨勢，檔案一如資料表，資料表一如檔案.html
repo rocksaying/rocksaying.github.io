@@ -30,16 +30,17 @@ permalink: /archives/2521061.html
 <p>
 Microsoft Windows Vista 引入一種新的檔案系統，稱為 WFS 。就我所知， WFS 大幅加強結構化文件的搜尋能力，例如 XML 與 Excel XLS 這類結構化文件，將可以進行內容的搜尋與聯結動作。對 Vista 而言，儲存在 WFS 檔案系統中的結構化文件也是一種資料表，所以可以搜尋和聯結。如果加上 SQL 引擎，那麼在檔案總管的「搜尋列」中輸入下列內容就能完成工作也是指日可期之事。
 </p>
-<pre class="highlight"><code><span class="k">SELECT</span> <span class="k">INTO</span> <span class="s1">'My Documents/abc_supply_order.xls'</span> <span class="n">p</span><span class="p">.</span><span class="n">productName</span><span class="p">,</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyBarCode</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">quantity</span><span class="p">)</span> <span class="k">AS</span> <span class="n">quantity</span>
-<span class="k">FROM</span> <span class="s1">'My Documents/xyz_order.xls'</span> <span class="k">AS</span> <span class="n">o</span>
-<span class="k">INNER</span> <span class="k">JOIN</span> <span class="p">(</span><span class="s1">'pgsql://dataware.example.com/products/product'</span> <span class="k">AS</span> <span class="n">p</span>
-    <span class="k">INNER</span> <span class="k">JOIN</span> <span class="s1">'pgsql://dataware.example.com/supplies/supply'</span> <span class="k">AS</span> <span class="n">s</span>
-    <span class="k">ON</span> <span class="n">p</span><span class="p">.</span><span class="n">barCode</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">barCode</span> <span class="k">AND</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyName</span> <span class="o">=</span> <span class="s1">'abc'</span><span class="p">)</span>
-<span class="k">ON</span> <span class="n">o</span><span class="p">.</span><span class="n">barCode</span> <span class="o">=</span> <span class="n">p</span><span class="p">.</span><span class="n">barCode</span>
-<span class="k">GROUP</span> <span class="k">BY</span> <span class="n">p</span><span class="p">.</span><span class="n">productName</span><span class="p">,</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyBarCode</span>
-<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">s</span><span class="p">.</span><span class="n">supplyBarCode</span><span class="p">;</span>
- 
-</code></pre>
+
+{% highlight text %}
+SELECT INTO 'My Documents/abc_supply_order.xls' p.productName, s.supplyBarCode, sum(o.quantity) AS quantity
+FROM 'My Documents/xyz_order.xls' AS o
+INNER JOIN ('pgsql://dataware.example.com/products/product' AS p
+    INNER JOIN 'pgsql://dataware.example.com/supplies/supply' AS s
+    ON p.barCode = s.barCode AND s.supplyName = 'abc')
+ON o.barCode = p.barCode
+GROUP BY p.productName, s.supplyBarCode
+ORDER BY s.supplyBarCode;
+{% endhighlight %}
 
 <p>
 上述 SQL 敘述的語意是，查詢資料庫中的 products 資料表與 supply 資料表，將供應商為 'abc' 的商品挑出來，再和檔案系統的 xyz_order.xls 試算表的採購單內容聯結找出要下單給供應商 'abc' 採購的商品，總計採購數量 (sum of quantity) ，將結果儲存到檔案系統的 abc_supply_order.xls 試算表中。

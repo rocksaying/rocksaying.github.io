@@ -27,11 +27,13 @@ permalink: /archives/10934753.html
 單參數建構子: <code>N(int v) {d = v}</code>，意即 <var>v</var> 存在且為數值時， <var>d</var> 之初值為 <var>v</var>。
 將上述 C/C++ 中分成兩個函數撰寫的流程彙整後即為下列流程:
 </p>
-<pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="nx">v</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span><span class="c1">// or arguments.length == 0</span>
-    <span class="nx">d</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="k">else</span>
-    <span class="nx">d</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
-</code></pre>
+
+{% highlight javascript %}
+if (v === undefined) {// or arguments.length == 0
+    d = 0;
+else
+    d = v;
+{% endhighlight %}
 
 
 <p>
@@ -43,67 +45,71 @@ permalink: /archives/10934753.html
 <p>
 將 C/C++ 的 method 定義語法改成 JavaScript 的寫法:
 </p>
-<pre class="highlight"><code><span class="c1">//C++:</span>
-<span class="nx">type</span> <span class="nx">methodName</span><span class="p">(</span><span class="nx">arguments</span><span class="p">...)</span> <span class="p">{</span><span class="nx">body</span><span class="p">...}</span>
 
-<span class="c1">//JavaScript:</span>
-<span class="k">this</span><span class="p">.</span><span class="nx">methodName</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">arguments</span><span class="p">...)</span> <span class="p">{</span><span class="nx">body</span><span class="p">...}</span>
-</code></pre>
+{% highlight javascript %}
+//C++:
+type methodName(arguments...) {body...}
+
+//JavaScript:
+this.methodName = function(arguments...) {body...}
+{% endhighlight %}
 
 
 <p>
 以 JavaScript 改寫類別 Cx 不需要特殊的樣板語法。
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">Cx</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">data</span><span class="p">;</span>
 
-    <span class="nx">data</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+{% highlight javascript %}
+function Cx(v) {
+    var data;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">getData</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">data</span><span class="p">.</span><span class="nx">value</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+    data = v;
 
-<span class="kd">function</span> <span class="nx">N</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">n</span><span class="p">;</span>
+    this.getData = function() {
+        return data.value();
+    }
+};
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">v</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span>
-        <span class="nx">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="nx">n</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+function N(v) {
+    var n;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="o">-</span><span class="nx">n</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+    if (v === undefined)
+        n = 0;
+    else
+        n = v;
 
-<span class="kd">function</span> <span class="nx">M</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">m</span><span class="p">;</span>
+    this.value = function() {
+        return -n;
+    }
+};
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">v</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span>
-        <span class="nx">m</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="nx">m</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+function M(v) {
+    var m;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">m</span> <span class="o">*</span> <span class="mi">10</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+    if (v === undefined)
+        m = 0;
+    else
+        m = v;
 
-<span class="kd">function</span> <span class="nx">S</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">s</span><span class="p">;</span>
+    this.value = function () {
+        return m * 10;
+    }
+};
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">v</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span>
-        <span class="nx">s</span> <span class="o">=</span> <span class="s2">""</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="nx">s</span> <span class="o">=</span> <span class="nx">v</span><span class="p">;</span>
+function S(v) {
+    var s;
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">s</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</code></pre>
+    if (v === undefined)
+        s = "";
+    else
+        s = v;
+
+    this.value = function() {
+        return s;
+    }
+};
+{% endhighlight %}
 
 
 <p>
@@ -112,23 +118,23 @@ permalink: /archives/10934753.html
 <p>
 JavaScript 的變數不用宣告型別，寫 var 即可，由右值的實體決定左值的型別。 C# 3.0 引入了類似觀念，稱為隱含型別，而且關鍵字就是 <code>var</code>。所以在 C# 3.0 的程式碼中看到 <code>var n = new N(1);</code> 時，請勿訝異。但是 JavaScript 的變數可以再次指派其他型別的資料給左值；C# 3.0 則在第一次指派後便固定型別，之後不可指派其他型別的內容給變數。
 </p>
-<pre class="highlight"><code>
-<span class="kd">var</span> <span class="nx">n</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">N</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
-<span class="c1">//不用寫特殊的樣板語法...</span>
-<span class="kd">var</span> <span class="nx">cn</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Cx</span><span class="p">(</span> <span class="nx">n</span> <span class="p">);</span>
+{% highlight javascript %}
+var n = new N(1);
 
-<span class="nx">print</span><span class="p">(</span> <span class="nx">cn</span><span class="p">.</span><span class="nx">getData</span><span class="p">()</span> <span class="p">);</span>
+//不用寫特殊的樣板語法...
+var cn = new Cx( n );
 
-<span class="kd">var</span> <span class="nx">m</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">M</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="kd">var</span> <span class="nx">cm</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Cx</span><span class="p">(</span> <span class="nx">m</span> <span class="p">);</span>
-<span class="nx">print</span><span class="p">(</span> <span class="nx">cm</span><span class="p">.</span><span class="nx">getData</span><span class="p">()</span> <span class="p">);</span>
+print( cn.getData() );
 
-<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">S</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">);</span>
-<span class="kd">var</span> <span class="nx">cs</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Cx</span><span class="p">(</span> <span class="nx">s</span> <span class="p">);</span>
-<span class="nx">print</span><span class="p">(</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">getData</span><span class="p">()</span> <span class="p">);</span>
+var m = new M(1);
+var cm = new Cx( m );
+print( cm.getData() );
 
-</code></pre>
+var s = new S("hello");
+var cs = new Cx( s );
+print( cs.getData() );
+{% endhighlight %}
 
 
 <p>

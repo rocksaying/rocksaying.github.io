@@ -17,15 +17,17 @@ permalink: /archives/2650736.html
 <p>
 當我們用 utf-8 編碼格式儲存源碼時，源碼中的字串也會是 utf-8 內碼 (廢話) 。程式自本地字元編碼格式的外部資料來源讀取資料時，字串對比動作會因為內碼不同而判定不相等。例如: 將 '你好' 存在純文字檔中，且文字檔之編碼格式為 ANSI (即本地字元內碼) 。再把下列 PHP 程式以 utf-8 編碼格式儲存，則其中的字串比對 <code>strpos()</code> 會判定資料中沒有 '你好' 這句話。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?</span>
-<span class="nv">$s</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'hello.txt'</span><span class="p">);</span>
 
-<span class="k">echo</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="nv">$s</span><span class="p">,</span> <span class="s1">'你好'</span><span class="p">)</span>
-    <span class="o">?</span> <span class="s1">'找到了'</span>
-    <span class="o">:</span> <span class="s1">'沒找到'</span>
-<span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?
+$s = file_get_contents('hello.txt');
+
+echo (strpos($s, '你好')
+    ? '找到了'
+    : '沒找到'
+);
+?>
+{% endhighlight %}
 
 <p>
 雖說這種問題只要在讀取外部資料時都加上內碼轉換的動作即可解決。但實務上，我卻常常碰到外部資料中含有自定字 (例如Big5日文字集) 、外部字等各種情形，令 PHP 的 <code>iconv, mb_string</code> 等轉碼函數無法順利轉碼。我們如果有空，可以自己實踐另一個轉碼函數避過這些字。假設我們沒有時間，那麼接下去看。
@@ -33,36 +35,38 @@ permalink: /archives/2650736.html
 <p>
 這時我們不得不多繞一圈，把常值字串寫在另一個以本地字元內碼格式儲存的 php 源碼檔案中，並為此字串定義一個常數名稱 (一般實踐多語系功能時的作法)。然而這作法仍然無法滿足「以中文字為符號名稱」之需求。因為常數名稱不能用中文，否則載入後還是會因內碼不同而被 PHP 視為不同符號。如下例。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// language.php, 以 Big5編碼格式儲存
-</span><span class="nb">define</span><span class="p">(</span><span class="s1">'你好'</span><span class="p">,</span> <span class="s1">'你好'</span><span class="p">);</span>
-<span class="err">$你好</span> <span class="o">=</span> <span class="s1">'你好'</span><span class="p">;</span>
-<span class="nb">define</span><span class="p">(</span><span class="s1">'HELLO'</span><span class="p">,</span> <span class="s1">'你好'</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
+
+{% highlight php %}
+<?php
+// language.php, 以 Big5編碼格式儲存
+define('你好', '你好');
+$你好 = '你好';
+define('HELLO', '你好');
+?>
 
 #############
 
-<span class="cp">&lt;?php</span>
-<span class="k">include_once</span> <span class="s1">'language.php'</span><span class="p">;</span>
+<?php
+include_once 'language.php';
 
-<span class="nv">$s</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'hello.txt'</span><span class="p">);</span>
+$s = file_get_contents('hello.txt');
 
-<span class="k">echo</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="nv">$s</span><span class="p">,</span> <span class="err">你好</span><span class="p">)</span> <span class="c1">//常數符號, PHP Notice! 常數未定義
-</span>    <span class="o">?</span> <span class="s1">'找到了'</span>
-    <span class="o">:</span> <span class="s1">'沒找到'</span>
-<span class="p">);</span>
+echo (strpos($s, 你好) //常數符號, PHP Notice! 常數未定義
+    ? '找到了'
+    : '沒找到'
+);
 
-<span class="k">echo</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="nv">$s</span><span class="p">,</span> <span class="err">$你好</span><span class="p">)</span> <span class="c1">//變數符號, PHP Notice! 變數未定義
-</span>    <span class="o">?</span> <span class="s1">'找到了'</span>
-    <span class="o">:</span> <span class="s1">'沒找到'</span>
-<span class="p">);</span>
+echo (strpos($s, $你好) //變數符號, PHP Notice! 變數未定義
+    ? '找到了'
+    : '沒找到'
+);
 
-<span class="k">echo</span> <span class="p">(</span><span class="nb">strpos</span><span class="p">(</span><span class="nv">$s</span><span class="p">,</span> <span class="nx">HELLO</span><span class="p">)</span>
-    <span class="o">?</span> <span class="s1">'找到了'</span>
-    <span class="o">:</span> <span class="s1">'沒找到'</span>
-<span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+echo (strpos($s, HELLO)
+    ? '找到了'
+    : '沒找到'
+);
+?>
+{% endhighlight %}
 
 <p>
 我們還有一招最後手段可用，即在 language.php 寫上 <code>define(iconv('big5', 'utf-8', '你好'), '你好');</code> 就沒問題了。但最後手段往往也是最不得已或最麻煩的手段，這手段誰想用呢？

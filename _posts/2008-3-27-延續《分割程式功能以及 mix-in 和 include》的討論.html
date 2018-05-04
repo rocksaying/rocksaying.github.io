@@ -17,7 +17,9 @@ permalink: /archives/5763473.html
 至於不直接調用 function 這點，那是因為直接調用 function 的方式將損失動態性，或者說 "彈性"。如下例:
 </p>
 
-<pre class="highlight"><code>//--------
+
+{% highlight php %}
+//--------
 function foo() { echo 'foo'; }
 function bar() { echo 'bar'; }
 
@@ -29,24 +31,24 @@ class B {
 
 function allSay($a) {
   foreach ($a as $o) {
-    $o-&gt;say();
+    $o->say();
   }
 }
 
 //--------
 $a = array(new A, new A, new B);
 
-$a[0]-&gt;say = 'foo';
-$a[1]-&gt;say = 'bar';
+$a[0]->say = 'foo';
+$a[1]->say = 'bar';
 
 allSay($a);
 
 /*
 foo();
 bar();
-$a[2]-&gt;say();
+$a[2]->say();
 */
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -64,28 +66,29 @@ tokimeki又說: <q>我所需要的是「擴充」該類別的功能，換言之�
 Ruby 可以 'open class' 後改變原有類別的任何方法 (包括 protected method)。如下例:
 </p>
 
-<pre class="highlight"><code><span class="k">class</span> <span class="nc">A</span>
-  <span class="k">def</span> <span class="nf">say</span>
-  <span class="k">end</span>
-  <span class="kp">protected</span> <span class="ss">:say</span>
 
-  <span class="k">def</span> <span class="nf">run</span>
-    <span class="nb">self</span><span class="p">.</span><span class="nf">say</span>
-  <span class="k">end</span>
-<span class="k">end</span>
+{% highlight php %}
+class A
+  def say
+  end
+  protected :say
 
-<span class="c1">#open class A</span>
-<span class="k">class</span> <span class="nc">A</span>
-  <span class="k">def</span> <span class="nf">say</span>
-    <span class="nb">print</span> <span class="s1">'hello'</span>
-  <span class="k">end</span>
-  <span class="kp">protected</span> <span class="ss">:say</span>
-<span class="k">end</span>
+  def run
+    self.say
+  end
+end
 
-<span class="n">a</span> <span class="o">=</span> <span class="no">A</span><span class="p">.</span><span class="nf">new</span>
-<span class="n">a</span><span class="p">.</span><span class="nf">run</span>
+#open class A
+class A
+  def say
+    print 'hello'
+  end
+  protected :say
+end
 
-</code></pre>
+a = A.new
+a.run
+{% endhighlight %}
 
 
 <p>
@@ -103,7 +106,9 @@ Ruby 可以 'open class' 後改變原有類別的任何方法 (包括 protected 
 按 PHP 目前的能力來看，想要達成你的需求，要嘛用 include ，要不就用 hook 的技巧：你預先在方法定義中埋入 hook points ，然後你在外部插入 hooks 。
 </p>
 
-<pre class="highlight"><code>class A {
+
+{% highlight php %}
+class A {
     protected static $hooks = false;
 
     function __construct() {
@@ -126,7 +131,7 @@ Ruby 可以 'open class' 後改變原有類別的任何方法 (包括 protected 
     }
 
     public function run() {
-        return $this-&gt;say();
+        return $this->say();
     }
     /*
     ...
@@ -135,8 +140,8 @@ Ruby 可以 'open class' 後改變原有類別的任何方法 (包括 protected 
 }
 
 $a = new A;
-$a-&gt;run();
-</code></pre>
+$a->run();
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/5763473.html</div>
 <div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
 <blockquote class="roodo-comment">

@@ -36,19 +36,23 @@ Message taking loop
 seed 提供的範例中，進入訊息處理迴圈的程式碼如下:
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">mainloop</span> <span class="o">=</span> <span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_new</span><span class="p">();</span>
-<span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_run</span><span class="p">(</span><span class="nx">mainloop</span><span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+var GLib = imports.gi.GLib;
+var mainloop = GLib.main_loop_new();
+GLib.main_loop_run(mainloop);
+{% endhighlight %}
 
 
 
 <p>至於 gjs ，則本身提供了一個 mainloop 模組可用。如下列:
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
-<span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-</code></pre>
+
+{% highlight javascript %}
+var Mainloop = imports.mainloop;
+Mainloop.run('');
+{% endhighlight %}
 
 
 <p>本文範例在 Ubuntu 10.04 與 10.10 上，分別以 gjs 和 seed 測試過。在撰寫過程中，我發現 Ubuntu 10.10 的 seed 相依的環境有問題。seed 的範例程式碼最後皆使用 GLib 的 <dfn>main_loop_new()</dfn> 建立訊息處理迴圈。但是它所使用的 glib binding ，並沒有定義 <dfn>main_loop_new()</dfn> 和 <dfn>main_loop_run()</dfn> 函數，所以在調用遠端服務的 D-Bus 方法後，無法取得回傳訊息。我目前還無法確定這個問題是否僅存在於 Ubuntu 10.10 提供的 seed 套件身上。Ubuntu 10.04 倒是很正常。
@@ -64,19 +68,21 @@ Proxy object
 下列為 gjs/seed 使用的 D-Bus 代理個體類別的固定範本:
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">ProxyObjectClassName</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">_init</span><span class="p">();</span>
-<span class="p">};</span>
-<span class="nx">ProxyObjectClassName</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="na">_init</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">// session bus or system bus
-</span>
-	<span class="nx">DBus</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">proxifyObject</span> <span class="p">(</span><span class="k">this</span><span class="p">,</span>
-				   <span class="s1">'dbus service name'</span><span class="p">,</span>
-				   <span class="s1">'dbus service object path'</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</code></pre>
+
+{% highlight javascript %}
+function ProxyObjectClassName() {
+    this._init();
+};
+ProxyObjectClassName.prototype = {
+    _init: function() {
+    // session bus or system bus
+
+	DBus.session.proxifyObject (this,
+				   'dbus service name',
+				   'dbus service object path');
+    }
+};
+{% endhighlight %}
 
 
 <h5>
@@ -89,34 +95,36 @@ Interface spec
 gjs/seed 使用下列的表格形式描述介面規格:
 </p>
 
-<pre class="highlight"><code><span class="p">{</span>
-    <span class="nl">name</span><span class="p">:</span> <span class="s1">'interface name'</span><span class="p">,</span>
-    <span class="nx">methods</span><span class="err">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Method name'</span><span class="p">,</span>
-            <span class="na">inSignature</span><span class="p">:</span> <span class="s1">'the type signature of input parameters'</span><span class="p">,</span>
-            <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'the type signature of input values'</span>
-        <span class="p">}</span>
-        <span class="p">,</span>
-        <span class="p">...</span>
-    <span class="p">],</span>
-    <span class="nx">signals</span><span class="err">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Signal name'</span><span class="p">,</span>
-            <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
-            <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'the type signature of input values'</span>
-        <span class="p">}</span>
-        <span class="p">,</span>
-        <span class="p">...</span>
-    <span class="p">],</span>
-    <span class="nx">properties</span><span class="err">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Property name'</span><span class="p">,</span>
-            <span class="na">signature</span><span class="p">:</span> <span class="s1">'the type signature of property'</span><span class="p">,</span>
-            <span class="na">access</span><span class="p">:</span> <span class="s1">'read or readwrite'</span>
-        <span class="p">}</span>
-        <span class="p">,</span>
-        <span class="p">...</span>
-    <span class="p">]</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight javascript %}
+{
+    name: 'interface name',
+    methods: [
+        { name: 'Method name',
+            inSignature: 'the type signature of input parameters',
+            outSignature: 'the type signature of input values'
+        }
+        ,
+        ...
+    ],
+    signals: [
+        { name: 'Signal name',
+            inSignature: '',
+            outSignature: 'the type signature of input values'
+        }
+        ,
+        ...
+    ],
+    properties: [
+        { name: 'Property name',
+            signature: 'the type signature of property',
+            access: 'read or readwrite'
+        }
+        ,
+        ...
+    ]
+}
+{% endhighlight %}
 
 <p>
 當你填完上面那張表後，請將它交給 gjs/seed 實作的 <dfn>DBus.proxifyPrototype()</dfn> 方法。<dfn>DBus.proxifyPrototype()</dfn> 會把那張表描述的介面內容，注入我們指定的代理類別。
@@ -125,11 +133,11 @@ gjs/seed 使用下列的表格形式描述介面規格:
 <p>
 至於如何得知你的服務對象的 D-Bus 規格呢？途徑有二。一、查看它的文件有沒有描述。二、透過 DBus Introspectable 介面的 Introspect 方法查詢。我個人偏好第二種方式，因為它的查詢結果會很明確地告訴我型態簽名(<span class="note">D-Bus 規格的型態簽名之意義，請自行查詢</span>)，而不需我自己翻譯。下列示範如何利用 <dfn>dbus-send</dfn> 工具內觀 Notifications 的介面規格。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ dbus-send --session --print-reply --dest=org.freedesktop.Notifications \
     /org/freedesktop/Notifications \
     org.freedesktop.DBus.Introspectable.Introspect
-</pre>
+</code></pre>
 
 <h5>
 使用 callback 模式接受回傳值
@@ -155,84 +163,86 @@ Notifications Notify
 </p>
 
 <a name="dbus-notify.js"></a>
-<pre class="highlight"><code><span class="kr">const</span> <span class="nx">DBus</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">dbus</span><span class="p">;</span>
-<span class="c1">// 'const' 是 ECMAScript v5 的保留用字，目前尚未定義其用途。
-</span>
-<span class="c1">// 在 gjs 和 seed 中，這個關鍵字的用途是定義一個常數。
-</span>
 
-<span class="kd">function</span> <span class="nx">Notifications</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// 定義代理個體的類別
-</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">_init</span><span class="p">();</span>
-<span class="p">};</span>
-<span class="nx">Notifications</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="na">_init</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nx">DBus</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">proxifyObject</span> <span class="p">(</span><span class="k">this</span><span class="p">,</span>
-				   <span class="s1">'org.freedesktop.Notifications'</span><span class="p">,</span>
-				   <span class="s1">'/org/freedesktop/Notifications'</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-<span class="nx">DBus</span><span class="p">.</span><span class="nx">proxifyPrototype</span><span class="p">(</span><span class="nx">Notifications</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="c1">// 將介面內容注入代理類別
-</span>
-<span class="p">{</span>   <span class="c1">// 描述 org.freedesktop.Notifications 的介面內容
-</span>
-    <span class="na">name</span><span class="p">:</span> <span class="s1">'org.freedesktop.Notifications'</span><span class="p">,</span>
-    <span class="na">methods</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'GetServerInformation'</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'ssss'</span><span class="p">},</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Notify'</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">'susssasa{sv}i'</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'u'</span> <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="na">signals</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'NotificationClosed'</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'uu'</span> <span class="p">}</span>
-    <span class="p">]</span>
-<span class="p">});</span>
+{% highlight javascript %}
+const DBus = imports.dbus;
+// 'const' 是 ECMAScript v5 的保留用字，目前尚未定義其用途。
 
-<span class="kd">var</span> <span class="nx">notifier</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Notifications</span><span class="p">();</span> <span class="c1">// 建立遠端個體在本地端的代理者
-</span>
+// 在 gjs 和 seed 中，這個關鍵字的用途是定義一個常數。
 
-<span class="nx">notifier</span><span class="p">.</span><span class="nx">GetServerInformationRemote</span><span class="p">(</span>
-    <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">print</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">result</span><span class="p">);</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">result</span><span class="p">)</span>
-            <span class="nx">print</span><span class="p">(</span><span class="nx">p</span> <span class="o">+</span> <span class="s1">': '</span> <span class="o">+</span> <span class="nx">result</span><span class="p">[</span><span class="nx">p</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">);</span>
 
-<span class="nx">notifier</span><span class="p">.</span><span class="nx">NotifyRemote</span><span class="p">(</span>
-    <span class="s2">"appname"</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"message-im"</span><span class="p">,</span> <span class="s2">"Test"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">,</span> <span class="p">[],</span> <span class="p">{},</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">print</span><span class="p">(</span><span class="s2">"result: "</span> <span class="o">+</span> <span class="nx">result</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">);</span>
+function Notifications() { // 定義代理個體的類別
 
-<span class="nx">notifier</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'NotificationClosed'</span><span class="p">,</span>
-    <span class="kd">function</span><span class="p">(</span><span class="nx">emitter</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">reason</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">print</span><span class="p">(</span><span class="s2">"Closed. ID: "</span> <span class="o">+</span> <span class="nx">id</span> <span class="o">+</span> <span class="s2">", reason: "</span> <span class="o">+</span> <span class="nx">reason</span><span class="p">);</span>
-        <span class="nx">main_quit</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">);</span>
+    this._init();
+};
+Notifications.prototype = {
+    _init: function() {
+	DBus.session.proxifyObject (this,
+				   'org.freedesktop.Notifications',
+				   '/org/freedesktop/Notifications');
+    }
+};
+DBus.proxifyPrototype(Notifications.prototype, // 將介面內容注入代理類別
 
-<span class="kd">function</span> <span class="nx">main_quit</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">Seed</span> <span class="o">!=</span> <span class="s1">'undefined'</span><span class="p">)</span>
-        <span class="nx">Seed</span><span class="p">.</span><span class="nx">quit</span><span class="p">();</span>
-    <span class="k">else</span>
-        <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">quit</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-<span class="p">}</span>
+{   // 描述 org.freedesktop.Notifications 的介面內容
 
-<span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">Seed</span> <span class="o">!=</span> <span class="s1">'undefined'</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">mainloop</span> <span class="o">=</span> <span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_new</span><span class="p">();</span>
-    <span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_run</span><span class="p">(</span><span class="nx">mainloop</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span>
-    <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+    name: 'org.freedesktop.Notifications',
+    methods: [
+        { name: 'GetServerInformation', inSignature: '', outSignature: 'ssss'},
+        { name: 'Notify', inSignature: 'susssasa{sv}i', outSignature: 'u' }
+    ],
+    signals: [
+        { name: 'NotificationClosed', inSignature: '', outSignature: 'uu' }
+    ]
+});
+
+var notifier = new Notifications(); // 建立遠端個體在本地端的代理者
+
+
+notifier.GetServerInformationRemote(
+    function(result) {
+        print(typeof result);
+        for (var p in result)
+            print(p + ': ' + result[p]);
+    }
+);
+
+notifier.NotifyRemote(
+    "appname", 0, "message-im", "Test", "body", [], {}, -1,
+    function(result) {
+        print("result: " + result);
+    }
+);
+
+notifier.connect('NotificationClosed',
+    function(emitter, id, reason) {
+        print("Closed. ID: " + id + ", reason: " + reason);
+        main_quit();
+    }
+);
+
+function main_quit() {
+    if (typeof Seed != 'undefined')
+        Seed.quit();
+    else
+        Mainloop.quit('');
+}
+
+if (typeof Seed != 'undefined') {
+    var GLib = imports.gi.GLib;
+    var mainloop = GLib.main_loop_new();
+    GLib.main_loop_run(mainloop);
+}
+else {
+    var Mainloop = imports.mainloop;
+    Mainloop.run('');
+}
+{% endhighlight %}
 
 <p>
 執行結果如下列所示，同時你會看到桌面上彈出一個訊息視窗:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ dbus-send --session --print-reply --dest=org.freedesktop.Notifications \
     /org/freedesktop/Notifications \
     org.freedesktop.DBus.Introspectable.Introspect
@@ -245,7 +255,7 @@ object
 3: 1.1
 result: 17
 Closed. ID: 17, reason: 1
-</pre>
+</code></pre>
 
 <h4>
 NetworkManager and Introspectable
@@ -261,84 +271,85 @@ GetDevices 方法可得知目前有幾個網路設備可用。
 大部份的 D-Bus 服務都會實作 org.freedesktop.DBus.Introspectable 介面，提供 Introspect 方法。讓其他人可以藉由這個方法查看介面規格。我們查詢的結果會是一份 XML 文件，若我們進一步分析該文件，就可以直接將分析結果交給 <dfn>DBus.proxifyPrototype()</dfn> 注入指定的代理類別，而不必自己描述。在此範例中，只是展示我們可以在執行時內觀介面規格，並未進一步實現分析與注入動作。
 </p>
 
-<pre class="highlight"><code><span class="kr">const</span> <span class="nx">DBus</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">dbus</span><span class="p">;</span>
 
-<span class="kd">function</span> <span class="nx">NetworkManager</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">_init</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="nx">NetworkManager</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="na">_init</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	    <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">.</span><span class="nx">proxifyObject</span> <span class="p">(</span><span class="k">this</span><span class="p">,</span>
-	       <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">,</span>
-	       <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="nx">DBus</span><span class="p">.</span><span class="nx">proxifyPrototype</span> <span class="p">(</span><span class="nx">NetworkManager</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span>
-<span class="p">{</span>
-    <span class="na">name</span><span class="p">:</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">,</span>
-    <span class="na">methods</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'GetDevices'</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'ao'</span> <span class="p">}</span>
-    <span class="p">]</span>
-<span class="p">});</span>
+{% highlight javascript %}
+const DBus = imports.dbus;
 
-<span class="kd">function</span> <span class="nx">Introspectable</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">_init</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="nx">Introspectable</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="na">_init</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nx">DBus</span><span class="p">.</span><span class="nx">system</span><span class="p">.</span><span class="nx">proxifyObject</span> <span class="p">(</span><span class="k">this</span><span class="p">,</span>
-		   <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">,</span>
-		   <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="nx">DBus</span><span class="p">.</span><span class="nx">proxifyPrototype</span> <span class="p">(</span><span class="nx">Introspectable</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span>
-<span class="p">{</span>
-    <span class="na">name</span><span class="p">:</span> <span class="s1">'org.freedesktop.DBus.Introspectable'</span><span class="p">,</span>
-    <span class="na">methods</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Introspect'</span><span class="p">,</span> <span class="na">inSignature</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span> <span class="na">outSignature</span><span class="p">:</span> <span class="s1">'s'</span> <span class="p">},</span>
-    <span class="p">]</span>
-<span class="p">});</span>
+function NetworkManager() {
+    this._init();
+}
+NetworkManager.prototype = {
+    _init: function() {
+	    DBus.system.proxifyObject (this,
+	       'org.freedesktop.NetworkManager',
+	       '/org/freedesktop/NetworkManager');
+    }
+}
+DBus.proxifyPrototype (NetworkManager.prototype,
+{
+    name: 'org.freedesktop.NetworkManager',
+    methods: [
+        { name: 'GetDevices', inSignature: '', outSignature: 'ao' }
+    ]
+});
 
-<span class="kd">var</span> <span class="nx">nm</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">NetworkManager</span><span class="p">();</span>
-<span class="kd">var</span> <span class="nx">introspectable</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Introspectable</span><span class="p">();</span>
+function Introspectable() {
+    this._init();
+}
+Introspectable.prototype = {
+    _init: function() {
+        DBus.system.proxifyObject (this,
+		   'org.freedesktop.NetworkManager',
+		   '/org/freedesktop/NetworkManager');
+    }
+}
+DBus.proxifyPrototype (Introspectable.prototype,
+{
+    name: 'org.freedesktop.DBus.Introspectable',
+    methods: [
+        { name: 'Introspect', inSignature: '', outSignature: 's' },
+    ]
+});
 
-<span class="nx">introspectable</span><span class="p">.</span><span class="nx">IntrospectRemote</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
-<span class="p">});</span>
+var nm = new NetworkManager();
+var introspectable = new Introspectable();
 
-<span class="nx">nm</span><span class="p">.</span><span class="nx">GetDevicesRemote</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span><span class="s2">"Devices:"</span><span class="p">);</span>
-	<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">result</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">print</span><span class="p">(</span><span class="nx">result</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
-	<span class="p">}</span>
-	<span class="nx">main_quit</span><span class="p">();</span>
-<span class="p">});</span>
+introspectable.IntrospectRemote(function(result) {
+    print(result);
+});
 
-<span class="kd">function</span> <span class="nx">main_quit</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">Seed</span> <span class="o">!=</span> <span class="s1">'undefined'</span><span class="p">)</span>
-        <span class="nx">Seed</span><span class="p">.</span><span class="nx">quit</span><span class="p">();</span>
-    <span class="k">else</span>
-        <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">quit</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-<span class="p">}</span>
+nm.GetDevicesRemote(function(result) {
+    print("Devices:");
+	for (var i = 0; i < result.length; i++) {
+	    print(result[i]);
+	}
+	main_quit();
+});
 
-<span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">Seed</span> <span class="o">!=</span> <span class="s1">'undefined'</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-    <span class="kd">var</span> <span class="nx">mainloop</span> <span class="o">=</span> <span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_new</span><span class="p">();</span>
-    <span class="nx">GLib</span><span class="p">.</span><span class="nx">main_loop_run</span><span class="p">(</span><span class="nx">mainloop</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">Mainloop</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">mainloop</span><span class="p">;</span> <span class="c1">//Seed doesn't define this.
-</span>
-    <span class="nx">Mainloop</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="s1">''</span><span class="p">);</span>
-<span class="p">}</span>
+function main_quit() {
+    if (typeof Seed != 'undefined')
+        Seed.quit();
+    else
+        Mainloop.quit('');
+}
 
-</code></pre>
+if (typeof Seed != 'undefined') {
+    var GLib = imports.gi.GLib;
+    var mainloop = GLib.main_loop_new();
+    GLib.main_loop_run(mainloop);
+}
+else {
+    var Mainloop = imports.mainloop; //Seed doesn't define this.
+
+    Mainloop.run('');
+}
+{% endhighlight %}
 
 
 <p>
 執行結果如下列所示:
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ seed nm-get-devices.js
 
     .
@@ -347,7 +358,7 @@ $ seed nm-get-devices.js
 
 Devices:
 /org/freedesktop/NetworkManager/Devices/0
-</pre>
+</code></pre>
 
 
 <h4>

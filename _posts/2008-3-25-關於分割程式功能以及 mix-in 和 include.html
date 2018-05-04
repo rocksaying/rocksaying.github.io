@@ -31,7 +31,9 @@ http://blog.pixnet.net/HACGIS/post/15612808。
 <p>
 第二，一個小小的語法缺點，程式外觀不甚雅觀。例如:
 </p>
-<pre class="highlight"><code>class A {
+
+{% highlight php %}
+class A {
   var $name = 'world';
   function say() {
     include 'plugin/hello.php';
@@ -42,15 +44,15 @@ http://blog.pixnet.net/HACGIS/post/15612808。
 
 --
 // plugin/hello.php
-echo "Hello, $this-&gt;name";
+echo "Hello, $this->name";
 
 --
 // plugin/otherMethods.php
 public function bye() {
-  echo "Goodbye, $this-&gt;name";
+  echo "Goodbye, $this->name";
 }
 --
-</code></pre>
+{% endhighlight %}
 
 <p>
 當然，這不算什麼大缺點。但從動態性來說，卻可以一眼看出問題。稍後說明。
@@ -68,23 +70,27 @@ public function bye() {
 </p>
 
 <h6>A.php</h6>
-<pre class="highlight"><code>class A extends MixableClass {
+
+{% highlight php %}
+class A extends MixableClass {
   var $name = 'world';
 }
-</code></pre>
+{% endhighlight %}
 
 
 <h6>others.php</h6>
-<pre class="highlight"><code>require_once 'A.php';
+
+{% highlight php %}
+require_once 'A.php';
 function bye() {
-  echo "Goodbye, $this-&gt;name";
+  echo "Goodbye, $this->name";
 }
 
 A::delegate('A', 'bye', 'bye');
 
 $a = new A;
-$a-&gt;bye();
-</code></pre>
+$a->bye();
+{% endhighlight %}
 
 <p>
 透過混成，我不用回頭修改 A.php 這個源碼的內容，而是在別的地方做這件事。是「由外而內」的重構，所以說是 "mix-<em>in</em>"。

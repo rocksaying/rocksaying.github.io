@@ -25,25 +25,27 @@ PHP DBus 模組從遠端個體取得封箱型態的內容時，會將它們配�
 回傳的屬性狀態是一個封箱資料，所以要先對目標拆封才能得值。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$NM_Service</span> <span class="o">=</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">;</span>
-<span class="nv">$NM_Player_Path</span> <span class="o">=</span> <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">;</span>
-<span class="nv">$DBus_Properties_Interface</span> <span class="o">=</span> <span class="s1">'org.freedesktop.DBus.Properties'</span><span class="p">;</span>
 
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SYSTEM</span><span class="p">);</span>
+{% highlight php %}
+<?php
+$NM_Service = 'org.freedesktop.NetworkManager';
+$NM_Player_Path = '/org/freedesktop/NetworkManager';
+$DBus_Properties_Interface = 'org.freedesktop.DBus.Properties';
 
-<span class="nv">$proxy_obj</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
-    <span class="nv">$NM_Service</span><span class="p">,</span> <span class="nv">$NM_Player_Path</span><span class="p">,</span> <span class="nv">$DBus_Properties_Interface</span><span class="p">);</span>
+$d = new Dbus(Dbus::BUS_SYSTEM);
 
-<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$proxy_obj</span><span class="o">-&gt;</span><span class="na">GetAll</span><span class="p">(</span><span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">);</span>
+$proxy_obj = $d->createProxy(
+    $NM_Service, $NM_Player_Path, $DBus_Properties_Interface);
 
-<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span> <span class="c1">// boxing values
-</span>
-<span class="nv">$unboxed_result</span> <span class="o">=</span> <span class="nv">$result</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span> <span class="c1">//unboxing
-</span><span class="nv">$cs</span> <span class="o">=</span> <span class="nv">$unboxed_result</span><span class="p">[</span><span class="s1">'ActiveConnections'</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">();</span>
-<span class="k">echo</span> <span class="s1">'Name of connection 0: '</span><span class="p">,</span> <span class="nv">$cs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$result = $proxy_obj->GetAll('org.freedesktop.NetworkManager');
+
+var_dump($result); // boxing values
+
+$unboxed_result = $result->getData(); //unboxing
+$cs = $unboxed_result['ActiveConnections']->getData()->getData();
+echo 'Name of connection 0: ', $cs[0]->getData(), "\n";
+?>
+{% endhighlight %}
 
 
 <p>
@@ -56,39 +58,41 @@ PHP DBus 模組從遠端個體取得封箱型態的內容時，會將它們配�
 範例二是 DBus 封箱資料的泛用拆封函數，它會將所有封箱資料全部拆封。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">dbus_unboxing</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$v</span><span class="p">))</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$v</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$vv</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$v</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">dbus_unboxing</span><span class="p">(</span><span class="nv">$vv</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">is_object</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="k">and</span> <span class="nb">strpos</span><span class="p">(</span><span class="nb">get_class</span><span class="p">(</span><span class="nv">$v</span><span class="p">),</span> <span class="s1">'Dbus'</span><span class="p">)</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">dbus_unboxing</span><span class="p">(</span><span class="nv">$v</span><span class="o">-&gt;</span><span class="na">getData</span><span class="p">());</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="nv">$v</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="nv">$NM_Service</span> <span class="o">=</span> <span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">;</span>
-<span class="nv">$NM_Player_Path</span> <span class="o">=</span> <span class="s1">'/org/freedesktop/NetworkManager'</span><span class="p">;</span>
-<span class="nv">$DBus_Properties_Interface</span> <span class="o">=</span> <span class="s1">'org.freedesktop.DBus.Properties'</span><span class="p">;</span>
+{% highlight php %}
+<?php
+function dbus_unboxing($v) {
+    if (is_array($v)) {
+        foreach ($v as $k => $vv) {
+            $v[$k] = dbus_unboxing($vv);
+        }
+        return $v;
+    }
+    else if (is_object($v) and strpos(get_class($v), 'Dbus') === 0) {
+        return dbus_unboxing($v->getData());
+    }
+    return $v;
+}
 
-<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dbus</span><span class="p">(</span><span class="nx">Dbus</span><span class="o">::</span><span class="na">BUS_SYSTEM</span><span class="p">);</span>
+$NM_Service = 'org.freedesktop.NetworkManager';
+$NM_Player_Path = '/org/freedesktop/NetworkManager';
+$DBus_Properties_Interface = 'org.freedesktop.DBus.Properties';
 
-<span class="nv">$proxy_obj</span> <span class="o">=</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">createProxy</span><span class="p">(</span>
-    <span class="nv">$NM_Service</span><span class="p">,</span> <span class="nv">$NM_Player_Path</span><span class="p">,</span> <span class="nv">$DBus_Properties_Interface</span><span class="p">);</span>
+$d = new Dbus(Dbus::BUS_SYSTEM);
 
-<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$proxy_obj</span><span class="o">-&gt;</span><span class="na">GetAll</span><span class="p">(</span><span class="s1">'org.freedesktop.NetworkManager'</span><span class="p">);</span>
+$proxy_obj = $d->createProxy(
+    $NM_Service, $NM_Player_Path, $DBus_Properties_Interface);
 
-<span class="nv">$unboxed_result</span> <span class="o">=</span> <span class="nx">dbus_unboxing</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
+$result = $proxy_obj->GetAll('org.freedesktop.NetworkManager');
 
-<span class="nb">var_dump</span><span class="p">(</span><span class="nv">$unboxed_result</span><span class="p">);</span> <span class="c1">// unboxing values
-</span>
-<span class="k">echo</span> <span class="s1">'Name of connection 0: '</span><span class="p">,</span> <span class="nv">$unboxed_result</span><span class="p">[</span><span class="s1">'ActiveConnections'</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+$unboxed_result = dbus_unboxing($result);
 
-<span class="cp">?&gt;</span>
-</code></pre>
+var_dump($unboxed_result); // unboxing values
+
+echo 'Name of connection 0: ', $unboxed_result['ActiveConnections'][0], "\n";
+
+?>
+{% endhighlight %}
 
 
 <p>

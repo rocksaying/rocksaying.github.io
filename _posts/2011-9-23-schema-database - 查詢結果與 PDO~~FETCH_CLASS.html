@@ -27,35 +27,37 @@ permalink: /archives/16920627.html
 <p>下列內容就是用 PHP 語言表示上述所說的過程。假設 Book 是一個 ORM 類別。第一段是一般預期的配置過程。第二段則是 <dfn>PDO::FETCH_CLASS</dfn> 的配置過程。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">author</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="nv">$input_data</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'isbn'</span>  <span class="o">=&gt;</span> <span class="s1">'1234567890'</span><span class="p">,</span>
-    <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'Title 1'</span><span class="p">,</span>
-    <span class="s1">'author'</span><span class="o">=&gt;</span>  <span class="s1">'rock'</span>
-<span class="p">);</span>
+{% highlight php %}
+<?php
+class Book {
+    function __construct() {
+        $this->isbn = $this->title = $this->author = '';
+    }
+}
 
-<span class="c1">// 1. expected way:
-</span><span class="nv">$b1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Book</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$input_data</span> <span class="k">as</span> <span class="nv">$field</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$b1</span><span class="o">-&gt;</span><span class="nv">$field</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-<span class="p">}</span>
+$input_data = array(
+    'isbn'  => '1234567890',
+    'title' => 'Title 1',
+    'author'=>  'rock'
+);
 
-<span class="c1">// 2. PDO_FETCH_CLASS's way:
-</span><span class="k">foreach</span> <span class="p">(</span><span class="nv">$input_data</span> <span class="k">as</span> <span class="nv">$field</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$b2</span><span class="o">-&gt;</span><span class="nv">$field</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nv">$b2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Book</span><span class="p">;</span>
+// 1. expected way:
+$b1 = new Book;
+foreach ($input_data as $field => $v) {
+    $b1->$field = $v;
+}
 
-<span class="k">echo</span> <span class="s2">"B1 title: </span><span class="si">{</span><span class="nv">$b1</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s2">"B2 title: </span><span class="si">{</span><span class="nv">$b2</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// empty...
-</span><span class="cp">?&gt;</span>
-</code></pre>
+// 2. PDO_FETCH_CLASS's way:
+foreach ($input_data as $field => $v) {
+    $b2->$field = $v;
+}
+$b2 = new Book;
+
+echo "B1 title: {$b1->title}\n";
+echo "B2 title: {$b2->title}\n"; // empty...
+?>
+{% endhighlight %}
 
 
 <p>眼尖的人，應該不用執行就可以看出 <dfn>PDO::FETCH_CLASS</dfn> 的奇特行為會帶來什麼困擾。
@@ -69,41 +71,43 @@ permalink: /archives/16920627.html
 <p>延用前一節的 PHP 程式碼，修改為實際 <dfn>PDO::FETCH_CLASS</dfn> 與 <dfn>PDO::FETCH_PROPS_LATE</dfn> 的用法。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Book</span> <span class="p">{</span>
-    <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">author</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
-    <span class="p">}</span>
-    
-    <span class="k">function</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"ISBN: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">isbn</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="s2">"Title: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-        <span class="k">echo</span> <span class="s2">"Author: </span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">author</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="nv">$dsn</span> <span class="o">=</span> <span class="s1">'sqlite::memory:'</span><span class="p">;</span>
-<span class="nv">$db</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="nv">$dsn</span><span class="p">);</span>
-<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"CREATE TABLE books (
+{% highlight php %}
+<?php
+class Book {
+    function __construct() {
+        $this->isbn = $this->title = $this->author = '';
+    }
+    
+    function dump() {
+        echo "ISBN: {$this->isbn}\n";
+        echo "Title: {$this->title}\n";
+        echo "Author: {$this->author}\n";
+    }
+}
+
+$dsn = 'sqlite::memory:';
+$db = new PDO($dsn);
+$db->query("CREATE TABLE books (
     isbn varchar(13) primary key,
     title varchar(1024) not null,
     author varchar(1024) not null
-    );"</span><span class="p">);</span>
-<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"INSERT INTO books VALUES ('1234567890', 'Title1 ', 'rock');"</span><span class="p">);</span>
+    );");
+$db->query("INSERT INTO books VALUES ('1234567890', 'Title1 ', 'rock');");
 
-<span class="nv">$stat</span> <span class="o">=</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"SELECT * FROM books;"</span><span class="p">);</span>
+$stat = $db->query("SELECT * FROM books;");
 
-<span class="c1">//$stat-&gt;setFetchMode(PDO::FETCH_CLASS, 'Book'); 
-</span>  <span class="c1">// Unexcepted result. The constructor will reset all properties.
-</span>
-<span class="nv">$stat</span><span class="o">-&gt;</span><span class="na">setFetchMode</span><span class="p">(</span><span class="nx">PDO</span><span class="o">::</span><span class="na">FETCH_CLASS</span> <span class="o">|</span> <span class="nx">PDO</span><span class="o">::</span><span class="na">FETCH_PROPS_LATE</span><span class="p">,</span> <span class="s1">'Book'</span><span class="p">);</span>
+//$stat->setFetchMode(PDO::FETCH_CLASS, 'Book'); 
+  // Unexcepted result. The constructor will reset all properties.
 
-<span class="k">while</span> <span class="p">(</span><span class="nv">$book</span> <span class="o">=</span> <span class="nv">$stat</span><span class="o">-&gt;</span><span class="na">fetch</span><span class="p">())</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s1">'Class of book is '</span><span class="p">,</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$book</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="nv">$book</span><span class="o">-&gt;</span><span class="na">dump</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$stat->setFetchMode(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, 'Book');
+
+while ($book = $stat->fetch()) {
+    echo 'Class of book is ', get_class($book), "\n";
+    $book->dump();
+}
+?>
+{% endhighlight %}
 
 
 <p>我一開始說這是我在修改 schema-database 函數庫時碰到的問題。那麼用我的 schema-database 配上 <dfn>PDO::FETCH_CLASS</dfn> 會如何？
@@ -113,30 +117,32 @@ permalink: /archives/16920627.html
 <p>前一節的 pdo_fetch_props_late_example.php ，改用 schema-database 的 <dfn>Database_Query</dfn> 實作的話，程式碼將會是下列內容:
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'database_query.php'</span><span class="p">;</span>
 
-<span class="nv">$dsn</span> <span class="o">=</span> <span class="s1">'sqlite::memory:'</span><span class="p">;</span>
-<span class="nv">$db</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="nv">$dsn</span><span class="p">);</span>
-<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"CREATE TABLE books (
+{% highlight php %}
+<?php
+require_once 'database_query.php';
+
+$dsn = 'sqlite::memory:';
+$db = new PDO($dsn);
+$db->query("CREATE TABLE books (
     isbn varchar(13) primary key,
     title varchar(1024) not null,
     author varchar(1024) not null
-    );"</span><span class="p">);</span>
-<span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"INSERT INTO books VALUES ('1234567890', 'Title1 ', 'rock');"</span><span class="p">);</span>
+    );");
+$db->query("INSERT INTO books VALUES ('1234567890', 'Title1 ', 'rock');");
 
-<span class="nv">$query</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Database_Query</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'db'</span> <span class="o">=&gt;</span> <span class="nv">$db</span><span class="p">));</span>
+$query = new Database_Query(array('db' => $db));
 
-<span class="nv">$books</span> <span class="o">=</span> <span class="nv">$query</span><span class="o">-&gt;</span><span class="na">from</span><span class="p">(</span><span class="s1">'books'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">select</span><span class="p">(</span><span class="nx">PDO</span><span class="o">::</span><span class="na">FETCH_CLASS</span><span class="p">);</span>
-<span class="c1">// schema-database 看到 PDO::FETCH_CLASS 的選項時，總是搭配 PDO::FETCH_PROPS_LATE，
+$books = $query->from('books')->select(PDO::FETCH_CLASS);
+// schema-database 看到 PDO::FETCH_CLASS 的選項時，總是搭配 PDO::FETCH_PROPS_LATE，
 // 且將記錄配置為 Database_Row 個體。
-</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$books</span> <span class="k">as</span> <span class="nv">$book</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s1">'Class of book is '</span><span class="p">,</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$book</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// Database_Row
-</span>    <span class="k">echo</span> <span class="s2">"ISBN: </span><span class="si">{</span><span class="nv">$book</span><span class="o">-&gt;</span><span class="na">isbn</span><span class="si">}</span><span class="s2">; Title: </span><span class="si">{</span><span class="nv">$book</span><span class="o">-&gt;</span><span class="na">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+foreach ($books as $book) {
+    echo 'Class of book is ', get_class($book), "\n"; // Database_Row
+    echo "ISBN: {$book->isbn}; Title: {$book->title}\n";
+}
+?>
+{% endhighlight %}
 
 
 <p>

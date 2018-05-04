@@ -39,11 +39,11 @@ ScriptFile=/lib/plymouth/themes/ubuntu-logo/ubuntu-logo.script
 <p>稍有經驗的使用者在看完 <dfn>default.plymouth</dfn> 的內容後，大概就知道如何修改了。如果你只是想要換一下啟動畫面的Logo影像，那麼只需要把你的圖檔複製到 <dfn>/lib/plymouth/themes/ubuntu-log</dfn> ，替換掉原本的 ubuntu_logo.png 即可。我建議先將原本的 ubuntu_logo.png 備份起來。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ cd /lib/plymouth/themes/ubuntu-logo
 $ sudo mv ubuntu_logo.png ubuntu_logo.png.bak
 $ sudo cp <var>/your/image</var> ubuntu_logo.png
-</pre>
+</code></pre>
 
 <p>若你想一併換掉底下跑動的啟動進度顯示圖像，就準備兩個相對應的圖像，一個表示關閉(progress_dot_off.png)，一個表示亮起(progress_dot_on.png)。依樣畫葫蘆，將它們複製到 <dfn>/lib/plymouth/themes/ubuntu-log</dfn> ，替換掉原本的圖檔。
 </p>
@@ -58,7 +58,7 @@ $ sudo cp <var>/your/image</var> ubuntu_logo.png
 <p>如果你想要自定一個啟動畫面樣式，那麼可以在 <dfn>/lib/plymouth/themes</dfn> 下建立一個子目錄，例如 my-theme ，將 ubuntu-logo/ubuntu-logo.plymouth 與 ubuntu-logo-logo.script 複製過去。再將你準備好的圖檔也複製過去。接著修改 <dfn>/etc/alternatives/default.plymouth</dfn> 的符號連結目標為你的 plymouth 。如下操作:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ cd /lib/plymouth/themes
 $ sudo mkdir my-theme
 $ cd my-theme
@@ -69,7 +69,7 @@ $ sudo cp <var>/your/images</var> .
 $ cd /etc/alternatives
 $ sudo rm default.plymouth
 $ sudo ln -s /lib/plymouth/themes/my-theme/my-theme.plymouth default.plymouth 
-</pre>
+</code></pre>
 
 <p>修改 my-theme.plymouth 中的 <var>ImageDir</var> 與 <var>ScriptFile</var> 的內容。
 </p>
@@ -143,11 +143,11 @@ progress_indicator.y = logo.y + logo.height - 50;
 <p>
 新增或編輯 <dfn>/etc/initramfs-tools/conf.d/splash</dfn>，增加一行 <code>FRAMEBUFFER=y</code>。儲存文件後，再執行 <code>update-initramfs -u</code> 更新。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ sudo -i
-# echo FRAMEBUFFER=y &gt;&gt; /etc/initramfs-tools/conf.d/splash
+# echo FRAMEBUFFER=y >> /etc/initramfs-tools/conf.d/splash
 # update-initramfs -u
-</pre>
+</code></pre>
 
 <h5>指定 grub 的解析度</h5>
 <p>這適用 Plymouth 以低解析度顯示或是16色模式顯示的狀況。我個人經驗是， nVidia 顯示晶片的使用者，升級顯示卡驅動程式為 nVidia 提供的版本後，經常出現這種狀況。這個解法分成兩步驟，如果第一個步驟就能修正，則不必再改第二個步驟。在 Ubuntu 10.04 中，這兩個步驟都要修改 <dfn>/etc/default/grub</dfn>，找到下列的段落內容。
@@ -165,10 +165,10 @@ $ sudo -i
 <p>
 第一個修正步驟，編輯 <dfn>/etc/default/grub</dfn> ，啟用 <code>GRUB_GFXPAYLOAD_LINUX=keep</code> 選項。然後更新 grub2 與 initramfs 。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ sudo update-grub2 
 $ sudo update-initramfs -u
-</pre>
+</code></pre>
 <div class="note">
 在其他版本中，這個設定項目位在 <dfn>/etc/grub.d/00_header</dfn>，而且要自己手動添加。位置是加到 <code>set gfxmode=${GRUB_GFXMODE}</code> 的下一行，內容是 <code>set gfxpayload=keep</code>。
 </div>

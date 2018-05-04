@@ -14,48 +14,52 @@ Using XSLT, PHP, or Ruby on Rails to transform XML documents into XHTML document
 
 <!--more-->
 <h4>XML document</h4>
-<pre class="highlight"><code><span class="nt">&lt;bookstore&gt;</span>
-<span class="nt">&lt;catalog&gt;</span>
 
-<span class="nt">&lt;cd&gt;</span>
-  <span class="nt">&lt;title</span> <span class="na">lang=</span><span class="s">"eng"</span><span class="nt">&gt;</span>Harry Potter<span class="nt">&lt;/title&gt;</span>
-  <span class="nt">&lt;artist&gt;</span>Potter<span class="nt">&lt;/artist&gt;</span>
-<span class="nt">&lt;/cd&gt;</span>
+{% highlight text %}
+<bookstore>
+<catalog>
 
-<span class="nt">&lt;cd&gt;</span>
-  <span class="nt">&lt;title</span> <span class="na">lang=</span><span class="s">"eng"</span><span class="nt">&gt;</span>Learning XML<span class="nt">&lt;/title&gt;</span>
-  <span class="nt">&lt;artist&gt;</span>LMX<span class="nt">&lt;/artist&gt;</span>
-<span class="nt">&lt;/cd&gt;</span>
+<cd>
+  <title lang="eng">Harry Potter</title>
+  <artist>Potter</artist>
+</cd>
 
-<span class="nt">&lt;/catalog&gt;</span>
-<span class="nt">&lt;/bookstore&gt;</span>
-</code></pre>
+<cd>
+  <title lang="eng">Learning XML</title>
+  <artist>LMX</artist>
+</cd>
+
+</catalog>
+</bookstore>
+{% endhighlight %}
 
 
 <h4>
 XSLT style
 </h4>
-<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;</span>
-<span class="nt">&lt;xsl:stylesheet</span> <span class="na">version=</span><span class="s">"1.0"</span>
-<span class="na">xmlns:xsl=</span><span class="s">"http://www.w3.org/1999/XSL/Transform"</span><span class="nt">&gt;</span>
 
-<span class="nt">&lt;xsl:template</span> <span class="na">match=</span><span class="s">"/"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;h2&gt;</span>My CD Collection<span class="nt">&lt;/h2&gt;</span>
-    <span class="nt">&lt;table</span> <span class="na">border=</span><span class="s">"1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;tr</span> <span class="na">bgcolor=</span><span class="s">"#9acd32"</span><span class="nt">&gt;</span>
-      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Title<span class="nt">&lt;/th&gt;</span>
-      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Artist<span class="nt">&lt;/th&gt;</span>
-    <span class="nt">&lt;/tr&gt;</span>
-    <span class="nt">&lt;xsl:for-each</span> <span class="na">select=</span><span class="s">"catalog/cd"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;tr&gt;</span>
-      <span class="nt">&lt;td&gt;&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">"title"</span><span class="nt">/&gt;&lt;/td&gt;</span>
-      <span class="nt">&lt;td&gt;&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">"artist"</span><span class="nt">/&gt;&lt;/td&gt;</span>
-    <span class="nt">&lt;/tr&gt;</span>
-    <span class="nt">&lt;/xsl:for-each&gt;</span>
-    <span class="nt">&lt;/table&gt;</span>
-<span class="nt">&lt;/xsl:template&gt;</span>
-<span class="nt">&lt;/xsl:stylesheet&gt;</span>
-</code></pre>
+{% highlight text %}
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xsl:stylesheet version="1.0"
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+<xsl:template match="/">
+    <h2>My CD Collection</h2>
+    <table border="1">
+    <tr bgcolor="#9acd32">
+      <th align="left">Title</th>
+      <th align="left">Artist</th>
+    </tr>
+    <xsl:for-each select="catalog/cd">
+    <tr>
+      <td><xsl:value-of select="title"/></td>
+      <td><xsl:value-of select="artist"/></td>
+    </tr>
+    </xsl:for-each>
+    </table>
+</xsl:template>
+</xsl:stylesheet>
+{% endhighlight %}
 
 <p>
 使用 XSLT 的優點在於樣版語法和伺服端實作工具無關。當網頁設計人員在設計網頁樣版時，不必知道程式開發人員使用什麼開發工具。當程式開發人員在爭論用 JSP, ASP.Net, PHP 或 RoR 開發時，那些事跟網頁設計人員一點關係都沒有。
@@ -68,31 +72,33 @@ XSLT style
 <h4>
 PHP style
 </h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// Select data from XML document.
-</span><span class="nv">$xml</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SimpleXMLElement</span><span class="p">(</span><span class="nv">$xmlSource</span><span class="p">);</span>
-<span class="nv">$resultSet</span> <span class="o">=</span> <span class="nv">$xml</span><span class="o">-&gt;</span><span class="na">xpath</span><span class="p">(</span><span class="s1">'catalog/cd'</span><span class="p">);</span>
 
-<span class="c1">// Select data from database by a pseudo object, $db.
-</span><span class="nv">$db</span><span class="o">-&gt;</span><span class="na">select_db</span><span class="p">(</span><span class="s1">'root'</span><span class="p">);</span>  <span class="c1"># match = "/"
-</span><span class="nv">$resultSet</span> <span class="o">=</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s1">'select * from catalog_cd;'</span><span class="p">);</span> <span class="c1"># select="catalog/cd"
-</span><span class="cp">?&gt;</span>
+{% highlight text %}
+<?php
+// Select data from XML document.
+$xml = new SimpleXMLElement($xmlSource);
+$resultSet = $xml->xpath('catalog/cd');
 
-    <span class="nt">&lt;h2&gt;</span>My CD Collection<span class="nt">&lt;/h2&gt;</span>
-    <span class="nt">&lt;table</span> <span class="na">border=</span><span class="s">"1"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;tr</span> <span class="na">bgcolor=</span><span class="s">"#9acd32"</span><span class="nt">&gt;</span>
-      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Title<span class="nt">&lt;/th&gt;</span>
-      <span class="nt">&lt;th</span> <span class="na">align=</span><span class="s">"left"</span><span class="nt">&gt;</span>Artist<span class="nt">&lt;/th&gt;</span>
-    <span class="nt">&lt;/tr&gt;</span>
+// Select data from database by a pseudo object, $db.
+$db->select_db('root');  # match = "/"
+$resultSet = $db->query('select * from catalog_cd;'); # select="catalog/cd"
+?>
 
-<span class="cp">&lt;?php</span> <span class="k">foreach</span> <span class="p">(</span><span class="nv">$resultSet</span> <span class="k">as</span> <span class="nv">$value</span><span class="p">)</span> <span class="o">:</span> <span class="cp">?&gt;</span>
-    <span class="nt">&lt;tr&gt;</span>
-        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?=</span><span class="nv">$value</span><span class="o">-&gt;</span><span class="na">title</span> <span class="cp">?&gt;</span><span class="nt">&lt;/td&gt;</span>
-        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;?=</span><span class="nv">$value</span><span class="o">-&gt;</span><span class="na">artist</span> <span class="cp">?&gt;</span><span class="nt">&lt;/td&gt;</span>
-    <span class="nt">&lt;/tr&gt;</span>
-<span class="cp">&lt;?php</span> <span class="k">endforeach</span><span class="p">;</span> <span class="cp">?&gt;</span>
-<span class="nt">&lt;/table&gt;</span>
-</code></pre>
+    <h2>My CD Collection</h2>
+    <table border="1">
+    <tr bgcolor="#9acd32">
+      <th align="left">Title</th>
+      <th align="left">Artist</th>
+    </tr>
+
+<?php foreach ($resultSet as $value) : ?>
+    <tr>
+        <td><?=$value->title ?></td>
+        <td><?=$value->artist ?></td>
+    </tr>
+<?php endforeach; ?>
+</table>
+{% endhighlight %}
 
 
 <p>
@@ -114,25 +120,27 @@ PHP is itself a powerful template system, many developers feel it is too powerfu
 <h4>
 Ruby on Rails style
 </h4>
-<pre class="highlight"><code><span class="o">&lt;%</span>
-<span class="sr">//</span> <span class="no">Select</span> <span class="n">data</span> <span class="n">from</span> <span class="no">XML</span> <span class="n">document</span><span class="p">.</span>
-<span class="nf">xml</span> <span class="o">=</span> <span class="no">REXML</span><span class="o">::</span><span class="no">Document</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">xmlSource</span><span class="p">).</span><span class="nf">root</span><span class="p">;</span>
-<span class="sx">%&gt;
-    &lt;h2&gt;</span><span class="no">My</span> <span class="no">CD</span> <span class="no">Collection</span><span class="o">&lt;</span><span class="sr">/h2&gt;
-    &lt;table border="1"&gt;
-    &lt;tr bgcolor="#9acd32"&gt;
-      &lt;th align="left"&gt;Title&lt;/</span><span class="n">th</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="n">th</span> <span class="n">align</span><span class="o">=</span><span class="s2">"left"</span><span class="o">&gt;</span><span class="no">Artist</span><span class="o">&lt;</span><span class="sr">/th&gt;
-    &lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
 
-<span class="o">&lt;</span><span class="sx">% REXML::XPath.each(xml, </span><span class="s1">'catalog/cd'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">value</span><span class="o">|</span> <span class="sx">%&gt;
-    &lt;tr&gt;</span>
-        <span class="o">&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="sx">%=value.elements['title'].text %&gt;&lt;/td&gt;
-        &lt;td&gt;&lt;%=</span><span class="n">value</span><span class="p">.</span><span class="nf">elements</span><span class="p">[</span><span class="s1">'artist'</span><span class="p">].</span><span class="nf">text</span> <span class="sx">%&gt;&lt;/td&gt;</span>
-    <span class="o">&lt;</span><span class="sr">/tr&gt;
-&lt;% end %&gt;
-&lt;/</span><span class="n">table</span><span class="o">&gt;</span>
-</code></pre>
+{% highlight text %}
+<%
+// Select data from XML document.
+xml = REXML::Document.new(xmlSource).root;
+%>
+    <h2>My CD Collection</h2>
+    <table border="1">
+    <tr bgcolor="#9acd32">
+      <th align="left">Title</th>
+      <th align="left">Artist</th>
+    </tr>
+
+<% REXML::XPath.each(xml, 'catalog/cd') do |value| %>
+    <tr>
+        <td><%=value.elements['title'].text %></td>
+        <td><%=value.elements['artist'].text %></td>
+    </tr>
+<% end %>
+</table>
+{% endhighlight %}
 
 
 <h4>Reference</h4>

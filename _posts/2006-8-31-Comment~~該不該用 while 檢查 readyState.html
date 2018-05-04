@@ -11,52 +11,57 @@ permalink: /archives/2086597.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">CreateHttpRequest</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="k">try</span> <span class="p">{</span>
-  		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
-  		<span class="c1">// for almost all browsers. (Maybe included M$IE7)</span>
-	<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE</span><span class="p">){</span>
-  		<span class="k">try</span> <span class="p">{</span>
-    		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Msxml2.XMLHTTP"</span><span class="p">);</span>
-  		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE2</span><span class="p">)</span> <span class="p">{</span>
-    		<span class="k">try</span> <span class="p">{</span>
-      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Microsoft.XMLHTTP"</span><span class="p">);</span>
-    		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">NotSupported</span><span class="p">)</span> <span class="p">{</span>
-      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    		<span class="p">}</span>
-  		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">HttpRequest</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight text %}
+function CreateHttpRequest() {
+	var HttpRequest = false;
+	try {
+  		HttpRequest = new XMLHttpRequest();
+  		// for almost all browsers. (Maybe included M$IE7)
+	} catch (tryMSIE){
+  		try {
+    		HttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+  		} catch (tryMSIE2) {
+    		try {
+      			HttpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+    		} catch (NotSupported) {
+      			HttpRequest = false;
+    		}
+  		}
+	}
+	return HttpRequest;
+}
+{% endhighlight %}
 
 <h5>
 同步模式範例。
 </h5>
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">CreateHttpRequest</span><span class="p">();</span>
-<span class="nx">request</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"test.xml"</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
-<span class="nx">request</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
 
-<span class="c1">// document loaded</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'test.xml loaded.'</span><span class="p">);</span>
- 
-</code></pre>
+{% highlight text %}
+var request = CreateHttpRequest();
+request.open("GET", "test.xml", false);
+request.send(null);
+
+// document loaded
+window.alert('test.xml loaded.');
+{% endhighlight %}
 
 <h5>
 非同步模式範例。
 </h5>
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">CreateHttpRequest</span><span class="p">();</span>
-<span class="nx">request</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"test.xml"</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
-<span class="nx">request</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
 
-<span class="k">while</span><span class="p">(</span><span class="nx">request</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">//do nothing...</span>
-<span class="p">}</span>
+{% highlight text %}
+var request = CreateHttpRequest();
+request.open("GET", "test.xml", true);
+request.send(null);
 
-<span class="c1">// document loaded</span>
-<span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'test.xml loaded.'</span><span class="p">);</span>
-</code></pre>
+while(request.readyState != 4) {
+    //do nothing...
+}
+
+// document loaded
+window.alert('test.xml loaded.');
+{% endhighlight %}
 
 <p>
 在非同步模式下，最佳實作方式不是去「檢查 readyState 的狀態」，而是去「等待 readyState 的改變事件」。所以要為 XmlHttpRequest.onreadystatechange  指派處理函數，並在調用 XmlHttpRequest.open() 時，指派第三個參數為 true (此亦為預設值)，即啟用非同步模式。如此一來，瀏覽器就會另外產生一個 thread 執行 send() ，而在 state 改變時，喚起 master thread 的處理函數。

@@ -11,59 +11,61 @@ Ruby 練習程式。讀取UTF-8編碼文字檔，轉換成Big5編碼後顯示。
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="nb">require</span> <span class="s1">'iconv'</span>
 
-<span class="n">conv</span> <span class="o">=</span> <span class="no">Iconv</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">)</span>
-<span class="n">fh</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.txt'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span>
+{% highlight text %}
+require 'iconv'
 
-<span class="nb">print</span> <span class="s2">"Loop way...</span><span class="se">\n</span><span class="s2">"</span>
-<span class="k">while</span> <span class="n">line</span> <span class="o">=</span> <span class="n">fh</span><span class="p">.</span><span class="nf">gets</span>
-    <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-<span class="k">end</span>
-<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+conv = Iconv.new('big5', 'utf-8')
+fh = File.open('test.txt', 'r')
 
-<span class="n">fh</span><span class="p">.</span><span class="nf">rewind</span>
+print "Loop way...\n"
+while line = fh.gets
+    print conv.iconv(line)
+end
+print "-----------\n";
 
-<span class="nb">print</span> <span class="s2">"Iterate way...</span><span class="se">\n</span><span class="s2">"</span>
-<span class="n">fh</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
-    <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-<span class="k">end</span>
-<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+fh.rewind
 
-<span class="n">fh</span><span class="p">.</span><span class="nf">rewind</span>
+print "Iterate way...\n"
+fh.each do |line|
+    print conv.iconv(line)
+end
+print "-----------\n";
 
-<span class="nb">print</span> <span class="s2">"Read to array</span><span class="se">\n</span><span class="s2">"</span>
-<span class="n">dataSet</span> <span class="o">=</span> <span class="n">fh</span><span class="p">.</span><span class="nf">readlines</span>
-<span class="n">dataSet</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
-    <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+fh.rewind
 
-<span class="n">fh</span><span class="p">.</span><span class="nf">close</span>
-<span class="n">conv</span><span class="p">.</span><span class="nf">close</span>
+print "Read to array\n"
+dataSet = fh.readlines
+dataSet.each { |line|
+    print conv.iconv(line)
+}
+print "-----------\n";
 
-<span class="nb">print</span> <span class="s2">"Block way...</span><span class="se">\n</span><span class="s2">"</span>
-<span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.txt'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">fh</span><span class="o">|</span>
-    <span class="no">Iconv</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">conv</span><span class="o">|</span>
-        <span class="n">fh</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
-            <span class="nb">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="nb">print</span> <span class="s2">"-----------</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+fh.close
+conv.close
 
-<span class="n">compressor</span> <span class="o">=</span> <span class="s1">'C:/progra~1/7-zip/7z.exe'</span>
-<span class="n">compressCommand</span> <span class="o">=</span> <span class="n">compressor</span> <span class="o">+</span> <span class="s1">' a -sitest_big5.txt test.7z'</span>
-<span class="no">IO</span><span class="p">.</span><span class="nf">popen</span><span class="p">(</span><span class="n">compressCommand</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">zfh</span><span class="o">|</span>
-    <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'test.txt'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">fh</span><span class="o">|</span>
-        <span class="no">Iconv</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">conv</span><span class="o">|</span>
-            <span class="n">fh</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
-                <span class="n">zfh</span><span class="p">.</span><span class="nf">print</span> <span class="n">conv</span><span class="p">.</span><span class="nf">iconv</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+print "Block way...\n"
+File.open('test.txt') { |fh|
+    Iconv.open('big5', 'utf-8') { |conv|
+        fh.each { |line|
+            print conv.iconv(line)
+        }
+    }
+}
+print "-----------\n";
+
+compressor = 'C:/progra~1/7-zip/7z.exe'
+compressCommand = compressor + ' a -sitest_big5.txt test.7z'
+IO.popen(compressCommand, 'w') { |zfh|
+    File.open('test.txt') { |fh|
+        Iconv.open('big5', 'utf-8') { |conv|
+            fh.each { |line|
+                zfh.print conv.iconv(line)
+            }
+        }
+    }
+}
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/2995543.html</div>
 <div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
 <blockquote class="roodo-comment">

@@ -20,51 +20,57 @@ C++ 的 Template 是種將資料型態參數化的功能。將資料型態資訊
 <p>
 以關鍵字 <dfn>template</dfn> 起始一個樣板宣告，後接參數。C/C++ 的程式語法，是以 <code>( )</code> 括起參數。而 Template 語法，則以 <code>&lt; &gt;</code> 括起參數。樣板所用參數之完整稱呼是「樣板參數(template parameters)」，慣例以 T, T1, T2 等作為樣板參數名稱。接著再寫上函數的程式碼樣板，又稱原型 (prototype)。函數原型的函數名稱即為函數樣板的名稱。
 </p>
-<pre class="highlight"><code><span class="n">template</span> <span class="o">&lt;</span> <span class="err">樣板參數型態</span> <span class="err">樣板參數名</span> <span class="p">[,</span> <span class="err">其他樣板參數</span><span class="p">]</span> <span class="o">&gt;</span>
-<span class="err">原型回傳型態</span> <span class="err">函數名</span><span class="p">(</span><span class="err">參數型態</span> <span class="err">原型參數名</span><span class="p">,</span> <span class="p">...)</span> <span class="p">{</span>
-    <span class="c1">//prototype codes;
-</span><span class="p">}</span>
-</code></pre>
+
+{% highlight c++ %}
+template < 樣板參數型態 樣板參數名 [, 其他樣板參數] >
+原型回傳型態 函數名(參數型態 原型參數名, ...) {
+    //prototype codes;
+}
+{% endhighlight %}
 
 
 <p>
 參數型態可用關鍵字 <dfn>class</dfn> 或 <dfn>typename</dfn> 表示泛用型態 (即任何型態)；或是一個已宣告的資料型態，如 <dfn>int</dfn> 與自定類。原型中的參數型態若是已宣告的資料型態，則是一種特殊化的函數樣板。
 </p>
 
-<pre class="highlight"><code><span class="c1">//normal function:
-</span><span class="kt">int</span> <span class="nf">myAdd</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="c1">//function template
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">T</span> <span class="n">myAdd</span><span class="p">(</span><span class="n">T</span> <span class="n">a</span><span class="p">,</span> <span class="n">T</span> <span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight c++ %}
+//normal function:
+int myAdd(int a, int b) {
+    return a + b;
+}
 
-<span class="c1">//基於C/C++的自由撰寫風格，通常分兩行。
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">T</span> <span class="n">myAdd</span><span class="p">(</span><span class="n">T</span> <span class="n">a</span><span class="p">,</span> <span class="n">T</span> <span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
-<span class="p">}</span>
+//function template
+template <class T> T myAdd(T a, T b)
+{
+    return a + b;
+}
 
-<span class="c1">//apply:
-</span><span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="n">myAdd</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
-</code></pre>
+//基於C/C++的自由撰寫風格，通常分兩行。
+template <class T>
+T myAdd(T a, T b)
+{
+    return a + b;
+}
+
+//apply:
+int a = 1, b = 2;
+myAdd(a, b);
+{% endhighlight %}
 
 
 <p>
 題外話。多數動態語言並不需要樣板，它們原本就具有泛型處理的語意與概念。
 </p>
-<pre class="highlight"><code><span class="c1">//In JavaScript</span>
-<span class="kd">function</span> <span class="nx">myAdd</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="nx">a</span> <span class="o">+</span> <span class="nx">b</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">b</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="nx">myAdd</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">);</span>
-</code></pre>
+
+{% highlight c++ %}
+//In JavaScript
+function myAdd(a, b) {
+    return a + b;
+}
+var a = 1, b = 2;
+myAdd(a, b);
+{% endhighlight %}
 
 
 <a name="Class Template"></a>
@@ -76,88 +82,94 @@ C++ 的 Template 是種將資料型態參數化的功能。將資料型態資訊
 套用類別樣板的語法則是以樣板名稱括起參數值，括號用 <code>&lt; &gt;</code>。如: <code>templateName&lt;argument&gt;</code>。
 </p>
 
-<pre class="highlight"><code><span class="c1">//normal class:
-</span><span class="n">class</span> <span class="n">myClass</span> <span class="p">{</span>
-    <span class="n">myClass</span><span class="o">&amp;</span> <span class="n">add</span><span class="p">(</span><span class="k">const</span> <span class="n">myClass</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
 
-<span class="c1">//class template:
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">myTClass</span>
-<span class="p">{</span>
-    <span class="n">T</span><span class="o">&amp;</span> <span class="n">add</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+{% highlight c++ %}
+//normal class:
+class myClass {
+    myClass& add(const myClass& a) {
+        return *this;
+    }
+};
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">myTClass</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span>  <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">;</span>
-    <span class="n">myTClass</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+//class template:
+template <class T>
+class myTClass
+{
+    T& add(const T& a) {
+        return *this;
+    }
+};
+
+int main() {
+    myTClass<int>  a, b;
+    myTClass<double> x,y;
+}
+{% endhighlight %}
 
 
 <h5>部份特殊化 (partial specialization)</h5>
 <p>
 套用一個通用型的樣板以宣告特殊情形的樣板，特殊情形的樣板參數指明採用已宣告之資料型態。對編譯器而言，特殊化樣板是添加在通用型樣板之下的特殊適用條例，並不是一個新樣板。編譯器視實際的參數型態決定援引一般條例或特殊條例，不需程序員指示。
 </p>
-<pre class="highlight"><code><span class="c1">//通用型樣板、泛型樣板:
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T1</span><span class="p">,</span> <span class="n">class</span> <span class="n">T2</span><span class="o">&gt;</span> <span class="n">class</span> <span class="n">myTClass</span><span class="p">;</span>
 
-<span class="c1">//部份特殊化:
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">class</span> <span class="n">myTClass</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">;</span>
-                   <span class="c1">//-------------------- 套用 myTClass 樣板，引數為 T 和 int
-</span>                   <span class="c1">//亦即第二個樣板參數之值指明為 int 。
+{% highlight c++ %}
+//通用型樣板、泛型樣板:
+template <class T1, class T2> class myTClass;
+
+//部份特殊化:
+template <class T> class myTClass<T, int>;
+                   //-------------------- 套用 myTClass 樣板，引數為 T 和 int
+                   //亦即第二個樣板參數之值指明為 int 。
 //----------------- 宣告一個 myTClass 的部份特殊化樣板
-</span>
-<span class="c1">// general template class
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T1</span><span class="p">,</span> <span class="n">class</span> <span class="n">T2</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">myTClass</span>
-<span class="p">{</span>
-<span class="n">public</span><span class="o">:</span>
-    <span class="n">T1</span><span class="o">&amp;</span> <span class="n">add</span><span class="p">(</span><span class="k">const</span> <span class="n">T2</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
 
-<span class="c1">// 部份特殊化
-</span><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">myTClass</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span>
-<span class="p">{</span>
-<span class="n">public</span><span class="o">:</span>
-    <span class="n">T</span><span class="o">&amp;</span> <span class="n">add</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+// general template class
+template <class T1, class T2>
+class myTClass
+{
+public:
+    T1& add(const T2& a) {
+        return *this;
+    }
+};
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">myTClass</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span>  <span class="n">a</span><span class="p">;</span> <span class="c1">//援引特殊化樣板(第2個參數為int型態之特殊情形)
-</span>    <span class="n">myTClass</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="n">b</span><span class="p">;</span> <span class="c1">//援引泛型樣板
-</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+// 部份特殊化
+template <class T>
+class myTClass<T, int>
+{
+public:
+    T& add(const int& a) {
+        return *this;
+    }
+};
+
+int main() {
+    myTClass<int, int>  a; //援引特殊化樣板(第2個參數為int型態之特殊情形)
+    myTClass<int, double> b; //援引泛型樣板
+    return 0;
+}
+{% endhighlight %}
 
 
 <h5>原型之函數成員特殊化</h5>
 <p>
 原型的方法(函數成員)特殊化。特殊化的原型方法不可以寫在類別樣板的宣告中。語法是以套用類別樣式之敘述代替函數成員的類別範圍，且樣板參數值須為已宣告之資料型態。
 </p>
-<pre class="highlight"><code><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">myTClass</span>
-<span class="p">{</span>
-<span class="n">public</span><span class="o">:</span>
-    <span class="kt">void</span> <span class="n">display</span><span class="p">(</span><span class="n">T</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">b</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
 
-<span class="kt">void</span> <span class="n">myTClass</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;::</span><span class="n">display</span><span class="p">(</span><span class="kt">int</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
-     <span class="c1">//----------- 特化 myTClass 樣板之原型函數成員，樣板參數值為 int
-</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">b</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight c++ %}
+template <class T>
+class myTClass
+{
+public:
+    void display(T b) {
+        cout << b << std::endl;
+    }
+};
+
+void myTClass<int>::display(int b) {
+     //----------- 特化 myTClass 樣板之原型函數成員，樣板參數值為 int
+    cout << std::setw(10) << b << endl;
+}
+{% endhighlight %}
 
 
 
@@ -169,57 +181,59 @@ C++ 的 Template 是種將資料型態參數化的功能。將資料型態資訊
 當樣板參數列為空值時，則原型中出現的資料型態都必須指明為已宣告的資料型態。此時程序員的工作與設計一個傳統類別 (non-template class) 無異。差別僅在編譯器將此類別視為一個樣板，故使用時不需要區分兩者。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
-#include &lt;iomanip&gt;
-#include &lt;string&gt;
-</span>
-<span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">Set</span>
-<span class="p">{</span>
-    <span class="n">T</span> <span class="n">t</span><span class="p">;</span>
-<span class="n">public</span><span class="o">:</span>
-    <span class="n">Set</span><span class="p">(</span><span class="n">T</span> <span class="n">st</span><span class="p">)</span> <span class="o">:</span> <span class="n">t</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="p">{}</span>
 
-    <span class="kt">void</span> <span class="n">display</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">t</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+{% highlight c++ %}
+#include <iostream>
+#include <iomanip>
+#include <string>
 
-<span class="c1">// Normal class, Not-template class
-</span><span class="n">class</span> <span class="n">Set_int</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">t</span><span class="p">;</span>
-<span class="n">public</span><span class="o">:</span>
-    <span class="n">Set_int</span><span class="p">(</span><span class="kt">int</span> <span class="n">st</span><span class="p">)</span><span class="o">:</span> <span class="n">t</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="p">{}</span>
+template <class T>
+class Set
+{
+    T t;
+public:
+    Set(T st) : t(st) {}
 
-    <span class="kt">void</span> <span class="n">display</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setfill</span><span class="p">(</span><span class="sc">'0'</span><span class="p">)</span>
-            <span class="o">&lt;&lt;</span> <span class="n">t</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+    void display() {
+        std::cout << t << std::endl;
+    }
+};
 
-<span class="c1">// Specialized class template
-</span><span class="n">template</span> <span class="o">&lt;&gt;</span> <span class="n">class</span> <span class="n">Set</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">t</span><span class="p">;</span>
-<span class="n">public</span><span class="o">:</span>
-    <span class="n">Set</span><span class="p">(</span><span class="kt">int</span> <span class="n">st</span><span class="p">)</span><span class="o">:</span> <span class="n">t</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="p">{}</span>
+// Normal class, Not-template class
+class Set_int
+{
+    int t;
+public:
+    Set_int(int st): t(st) {}
 
-    <span class="kt">void</span> <span class="n">display</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setfill</span><span class="p">(</span><span class="sc">'o'</span><span class="p">)</span>
-            <span class="o">&lt;&lt;</span> <span class="n">t</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+    void display() {
+        std::cout << std::setw(10) << std::setfill('0')
+            << t << std::endl;
+    }
+};
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">Set</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">a</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span>
-    <span class="n">Set_int</span> <span class="n">b</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>  <span class="c1">// User needs to know there is a non-template class.
-</span>    <span class="n">Set</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">c</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> <span class="c1">// User doesn't need to know there is a non-template class.
-</span>
-    <span class="n">a</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-    <span class="n">b</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-    <span class="n">c</span><span class="p">.</span><span class="n">display</span><span class="p">();</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+// Specialized class template
+template <> class Set<int>
+{
+    int t;
+public:
+    Set(int st): t(st) {}
+
+    void display() {
+        std::cout << std::setw(10) << std::setfill('o')
+            << t << std::endl;
+    }
+};
+
+int main() {
+    Set<std::string> a("hello");
+    Set_int b(2);  // User needs to know there is a non-template class.
+    Set<int> c(2); // User doesn't need to know there is a non-template class.
+
+    a.display();
+    b.display();
+    c.display();
+    return 0;
+}
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/3641717.html</div>

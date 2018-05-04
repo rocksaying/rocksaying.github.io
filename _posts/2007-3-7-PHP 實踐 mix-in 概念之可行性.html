@@ -20,51 +20,55 @@ Ruby 可以這麼做，那其他語言呢？ C/C++ 自然不用說，事實上�
 <p>
 說明 PHP 能否實踐混成(mix-in)概念之前，我們先來看 JavaScript 怎麼做？
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">bar</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="s1">'bar: '</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
-<span class="p">}</span>
 
-<span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">'name'</span><span class="p">:</span> <span class="s1">'abc'</span>
-<span class="p">}</span>
+{% highlight php %}
+function bar() {
+    window.alert('bar: ' + this.name);
+}
 
-<span class="nx">o</span><span class="p">.</span><span class="nx">foo</span> <span class="o">=</span> <span class="nx">bar</span><span class="p">;</span>
-<span class="nx">o</span><span class="p">.</span><span class="nx">foo</span><span class="p">();</span>
-</code></pre>
+var o = {
+    'name': 'abc'
+}
+
+o.foo = bar;
+o.foo();
+{% endhighlight %}
 
 
 <h4>Invoking variable function without access object context</h4>
 <p>
 儘管 PHP 沒有函數指標、函數個體等功能，但藉著以「名」參照的方式，我們可以使用 <a href="http://tw.php.net/manual/en/functions.variable-functions.php">Variable function</a> 。自 PHP3 以來的長久時間中，我們一直藉 Variable function ，享受動態的函數調用技巧。那麼它能否實踐混成概念呢？首先我們先看一段基本程式。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">bar1</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"bar</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">O</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$k</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$f</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$fp</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$f</span><span class="p">;</span>
-        <span class="nv">$fp</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+function bar1() {
+    echo "bar\n";
+}
 
-<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
+class O {
+    private $name;
+    public function __construct($name) {
+        $this->name = $name;
+    }
+    public function __set($k, $v) {
+        $this->$k = $v;
+    }
+    public function __call($f, $args) {
+        $fp = $this->$f;
+        $fp($this);
+    }
+}
 
-<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span> <span class="o">=</span> <span class="s1">'bar1'</span><span class="p">;</span>
-<span class="nv">$foo</span> <span class="o">=</span> <span class="s1">'bar1'</span><span class="p">;</span>
+$o = new O('abc');
 
-<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
-<span class="nv">$foo</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$o->foo = 'bar1';
+$foo = 'bar1';
+
+$o->foo();
+$foo();
+?>
+{% endhighlight %}
 
 <p>
 首先，我定義了一個獨立的函數<code>bar1</code>。接著定義一個類別<code>O</code>，其中以 <code>__set</code> 指派要混成行為的函數名稱，再以 <code>__call</code> 調用混成的行為。結果證實這是可行的，我們心裡可以先竊喜一下。
@@ -74,53 +78,55 @@ Ruby 可以這麼做，那其他語言呢？ C/C++ 自然不用說，事實上�
 <p>
 不要高興太早，函數<code>bar1</code>並沒有嘗試存取任何個體成員，它是一個完全獨立的函數。我們目前只證明它可以混成為類別行為。所以接下來我們要嘗試這樣的函數能否存取個體成員，就像開頭那個 JavaScript 程式所做的事一樣。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">bar1</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"bar</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="k">function</span> <span class="nf">bar2</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="c1">// Fatal error: Using $this when not in object context.
-</span><span class="p">}</span>
+{% highlight php %}
+<?php
+function bar1() {
+    echo "bar\n";
+}
 
-<span class="k">function</span> <span class="nf">bar3</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$this</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="p">)</span>
-        <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="c1">// Fatal error: Using $this when not in object context.
-</span><span class="p">}</span>
+function bar2() {
+    echo 'bar: ', $this->name, "\n";
+    // Fatal error: Using $this when not in object context.
+}
 
-<span class="k">function</span> <span class="nf">bar4</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span><span class="p">)</span>
-        <span class="k">echo</span> <span class="s1">'bar: '</span><span class="p">,</span> <span class="nv">$This</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">;</span>
-        <span class="c1">// Fatal error: Cannot access private property O::$name
-</span>    <span class="k">else</span>
-        <span class="k">echo</span> <span class="s2">"Not in an object context</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+function bar3(&$this = FALSE) {
+    if ($this)
+        echo 'bar: ', $this->name, "\n";
+    // Fatal error: Using $this when not in object context.
+}
 
-<span class="k">class</span> <span class="nc">O</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$k</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$f</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$fp</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$f</span><span class="p">;</span>
-        <span class="nv">$fp</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+function bar4(&$This = FALSE) {
+    if (&$This)
+        echo 'bar: ', $This->name;
+        // Fatal error: Cannot access private property O::$name
+    else
+        echo "Not in an object context\n";
+}
 
-<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O</span><span class="p">(</span><span class="s1">'abc'</span><span class="p">);</span>
+class O {
+    private $name;
+    public function __construct($name) {
+        $this->name = $name;
+    }
+    public function __set($k, $v) {
+        $this->$k = $v;
+    }
+    public function __call($f, $args) {
+        $fp = $this->$f;
+        $fp($this);
+    }
+}
 
-<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span> <span class="o">=</span> <span class="s1">'bar4'</span><span class="p">;</span>
-<span class="nv">$foo</span> <span class="o">=</span> <span class="s1">'bar4'</span><span class="p">;</span>
+$o = new O('abc');
 
-<span class="nv">$o</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
-<span class="nv">$foo</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$o->foo = 'bar4';
+$foo = 'bar4';
+
+$o->foo();
+$foo();
+?>
+{% endhighlight %}
 
 <p>
 一拍兩瞪眼，廢話不多說。從<code>bar2</code> 到 <code>bar4</code> 都發生錯誤。 PHP 的錯誤訊息很明顯地告訴我們，<var>$this</var> 關鍵字不能用在類別以外的函數中，這不像 JavaScript 的 <var>this</var> 會自動依情境指涉關聯個體。
@@ -133,19 +139,21 @@ Ruby 可以這麼做，那其他語言呢？ C/C++ 自然不用說，事實上�
 <p>
 外部函數不能存取受保護的成員，又不能宣告為夥伴，那麼退一步想吧，只要是公開成員就可以做到了吧。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">O2</span> <span class="k">extends</span> <span class="nx">O</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="nv">$o2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">O2</span><span class="p">(</span><span class="s1">'xyz'</span><span class="p">);</span>
-<span class="nv">$o2</span><span class="o">-&gt;</span><span class="na">foo</span> <span class="o">=</span> <span class="s1">'bar4'</span><span class="p">;</span>
-<span class="nv">$o2</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?php
+class O2 extends O {
+    public $name;
+    public function __construct($name) {
+        $this->name = $name;
+    }
+}
+
+$o2 = new O2('xyz');
+$o2->foo = 'bar4';
+$o2->foo();
+?>
+{% endhighlight %}
 
 <p>
 類別<code>O2</code>與<code>O</code>類似，差別在其<var>$name</var>為公開成員。這一次終於可行了。

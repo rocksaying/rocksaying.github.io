@@ -23,25 +23,27 @@ Vala 與 GObject Introspection 都是 GNOME 3 平台中的重要角色。 Vala �
 hello.vala 實作了一個非常簡單的類別。我將用它展示我碰到的狀況。
 </p>
 
-<pre class="highlight"><code><span class="n">public</span> <span class="n">class</span> <span class="n">Hello</span> <span class="p">{</span>
-    <span class="n">public</span> <span class="n">Hello</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"new instance</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">public</span> <span class="kt">void</span> <span class="n">say</span><span class="p">()</span> <span class="p">{</span>
-        <span class="n">stdout</span><span class="p">.</span><span class="n">printf</span><span class="p">(</span><span class="s">"hello</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c# %}
+public class Hello {
+    public Hello() {
+        stdout.printf("new instance\n");
+    }
+    public void say() {
+        stdout.printf("hello\n");
+    }
+}
+{% endhighlight %}
 
 
 <p>
 下列步驟可以編出 libhello.so 以及一份 GObject Introspection 所需的 gir 文件。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ valac --library=hello --gir=Hello-0.1.gir \
   -X -shared -X -fPIC -o libhello.so  hello.vala
-</pre>
+</code></pre>
 
 <h5>狀況1: g-ir-compiler 不接受 valac 產生的 gir 文件</h5>
 
@@ -49,13 +51,13 @@ $ valac --library=hello --gir=Hello-0.1.gir \
 我先將上一節由 valac 產出的 Hello-0.1.gir 複製為 Hello-1.0.gir，再交給 g-ir-compiler 編譯為 typelib 中介連結檔。遺憾的是，它開頭就抱怨 gir 文件的版本不對。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ cp Hello-0.1.gir Hello-1.0.gir
 $ g-ir-compiler --output=Hello-1.0.typelib Hello-1.0.gir
 Error at line 3, character 1: Unsupported version '1.2'
 ... 
 (其餘省略)
-</pre>
+</code></pre>
 
 <p>
 如果只是版本不符的問題那還好辦，然而事情卻沒那麼簡單。仔細修改下來後，我發現 valac 所產出的 gir 文件內容，根本不合 g-ir-compiler 的預期。
@@ -71,7 +73,7 @@ Error at line 3, character 1: Unsupported version '1.2'
 既然 valac 產出的 gir 文件不合用，那我們再換個方式。我們讓 valac 產出 C 源碼，再將之交由 g-ir-scanner 掃描內容，由 g-ir-scanner 產出 gir 文件。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ valac -C --library=hello hello.vala
 
 $ LD_LIBRARY_PATH=. g-ir-scanner --namespace=Hello --nsversion=1.0 \
@@ -80,7 +82,7 @@ $ LD_LIBRARY_PATH=. g-ir-scanner --namespace=Hello --nsversion=1.0 \
 $ cat Hello-0.2.gir
 ... 
 (沒有類別內容)
-</pre>
+</code></pre>
 
 <p>
 查看了 g-ir-scanner 的輸出結果，我卻發現它沒有類別資訊。
@@ -106,36 +108,36 @@ $ cat Hello-0.2.gir
 以下為我編輯出來符合 Hello 類別的 gir 文件。
 </p>
 
-<pre class="highlight"><code>
-<span class="cp">&lt;?xml version="1.0"?&gt;</span>
-<span class="nt">&lt;repository</span> <span class="na">version=</span><span class="s">"1.0"</span> 
-    <span class="na">xmlns=</span><span class="s">"http://www.gtk.org/introspection/core/1.0"</span> 
-    <span class="na">xmlns:c=</span><span class="s">"http://www.gtk.org/introspection/c/1.0"</span> 
-    <span class="na">xmlns:glib=</span><span class="s">"http://www.gtk.org/introspection/glib/1.0"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;package</span> <span class="na">name=</span><span class="s">"hello"</span><span class="nt">/&gt;</span>
-<span class="nt">&lt;namespace</span> <span class="na">name=</span><span class="s">"Hello"</span> <span class="na">shared-library=</span><span class="s">"hello"</span> <span class="na">version=</span><span class="s">"1.0"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;class</span> <span class="na">name=</span><span class="s">"Hello"</span> <span class="na">c:type=</span><span class="s">"Hello"</span> 
-    <span class="na">glib:type-name=</span><span class="s">"Hello"</span> <span class="na">glib:get-type=</span><span class="s">"hello_get_type"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;constructor</span> <span class="na">name=</span><span class="s">"new"</span> <span class="na">c:identifier=</span><span class="s">"hello_new"</span><span class="nt">&gt;</span>
-	    <span class="nt">&lt;return-value</span> <span class="na">transfer-ownership=</span><span class="s">"full"</span><span class="nt">&gt;</span>
-		    <span class="nt">&lt;type</span> <span class="na">name=</span><span class="s">"Hello"</span> <span class="na">c:type=</span><span class="s">"Hello*"</span><span class="nt">/&gt;</span>
-	    <span class="nt">&lt;/return-value&gt;</span>
-    <span class="nt">&lt;/constructor&gt;</span>
-    <span class="nt">&lt;method</span> <span class="na">name=</span><span class="s">"say"</span> <span class="na">c:identifier=</span><span class="s">"hello_say"</span><span class="nt">&gt;</span>
-	    <span class="nt">&lt;return-value</span> <span class="na">transfer-ownership=</span><span class="s">"none"</span><span class="nt">&gt;</span>
-		    <span class="nt">&lt;type</span> <span class="na">name=</span><span class="s">"none"</span><span class="nt">/&gt;</span>
-	    <span class="nt">&lt;/return-value&gt;</span>
-    <span class="nt">&lt;/method&gt;</span>
-<span class="nt">&lt;/class&gt;</span>
-<span class="nt">&lt;/namespace&gt;</span>
-<span class="nt">&lt;/repository&gt;</span>
 
-</code></pre>
+{% highlight c# %}
+<?xml version="1.0"?>
+<repository version="1.0" 
+    xmlns="http://www.gtk.org/introspection/core/1.0" 
+    xmlns:c="http://www.gtk.org/introspection/c/1.0" 
+    xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
+<package name="hello"/>
+<namespace name="Hello" shared-library="hello" version="1.0">
+<class name="Hello" c:type="Hello" 
+    glib:type-name="Hello" glib:get-type="hello_get_type">
+    <constructor name="new" c:identifier="hello_new">
+	    <return-value transfer-ownership="full">
+		    <type name="Hello" c:type="Hello*"/>
+	    </return-value>
+    </constructor>
+    <method name="say" c:identifier="hello_say">
+	    <return-value transfer-ownership="none">
+		    <type name="none"/>
+	    </return-value>
+    </method>
+</class>
+</namespace>
+</repository>
+{% endhighlight %}
 
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ g-ir-compiler --output=Hello-1.0.typelib Hello-1.0.gir
-</pre>
+</code></pre>
 
 <h5>狀況3: Vala 定義的類別內容，無法透過 GObject Introspection 機制配置實體</h5>
 
@@ -144,92 +146,95 @@ $ g-ir-compiler --output=Hello-1.0.typelib Hello-1.0.gir
 以下以 gjs 為示範:
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">gi</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GIRepository</span><span class="p">;</span> <span class="c1">// import namespace</span>
-<span class="nx">gi</span><span class="p">.</span><span class="nx">IRepository</span><span class="p">.</span><span class="nx">prepend_search_path</span><span class="p">(</span><span class="s2">"."</span><span class="p">);</span>
 
-<span class="kr">const</span> <span class="nx">h</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Hello</span><span class="p">;</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"GJS: namespace of Hello: "</span> <span class="o">+</span> <span class="nx">h</span><span class="p">);</span>
+{% highlight c# %}
+var gi = imports.gi.GIRepository; // import namespace
+gi.IRepository.prepend_search_path(".");
 
-<span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">h</span><span class="p">.</span><span class="nx">Hello</span><span class="p">();</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"GJS: type of o is "</span> <span class="o">+</span> <span class="nx">o</span><span class="p">);</span>
+const h = imports.gi.Hello;
+print("GJS: namespace of Hello: " + h);
 
-<span class="nx">o</span><span class="p">.</span><span class="nx">say</span><span class="p">();</span>
-</code></pre>
+var o = new h.Hello();
+print("GJS: type of o is " + o);
+
+o.say();
+{% endhighlight %}
 
 
 <p>
 執行結果:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ gjs test-hello.js
 (gjs-console.real:12062): GLib-GObject-CRITICAL **: g_object_newv: assertion `G_TYPE_IS_OBJECT (object_type)' failed
 
 (gjs-console.real:12062): GLib-GObject-CRITICAL **: g_object_is_floating: assertion `G_IS_OBJECT (object)' failed
 
 (其餘省略)
-</pre>
+</code></pre>
 
 <p>
 但是直接用 C 語言，按照 <a href="http://developer.gnome.org/gobject/2.28/gtype-conventions.html">GObject 設計慣例</a> 所實作的類別內容，使用相同的 Hello-1.0.gir，卻可正常配置實體。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;glib-object.h&gt;
-</span> 
-<span class="cp">#define TYPE_HELLO (hello_get_type ())
+
+{% highlight c# %}
+#include <stdio.h>
+#include <glib-object.h>
+ 
+#define TYPE_HELLO (hello_get_type ())
 #define HELLO(object) G_TYPE_CHECK_INSTANCE_CAST ((object), TYPE_HELLO, Hello)
 #define IS_HELLO(object) G_TYPE_CHECK_INSTANCE_TYPE ((object), TYPE_HELLO))
 #define HELLO_GET_PRIVATE(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), TYPE_HELLO, HelloPrivate))
 #define HELLO_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_HELLO, HelloClass))
 #define IS_HELLO_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_HELLO))
 #define HELLO_GET_CLASS(object) (G_TYPE_INSTANCE_GET_CLASS ((object), TYPE_HELLO, HelloClass))
-</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_Hello</span> <span class="n">Hello</span><span class="p">;</span>
-<span class="k">struct</span> <span class="n">_Hello</span> <span class="p">{</span>
-    <span class="n">GObject</span> <span class="n">parent</span><span class="p">;</span>
-<span class="p">};</span>
 
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_HelloClass</span> <span class="n">HelloClass</span><span class="p">;</span>
-<span class="k">struct</span> <span class="n">_HelloClass</span> <span class="p">{</span>
-    <span class="n">GObjectClass</span> <span class="n">parent_class</span><span class="p">;</span>
-<span class="p">};</span>
+typedef struct _Hello Hello;
+struct _Hello {
+    GObject parent;
+};
 
-<span class="n">GType</span> <span class="n">hello_get_type</span> <span class="p">(</span><span class="kt">void</span><span class="p">);</span>
-<span class="n">G_DEFINE_TYPE</span> <span class="p">(</span><span class="n">Hello</span><span class="p">,</span> <span class="n">hello</span><span class="p">,</span> <span class="n">G_TYPE_OBJECT</span><span class="p">);</span>
+typedef struct _HelloClass HelloClass;
+struct _HelloClass {
+    GObjectClass parent_class;
+};
 
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_HelloPrivate</span> <span class="n">HelloPrivate</span><span class="p">;</span>
-<span class="k">struct</span> <span class="n">_HelloPrivate</span> <span class="p">{</span>
-<span class="p">};</span>
+GType hello_get_type (void);
+G_DEFINE_TYPE (Hello, hello, G_TYPE_OBJECT);
+
+typedef struct _HelloPrivate HelloPrivate;
+struct _HelloPrivate {
+};
  
-<span class="k">static</span> <span class="kt">void</span>
-<span class="nf">hello_init</span> <span class="p">(</span><span class="n">Hello</span> <span class="o">*</span><span class="n">self</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"obj_init</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-<span class="p">}</span>
+static void
+hello_init (Hello *self)
+{
+    printf("obj_init\n");
+}
 
-<span class="k">static</span> <span class="kt">void</span>
-<span class="nf">hello_class_init</span> <span class="p">(</span><span class="n">HelloClass</span> <span class="o">*</span><span class="n">klass</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"class_init</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-<span class="c1">//    g_type_class_add_private (klass, sizeof (HelloPrivate));
-</span>    <span class="n">GObjectClass</span> <span class="o">*</span><span class="n">base_class</span> <span class="o">=</span> <span class="n">G_OBJECT_CLASS</span> <span class="p">(</span><span class="n">klass</span><span class="p">);</span>
-<span class="p">}</span>
+static void
+hello_class_init (HelloClass *klass)
+{
+    printf("class_init\n");
+//    g_type_class_add_private (klass, sizeof (HelloPrivate));
+    GObjectClass *base_class = G_OBJECT_CLASS (klass);
+}
  
-<span class="kt">void</span>
-<span class="nf">hello_say</span> <span class="p">(</span><span class="n">Hello</span> <span class="o">*</span><span class="n">self</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"hello world</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-<span class="p">}</span>
-
-</code></pre>
+void
+hello_say (Hello *self)
+{
+    printf("hello world\n");
+}
+{% endhighlight %}
 
 
 <p>
 編譯與執行結果如下列所示:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ gcc `pkg-config --cflags --libs gobject-introspection-1.0` \
   hello_pure.c -shared -fPIC -o libhello.so 
 $ g-ir-compiler --output=Hello-1.0.typelib Hello-1.0.gir
@@ -239,7 +244,7 @@ class_init
 obj_init
 GJS: type of o is [object instance proxy GIName:Hello.Hello jsobj]
 hello world
-</pre>
+</code></pre>
 
 <p>
 我雖然嘗試比較過 Vala 產出的 hello.c 與我直接用 C 語言撰寫的 hello_pure.c，但目前還看不出是在哪個環節有差異，才導致 Vala 產生的 GObject 類別不能透過 GObject Introspection 實體化。

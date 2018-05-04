@@ -32,7 +32,7 @@ VLC 同樣是利用這個 XID 告訴 X11 server 在哪裡顯示視訊內容。
 <p>
 我們可以利用 <dfn>xwininfo</dfn> 查看指定軟體使用的 XID 為何。如下所示範，可查知 XID 為 79691795。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 rock:~$ xwininfo -name "VLC media player" -int
 
 xwininfo: Window id: 79691795 "VLC media player"
@@ -45,7 +45,7 @@ xwininfo: Window id: 79691795 "VLC media player"
   Height: 113
   Depth: 24
   Visual: 0x21
-</pre>
+</code></pre>
 
 <p>
 那麼我們是否可以自己先配置一個視窗區域，然後要求 VLC 用這個區域顯示視訊內容呢？
@@ -61,21 +61,21 @@ xwininfo: Window id: 79691795 "VLC media player"
     <li>To enable vlc's dbus control function:
 (ref: <a href="http://wiki.videolan.org/DBus">http://wiki.videolan.org/DBus</a>)
     <br/>
-<pre class="language-term">
+<pre><code class="language-term">
 $ vlc --control dbus
-</pre>
+</code></pre>
     </li>
 
     <li>To ask vlc to render video in foreign area (by XID or HWND):
 (ref: <a href="http://trac.videolan.org/vlc/ticket/4655">http://trac.videolan.org/vlc/ticket/4655</a>)
     <br/>
-<pre class="language-term">
+<pre><code class="language-term">
 #X11:
 $ vlc --drawable-xid $XID
 
 #Windows:
 C:> vlc --drawable-hwnd $HWND
-</pre>
+</code></pre>
     </li>
 </ul>
 </div>
@@ -92,104 +92,105 @@ C:> vlc --drawable-hwnd $HWND
 當 GTK 完成上述視覺控制項的配置工作並顯示在螢幕上後，程式會執行 media_play() 函數。它先啟動一個 VLC 行程(launch_vlc_service)，靜待2秒等 VLC 行程啟動完成。接著配置 VLC DBus 的代理個體，透過其 DBus 介面，將指定的影片加入媒體清單並播放之。
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python
-</span>
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">subprocess</span>
-<span class="kn">import</span> <span class="nn">gtk</span><span class="o">,</span> <span class="nn">gtk.gdk</span>
-<span class="kn">import</span> <span class="nn">dbus</span>
-<span class="c">#from dbus.mainloop.glib import DBusGMainLoop
-</span>
 
-<span class="n">vlc_service</span> <span class="o">=</span> <span class="s">'org.mpris.vlc'</span>
-<span class="n">vlc_path</span> <span class="o">=</span> <span class="s">'/'</span>
-<span class="n">vlc_player_path</span> <span class="o">=</span> <span class="s">'/Player'</span>
-<span class="n">vlc_tracklist_path</span> <span class="o">=</span> <span class="s">'/TrackList'</span>
-<span class="n">mediaplayer_ifacename</span> <span class="o">=</span> <span class="s">'org.freedesktop.MediaPlayer'</span>
+{% highlight python %}
+#!/usr/bin/python
 
-<span class="n">XID</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="n">Vlc</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="n">Player</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="n">Tracklist</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="c">#DBusGMainLoop(set_as_default=True)
-</span>
+import os, sys, time, subprocess
+import gtk, gtk.gdk
+import dbus
+#from dbus.mainloop.glib import DBusGMainLoop
 
-<span class="k">def</span> <span class="nf">init_xid</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
-    <span class="k">global</span> <span class="n">XID</span>
-    <span class="n">XID</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">get_window</span><span class="p">()</span><span class="o">.</span><span class="n">xid</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"XID: </span><span class="si">%</span><span class="s">d</span><span class="se">\n</span><span class="s">"</span> <span class="o">%</span> <span class="n">XID</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">launch_vlc_service</span><span class="p">(</span><span class="n">view_id</span><span class="p">):</span>
-    <span class="n">cmd</span> <span class="o">=</span> <span class="s">"vlc -I dummy --control dbus --drawable-xid </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">view_id</span>
-    <span class="n">cmd</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
-    <span class="n">pid</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">pid</span> <span class="c"># background and NOWAIT
-</span>
+vlc_service = 'org.mpris.vlc'
+vlc_path = '/'
+vlc_player_path = '/Player'
+vlc_tracklist_path = '/TrackList'
+mediaplayer_ifacename = 'org.freedesktop.MediaPlayer'
 
-<span class="k">def</span> <span class="nf">init_player</span><span class="p">():</span>
-    <span class="k">global</span> <span class="n">Vlc</span><span class="p">,</span> <span class="n">Player</span><span class="p">,</span> <span class="n">Tracklist</span>
-    <span class="n">vlc_proxy</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">vlc_service</span><span class="p">,</span> <span class="n">vlc_path</span><span class="p">)</span>
-    <span class="n">Vlc</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">vlc_proxy</span><span class="p">,</span> <span class="n">mediaplayer_ifacename</span><span class="p">)</span>
-    <span class="n">player_proxy</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">vlc_service</span><span class="p">,</span> <span class="n">vlc_player_path</span><span class="p">)</span>
-    <span class="n">Player</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">player_proxy</span><span class="p">,</span> <span class="n">mediaplayer_ifacename</span><span class="p">)</span>
-    <span class="n">tracklist_proxy</span> <span class="o">=</span> <span class="n">bus</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">vlc_service</span><span class="p">,</span> <span class="n">vlc_tracklist_path</span><span class="p">)</span>
-    <span class="n">Tracklist</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">Interface</span><span class="p">(</span><span class="n">tracklist_proxy</span><span class="p">,</span> <span class="n">mediaplayer_ifacename</span><span class="p">)</span>
+XID = None
+Vlc = None
+Player = None
+Tracklist = None
+#DBusGMainLoop(set_as_default=True)
 
-<span class="k">def</span> <span class="nf">play_video</span><span class="p">(</span><span class="n">mrl</span><span class="p">):</span>
-    <span class="n">Tracklist</span><span class="o">.</span><span class="n">AddTrack</span><span class="p">(</span><span class="n">mrl</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">program_quit</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">Vlc</span><span class="o">.</span><span class="n">Quit</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">gtk</span><span class="o">.</span><span class="n">main_quit</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"Good bye"</span><span class="p">)</span>
+def init_xid(widget):
+    global XID
+    XID = widget.get_window().xid
+    print("XID: %d\n" % XID)
 
-<span class="k">def</span> <span class="nf">media_play</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
-    <span class="n">init_xid</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
-    <span class="n">launch_vlc_service</span><span class="p">(</span><span class="n">XID</span><span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">init_player</span><span class="p">()</span>
-    <span class="n">play_video</span><span class="p">(</span><span class="s">"file:///home/rock/Video/maids_05.rmvb"</span><span class="p">)</span>
+def launch_vlc_service(view_id):
+    cmd = "vlc -I dummy --control dbus --drawable-xid %d" % view_id
+    cmd = cmd.split(" ")
+    pid = subprocess.Popen(cmd).pid # background and NOWAIT
 
-<span class="k">def</span> <span class="nf">media_toggle_play</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
-    <span class="n">Player</span><span class="o">.</span><span class="n">Pause</span><span class="p">()</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s">"PID: </span><span class="si">%</span><span class="s">d"</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">())</span>
+def init_player():
+    global Vlc, Player, Tracklist
+    vlc_proxy = bus.get_object(vlc_service, vlc_path)
+    Vlc = dbus.Interface(vlc_proxy, mediaplayer_ifacename)
+    player_proxy = bus.get_object(vlc_service, vlc_player_path)
+    Player = dbus.Interface(player_proxy, mediaplayer_ifacename)
+    tracklist_proxy = bus.get_object(vlc_service, vlc_tracklist_path)
+    Tracklist = dbus.Interface(tracklist_proxy, mediaplayer_ifacename)
 
-<span class="n">bus</span> <span class="o">=</span> <span class="n">dbus</span><span class="o">.</span><span class="n">SessionBus</span><span class="p">()</span>
+def play_video(mrl):
+    Tracklist.AddTrack(mrl, True)
 
-<span class="n">w</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">gtk</span><span class="o">.</span><span class="n">WINDOW_TOPLEVEL</span><span class="p">)</span>
+def program_quit(widget=None):
+    Vlc.Quit()
+    time.sleep(2)
+    gtk.main_quit()
+    print("Good bye")
 
-<span class="n">w</span><span class="o">.</span><span class="n">set_default_size</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">640</span><span class="p">)</span>
+def media_play(widget):
+    init_xid(widget)
+    launch_vlc_service(XID)
+    time.sleep(2)
+    init_player()
+    play_video("file:///home/rock/Video/maids_05.rmvb")
 
-<span class="n">fixed_panel</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Fixed</span><span class="p">()</span>
-<span class="n">w</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fixed_panel</span><span class="p">)</span>
+def media_toggle_play(widget):
+    Player.Pause()
 
-<span class="n">media_view</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">DrawingArea</span><span class="p">()</span>
-<span class="n">media_view</span><span class="o">.</span><span class="n">set_size_request</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
-<span class="n">fixed_panel</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">media_view</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+print("PID: %d" % os.getpid())
 
-<span class="n">btn_toggle_play</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="s">"Play/Pause"</span><span class="p">)</span>
-<span class="n">btn_toggle_play</span><span class="o">.</span><span class="n">connect_object</span><span class="p">(</span><span class="s">"clicked"</span><span class="p">,</span> <span class="n">media_toggle_play</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
-<span class="n">fixed_panel</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">btn_toggle_play</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>
+bus = dbus.SessionBus()
 
-<span class="n">btn_quit</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="s">"Quit"</span><span class="p">)</span>
-<span class="n">btn_quit</span><span class="o">.</span><span class="n">connect_object</span><span class="p">(</span><span class="s">"clicked"</span><span class="p">,</span> <span class="n">program_quit</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
-<span class="n">fixed_panel</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">btn_quit</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>
+w = gtk.Window(gtk.WINDOW_TOPLEVEL)
 
-<span class="n">media_view</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">"map"</span><span class="p">,</span> <span class="n">media_play</span><span class="p">)</span>
+w.set_default_size(800, 640)
 
-<span class="n">w</span><span class="o">.</span><span class="n">set_decorated</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span> <span class="c"># disable all decorations.
-</span>
-<span class="n">w</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>
+fixed_panel = gtk.Fixed()
+w.add(fixed_panel)
 
-<span class="n">w</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">"destroy"</span><span class="p">,</span> <span class="n">program_quit</span><span class="p">)</span>
+media_view = gtk.DrawingArea()
+media_view.set_size_request(800, 600)
+fixed_panel.put(media_view, 0, 0)
 
-<span class="n">w</span><span class="o">.</span><span class="n">show_all</span><span class="p">()</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">gtk</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-<span class="k">except</span><span class="p">:</span>
-    <span class="k">pass</span>
+btn_toggle_play = gtk.Button("Play/Pause")
+btn_toggle_play.connect_object("clicked", media_toggle_play, w)
+fixed_panel.put(btn_toggle_play, 100, 601)
 
-</code></pre>
+btn_quit = gtk.Button("Quit")
+btn_quit.connect_object("clicked", program_quit, w)
+fixed_panel.put(btn_quit, 200, 601)
+
+media_view.connect("map", media_play)
+
+w.set_decorated(False) # disable all decorations.
+
+w.move(10,100)
+
+w.connect("destroy", program_quit)
+
+w.show_all()
+try:
+    gtk.main()
+except:
+    pass
+{% endhighlight %}
 
 
 <p>

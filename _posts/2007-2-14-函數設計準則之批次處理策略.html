@@ -18,7 +18,9 @@ permalink: /archives/2722505.html
 如果我用 Tokimeki 的作法，加上參數 <var>$中斷</var> 的設計，並選擇保用可能隨時改變 <var>$中斷</var> 之值的彈性，則批次處理函數的結果會有一個錯誤狀態和一組錯誤狀態兩種情形。面對這情形，我調用時的程式如下列:
 </p>
 
-<pre class="highlight"><code>$results = 載入：模組集($模組集, $中斷);
+
+{% highlight php %}
+$results = 載入：模組集($模組集, $中斷);
 if (is_string($results)) {
     echo $ersults;
 }
@@ -30,14 +32,16 @@ else if (is_array($results)) {
 else {
     echo 'OK';
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>
 如果我不用 Tokimeki 的作法，把 <var>$中斷</var> 拿掉，令批次處理函數的結果只會是一組錯誤狀態。則我調用時的程式如下列:
 </p>
 
-<pre class="highlight"><code>$results = 載入：模組集($模組集);
+
+{% highlight php %}
+$results = 載入：模組集($模組集);
 if ($results !== TRUE) {
     foreach ($results as $errorStatus) {
         echo $errorStatus;
@@ -46,7 +50,7 @@ if ($results !== TRUE) {
 else {
     echo 'OK';
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -56,7 +60,9 @@ else {
 當然我們也視情況決定不採用 transaction 策略，但必須有相對應的處理函數。以 Tokimeki 的例子來看，則必須要有與模組載入函數相對應的模組卸載函數。在此策略下，批次載入模組不用為了一個載入錯誤而釋放已經載入成功的九個模組，而由程式主體決定。程式主體可以選擇將已載入的模組從 <var>$模組集</var> 中移除後，再次調用批次載入函數；或是決定中止程序而將失敗的模組從 <var>$模組集</var> 中移除，再調用卸載函數釋放已經載入的模組。如下所示:
 </p>
 
-<pre class="highlight"><code>while (($results = 載入：模組集($模組集)) !== TRUE) {
+
+{% highlight php %}
+while (($results = 載入：模組集($模組集)) !== TRUE) {
     if ($再試幾次) {
         $模組集 = array();
         foreach ($results as $result) {
@@ -70,7 +76,7 @@ else {
         break;
     }
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>

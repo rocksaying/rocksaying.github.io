@@ -31,77 +31,79 @@ permalink: /archives/2659001.html
 <p>
 為了進一步討論這個問題，我用 PHP 實踐一個唯讀參照類別。因為 PHP5 只能覆載  setter 和 getter ，所以現階段用 PHP 可以「有條件地」實踐我要的唯讀參照。條件是參照對象為關聯陣列 (associative array) 或個體 (object) 。在本文中，我僅實踐參照對象為個體的參照類別。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">Reference</span> <span class="p">{</span>
-    <span class="k">protected</span> <span class="nv">$_target</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">refer</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$target</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">$target</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$target</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$target</span> <span class="o">!==</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">refer</span><span class="p">(</span><span class="nv">$target</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$property</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span> <span class="o">===</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'無參照對象!'</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span><span class="o">-&gt;</span><span class="nv">$property</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$property</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span><span class="o">-&gt;</span><span class="nv">$property</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="k">class</span> <span class="nc">ConstReference</span> <span class="k">extends</span> <span class="nx">Reference</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'read-only reference!'</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+class Reference {
+    protected $_target;
+    public function refer(&$target) {
+        $this->_target = &$target;
+    }
+    public function __construct(&$target = NULL) {
+        if ($target !== NULL) {
+            $this->refer($target);
+        }
+    }
+    public function __set($property, $v) {
+        if ($this->_target === NULL) {
+            throw new Exception('無參照對象!');
+        }
+        else {
+            $this->_target->$property = $v;
+        }
+    }
+    public function __get($property) {
+        return $this->_target->$property;
+    }
+}
 
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+class ConstReference extends Reference {
+    public function __set($k, $v) {
+        throw new Exception('read-only reference!');
+    }
+}
 
-<span class="k">function</span> <span class="nf">showX</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">global</span> <span class="nv">$x</span><span class="p">;</span>
-    <span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s1">'$x is '</span><span class="p">;</span>
-    <span class="nb">print_r</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="nx">showX</span><span class="p">();</span>
+$x->value = 0;
 
-<span class="nv">$ref</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Reference</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
-<span class="nv">$constRef</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ConstReference</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
-<span class="nv">$ref2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Reference</span><span class="p">(</span><span class="nv">$constRef</span><span class="p">);</span>
+function showX() {
+    global $x;
+    echo "\n", '$x is ';
+    print_r($x);
+}
+showX();
 
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(ref) Value of x is </span><span class="si">{</span><span class="nv">$ref</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$ref</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">showX</span><span class="p">();</span>
+$ref = new Reference($x);
+$constRef = new ConstReference($x);
+$ref2 = new Reference($constRef);
 
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(constRef) Value of x is </span><span class="si">{</span><span class="nv">$constRef</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$constRef</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">showX</span><span class="p">();</span>
+echo "\n---\n(ref) Value of x is {$ref->value} \n";
+try {
+    $ref->value = 100;
+}
+catch (Exception $e) {
+    echo $e;
+}
+showX();
 
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(ref2) Value of x is </span><span class="si">{</span><span class="nv">$ref2</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$ref2</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">300</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">showX</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+echo "\n---\n(constRef) Value of x is {$constRef->value} \n";
+try {
+    $constRef->value = 200;
+}
+catch (Exception $e) {
+    echo $e;
+}
+showX();
+
+echo "\n---\n(ref2) Value of x is {$ref2->value} \n";
+try {
+    $ref2->value = 300;
+}
+catch (Exception $e) {
+    echo $e;
+}
+showX();
+?>
+{% endhighlight %}
 
 
 <p>
@@ -110,34 +112,36 @@ HACGIS 則提問：<q>「那麼我若用另一參照指涉過去，此參照是�
 <p>
 關於繼承的情形，則需要實踐一個「解除唯讀之唯讀參照」類別以便說明。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">DeconstReference</span> <span class="k">extends</span> <span class="nx">ConstReference</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$property</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_target</span><span class="o">-&gt;</span><span class="nv">$property</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
 
-<span class="nv">$deconstReferenceRef2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DeconstReference</span><span class="p">(</span><span class="nv">$ref2</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(deconstReferenceRef2) Value of ref2 is </span><span class="si">{</span><span class="nv">$deconstReferenceRef2</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$deconstReferenceRef2</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">400</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">showX</span><span class="p">();</span>
+{% highlight php %}
+<?php
+class DeconstReference extends ConstReference {
+    public function __set($property, $v) {
+        $this->_target->$property = $v;
+    }
+}
 
-<span class="nv">$deconstReferenceX</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DeconstReference</span><span class="p">(</span><span class="nv">$x</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="s2">(deconstReferenceX) Value of x is </span><span class="si">{</span><span class="nv">$deconstReferenceX</span><span class="o">-&gt;</span><span class="na">value</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$deconstReferenceX</span><span class="o">-&gt;</span><span class="na">value</span> <span class="o">=</span> <span class="mi">500</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">showX</span><span class="p">();</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$deconstReferenceRef2 = new DeconstReference($ref2);
+echo "\n---\n(deconstReferenceRef2) Value of ref2 is {$deconstReferenceRef2->value} \n";
+try {
+    $deconstReferenceRef2->value = 400;
+}
+catch (Exception $e) {
+    echo $e;
+}
+showX();
+
+$deconstReferenceX = new DeconstReference($x);
+echo "\n---\n(deconstReferenceX) Value of x is {$deconstReferenceX->value} \n";
+try {
+    $deconstReferenceX->value = 500;
+}
+catch (Exception $e) {
+    echo $e;
+}
+showX();
+?>
+{% endhighlight %}
 
 <p>
 我發覺 <var>$deconstReference</var> 參照 <var>$ref2</var> 的連續參照例子很有趣，可以觀察參照串列中各個體行為的調用順序。將其結果列於下：

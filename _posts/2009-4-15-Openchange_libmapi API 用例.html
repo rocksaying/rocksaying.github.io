@@ -42,42 +42,43 @@ openchangeclient -p rock --fetch-items=contact
     </li>
 </ol>
 
-<pre class="highlight"><code>    <span class="n">TALLOC_CTX</span>              <span class="o">*</span><span class="n">mem_ctx</span><span class="p">;</span>
-    <span class="k">enum</span> <span class="n">MAPISTATUS</span>         <span class="n">retval</span><span class="p">;</span>     <span class="c1">// MAPI回傳值。
-</span>    <span class="k">struct</span> <span class="n">mapi_session</span>     <span class="o">*</span><span class="n">session</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">mapi_object_t</span>           <span class="n">obj_store</span><span class="p">;</span>  <span class="c1">// 預設回傳訊息封包儲存區。
-</span>
-    <span class="n">mem_ctx</span> <span class="o">=</span> <span class="n">talloc_named</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">"Name of this memory resource"</span><span class="p">);</span>
 
-    <span class="c1">// 狀態初始化，指定 profile 資料檔。
-</span>    <span class="c1">// DEFAULT_PROFDB = "profiles.ldb"
-</span>    <span class="n">retval</span> <span class="o">=</span> <span class="n">MAPIInitialize</span><span class="p">(</span><span class="n">DEFAULT_PROFDB</span><span class="p">);</span> 
-    <span class="n">IS_RETVAL_ERROR</span><span class="p">(</span><span class="s">"MAPIInitialize"</span><span class="p">,</span> <span class="n">retval</span><span class="p">);</span>
+{% highlight c %}
+TALLOC_CTX              *mem_ctx;
+    enum MAPISTATUS         retval;     // MAPI回傳值。
+    struct mapi_session     *session = NULL;
+    mapi_object_t           obj_store;  // 預設回傳訊息封包儲存區。
 
-    <span class="c1">// 使用者登入，指定 profile 識別名。                
-</span>    <span class="c1">// DEFAULT_PROFILE = "Administrator"
-</span>    <span class="n">retval</span> <span class="o">=</span> <span class="n">MapiLogonEx</span><span class="p">(</span><span class="o">&amp;</span><span class="n">session</span><span class="p">,</span> <span class="n">DEFAULT_PROFILE</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span> 
-    <span class="n">IS_RETVAL_ERROR</span><span class="p">(</span><span class="s">"MapiLogonEx"</span><span class="p">,</span> <span class="n">retval</span><span class="p">);</span>
+    mem_ctx = talloc_named(NULL, 0, "Name of this memory resource");
 
-    <span class="c1">// 呼叫 mapi_object_init 建構 mapi_object_t 個體。
-</span>    <span class="n">mapi_object_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_store</span><span class="p">);</span>
+    // 狀態初始化，指定 profile 資料檔。
+    // DEFAULT_PROFDB = "profiles.ldb"
+    retval = MAPIInitialize(DEFAULT_PROFDB); 
+    IS_RETVAL_ERROR("MAPIInitialize", retval);
 
-    <span class="c1">// 建構預設回傳訊息封包。
-</span>    <span class="n">OpenMsgStore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_store</span><span class="p">);</span>
+    // 使用者登入，指定 profile 識別名。                
+    // DEFAULT_PROFILE = "Administrator"
+    retval = MapiLogonEx(&session, DEFAULT_PROFILE, NULL); 
+    IS_RETVAL_ERROR("MapiLogonEx", retval);
+
+    // 呼叫 mapi_object_init 建構 mapi_object_t 個體。
+    mapi_object_init(&obj_store);
+
+    // 建構預設回傳訊息封包。
+    OpenMsgStore(&obj_store);
 
 
-    <span class="cm">/*
+    /*
         Some thing you want to do.
-    */</span>
+    */
 
-    <span class="c1">// 呼叫 mapi_object_init 釋放 mapi_object_t 個體。
-</span>    <span class="n">mapi_object_release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_stroe</span><span class="p">);</span>
+    // 呼叫 mapi_object_init 釋放 mapi_object_t 個體。
+    mapi_object_release(&obj_stroe);
 
 
-    <span class="n">MAPIUninitialize</span><span class="p">();</span>
-    <span class="n">talloc_free</span><span class="p">(</span><span class="n">mem_ctx</span><span class="p">);</span>
-
-</code></pre>
+    MAPIUninitialize();
+    talloc_free(mem_ctx);
+{% endhighlight %}
 
 
 
@@ -85,24 +86,25 @@ openchangeclient -p rock --fetch-items=contact
 開啟信箱資料夾或指定功能的預設資料夾: Mailbox
 </h4>
 
-<pre class="highlight"><code>
-    <span class="k">enum</span> <span class="n">MAPISTATUS</span>     <span class="n">retval</span><span class="p">;</span>
-    <span class="kt">uint32_t</span>            <span class="n">type_of_folder</span><span class="p">;</span> <span class="c1">//指定要抓取的資料夾型態
-</span>    <span class="n">mapi_id_t</span>           <span class="n">folder_id</span><span class="p">;</span> <span class="c1">//儲存取得的資料夾id (數值型態)
-</span>    <span class="n">mapi_object_t</span>       <span class="n">obj_store</span><span class="p">;</span> <span class="c1">//儲存取得的訊息封包
-</span>
-    <span class="n">mapi_object_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_store</span><span class="p">);</span>
-    <span class="n">type_of_folder</span> <span class="o">=</span> <span class="n">olFolderTopInformationStore</span><span class="p">;</span> <span class="c1">//Root of mailbox     
-</span>	<span class="n">retval</span> <span class="o">=</span> <span class="n">GetDefaultFolder</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_store</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">folder_id</span><span class="p">,</span> <span class="n">type_of_folder</span><span class="p">);</span>
-	<span class="k">if</span> <span class="p">(</span><span class="n">retval</span> <span class="o">!=</span> <span class="n">MAPI_E_SUCCESS</span><span class="p">)</span> <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
 
-    <span class="n">mapi_object_t</span>       <span class="n">obj_folder</span><span class="p">;</span> <span class="c1">//儲存取得的資料夾封包
-</span>	<span class="n">mapi_object_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_folder</span><span class="p">);</span>
-	<span class="n">retval</span> <span class="o">=</span> <span class="n">OpenFolder</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_store</span><span class="p">,</span> <span class="n">folder_id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">obj_folder</span><span class="p">);</span>
-	<span class="c1">// obj_store 是 父資料夾的封包 (parent folder)
-</span>	<span class="k">if</span> <span class="p">(</span><span class="n">retval</span> <span class="o">!=</span> <span class="n">MAPI_E_SUCCESS</span><span class="p">)</span> <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+{% highlight c %}
+enum MAPISTATUS     retval;
+    uint32_t            type_of_folder; //指定要抓取的資料夾型態
+    mapi_id_t           folder_id; //儲存取得的資料夾id (數值型態)
+    mapi_object_t       obj_store; //儲存取得的訊息封包
 
-<span class="cm">/*
+    mapi_object_init(&obj_store);
+    type_of_folder = olFolderTopInformationStore; //Root of mailbox     
+	retval = GetDefaultFolder(&obj_store, &folder_id, type_of_folder);
+	if (retval != MAPI_E_SUCCESS) return false;
+
+    mapi_object_t       obj_folder; //儲存取得的資料夾封包
+	mapi_object_init(&obj_folder);
+	retval = OpenFolder(&obj_store, folder_id, &obj_folder);
+	// obj_store 是 父資料夾的封包 (parent folder)
+	if (retval != MAPI_E_SUCCESS) return false;
+
+/*
 The following types of folders are supported:
 
     * olFolderTopInformationStore
@@ -119,8 +121,8 @@ The following types of folders are supported:
     * olFolderDrafts
     * olFolderReminders
     * olFolderFinder
-*/</span>
-</code></pre>
+*/
+{% endhighlight %}
 
 
 
@@ -133,29 +135,31 @@ The following types of folders are supported:
 故要取得訊息內容時，就要以 <code>GetProps(), GetPropsAll()</code> 等取得指定的屬性清單。再以 <code>get_SPropValue()</code> 自屬性清單中取得指定的屬性值。
 </p>
 
-<pre class="highlight"><code>	<span class="k">enum</span> <span class="n">MAPISTATUS</span>		<span class="n">retval</span><span class="p">;</span>
 
-	<span class="k">struct</span> <span class="n">SPropTagArray</span>   <span class="o">*</span><span class="n">SPropTagArray</span><span class="p">;</span>
-	<span class="k">struct</span> <span class="n">SPropValue</span>      <span class="o">*</span><span class="n">lpProps</span><span class="p">;</span>
-	<span class="kt">uint32_t</span>               <span class="n">count</span><span class="p">;</span>
+{% highlight c %}
+enum MAPISTATUS		retval;
 
-	<span class="kt">char</span>           <span class="o">*</span><span class="n">name</span><span class="p">;</span>
-	<span class="kt">uint64_t</span>       <span class="o">*</span><span class="n">fid</span><span class="p">;</span>
+	struct SPropTagArray   *SPropTagArray;
+	struct SPropValue      *lpProps;
+	uint32_t               count;
 
-	<span class="n">SPropTagArray</span> <span class="o">=</span> <span class="n">set_SPropTagArray</span><span class="p">(</span><span class="n">mem_ctx</span><span class="p">,</span> 
-        <span class="mh">0x2</span><span class="p">,</span> <span class="c1">// 要讀取的屬性數 (依後面接著的參數數量而定) 
-</span>        <span class="n">PR_DISPLAY_NAME</span><span class="p">,</span>
-        <span class="n">PR_FID</span>
-    <span class="p">);</span>
-	<span class="n">retval</span> <span class="o">=</span> <span class="n">GetProps</span><span class="p">(</span><span class="n">obj_folder</span><span class="p">,</span> <span class="n">SPropTagArray</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lpProps</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">count</span><span class="p">);</span>
-	<span class="n">MAPIFreeBuffer</span><span class="p">(</span><span class="n">SPropTagArray</span><span class="p">);</span>
-	<span class="k">if</span> <span class="p">(</span><span class="n">retval</span> <span class="o">!=</span> <span class="n">MAPI_E_SUCCESS</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+	char           *name;
+	uint64_t       *fid;
 
-	<span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint64_t</span> <span class="o">*</span><span class="p">)</span><span class="n">get_SPropValue</span><span class="p">(</span><span class="n">lpProps</span><span class="p">,</span> <span class="n">PR_FID</span><span class="p">);</span>
-	<span class="n">name</span> <span class="o">=</span> <span class="n">CONVERT</span><span class="p">((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">get_SPropValue</span><span class="p">(</span><span class="n">lpProps</span><span class="p">,</span> <span class="n">PR_DISPLAY_NAME</span><span class="p">));</span>
+	SPropTagArray = set_SPropTagArray(mem_ctx, 
+        0x2, // 要讀取的屬性數 (依後面接著的參數數量而定) 
+        PR_DISPLAY_NAME,
+        PR_FID
+    );
+	retval = GetProps(obj_folder, SPropTagArray, &lpProps, &count);
+	MAPIFreeBuffer(SPropTagArray);
+	if (retval != MAPI_E_SUCCESS) return;
 
-    <span class="n">MAPIFreeBuffer</span><span class="p">(</span><span class="n">lpProps</span><span class="p">);</span>
-</code></pre>
+	fid = (uint64_t *)get_SPropValue(lpProps, PR_FID);
+	name = CONVERT((char *)get_SPropValue(lpProps, PR_DISPLAY_NAME));
+
+    MAPIFreeBuffer(lpProps);
+{% endhighlight %}
 
 
 
@@ -166,59 +170,60 @@ The following types of folders are supported:
 <p>
 以 <code>QueryRows() 或 SeekRow()</code> 讀取項目的屬性內容。以 <code>find_SPropValue_data()</code> 讀取 <var>SRow_t aRow</var> 結構的內容。
 </p>
-<pre class="highlight"><code>	<span class="n">mapi_object_t</span>		<span class="n">obj_htable</span><span class="p">;</span>
-	<span class="n">mapi_object_t</span>		<span class="n">obj_table</span><span class="p">;</span>
 
-	<span class="k">struct</span> <span class="n">SPropTagArray</span>	<span class="o">*</span><span class="n">SPropTagArray</span><span class="p">;</span>
-	<span class="k">struct</span> <span class="n">SRowSet</span>		<span class="n">rowset</span><span class="p">;</span>
+{% highlight c %}
+mapi_object_t		obj_htable;
+	mapi_object_t		obj_table;
 
-    <span class="kt">uint32_t</span>    <span class="n">start_position</span><span class="p">,</span> <span class="n">end_position</span><span class="p">,</span> <span class="n">current_position</span><span class="p">,</span> <span class="n">seekRowResult</span><span class="p">;</span>
+	struct SPropTagArray	*SPropTagArray;
+	struct SRowSet		rowset;
 
-	<span class="n">mapi_object_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_htable</span><span class="p">);</span>
-	<span class="n">retval</span> <span class="o">=</span> <span class="n">GetHierarchyTable</span><span class="p">(</span><span class="n">obj_folder</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">obj_htable</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-	<span class="k">if</span> <span class="p">(</span><span class="n">retval</span> <span class="o">!=</span> <span class="n">MAPI_E_SUCCESS</span><span class="p">)</span> <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    uint32_t    start_position, end_position, current_position, seekRowResult;
 
-    <span class="cm">/**
+	mapi_object_init(&obj_htable);
+	retval = GetHierarchyTable(obj_folder, &obj_htable, 0, NULL);
+	if (retval != MAPI_E_SUCCESS) return false;
+
+    /**
      * 設定要取得的屬性。
      * 以 SQL 的概念說明的話，這是在設定 SELECT 的欄位。
      * 此處的設定會影嚮接下來的 QueryRows() 與 SeekRow() 的結果。          
-     */</span>
-	<span class="n">SPropTagArray</span> <span class="o">=</span> <span class="n">set_SPropTagArray</span><span class="p">(</span><span class="n">mem_ctx</span><span class="p">,</span> <span class="mh">0x6</span><span class="p">,</span>
-					  <span class="n">PR_DISPLAY_NAME</span><span class="p">,</span>
-					  <span class="n">PR_FID</span><span class="p">,</span>
-					  <span class="n">PR_COMMENT</span><span class="p">,</span>
-					  <span class="n">PR_CONTENT_UNREAD</span><span class="p">,</span>
-					  <span class="n">PR_CONTENT_COUNT</span><span class="p">,</span>
-					  <span class="n">PR_FOLDER_CHILD_COUNT</span><span class="p">);</span>
-	<span class="n">retval</span> <span class="o">=</span> <span class="n">SetColumns</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_htable</span><span class="p">,</span> <span class="n">SPropTagArray</span><span class="p">);</span>
-	<span class="n">MAPIFreeBuffer</span><span class="p">(</span><span class="n">SPropTagArray</span><span class="p">);</span>
-	<span class="k">if</span> <span class="p">(</span><span class="n">retval</span> <span class="o">!=</span> <span class="n">MAPI_E_SUCCESS</span><span class="p">)</span> <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+     */
+	SPropTagArray = set_SPropTagArray(mem_ctx, 0x6,
+					  PR_DISPLAY_NAME,
+					  PR_FID,
+					  PR_COMMENT,
+					  PR_CONTENT_UNREAD,
+					  PR_CONTENT_COUNT,
+					  PR_FOLDER_CHILD_COUNT);
+	retval = SetColumns(&obj_htable, SPropTagArray);
+	MAPIFreeBuffer(SPropTagArray);
+	if (retval != MAPI_E_SUCCESS) return false;
 	
 
-	<span class="k">while</span> <span class="p">(((</span><span class="n">retval</span> <span class="o">=</span> <span class="n">QueryRows</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_htable</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">,</span> <span class="n">TBL_ADVANCE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rowset</span><span class="p">))</span> 
-        <span class="o">!=</span> <span class="n">MAPI_E_NOT_FOUND</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">rowset</span><span class="p">.</span><span class="n">cRows</span><span class="p">)</span> 
-    <span class="p">{</span>
-		<span class="k">for</span> <span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">rowset</span><span class="p">.</span><span class="n">cRows</span><span class="p">;</span> <span class="n">index</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="n">fid</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="p">)</span><span class="n">find_SPropValue_data</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rowset</span><span class="p">.</span><span class="n">aRow</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">PR_FID</span><span class="p">);</span>
-			<span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">find_SPropValue_data</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rowset</span><span class="p">.</span><span class="n">aRow</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">PR_DISPLAY_NAME</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
+	while (((retval = QueryRows(&obj_htable, 0x32, TBL_ADVANCE, &rowset)) 
+        != MAPI_E_NOT_FOUND) && rowset.cRows) 
+    {
+		for (index = 0; index < rowset.cRows; index++) {
+			fid = (const uint64_t *)find_SPropValue_data(&rowset.aRow[index], PR_FID);
+			name = (const char *)find_SPropValue_data(&rowset.aRow[index], PR_DISPLAY_NAME);
+		}
+	}
 
 
-	<span class="n">mapi_object_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_table</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">current_position</span> <span class="o">=</span> <span class="n">start_position</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> 
-        <span class="n">current_position</span> <span class="o">&lt;</span> <span class="n">end_position</span><span class="p">;</span> 
-        <span class="o">++</span><span class="n">current_position</span><span class="p">)</span> 
-    <span class="p">{</span>
-        <span class="n">SeekRow</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_table</span><span class="p">,</span> <span class="n">BOOKMARK_BEGINNING</span><span class="p">,</span> <span class="n">current_position</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">seekRowResult</span><span class="p">);</span>
-        <span class="c1">//SeekRow(&amp;obj_table, BOOKMARK_CURRENT, 0, &amp;seekRowResult);
-</span>
-        <span class="n">retval</span> <span class="o">=</span> <span class="n">QueryRows</span><span class="p">(</span><span class="o">&amp;</span><span class="n">obj_table</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">TBL_ADVANCE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rowset</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">retval</span> <span class="o">==</span> <span class="n">MAPI_E_NOT_FOUND</span> <span class="o">||</span> <span class="n">rowset</span><span class="p">.</span><span class="n">cRows</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="k">break</span><span class="p">;</span>
-    <span class="p">}</span>
+	mapi_object_init(&obj_table);
+    for (current_position = start_position - 1; 
+        current_position < end_position; 
+        ++current_position) 
+    {
+        SeekRow(&obj_table, BOOKMARK_BEGINNING, current_position, &seekRowResult);
+        //SeekRow(&obj_table, BOOKMARK_CURRENT, 0, &seekRowResult);
 
-</code></pre>
+        retval = QueryRows(&obj_table, 1, TBL_ADVANCE, &rowset);
+        if (retval == MAPI_E_NOT_FOUND || rowset.cRows == 0)
+            break;
+    }
+{% endhighlight %}
 
 
 
@@ -228,97 +233,98 @@ The following types of folders are supported:
 <p>
 可參考 libmapi/mapidump.c 的程式碼。
 </p>
-<pre class="highlight"><code><span class="cm">/**
+
+{% highlight c %}
+/**
  * 輸出資料型態為字串的屬性。
- */</span> 
-<span class="kt">void</span> <span class="nf">put_str</span><span class="p">(</span><span class="k">struct</span> <span class="n">mapi_SPropValue_array</span> <span class="o">*</span><span class="n">properties</span><span class="p">,</span> 
-    <span class="kt">uint32_t</span> <span class="n">mapitag</span><span class="p">,</span> 
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">label</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pad</span><span class="p">)</span> 
-<span class="p">{</span>
-    <span class="k">const</span> <span class="n">uchar_t</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+ */ 
+void put_str(struct mapi_SPropValue_array *properties, 
+    uint32_t mapitag, 
+    const char *label,
+    const char *pad) 
+{
+    const uchar_t *p;
 
-    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="n">uchar_t</span> <span class="o">*</span><span class="p">)</span><span class="n">find_mapi_SPropValue_data</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">mapitag</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">p</span> <span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%s%s: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span> 
-<span class="p">}</span>
+    p = (const uchar_t *)find_mapi_SPropValue_data(properties, mapitag);
+    if ( !p )
+        return;
+    printf("%s%s: %s\n", pad, label, p); 
+}
 
-<span class="cm">/**
+/**
  * 輸出資料型態為日期的屬性。
- */</span> 
-<span class="kt">void</span> <span class="nf">put_datetime</span><span class="p">(</span><span class="n">TALLOC_CTX</span> <span class="o">*</span><span class="n">mem_ctx</span><span class="p">,</span> 
-    <span class="k">struct</span> <span class="n">mapi_SPropValue_array</span> <span class="o">*</span><span class="n">properties</span><span class="p">,</span> 
-    <span class="kt">uint32_t</span> <span class="n">mapitag</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">label</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">pad</span><span class="p">)</span> 
-<span class="p">{</span>
-	<span class="n">NTTIME</span>                 <span class="n">time</span><span class="p">;</span>
-	<span class="k">const</span> <span class="k">struct</span> <span class="n">FILETIME</span>  <span class="o">*</span><span class="n">filetime</span><span class="p">;</span>
-	<span class="kt">char</span>                   <span class="o">*</span><span class="n">date</span><span class="p">;</span>
+ */ 
+void put_datetime(TALLOC_CTX *mem_ctx, 
+    struct mapi_SPropValue_array *properties, 
+    uint32_t mapitag,
+    const char*label,
+    const char*pad) 
+{
+	NTTIME                 time;
+	const struct FILETIME  *filetime;
+	char                   *date;
 
-	<span class="n">filetime</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">FILETIME</span> <span class="o">*</span><span class="p">)</span> <span class="n">find_mapi_SPropValue_data</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">mapitag</span><span class="p">);</span>
+	filetime = (const struct FILETIME *) find_mapi_SPropValue_data(properties, mapitag);
 	
-	<span class="k">if</span> <span class="p">(</span><span class="n">filetime</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">time</span> <span class="o">=</span> <span class="n">filetime</span><span class="o">-&gt;</span><span class="n">dwHighDateTime</span><span class="p">;</span>
-        <span class="n">time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">;</span>
-        <span class="n">time</span> <span class="o">|=</span> <span class="n">filetime</span><span class="o">-&gt;</span><span class="n">dwLowDateTime</span><span class="p">;</span>
-        <span class="n">date</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">nt_time_string</span><span class="p">(</span><span class="n">mem_ctx</span><span class="p">,</span> <span class="n">time</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"%s%s: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">date</span><span class="p">);</span>
-        <span class="n">talloc_free</span><span class="p">(</span><span class="n">date</span><span class="p">);</span>
-	<span class="p">}</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
+	if (filetime) {
+        time = filetime->dwHighDateTime;
+        time = time << 32;
+        time |= filetime->dwLowDateTime;
+        date = (char*)nt_time_string(mem_ctx, time);
+        printf("%s%s: %s\n", pad, label, date);
+        talloc_free(date);
+	}
+    return;
+}
 
-<span class="cm">/**
+/**
  * 輸出資料型態為無號整數的屬性。
- */</span> 
-<span class="kt">void</span> <span class="nf">put_uint32</span><span class="p">(</span><span class="k">struct</span> <span class="n">mapi_SPropValue_array</span> <span class="o">*</span><span class="n">properties</span><span class="p">,</span> 
-    <span class="kt">uint32_t</span> <span class="n">mapitag</span><span class="p">,</span> 
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">label</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pad</span><span class="p">)</span> 
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+ */ 
+void put_uint32(struct mapi_SPropValue_array *properties, 
+    uint32_t mapitag, 
+    const char *label,
+    const char *pad) 
+{
+    const uint32_t *p;
 
-    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="p">)</span><span class="n">find_mapi_SPropValue_data</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">mapitag</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">p</span> <span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%s%s: %u</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span> 
-<span class="p">}</span>
+    p = (const uint32_t *)find_mapi_SPropValue_data(properties, mapitag);
+    if ( !p )
+        return;
+    printf("%s%s: %u\n", pad, label, *p); 
+}
 
-<span class="cm">/**
+/**
  * 輸出資料型態為實數的屬性。
- */</span> 
-<span class="kt">void</span> <span class="nf">put_double</span><span class="p">(</span><span class="k">struct</span> <span class="n">mapi_SPropValue_array</span> <span class="o">*</span><span class="n">properties</span><span class="p">,</span> 
-    <span class="kt">uint32_t</span> <span class="n">mapitag</span><span class="p">,</span> 
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">label</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pad</span><span class="p">)</span> 
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">double</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+ */ 
+void put_double(struct mapi_SPropValue_array *properties, 
+    uint32_t mapitag, 
+    const char *label,
+    const char *pad) 
+{
+    const double *p;
 
-    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="kt">double</span> <span class="o">*</span><span class="p">)</span><span class="n">find_mapi_SPropValue_data</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">mapitag</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">p</span> <span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%s%s: %f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span> 
-<span class="p">}</span>
+    p = (const double *)find_mapi_SPropValue_data(properties, mapitag);
+    if ( !p )
+        return;
+    printf("%s%s: %f\n", pad, label, *p); 
+}
 
-<span class="cm">/**
+/**
  * 以十六進位格式輸出資料型態為長整數的屬性。
- */</span> 
-<span class="kt">void</span> <span class="nf">put_longhex</span><span class="p">(</span><span class="k">struct</span> <span class="n">mapi_SPropValue_array</span> <span class="o">*</span><span class="n">properties</span><span class="p">,</span> 
-    <span class="kt">uint32_t</span> <span class="n">mapitag</span><span class="p">,</span> 
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">label</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pad</span><span class="p">)</span> 
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+ */ 
+void put_longhex(struct mapi_SPropValue_array *properties, 
+    uint32_t mapitag, 
+    const char *label,
+    const char *pad) 
+{
+    const uint64_t *p;
 
-    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="kt">uint64_t</span> <span class="o">*</span><span class="p">)</span><span class="n">find_mapi_SPropValue_data</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">mapitag</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">p</span> <span class="p">)</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%s%s: %"</span><span class="n">PRIx64</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span> 
-<span class="p">}</span>
-
-</code></pre>
+    p = (const uint64_t *)find_mapi_SPropValue_data(properties, mapitag);
+    if ( !p )
+        return;
+    printf("%s%s: %"PRIx64"\n", pad, label, *p); 
+}
+{% endhighlight %}
 
 
 <p>

@@ -18,20 +18,24 @@ permalink: /archives/5895631.html
 基本上，<var>disabled</var> 與 <var>readonly</var> 對使用者而言，同樣都令輸入控制元件不能修改內容。兩者的差別主要在於，一個具 <var>disabled</var> 屬性的輸入控制元件，其值不會被遞交回伺服器；而 <var>readonly</var> 屬性的輸入控制元件，其值可能會被遞交回伺服器 (在 W3C HTML Specification 中，這句話的意義等同 "視瀏覽器實作而定")。如下例所示:
 </p>
 
-<pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">"test.php"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"i1"</span> <span class="na">name=</span><span class="s">"i1"</span> <span class="na">value=</span><span class="s">"1"</span> <span class="na">disabled=</span><span class="s">"disabled"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"i2"</span> <span class="na">name=</span><span class="s">"i2"</span> <span class="na">value=</span><span class="s">"2"</span> <span class="na">readonly=</span><span class="s">"readonly"</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">"i3"</span> <span class="na">name=</span><span class="s">"i3"</span> <span class="na">value=</span><span class="s">"3"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;/form&gt;</span>
-</code></pre>
+
+{% highlight text %}
+<form action="test.php">
+    <input id="i1" name="i1" value="1" disabled="disabled" />
+    <input id="i2" name="i2" value="2" readonly="readonly" />
+    <input id="i3" name="i3" value="3" />
+</form>
+{% endhighlight %}
 
 <br/>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">echo</span> <span class="s1">'&lt;pre&gt;'</span><span class="p">;</span>
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'&lt;/pre&gt;'</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+
+{% highlight text %}
+<?php
+echo '<pre>';
+print_r($_POST);
+echo '</pre>';
+?>
+{% endhighlight %}
 
 <p>
 因為 <var>i1</var> 具有 <var>disabled</var> 屬性，其值不會被遞交。而<var>i2</var> 僅具有 <var>readonly</var> 屬性，雖然使用者不能修改欄位內容，但其值仍會被遞交。故 test.php 受理後只會收到 <var>i2,i3</var> 兩個輸入控制元件的值。如下所示:
@@ -54,22 +58,24 @@ Array
 </p>
 
 <h5>selenium-api.js</h5>
-<pre class="highlight"><code><span class="nx">Selenium</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">isEditable</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">locator</span><span class="p">)</span> <span class="p">{</span>
-    <span class="cm">/**
+
+{% highlight text %}
+Selenium.prototype.isEditable = function(locator) {
+    /**
    * Determines whether the specified input element is editable, ie hasn't been disabled.
    * This method will fail if the specified element isn't an input element.
    *
-   * @param locator an &lt;a href="#locators"&gt;element locator&lt;/a&gt;
+   * @param locator an <a href="#locators">element locator</a>
    * @return boolean true if the input element is editable, false otherwise
-   */</span>
-    <span class="kd">var</span> <span class="nx">element</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">browserbot</span><span class="p">.</span><span class="nx">findElement</span><span class="p">(</span><span class="nx">locator</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">element</span><span class="p">.</span><span class="nx">value</span> <span class="o">==</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">Assert</span><span class="p">.</span><span class="nx">fail</span><span class="p">(</span><span class="s2">"Element "</span> <span class="o">+</span> <span class="nx">locator</span> <span class="o">+</span> <span class="s2">" is not an input."</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="c1">//return !element.disabled;</span>
-    <span class="k">return</span> <span class="p">(</span><span class="o">!</span><span class="nx">element</span><span class="p">.</span><span class="nx">disabled</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">element</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s1">'readonly'</span><span class="p">));</span>
-<span class="p">};</span>
-</code></pre>
+   */
+    var element = this.browserbot.findElement(locator);
+    if (element.value == undefined) {
+        Assert.fail("Element " + locator + " is not an input.");
+    }
+    //return !element.disabled;
+    return (!element.disabled && !element.getAttribute('readonly'));
+};
+{% endhighlight %}
 
 
 <p>

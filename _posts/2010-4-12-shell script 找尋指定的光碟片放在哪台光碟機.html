@@ -13,42 +13,44 @@ permalink: /archives/12169181.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="c">#!/bin/sh</span>
 
-<span class="c"># scan Ubuntu install CD.</span>
+{% highlight sh %}
+#!/bin/sh
 
-<span class="k">for </span>media <span class="k">in</span> <span class="k">$(</span> ls /media <span class="k">)</span>; <span class="k">do</span>
-    <span class="c">#echo "$media"</span>
-    <span class="nv">disc</span><span class="o">=</span>/media/<span class="nv">$media</span>
+# scan Ubuntu install CD.
+
+for media in $( ls /media ); do
+    #echo "$media"
+    disc=/media/$media
     
-    <span class="k">if</span> <span class="o">[</span> -d <span class="nv">$disc</span>/dists <span class="o">]</span>; <span class="k">then
-        for </span>release <span class="k">in</span> <span class="k">$(</span> find <span class="nv">$disc</span>/dists -name Release <span class="k">)</span>; <span class="k">do</span>
-            <span class="c">#Origin: Ubuntu</span>
-            <span class="c">#Version: 9.10</span>
-            <span class="nv">key_origin</span><span class="o">=</span><span class="sb">`</span>grep <span class="s2">"Origin: Ubuntu"</span> <span class="k">${</span><span class="nv">release</span><span class="k">}</span><span class="sb">`</span>
-            <span class="nv">key_label</span><span class="o">=</span><span class="sb">`</span>grep -P <span class="s2">"^Version: </span><span class="se">\d</span><span class="s2">+</span><span class="se">\.\d</span><span class="s2">+$"</span> <span class="k">${</span><span class="nv">release</span><span class="k">}</span><span class="sb">`</span>
+    if [ -d $disc/dists ]; then
+        for release in $( find $disc/dists -name Release ); do
+            #Origin: Ubuntu
+            #Version: 9.10
+            key_origin=`grep "Origin: Ubuntu" ${release}`
+            key_label=`grep -P "^Version: \d+\.\d+$" ${release}`
 
-            <span class="k">if</span> <span class="o">[</span> -n <span class="s2">"</span><span class="k">${</span><span class="nv">key_origin</span><span class="k">}</span><span class="s2">"</span> <span class="o">]</span> <span class="o">&amp;&amp;</span> <span class="o">[</span> -n <span class="s2">"</span><span class="k">${</span><span class="nv">key_label</span><span class="k">}</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then
-                </span><span class="nv">os_disc</span><span class="o">=</span><span class="nv">$disc</span>
-                <span class="nb">break
-            </span><span class="k">fi
+            if [ -n "${key_origin}" ] && [ -n "${key_label}" ]; then
+                os_disc=$disc
+                break
+            fi
         done
     fi
 
-    if</span> <span class="o">[</span> -n <span class="s2">"</span><span class="nv">$os_disc</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then
-        </span><span class="nb">break
-    </span><span class="k">fi
+    if [ -n "$os_disc" ]; then
+        break
+    fi
 done
 
-if</span> <span class="o">[</span> -n <span class="s2">"</span><span class="nv">$os_disc</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then
-    </span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">os_disc</span><span class="k">}</span><span class="s2"> is a Ubuntu install CD"</span>
-<span class="k">else
-    </span><span class="nb">echo</span> <span class="s2">"There is no Ubuntu install CD"</span>
-    <span class="nb">exit </span>1
-<span class="k">fi
+if [ -n "$os_disc" ]; then
+    echo "${os_disc} is a Ubuntu install CD"
+else
+    echo "There is no Ubuntu install CD"
+    exit 1
+fi
 
-</span><span class="nb">exit </span>0
-</code></pre>
+exit 0
+{% endhighlight %}
 
 <p>
 先用 <dfn>ls</dfn> 列出 /media 下現有的掛載點。用 <dfn>find</dfn> 搜尋掛載點下的指定檔案名稱。最後用 <dfn>grep</dfn> 找尋文件中是否有符合的識別文字。

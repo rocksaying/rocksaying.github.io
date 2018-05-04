@@ -11,22 +11,26 @@ t106 是產品名稱表 (barcode, pname, sno)，t107 (sno, sname, dno) 是小分
 
 <!--more-->
 <h3>聯結式一</h3>
-<pre class="highlight"><code><span class="k">select</span> <span class="n">t109</span><span class="p">.</span><span class="n">lname</span><span class="p">,</span> <span class="n">t108</span><span class="p">.</span><span class="n">dname</span><span class="p">,</span> <span class="n">t107</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">t106</span><span class="p">.</span><span class="n">pname</span><span class="p">,</span> <span class="n">t106</span><span class="p">.</span><span class="n">barcode</span> <span class="k">from</span> <span class="n">t106</span>
-<span class="k">inner</span> <span class="k">join</span> <span class="n">t107</span> <span class="k">on</span> <span class="n">t106</span><span class="p">.</span><span class="n">sno</span> <span class="o">=</span> <span class="n">t107</span><span class="p">.</span><span class="n">sno</span>
-<span class="k">inner</span> <span class="k">join</span> <span class="n">t108</span> <span class="k">on</span> <span class="n">t107</span><span class="p">.</span><span class="n">dno</span> <span class="o">=</span> <span class="n">t108</span><span class="p">.</span><span class="n">dno</span>
-<span class="k">inner</span> <span class="k">join</span> <span class="n">t109</span> <span class="k">on</span> <span class="n">t108</span><span class="p">.</span><span class="n">lno</span> <span class="o">=</span> <span class="n">t109</span><span class="p">.</span><span class="n">lno</span>
-</code></pre>
+
+{% highlight sql %}
+select t109.lname, t108.dname, t107.sname, t106.pname, t106.barcode from t106
+inner join t107 on t106.sno = t107.sno
+inner join t108 on t107.dno = t108.dno
+inner join t109 on t108.lno = t109.lno
+{% endhighlight %}
 
 
 <h3>聯結式二</h3>
-<pre class="highlight"><code><span class="k">select</span> <span class="n">t109</span><span class="p">.</span><span class="n">lname</span><span class="p">,</span> <span class="n">t108</span><span class="p">.</span><span class="n">dname</span><span class="p">,</span> <span class="n">t107</span><span class="p">.</span><span class="n">sname</span><span class="p">,</span> <span class="n">t106</span><span class="p">.</span><span class="n">pname</span><span class="p">,</span> <span class="n">t106</span><span class="p">.</span><span class="n">barcode</span>  <span class="k">from</span> <span class="n">t106</span>
-<span class="k">inner</span> <span class="k">join</span> <span class="p">(</span> <span class="n">t107</span> 
-  <span class="k">inner</span> <span class="k">join</span> <span class="p">(</span> <span class="n">t108</span> 
-    <span class="k">inner</span> <span class="k">join</span> <span class="n">t109</span> 
-    <span class="k">on</span> <span class="n">t108</span><span class="p">.</span><span class="n">lno</span> <span class="o">=</span> <span class="n">t109</span><span class="p">.</span><span class="n">lno</span><span class="p">)</span> 
-  <span class="k">on</span> <span class="n">t107</span><span class="p">.</span><span class="n">dno</span> <span class="o">=</span> <span class="n">t108</span><span class="p">.</span><span class="n">dno</span><span class="p">)</span>
-<span class="k">on</span> <span class="n">t106</span><span class="p">.</span><span class="n">sno</span> <span class="o">=</span> <span class="n">t107</span><span class="p">.</span><span class="n">sno</span>
-</code></pre>
+
+{% highlight sql %}
+select t109.lname, t108.dname, t107.sname, t106.pname, t106.barcode  from t106
+inner join ( t107 
+  inner join ( t108 
+    inner join t109 
+    on t108.lno = t109.lno) 
+  on t107.dno = t108.dno)
+on t106.sno = t107.sno
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

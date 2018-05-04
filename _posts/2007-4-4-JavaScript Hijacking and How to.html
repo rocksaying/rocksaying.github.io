@@ -34,37 +34,39 @@ JavaScript Hijacking 的運作概念
 </p>
 <fieldset>
 <legend>session_hijacking.php</legend>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">is_logon</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SESSION</span><span class="p">[</span><span class="s1">'logon'</span><span class="p">])</span> <span class="o">&amp;&amp;</span> <span class="nv">$_SESSION</span><span class="p">[</span><span class="s1">'logon'</span><span class="p">]</span> <span class="o">===</span> <span class="kc">true</span>
-        <span class="o">?</span> <span class="kc">true</span>
-        <span class="o">:</span> <span class="kc">false</span>
-    <span class="p">);</span>
-<span class="p">}</span>
 
-<span class="nb">session_id</span><span class="p">(</span><span class="s1">'hijackTest'</span><span class="p">);</span>
-<span class="nb">session_start</span><span class="p">();</span>
+{% highlight javascript %}
+<?php
+function is_logon() {
+    return (isset($_SESSION['logon']) && $_SESSION['logon'] === true
+        ? true
+        : false
+    );
+}
 
-<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'username'</span><span class="p">])</span> <span class="k">and</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">'username'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'xyz'</span>
-    <span class="k">and</span> <span class="o">!</span><span class="nx">is_logon</span><span class="p">())</span>
-<span class="p">{</span>
-    <span class="nv">$_SESSION</span><span class="p">[</span><span class="s1">'logon'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-<span class="p">}</span>
+session_id('hijackTest');
+session_start();
 
-<span class="k">if</span> <span class="p">(</span><span class="nx">is_logon</span><span class="p">())</span> <span class="p">{</span>
-    <span class="nv">$profile</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'xyz'</span><span class="p">,</span>
-        <span class="s1">'age'</span>  <span class="o">=&gt;</span> <span class="s1">'15'</span><span class="p">,</span>
-        <span class="s1">'from'</span> <span class="o">=&gt;</span> <span class="s1">'taiwan'</span>
-    <span class="p">);</span>
-    <span class="k">echo</span> <span class="s1">'['</span><span class="p">,</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$profile</span><span class="p">),</span> <span class="s1">']'</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s1">'&lt;form method="post"&gt;&lt;input type="text" name="username"/&gt;
-        &lt;button type="submit"&gt;submit&lt;/button&gt;&lt;/form&gt;'</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+if (isset($_POST['username']) and $_POST['username'] == 'xyz'
+    and !is_logon())
+{
+    $_SESSION['logon'] = true;
+}
+
+if (is_logon()) {
+    $profile = array(
+        'title' => 'xyz',
+        'age'  => '15',
+        'from' => 'taiwan'
+    );
+    echo '[', json_encode($profile), ']';
+}
+else {
+    echo '<form method="post"><input type="text" name="username"/>
+        <button type="submit">submit</button></form>';
+}
+?>
+{% endhighlight %}
 
 </fieldset>
 
@@ -73,37 +75,39 @@ JavaScript Hijacking 的運作概念
 </p>
 <fieldset>
 <legend>hijacking.html</legend>
-<pre class="highlight"><code><span class="o">&lt;</span><span class="nx">html</span><span class="o">&gt;&lt;</span><span class="nx">body</span><span class="o">&gt;</span>
-<span class="nx">Hijacking</span><span class="p">...</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="kd">var</span> <span class="nx">hijackingData</span> <span class="o">=</span> <span class="p">{};</span>
 
-<span class="kd">function</span> <span class="nb">Object</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// redefine/overwrite constructor of Object</span>
-    <span class="nx">hijackingData</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight javascript %}
+<html><body>
+Hijacking...
+<script type="text/javascript">
+var hijackingData = {};
 
-<span class="kd">var</span> <span class="nx">hijacking</span> <span class="o">=</span> <span class="nx">setInterval</span><span class="p">(</span>
-    <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">hijackingData</span><span class="p">.</span><span class="nx">from</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">hijacking</span><span class="p">);</span>
-            <span class="kd">function</span> <span class="nb">Object</span><span class="p">()</span> <span class="p">{}</span>  <span class="c1">// clear hijacking constructor of Object</span>
+function Object() { // redefine/overwrite constructor of Object
+    hijackingData = this;
+}
 
-            <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
-            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">p</span> <span class="k">in</span> <span class="nx">hijackingData</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nx">s</span> <span class="o">+=</span> <span class="nx">p</span> <span class="o">+</span> <span class="s1">' = '</span> <span class="o">+</span> <span class="nx">hijackingData</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">;</span>
-            <span class="p">}</span>
-            <span class="nx">alert</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="mi">500</span>
-<span class="p">);</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">src</span><span class="o">=</span><span class="s2">"http://localhost/test/session_hijacking.php"</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="sr">/body&gt;&lt;/</span><span class="nx">html</span><span class="o">&gt;</span>
-</code></pre>
+var hijacking = setInterval(
+    function() {
+        if (hijackingData.from) {
+            clearInterval(hijacking);
+            function Object() {}  // clear hijacking constructor of Object
+
+            var s = '';
+            for (var p in hijackingData) {
+                s += p + ' = ' + hijackingData[p] + '\n';
+            }
+            alert(s);
+        }
+    },
+    500
+);
+</script>
+
+<script src="http://localhost/test/session_hijacking.php">
+</script>
+
+</body></html>
+{% endhighlight %}
 
 </fieldset>
 

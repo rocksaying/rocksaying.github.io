@@ -46,23 +46,25 @@ wxJS_CtxSize 32K
 
 
 <h5>hello1.js - console mode, say hello</h5>
-<pre class="highlight"><code><span class="c1">// hello1.js</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"hello world\n"</span><span class="p">);</span>
-<span class="c1">//print 是 global object 'wxjs' 的方法，通常可省略前綴 'wxjs.' 。</span>
 
-<span class="kd">var</span> <span class="nx">rp</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="s1">'^[abc]{2,4}'</span><span class="p">);</span>
-<span class="c1">//RegExp 是 ECMA262 規範的標準類，順便測一下支援程度。</span>
+{% highlight javascript %}
+// hello1.js
+print("hello world\n");
+//print 是 global object 'wxjs' 的方法，通常可省略前綴 'wxjs.' 。
 
-<span class="kd">var</span> <span class="nx">ss</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s1">'aaaaa'</span><span class="p">,</span>
-    <span class="s1">'bb'</span><span class="p">,</span>
-    <span class="s1">'c'</span>
-<span class="p">];</span>
+var rp = new RegExp('^[abc]{2,4}');
+//RegExp 是 ECMA262 規範的標準類，順便測一下支援程度。
 
-<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">ss</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">print</span><span class="p">(</span> <span class="nx">rp</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">"\n"</span> <span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+var ss = [
+    'aaaaa',
+    'bb',
+    'c'
+];
+
+for (var i = 0; i < ss.length; ++i) {
+    print( rp.test(ss[i]) + "\n" );
+}
+{% endhighlight %}
 
 
 <pre class="language-text">
@@ -73,18 +75,20 @@ C:\Program Files\JavaScript\wxjs\bin\wxjs.exe  hello1.js
 <p>
 wxJavaScript 採用 wxWidgets 為 GUI 核心，它的編程風格自然也是 wxWidgets 。文件參考 <a href="http://www.wxjavascript.net/gui/index.html">wxJavaScript - GUI module</a>。 
 </p>
-<pre class="highlight"><code><span class="c1">// hello2.js</span>
-<span class="nx">wxTheApp</span><span class="p">.</span><span class="nx">onInit</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> 
-    <span class="nx">dlg</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">wxDialog</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">);</span> 
-    <span class="nx">dlg</span><span class="p">.</span><span class="nx">button</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">wxButton</span><span class="p">(</span><span class="nx">dlg</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"Hello"</span><span class="p">);</span> 
-    <span class="nx">dlg</span><span class="p">.</span><span class="nx">button</span><span class="p">.</span><span class="nx">onClicked</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> 
-        <span class="nx">dlg</span><span class="p">.</span><span class="nx">endModal</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> 
-    <span class="p">}</span> 
 
-    <span class="nx">dlg</span><span class="p">.</span><span class="nx">showModal</span><span class="p">();</span> 
-    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> 
-<span class="p">}</span>  
-</code></pre>
+{% highlight javascript %}
+// hello2.js
+wxTheApp.onInit = function() { 
+    dlg = new wxDialog(null, -1, "test"); 
+    dlg.button = new wxButton(dlg, 1, "Hello"); 
+    dlg.button.onClicked = function() { 
+        dlg.endModal(1); 
+    } 
+
+    dlg.showModal(); 
+    return false; 
+}
+{% endhighlight %}
 
 
 <pre class="language-text">
@@ -99,17 +103,19 @@ mod_wxjs 提供了兩個 object: <a href="http://www.wxjavascript.net/mod_wxjs/c
 <p>
 在副檔名部份，為了避免與即有的 Client 端使用的 JavaScript 衝突，改為 .wxjs 。
 </p>
-<pre class="highlight"><code><span class="c1">// hello3.wxjs</span>
-<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;html&gt;&lt;head&gt;&lt;title&gt;wxJS test program&lt;/title&gt;&lt;/head&gt;&lt;body&gt;"</span><span class="p">);</span> 
-<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;b&gt;Hello "</span> <span class="o">+</span> <span class="nx">request</span><span class="p">.</span><span class="nx">get</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"&lt;/b&gt;"</span><span class="p">);</span>
 
-<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;p&gt;List of GET:&lt;/p&gt;"</span><span class="p">);</span>
-<span class="k">for</span> <span class="p">(</span><span class="nx">p</span> <span class="k">in</span> <span class="nx">request</span><span class="p">.</span><span class="nx">get</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="nx">p</span> <span class="o">+</span> <span class="s2">": "</span> <span class="o">+</span> <span class="nx">request</span><span class="p">.</span><span class="nx">get</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"&lt;br/&gt;"</span><span class="p">);</span>
-<span class="p">}</span>
+{% highlight javascript %}
+// hello3.wxjs
+response.print("<html><head><title>wxJS test program</title></head><body>"); 
+response.print("<b>Hello " + request.get['name'] + "</b>");
+
+response.print("<p>List of GET:</p>");
+for (p in request.get) {
+    response.print(p + ": " + request.get[p] + "<br/>");
+}
  
-<span class="nx">response</span><span class="p">.</span><span class="nx">print</span><span class="p">(</span><span class="s2">"&lt;/body&gt;&lt;/html&gt;"</span><span class="p">);</span>
-</code></pre>
+response.print("</body></html>");
+{% endhighlight %}
 
 
 <pre class="language-text">

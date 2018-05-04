@@ -41,27 +41,28 @@ Schema-Database 是一個針對小型應用系統或嵌入式系統所設計的�
 <p>
 它的查詢動作如下:
 </p>
-<pre class="highlight"><code>$results = $query-&gt;from('Test')-&gt;select();
 
-$results = $query-&gt;from('Test')-&gt;select('id');
+{% highlight php %}
+$results = $query->from('Test')->select();
 
-$query-&gt;from('Test')
-      -&gt;where(array('id' =&gt; 10))
-      -&gt;select(array('id', 'name'));
+$results = $query->from('Test')->select('id');
 
-$query-&gt;from('Test')
-      -&gt;where(array('password' =&gt; '123')) //it will encode '123' by your schema.
-      -&gt;select();
+$query->from('Test')
+      ->where(array('id' => 10))
+      ->select(array('id', 'name'));
 
-$total_qty_expr = $query-&gt;prepare('SUM(:qty)', array('qty' =&gt; ''));
+$query->from('Test')
+      ->where(array('password' => '123')) //it will encode '123' by your schema.
+      ->select();
 
-$query-&gt;from('Order')
-      -&gt;where(array('qty &gt;' =&gt; 30))
-      -&gt;group_by('id')
-      -&gt;order_by('total_qty')
-      -&gt;select(array('id', 'total_qty' =&gt; $total_qty_expr));
+$total_qty_expr = $query->prepare('SUM(:qty)', array('qty' => ''));
 
-</code></pre>
+$query->from('Order')
+      ->where(array('qty >' => 30))
+      ->group_by('id')
+      ->order_by('total_qty')
+      ->select(array('id', 'total_qty' => $total_qty_expr));
+{% endhighlight %}
 
 <p>
 如果你覺得這種語法很像 LINQ ，不用懷疑，我就是抄 LINQ 的。
@@ -71,40 +72,42 @@ $query-&gt;from('Order')
 <p>
 它也提供了基本的 ORM 功能，例如 :
 </p>
-<pre class="highlight"><code>$data = array(
-    'id'  =&gt; 1,
-    'name'    =&gt; 'admin',
-    'password' =&gt; '123',
-    'permission'    =&gt; 0,
-    'email'     =&gt; 'admin@abc.com'
+
+{% highlight php %}
+$data = array(
+    'id'  => 1,
+    'name'    => 'admin',
+    'password' => '123',
+    'permission'    => 0,
+    'email'     => 'admin@abc.com'
 );
 
-$row-&gt;assign($data);
+$row->assign($data);
 
-$row-&gt;insert();
+$row->insert();
 
 //You can use array index to access field.
 echo $row['name'];
 
 //Also you can use object property to access field.
-echo $row-&gt;permission;
+echo $row->permission;
 
-$row-&gt;email = 'rock@abc.com';
+$row->email = 'rock@abc.com';
 
-$row-&gt;update();
+$row->update();
 
-$id = $row-&gt;id;
+$id = $row->id;
 
-$result = $row-&gt;get($id);
+$result = $row->get($id);
 
-$this-&gt;assertEquals('rock@abc.com', $result-&gt;name);
+$this->assertEquals('rock@abc.com', $result->name);
 
-$row-&gt;delete();
+$row->delete();
 
-$result = $row-&gt;get($id);
+$result = $row->get($id);
 
-$this-&gt;assertTrue( empty($result) );
-</code></pre>
+$this->assertTrue( empty($result) );
+{% endhighlight %}
 
 
 <p>
@@ -142,31 +145,33 @@ Database_Query 與 Database_Row 是互補的類別，同時也不干涉你原本
 <p>
 對於來自 Java 世界的朋友們，如果你習慣了重度的 ORM 操作，你也可以結合 Query 與 Row 來做事。
 </p>
-<pre class="highlight"><code>class PowerQuery extends Database_Query {
+
+{% highlight php %}
+class PowerQuery extends Database_Query {
     public function select($args, $decode) {
-        $table = $this-&gt;statments['from'];
+        $table = $this->statments['from'];
         $row = new Database_Row(array(
-            'db' =&gt; $this-&gt;db,
-            'schema' =&gt; $this-&gt;schema,
-            'table' =&gt; $table
+            'db' => $this->db,
+            'schema' => $this->schema,
+            'table' => $table
         ));
 
         $results = parent::select($args, $decode);
 
         $rows = array();
         foreach ($results as $result) {
-            $rows[] = $row-&gt;factory($result);
+            $rows[] = $row->factory($result);
         }
         return $rows; //現在回傳的將會是一個 Row object 陣列。
     }
 }
 
-$results = $query-&gt;from($table)-&gt;select();
+$results = $query->from($table)->select();
 
-$results[0]-&gt;update();
-$results[1]-&gt;update();
+$results[0]->update();
+$results[1]->update();
 ...
-</code></pre>
+{% endhighlight %}
 
 <p>
 不幸的是，這會造成低落的效能； Java 環境差別不大，PHP環境差異較高。在實務上，我們查詢出來的資料項，超過九成以上不會被異動，我們只使用了它們的取值功能(getter)。就此結果而言，我們只是把包覆資料的 model object 當成一個比較高級的結構(struct)或雜湊表(hash table, assocation array)。在 PHP 的世界中，我們還是保持簡單的作法吧。

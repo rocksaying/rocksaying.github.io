@@ -16,727 +16,21 @@ permalink: /archives/4052641.html
 <p>
 第525行設定 proxy 的網址。第669行到673行可調整是否偵測外部網域的連結頁面。
 </p>
-<pre class="highlight"><code><span class="c">&lt;!--</span><span class="p">?</span><span class="nx">php</span>
-<span class="nx">include</span> <span class="s1">'../../../include/cp_header.php'</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span> <span class="nx">file_exists</span><span class="p">(</span><span class="s2">"../language/"</span><span class="p">.</span><span class="nx">$xoopsConfig</span><span class="p">[</span><span class="s1">'language'</span><span class="p">].</span><span class="s2">"/main.php"</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-	<span class="nx">include</span> <span class="s2">"../language/"</span><span class="p">.</span><span class="nx">$xoopsConfig</span><span class="p">[</span><span class="s1">'language'</span><span class="p">].</span><span class="s2">"/main.php"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="c1">//global $xoopsDB;</span>
-<span class="c1">//$myts =&amp; MyTextSanitizer::getInstance();</span>
-<span class="nx">$pagetitle</span> <span class="o">=</span> <span class="s2">"&lt;h4&gt;"</span><span class="p">.</span><span class="nx">_MD_ADMIN_NAME</span><span class="p">.</span><span class="s2">"&lt;/h4&gt;"</span><span class="p">;</span>
 
-<span class="nx">xoops_cp_header</span><span class="p">();</span>
-<span class="p">?</span><span class="o">--&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"text/javascript"</span><span class="o">&gt;</span>
-<span class="c1">//  Brokenlink detector</span>
-<span class="c1">//  Copyright (C) 2006 shirock</span>
-<span class="c1">//  ------------------------------------------------------------------------ //</span>
-<span class="c1">//  This program is free software; you can redistribute it and/or modify     //</span>
-<span class="c1">//  it under the terms of the GNU General Public License as published by     //</span>
-<span class="c1">//  the Free Software Foundation; either version 2 of the License, or        //</span>
-<span class="c1">//  (at your option) any later version.                                      //</span>
-<span class="c1">//                                                                           //</span>
-<span class="c1">//  You may not change or alter any portion of this comment or credits       //</span>
-<span class="c1">//  of supporting developers from this source code or any supporting         //</span>
-<span class="c1">//  source code which is considered copyrighted (c) material of the          //</span>
-<span class="c1">//  original comment or credit authors.                                      //</span>
-<span class="c1">//                                                                           //</span>
-<span class="c1">//  This program is distributed in the hope that it will be useful,          //</span>
-<span class="c1">//  but WITHOUT ANY WARRANTY; without even the implied warranty of           //</span>
-<span class="c1">//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //</span>
-<span class="c1">//  GNU General Public License for more details.                             //</span>
-<span class="c1">//                                                                           //</span>
-<span class="c1">//  You should have received a copy of the GNU General Public License        //</span>
-<span class="c1">//  along with this program; if not, write to the Free Software              //</span>
-<span class="c1">//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //</span>
-<span class="c1">// ------------------------------------------------------------------------- //</span>
-<span class="cm">/*
-	Simply XmlHttpRequest creator. by shirock.
-*/</span>
-<span class="kd">function</span> <span class="nx">NewXmlHttpRequest</span><span class="p">()</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
-	<span class="k">try</span> <span class="p">{</span>
-  		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
-  		<span class="c1">// for almost all browsers. (Maybe included M$IE7)</span>
-	<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE</span><span class="p">){</span>
-  		<span class="k">try</span> <span class="p">{</span>
-    		<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Msxml2.XMLHTTP"</span><span class="p">);</span>
-  		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">tryMSIE2</span><span class="p">)</span> <span class="p">{</span>
-    		<span class="k">try</span> <span class="p">{</span>
-      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ActiveXObject</span><span class="p">(</span><span class="s2">"Microsoft.XMLHTTP"</span><span class="p">);</span>
-    		<span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">NotSupported</span><span class="p">)</span> <span class="p">{</span>
-      			<span class="nx">HttpRequest</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
-    		<span class="p">}</span>
-  		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">HttpRequest</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">AsyncRequest</span><span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="nx">callback</span><span class="p">,</span> <span class="nx">postdata</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">method</span> <span class="o">=</span> <span class="nx">method</span><span class="p">;</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">setUrl</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
-	<span class="p">}</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">callback</span> <span class="o">=</span> <span class="nx">callback</span><span class="p">;</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">setCallback</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">callback</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
-	<span class="p">}</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">postdata</span> <span class="o">=</span> <span class="nx">postdata</span><span class="p">;</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">send</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-		<span class="k">if</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="p">)</span> <span class="p">{</span>
-			<span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span> <span class="o">=</span> <span class="nx">NewXmlHttpRequest</span><span class="p">();</span>
-
-            <span class="kd">var</span> <span class="nx">o</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        		<span class="k">if</span> <span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="na">status</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span>
-            		    <span class="na">statusText</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">statusText</span><span class="p">,</span>
-            		    <span class="na">responseText</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">responseText</span><span class="p">,</span>
-            		    <span class="na">responseXML</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">responseXML</span><span class="p">,</span>
-            		    <span class="na">argument</span><span class="p">:</span> <span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span>
-                    <span class="p">};</span>
-
-        			<span class="k">if</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">status</span> <span class="o">&gt;=</span> <span class="mi">200</span> <span class="o">&amp;&amp;</span> <span class="nx">o</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">300</span><span class="p">)</span> <span class="p">{</span>
-        				<span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">success</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span>
-        			<span class="p">}</span>
-        			<span class="k">else</span> <span class="p">{</span>
-        				<span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">failure</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span>
-        			<span class="p">}</span>
-        		<span class="p">}</span>
-        	<span class="p">}</span>
-
-			<span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">method</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
-		    <span class="k">this</span><span class="p">.</span><span class="nx">HttpRequest</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">postdata</span><span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-
-	<span class="k">return</span> <span class="k">this</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="cm">/*
-HTTP 1.1 status code define,
-also see RFC-2616(http://www.faqs.org/rfcs/rfc2616)
-by shirock.
-*/</span>
-<span class="nx">AsyncRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">HTTPStatusCode</span> <span class="o">=</span> <span class="p">{</span>
-	<span class="s2">"100"</span> <span class="p">:</span> <span class="s1">'Continue'</span><span class="p">,</span>
-	<span class="s2">"101"</span> <span class="p">:</span> <span class="s1">'Switching Protocols'</span><span class="p">,</span>
-	<span class="s2">"200"</span> <span class="p">:</span> <span class="s1">'OK'</span><span class="p">,</span>
-	<span class="s2">"201"</span> <span class="p">:</span> <span class="s1">'Created'</span><span class="p">,</span>
-	<span class="s2">"202"</span> <span class="p">:</span> <span class="s1">'Accepted'</span><span class="p">,</span>
-	<span class="s2">"203"</span> <span class="p">:</span> <span class="s1">'Non-Authoritative Information'</span><span class="p">,</span>
-	<span class="s2">"204"</span> <span class="p">:</span> <span class="s1">'No Content'</span><span class="p">,</span>
-	<span class="s2">"205"</span> <span class="p">:</span> <span class="s1">'Reset Content'</span><span class="p">,</span>
-	<span class="s2">"206"</span> <span class="p">:</span> <span class="s1">'Partial Content'</span><span class="p">,</span>
-	<span class="s2">"300"</span> <span class="p">:</span> <span class="s1">'Multiple Choices'</span><span class="p">,</span>
-	<span class="s2">"301"</span> <span class="p">:</span> <span class="s1">'Moved Permanently'</span><span class="p">,</span>
-	<span class="s2">"302"</span> <span class="p">:</span> <span class="s1">'Found'</span><span class="p">,</span>
-	<span class="s2">"303"</span> <span class="p">:</span> <span class="s1">'See Other'</span><span class="p">,</span>
-	<span class="s2">"304"</span> <span class="p">:</span> <span class="s1">'Not Modified'</span><span class="p">,</span>
-	<span class="s2">"305"</span> <span class="p">:</span> <span class="s1">'Use Proxy'</span><span class="p">,</span>
-	<span class="s2">"307"</span> <span class="p">:</span> <span class="s1">'Temporary Redirect'</span><span class="p">,</span>
-	<span class="s2">"400"</span> <span class="p">:</span> <span class="s1">'Bad Request'</span><span class="p">,</span>
-	<span class="s2">"401"</span> <span class="p">:</span> <span class="s1">'Unauthorized'</span><span class="p">,</span>
-	<span class="s2">"402"</span> <span class="p">:</span> <span class="s1">'Payment Required'</span><span class="p">,</span>
-	<span class="s2">"403"</span> <span class="p">:</span> <span class="s1">'Forbidden'</span><span class="p">,</span>
-	<span class="s2">"404"</span> <span class="p">:</span> <span class="s1">'Not Found'</span><span class="p">,</span>
-	<span class="s2">"405"</span> <span class="p">:</span> <span class="s1">'Method Not Allowed'</span><span class="p">,</span>
-	<span class="s2">"406"</span> <span class="p">:</span> <span class="s1">'Not Acceptable'</span><span class="p">,</span>
-	<span class="s2">"407"</span> <span class="p">:</span> <span class="s1">'Proxy Authentication Required'</span><span class="p">,</span>
-	<span class="s2">"408"</span> <span class="p">:</span> <span class="s1">'Request Time-out'</span><span class="p">,</span>
-	<span class="s2">"409"</span> <span class="p">:</span> <span class="s1">'Conflict'</span><span class="p">,</span>
-  	<span class="s2">"410"</span> <span class="p">:</span> <span class="s1">'Gone'</span><span class="p">,</span>
-	<span class="s2">"411"</span> <span class="p">:</span> <span class="s1">'Length Required'</span><span class="p">,</span>
-	<span class="s2">"412"</span> <span class="p">:</span> <span class="s1">'Precondition Failed'</span><span class="p">,</span>
-	<span class="s2">"413"</span> <span class="p">:</span> <span class="s1">'Request Entity Too Large'</span><span class="p">,</span>
-	<span class="s2">"414"</span> <span class="p">:</span> <span class="s1">'Request-URI Too Large'</span><span class="p">,</span>
-	<span class="s2">"415"</span> <span class="p">:</span> <span class="s1">'Unsupported Media Type'</span><span class="p">,</span>
-	<span class="s2">"416"</span> <span class="p">:</span> <span class="s1">'Requested range not satisfiable'</span><span class="p">,</span>
-	<span class="s2">"417"</span> <span class="p">:</span> <span class="s1">'Expectation Failed'</span><span class="p">,</span>
-	<span class="s2">"500"</span> <span class="p">:</span> <span class="s1">'Internal Server Error'</span><span class="p">,</span>
-	<span class="s2">"501"</span> <span class="p">:</span> <span class="s1">'Not Implemented'</span><span class="p">,</span>
-	<span class="s2">"502"</span> <span class="p">:</span> <span class="s1">'Bad Gateway'</span><span class="p">,</span>
-	<span class="s2">"503"</span> <span class="p">:</span> <span class="s1">'Service Unavailable'</span><span class="p">,</span>
-	<span class="s2">"504"</span> <span class="p">:</span> <span class="s1">'Gateway Time-out'</span><span class="p">,</span>
-	<span class="s2">"505"</span> <span class="p">:</span> <span class="s1">'HTTP Version not supported'</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">style</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text/css'</span><span class="o">&gt;</span>
-<span class="p">.</span><span class="nx">status_standby</span> <span class="p">{</span>
-    <span class="nl">color</span><span class="p">:</span> <span class="nx">green</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="p">.</span><span class="nx">status_busy</span> <span class="p">{</span>
-    <span class="nl">color</span><span class="p">:</span> <span class="nx">red</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">transactions_status</span> <span class="nx">caption</span> <span class="p">{</span>
-	<span class="nl">width</span><span class="p">:</span> <span class="mi">300</span><span class="nx">px</span><span class="p">;</span>
-	<span class="nx">border</span><span class="o">-</span><span class="na">bottom</span><span class="p">:</span> <span class="mi">1</span><span class="nx">px</span> <span class="err">#</span><span class="nx">c0c0c0</span> <span class="kr">double</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">transactions_status</span> <span class="nx">td</span> <span class="p">{</span>
-	<span class="nl">border</span><span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
-	<span class="nl">width</span><span class="p">:</span> <span class="mi">20</span><span class="nx">px</span><span class="p">;</span>
-	<span class="nx">text</span><span class="o">-</span><span class="na">align</span><span class="p">:</span> <span class="nx">center</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="p">{</span>
-	<span class="nl">display</span><span class="p">:</span> <span class="nx">block</span><span class="p">;</span>
-	<span class="nx">list</span><span class="o">-</span><span class="nx">style</span><span class="o">-</span><span class="na">position</span><span class="p">:</span> <span class="nx">inside</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="nx">li</span> <span class="p">{</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="p">.</span><span class="nx">ok</span> <span class="p">{</span>
-	<span class="nx">list</span><span class="o">-</span><span class="nx">style</span><span class="o">-</span><span class="na">image</span><span class="p">:</span> <span class="nx">url</span><span class="p">(..</span><span class="o">/</span><span class="nx">images</span><span class="o">/</span><span class="nx">bookopen</span><span class="p">.</span><span class="nx">gif</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="p">.</span><span class="nx">error</span> <span class="p">{</span>
-	<span class="nl">color</span><span class="p">:</span> <span class="nx">red</span><span class="p">;</span>
-	<span class="nx">list</span><span class="o">-</span><span class="nx">style</span><span class="o">-</span><span class="na">image</span><span class="p">:</span> <span class="nx">url</span><span class="p">(..</span><span class="o">/</span><span class="nx">images</span><span class="o">/</span><span class="nx">user_logout</span><span class="p">.</span><span class="nx">gif</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="nx">li</span> <span class="p">.</span><span class="nx">href</span> <span class="p">{</span>
-	<span class="nx">padding</span><span class="o">-</span><span class="na">right</span><span class="p">:</span> <span class="mi">5</span><span class="nx">px</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="err">#</span><span class="nx">brokenlink</span> <span class="nx">ul</span> <span class="nx">li</span> <span class="p">.</span><span class="nx">errorMessage</span> <span class="p">{</span>
-	<span class="nx">padding</span><span class="o">-</span><span class="na">left</span><span class="p">:</span> <span class="mi">5</span><span class="nx">px</span><span class="p">;</span>
-	<span class="nx">border</span><span class="o">-</span><span class="na">left</span><span class="p">:</span> <span class="mi">2</span><span class="nx">px</span> <span class="err">#</span><span class="mi">000</span> <span class="nx">solid</span><span class="p">;</span>
-
-	<span class="nx">text</span><span class="o">-</span><span class="na">decoration</span><span class="p">:</span> <span class="nx">underline</span><span class="p">;</span>
-    <span class="nl">color</span><span class="p">:</span> <span class="nx">red</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="o">&lt;</span><span class="sr">/style&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="nx">input</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text'</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'url'</span> <span class="nx">name</span><span class="o">=</span><span class="s1">'url'</span> <span class="nx">size</span><span class="o">=</span><span class="s1">'60'</span> <span class="nx">maxlength</span><span class="o">=</span><span class="s1">'1024'</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'&lt;?=XOOPS_URL?&gt;/'</span><span class="o">/&gt;&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
-<span class="o">&lt;</span><span class="nx">label</span><span class="o">&gt;</span><span class="err">偵測深度</span><span class="p">:</span> <span class="o">&lt;</span><span class="sr">/label&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="nx">select</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'depth'</span> <span class="nx">name</span><span class="o">=</span><span class="s1">'depth'</span><span class="o">&gt;</span>
-	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'1'</span><span class="o">&gt;</span><span class="mi">1</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'2'</span><span class="o">&gt;</span><span class="mi">2</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'3'</span><span class="o">&gt;</span><span class="mi">3</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'4'</span><span class="o">&gt;</span><span class="mi">4</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'5'</span><span class="o">&gt;</span><span class="mi">5</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'6'</span><span class="o">&gt;</span><span class="mi">6</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/select&gt;</span><span class="err">
-</span><span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span>
-<span class="o">&lt;</span><span class="nx">label</span><span class="o">&gt;</span><span class="err">工作數</span><span class="p">:</span> <span class="o">&lt;</span><span class="sr">/label&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="nx">select</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'poolsize'</span> <span class="nx">name</span><span class="o">=</span><span class="s1">'poolsize'</span><span class="o">&gt;</span>
-	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'1'</span><span class="o">&gt;</span><span class="mi">1</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'5'</span><span class="o">&gt;</span><span class="mi">5</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'10'</span><span class="o">&gt;</span><span class="mi">10</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'15'</span><span class="o">&gt;</span><span class="mi">15</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span>	<span class="o">&lt;</span><span class="nx">option</span> <span class="nx">value</span><span class="o">=</span><span class="s1">'20'</span><span class="o">&gt;</span><span class="mi">20</span><span class="o">&lt;</span><span class="sr">/option&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/select&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">button</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'button'</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'check'</span><span class="o">&gt;</span><span class="err">確定</span><span class="o">&lt;</span><span class="sr">/button&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">table</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'transactions_status'</span> <span class="nx">width</span><span class="o">=</span><span class="s1">'300'</span> <span class="nx">border</span><span class="o">=</span><span class="s1">'1'</span> <span class="nx">cellspacing</span><span class="o">=</span><span class="s1">'0'</span> <span class="nx">style</span><span class="o">=</span><span class="s1">'display: none;'</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">caption</span><span class="o">&gt;</span><span class="err">工作指示燈</span><span class="o">&lt;</span><span class="sr">/caption&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="nx">tbody</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="nx">tr</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/tr&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/tbody&gt;</span><span class="err">
-</span><span class="o">&lt;</span><span class="sr">/table&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">div</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'brokenlink'</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/div&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">ul</span> <span class="nx">id</span><span class="o">=</span><span class="s1">'s'</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="sr">/ul&gt;</span><span class="err">
-</span>
-<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s1">'text/javascript'</span><span class="o">&gt;</span>
-<span class="kd">function</span> <span class="nx">_append_item</span><span class="p">(</span><span class="nx">task</span><span class="p">,</span> <span class="nx">ul</span><span class="p">,</span> <span class="nx">level</span><span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
-	<span class="nx">ul</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
-	<span class="nx">item</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">paddingLeft</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="nx">level</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'px'</span><span class="p">;</span>
-
-	<span class="kd">var</span> <span class="nx">spanHref</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'span'</span><span class="p">);</span>
-	<span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">spanHref</span><span class="p">);</span>
-	<span class="nx">spanHref</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">;</span>
-	<span class="nx">spanHref</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'href'</span><span class="p">;</span>
-
-	<span class="k">if</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">item</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'ok'</span><span class="p">;</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-	    <span class="nx">item</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'error'</span><span class="p">;</span>
-
-		<span class="kd">var</span> <span class="nx">spanErrorMessage</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'span'</span><span class="p">);</span>
-		<span class="nx">item</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">spanErrorMessage</span><span class="p">);</span>
-		<span class="nx">spanErrorMessage</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'ERROR: '</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">code</span>
-	        <span class="o">+</span> <span class="s1">', '</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">text</span><span class="p">;</span>
-		<span class="nx">spanErrorMessage</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'errorMessage'</span><span class="p">;</span>
-	<span class="p">}</span>
-
-	<span class="k">if</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">level</span> <span class="o">&gt;=</span> <span class="nx">level</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">subUl</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'ul'</span><span class="p">);</span>
-        <span class="nx">ul</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">subUl</span><span class="p">);</span>
-        <span class="nx">level</span><span class="o">++</span><span class="p">;</span>
-
-        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-            <span class="c1">//var_dump( i + ' : ' + task.childUrls[i] );</span>
-            <span class="k">if</span><span class="p">(</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">])</span> <span class="p">{</span>
-            	<span class="nx">subTask</span> <span class="o">=</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">].</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">;</span>
-	            <span class="nx">_append_item</span><span class="p">(</span><span class="nx">subTask</span><span class="p">,</span> <span class="nx">subUl</span><span class="p">,</span> <span class="nx">level</span><span class="p">);</span>
-			<span class="p">}</span>
-			<span class="k">else</span> <span class="p">{</span>
-			    <span class="nb">window</span><span class="p">.</span><span class="nx">alert</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">' is not in visitedUrls.'</span><span class="p">);</span>
-			<span class="p">}</span>
-        <span class="p">}</span>
-
-	<span class="p">}</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">showComplishedQueue</span><span class="p">()</span> <span class="p">{</span>
-	<span class="c1">//var_dump(visitedUrls);</span>
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
-	<span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'h3'</span><span class="p">);</span>
-	<span class="nx">p</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'Complished!'</span><span class="p">;</span>
-	<span class="nx">r</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">p</span><span class="p">);</span>
-	<span class="kd">var</span> <span class="nx">ul</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'ul'</span><span class="p">);</span>
-	<span class="nx">r</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">ul</span><span class="p">);</span>
-
-	<span class="nx">_append_item</span><span class="p">(</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">complishedQueue</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">ul</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-
-	<span class="nx">checkStandby</span><span class="p">();</span>
-<span class="p">};</span>
-
-<span class="kd">function</span> <span class="nx">_global_transactions_status_change</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">stat</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">status</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">);</span>
-    <span class="nx">status</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">)[</span><span class="nx">index</span><span class="p">].</span><span class="nx">className</span> <span class="o">=</span> <span class="s1">'status_'</span> <span class="o">+</span> <span class="nx">stat</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="kd">function</span> <span class="nx">_global_transactions_status_standby</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">_global_transactions_status_change</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="s1">'standby'</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="kd">function</span> <span class="nx">_global_transactions_status_busy</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">_global_transactions_status_change</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="s1">'busy'</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="kd">function</span> <span class="nx">_global_transactions_status_init</span><span class="p">(</span> <span class="nx">size</span> <span class="p">)</span> <span class="p">{</span>
-	<span class="kd">var</span> <span class="nx">status_bar</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tr'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-	<span class="kd">var</span> <span class="nx">td</span> <span class="o">=</span> <span class="nx">status_bar</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">);</span>
-	<span class="k">while</span><span class="p">(</span><span class="nx">td</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="nx">status_bar</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span> <span class="nx">td</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">size</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-    	<span class="kd">var</span> <span class="nx">td</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'td'</span><span class="p">);</span>
-    	<span class="nx">status_bar</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">td</span><span class="p">);</span>
-    	<span class="nx">td</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'#'</span><span class="p">;</span>
-    	<span class="nx">_global_transactions_status_standby</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">Callback</span><span class="p">(</span><span class="nx">transactions</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">argument</span> <span class="o">=</span> <span class="p">{</span>
-		<span class="s1">'taskQueue'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">,</span>
-		<span class="s1">'complishedQueue'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">complishedQueue</span><span class="p">,</span>
-		<span class="s1">'visitedUrls'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">,</span>
-		<span class="s1">'transactions'</span><span class="p">:</span> <span class="nx">transactions</span><span class="p">,</span>
-		<span class="s1">'transactionsIndex'</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
-		<span class="s1">'task'</span><span class="p">:</span> <span class="kc">null</span>
-	<span class="p">};</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">success</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">;</span>
-		<span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">;</span>
-		<span class="c1">//var level = task.level;</span>
-		<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">o</span><span class="p">;</span>
-
-		<span class="kd">var</span> <span class="nx">isOutSide</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-		<span class="k">if</span><span class="p">(</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">urlBase</span> <span class="o">==</span> <span class="kc">false</span>
-		<span class="o">||</span> <span class="nx">url</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="s1">'^'</span> <span class="o">+</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">urlBase</span><span class="p">,</span><span class="s1">'i'</span><span class="p">)</span> <span class="p">)</span>  <span class="p">)</span>
-		<span class="p">{</span>
-			<span class="c1">// if urlBase is false, it means no limit, can detect outer page.</span>
-			<span class="c1">// so think as not outside.</span>
-		    <span class="nx">isOutSide</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-		<span class="p">}</span>
-
-		<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nx">isOutSide</span> <span class="o">&amp;&amp;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">level</span> <span class="o">&lt;</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">depth</span><span class="p">)</span> <span class="p">{</span>
-		    <span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^</span><span class="se">\s</span><span class="sr">*/</span><span class="p">,</span> <span class="s1">''</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\s</span><span class="sr">*$/</span><span class="p">,</span> <span class="s1">''</span><span class="p">);</span> <span class="c1">// trim</span>
-		    <span class="kd">var</span> <span class="nx">matches</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">'?'</span><span class="p">);</span>
-		    <span class="kd">var</span> <span class="nx">baseUrl</span> <span class="o">=</span> <span class="nx">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-		    <span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span>
-		    <span class="k">if</span><span class="p">(</span> <span class="nx">i</span> <span class="o">==</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'//'</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-		        <span class="nx">baseUrl</span> <span class="o">+=</span> <span class="s1">'/'</span><span class="p">;</span>
-		    <span class="p">}</span>
-		    <span class="k">else</span> <span class="p">{</span>
-		        <span class="nx">baseUrl</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">);</span>
-		    <span class="p">}</span>
-
-		    <span class="kd">var</span> <span class="nx">host</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nx">baseUrl</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">'//'</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">));</span>
-		    <span class="kd">var</span> <span class="nx">matches</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">responseText</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/&lt;a</span><span class="se">[^</span><span class="sr">&lt;</span><span class="se">]</span><span class="sr">*</span><span class="se">\s</span><span class="sr">+href=</span><span class="se">([</span><span class="sr">'"</span><span class="se">]?)[</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+.*</span><span class="se">\1</span><span class="sr">/gi</span><span class="p">);</span>
-			<span class="kd">var</span> <span class="nx">wo_matches</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">responseText</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/window</span><span class="se">\.</span><span class="sr">open</span><span class="se">\(([</span><span class="sr">'"</span><span class="se">]?)[</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+.*</span><span class="se">\1</span><span class="sr">/gi</span><span class="p">);</span>
-			<span class="k">if</span><span class="p">(</span><span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
-			    <span class="k">if</span><span class="p">(</span><span class="nx">wo_matches</span><span class="p">)</span> <span class="p">{</span>
-			    	<span class="nx">matches</span> <span class="o">=</span> <span class="nx">matches</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">wo_matches</span><span class="p">);</span>
-				<span class="p">}</span>
-			<span class="p">}</span>
-			<span class="k">else</span> <span class="p">{</span>
-			    <span class="nx">matches</span> <span class="o">=</span> <span class="nx">wo_matches</span><span class="p">;</span>
-			<span class="p">}</span>
-
-		    <span class="k">if</span><span class="p">(</span><span class="nx">matches</span><span class="p">)</span> <span class="p">{</span>
-		        <span class="kd">var</span> <span class="nx">href</span><span class="p">;</span>
-		        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">matches</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		            <span class="k">if</span><span class="p">(</span> <span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'&lt;'</span><span class="p">)</span> <span class="p">{</span>
-		            	<span class="nx">href</span> <span class="o">=</span> <span class="sr">/&lt;a</span><span class="se">[^</span><span class="sr">&lt;</span><span class="se">]</span><span class="sr">*</span><span class="se">\s</span><span class="sr">+href=</span><span class="se">([</span><span class="sr">'"</span><span class="se">]?)([</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+</span><span class="se">)</span><span class="sr">.*</span><span class="se">\1</span><span class="sr">/i</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">])[</span><span class="mi">2</span><span class="p">];</span>
-					<span class="p">}</span>
-					<span class="k">else</span> <span class="p">{</span>
-		            	<span class="nx">href</span> <span class="o">=</span> <span class="sr">/window</span><span class="se">\.</span><span class="sr">open</span><span class="se">\(([</span><span class="sr">'"</span><span class="se">]?)([</span><span class="sr">a-z0-9_:</span><span class="se">\.\/</span><span class="sr">~%-</span><span class="se">]</span><span class="sr">+</span><span class="se">)</span><span class="sr">.*</span><span class="se">\1</span><span class="sr">/i</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">])[</span><span class="mi">2</span><span class="p">];</span>
-					<span class="p">}</span>
-
-		            <span class="kd">var</span> <span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-		            <span class="c1">// Does start with protocol:// ?</span>
-		            <span class="kd">var</span> <span class="nx">parts</span> <span class="o">=</span> <span class="nx">href</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^</span><span class="se">\w</span><span class="sr">+:/</span><span class="p">);</span>
-		            <span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nx">parts</span> <span class="o">||</span> <span class="nx">parts</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-		            	<span class="k">if</span><span class="p">(</span><span class="nx">href</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'/'</span><span class="p">)</span> <span class="p">{</span>
-		            	    <span class="nx">href</span> <span class="o">=</span> <span class="nx">host</span> <span class="o">+</span> <span class="nx">href</span><span class="p">;</span>
-		            	<span class="p">}</span>
-		            	<span class="k">else</span> <span class="p">{</span>
-		                	<span class="nx">href</span> <span class="o">=</span> <span class="nx">baseUrl</span> <span class="o">+</span> <span class="nx">href</span><span class="p">;</span>
-		            	<span class="p">}</span>
-
-		            	<span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-		            <span class="p">}</span>
-		            <span class="k">else</span> <span class="p">{</span>
-		                <span class="k">if</span><span class="p">(</span><span class="nx">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http:"</span>
-						<span class="o">&amp;&amp;</span> <span class="nx">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"https:"</span><span class="p">)</span>
-		            	<span class="p">{</span>
-		                    <span class="k">continue</span><span class="p">;</span>   <span class="c1">// skip, not http or https</span>
-		            	<span class="p">}</span>
-
-		            	<span class="kd">var</span> <span class="nx">indexLastDoubleSlashes</span> <span class="o">=</span> <span class="nx">href</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'//'</span><span class="p">);</span>
-		            	<span class="kd">var</span> <span class="nx">indexLastSlash</span> <span class="o">=</span> <span class="nx">href</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span>
-		            	<span class="k">if</span><span class="p">(</span><span class="nx">indexLastDoubleSlashes</span> <span class="o">==</span> <span class="nx">indexLastSlash</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-		            	   <span class="nx">href</span> <span class="o">+=</span> <span class="s1">'/'</span><span class="p">;</span>
-		            	   <span class="c1">// it's a root directory without '/' as trail char.</span>
-		            	<span class="p">}</span>
-
-		            	<span class="k">if</span><span class="p">(</span><span class="nx">href</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">host</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="o">==</span> <span class="nx">host</span><span class="p">)</span> <span class="p">{</span>
-		            		<span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-		            	<span class="p">}</span>
-		            	<span class="k">else</span> <span class="p">{</span>
-		            		<span class="nx">isLocalHref</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-		            	<span class="p">}</span>
-		            <span class="p">}</span>
-
-					<span class="k">this</span><span class="p">.</span><span class="nx">appendChildUrls</span><span class="p">(</span><span class="nx">task</span><span class="p">,</span> <span class="nx">href</span><span class="p">);</span>
-
-		            <span class="k">if</span><span class="p">(</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span><span class="nx">href</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span><span class="nx">href</span><span class="p">].</span><span class="nx">argument</span> <span class="p">)</span> <span class="p">{</span>
-		                <span class="c1">// had visited, skip.</span>
-		                <span class="k">continue</span><span class="p">;</span>
-		            <span class="p">}</span>
-		            <span class="k">else</span> <span class="p">{</span>
-		                <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">href</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-		               	<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="k">new</span> <span class="nx">Task</span><span class="p">(</span><span class="nx">task</span><span class="p">.</span><span class="nx">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nx">href</span><span class="p">)</span> <span class="p">);</span>
-		            <span class="p">}</span>
-
-		        <span class="p">}</span> <span class="c1">// for each matches</span>
-			<span class="p">}</span> <span class="c1">// end of if(matches)</span>
-		<span class="p">}</span> <span class="c1">// end of if(level &lt; o.argument.depth)</span>
-
-		<span class="k">this</span><span class="p">.</span><span class="nx">endTransaction</span><span class="p">(</span><span class="nx">o</span><span class="p">);</span>
-
-		<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">);</span>
-		<span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
-		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="o">+</span> <span class="s1">': ok.'</span><span class="p">;</span>
-		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">" childUrls: "</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
-		<span class="nx">s</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
-	<span class="p">}</span> <span class="c1">// end of event handler success</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">failure</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
-		<span class="c1">//window.alert('failure');</span>
-		<span class="nx">transactions</span><span class="p">.</span><span class="nx">visitedUrls</span><span class="p">[</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">o</span><span class="p">;</span>
-		<span class="k">this</span><span class="p">.</span><span class="nx">endTransaction</span><span class="p">(</span><span class="nx">o</span><span class="p">);</span>
-
-		<span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">);</span>
-		<span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
-		<span class="nx">item</span><span class="p">.</span><span class="nx">style</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="s1">'red'</span><span class="p">;</span>
-		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="o">+</span> <span class="s1">': failure.'</span><span class="p">;</span>
-		<span class="nx">item</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">+=</span> <span class="s2">" childUrls: "</span> <span class="o">+</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
-		<span class="nx">s</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">item</span><span class="p">);</span>
-	<span class="p">}</span> <span class="c1">// end of event handler failure</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">appendChildUrls</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">,</span> <span class="nx">href</span><span class="p">)</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">isInChildUrls</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-		    <span class="k">if</span><span class="p">(</span> <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">==</span> <span class="nx">href</span><span class="p">)</span> <span class="p">{</span>
-		        <span class="nx">isInChildUrls</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-		        <span class="k">break</span><span class="p">;</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-		<span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="nx">isInChildUrls</span> <span class="p">)</span> <span class="p">{</span>
-		    <span class="nx">task</span><span class="p">.</span><span class="nx">childUrls</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="nx">href</span> <span class="p">);</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">endTransaction</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
-		<span class="c1">//release slot</span>
-		<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">poolCheckout</span><span class="p">(</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactionsIndex</span> <span class="p">);</span>
-
-		<span class="k">this</span><span class="p">.</span><span class="nx">appendComplishedTask</span><span class="p">(</span><span class="nx">o</span><span class="p">);</span>
-		<span class="k">this</span><span class="p">.</span><span class="nx">checkPoolAndTask</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactions</span><span class="p">);</span>
-	<span class="p">}</span> <span class="c1">// end of function Callback.endTransaction</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">appendComplishedTask</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span><span class="p">;</span>
-		<span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">code</span> <span class="o">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">status</span><span class="p">;</span>
-		<span class="k">if</span><span class="p">(</span> <span class="nx">AsyncRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">HTTPStatusCode</span><span class="p">[</span> <span class="nx">o</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">]</span> <span class="p">)</span> <span class="p">{</span>
-			<span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="nx">AsyncRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">HTTPStatusCode</span><span class="p">[</span> <span class="nx">o</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">];</span>
-			<span class="c1">//the o.statusText always returns 'OK'...</span>
-		<span class="p">}</span>
-		<span class="k">else</span> <span class="p">{</span>
-		    <span class="nx">task</span><span class="p">.</span><span class="nx">status</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="s1">'Undefined Error!'</span><span class="p">;</span>
-		<span class="p">}</span>
-		<span class="nx">o</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">complishedQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="nx">task</span> <span class="p">);</span>
-	<span class="p">}</span> <span class="c1">// end of function Callback.appendComplishedTask</span>
-
-	<span class="k">this</span><span class="p">.</span><span class="nx">checkPoolAndTask</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">transactions</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">if</span><span class="p">(</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span>
-		<span class="o">&amp;&amp;</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">isPoolAllDone</span><span class="p">()</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span>
-		<span class="p">{</span>
-			<span class="nb">window</span><span class="p">.</span><span class="nx">clearInterval</span><span class="p">(</span> <span class="nx">transactions</span><span class="p">.</span><span class="nx">interval</span> <span class="p">);</span>
-			<span class="c1">//window.alert('complished');</span>
-			<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">transactions</span><span class="p">.</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span>
-				<span class="nx">transactions</span><span class="p">.</span><span class="nx">done</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
-				<span class="nx">showComplishedQueue</span><span class="p">();</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span> <span class="c1">// end of function Callback.checkPoolAndTask</span>
-
-<span class="p">}</span> <span class="c1">// end of function Callback</span>
-
-<span class="kd">function</span> <span class="nx">Task</span><span class="p">(</span><span class="nx">level</span><span class="p">,</span> <span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">level</span> <span class="o">=</span> <span class="nx">level</span><span class="p">;</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">=</span> <span class="p">{</span>
-	  <span class="na">code</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
-	  <span class="na">text</span><span class="p">:</span> <span class="kc">null</span>
-	<span class="p">};</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">childUrls</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
-<span class="p">}</span>
-
-<span class="kd">var</span> <span class="nx">transactions</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="na">Transaction</span><span class="p">:</span> <span class="kd">function</span> <span class="nx">Transaction</span><span class="p">(</span><span class="nx">transactions</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">this</span><span class="p">.</span><span class="nx">transaction</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AsyncRequest</span><span class="p">(</span> <span class="s1">'GET'</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="kc">null</span> <span class="p">);</span>
-		<span class="k">this</span><span class="p">.</span><span class="nx">callback</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Callback</span><span class="p">(</span> <span class="nx">transactions</span> <span class="p">);</span> <span class="c1">// pass transactions self.</span>
-	<span class="p">},</span>
-
-	<span class="na">taskQueue</span><span class="p">:</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(),</span>
-	<span class="na">clearTaskQueue</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
-	<span class="p">},</span>
-
-	<span class="na">complishedQueue</span><span class="p">:</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(),</span>
-	<span class="na">clearComplishedQueue</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">complishedQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span>
-	<span class="p">},</span>
-
-	<span class="na">visitedUrls</span><span class="p">:</span> <span class="p">{</span>
-	<span class="p">},</span> <span class="c1">// new empty object.</span>
-
-	<span class="na">urlBase</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-	<span class="na">depth</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-	<span class="na">done</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-
-	<span class="c1">//proxy: '&lt;?=XOOPS_URL?&gt;/modules/brokenlink/admin/proxy.php',</span>
-	<span class="na">proxy</span><span class="p">:</span> <span class="s1">'proxy.php'</span><span class="p">,</span>
-
-	<span class="na">pool</span><span class="p">:</span> <span class="p">[</span> <span class="kc">null</span> <span class="p">],</span>
-	<span class="na">poolBusy</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-	<span class="na">setPool</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">size</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">this</span><span class="p">.</span><span class="nx">pool</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">(</span><span class="nx">size</span><span class="p">);</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">size</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
-		<span class="p">}</span>
-		<span class="nx">poolBusy</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-
-		<span class="nx">_global_transactions_status_init</span><span class="p">(</span><span class="nx">size</span><span class="p">);</span>
-	<span class="p">},</span>
-
-	<span class="na">poolCheckin</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="kd">var</span> <span class="nx">index</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-		<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-			<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-				<span class="nx">_global_transactions_status_busy</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
-
-				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="k">this</span><span class="p">.</span><span class="nx">Transaction</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-				<span class="k">this</span><span class="p">.</span><span class="nx">poolBusy</span><span class="o">++</span><span class="p">;</span>
-				<span class="nx">index</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>
-
-				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">transactionsIndex</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>
-				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">callback</span><span class="p">.</span><span class="nx">argument</span><span class="p">.</span><span class="nx">task</span> <span class="o">=</span> <span class="nx">task</span><span class="p">;</span>
-
-				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">setUrl</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">proxy</span> <span class="o">+</span> <span class="s1">'?url='</span> <span class="o">+</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="cm">/*anchor.href*/</span> <span class="p">);</span>
-				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">setCallback</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">callback</span> <span class="p">);</span>
-				<span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">send</span><span class="p">();</span>
-
-				<span class="k">break</span><span class="p">;</span>
-			<span class="p">}</span>
-		<span class="p">}</span> <span class="c1">// end of for</span>
-		<span class="k">return</span> <span class="nx">index</span><span class="p">;</span>
-	<span class="p">},</span> <span class="c1">// end of function transaction.poolCheckin</span>
-
-	<span class="na">poolCheckout</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">pool</span><span class="p">[</span> <span class="nx">index</span> <span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">poolBusy</span><span class="o">--</span><span class="p">;</span>
-
-	    <span class="nx">_global_transactions_status_standby</span><span class="p">(</span><span class="nx">index</span><span class="p">);</span>
-	<span class="p">},</span>
-
-	<span class="na">isPoolAllDone</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	    <span class="k">return</span> <span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">poolBusy</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">?</span> <span class="kc">false</span> <span class="p">:</span> <span class="kc">true</span><span class="p">);</span>
-	<span class="p">},</span>
-
-	<span class="na">_getTransaction</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="p">{</span>
-		<span class="kd">var</span> <span class="nx">index</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">poolCheckin</span><span class="p">(</span><span class="nx">task</span><span class="p">);</span>
-		<span class="k">return</span> <span class="p">(</span> <span class="nx">index</span> <span class="o">===</span> <span class="kc">false</span> <span class="p">?</span> <span class="kc">false</span> <span class="p">:</span> <span class="kc">true</span> <span class="p">);</span>
-	<span class="p">},</span>
-
-	<span class="na">getPage</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">task</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">task</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^</span><span class="se">\s</span><span class="sr">*/</span><span class="p">,</span> <span class="s1">''</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\s</span><span class="sr">*$/</span><span class="p">,</span> <span class="s1">''</span><span class="p">);</span> <span class="c1">// trim</span>
-
-   		<span class="cm">/*
-		var matches = url.split('?');
-		var baseUrl = matches[0];
-		var i = baseUrl.lastIndexOf('/');
-		if( i == baseUrl.indexOf('//')+1) {
-		    baseUrl += '/';
-		}
-		else {
-			baseUrl = baseUrl.substring(0, i + 1 );
-		}
-		var host = baseUrl.substring(0, baseUrl.indexOf('/', baseUrl.indexOf('//')+2));
-		var anchor = {
-		  'host': host,
-		  'base': baseUrl,
-		  'level': level,
-		  'href': url
-		};*/</span>
-
-		<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_getTransaction</span><span class="p">(</span><span class="nx">task</span><span class="p">)</span> <span class="o">==</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-		  <span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">task</span><span class="p">);</span>
-		<span class="p">}</span>
-
-	<span class="p">},</span>
-
-  	<span class="na">interval</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
-
-	<span class="na">clearAll</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">clearTaskQueue</span><span class="p">();</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">clearComplishedQueue</span><span class="p">();</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">visitedUrls</span> <span class="o">=</span> <span class="p">{};</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">setPool</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-	    <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-	        <span class="nb">window</span><span class="p">.</span><span class="nx">clearInterval</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="p">);</span>
-		<span class="p">}</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
-	    <span class="k">this</span><span class="p">.</span><span class="nx">done</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="p">},</span>
-
-  <span class="na">travel</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-	<span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-      <span class="k">if</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">interval</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">setInterval</span><span class="p">(</span><span class="s1">'transactions.travel()'</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-	<span class="kd">var</span> <span class="nx">task</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
-	<span class="k">this</span><span class="p">.</span><span class="nx">getPage</span><span class="p">(</span><span class="nx">task</span><span class="p">);</span>
-
-	<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-  <span class="p">}</span>
-
-<span class="p">};</span>
-
-<span class="kd">function</span> <span class="nx">checkGo</span><span class="p">(</span><span class="nx">el</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">urlTextBox</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'url'</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="nx">urlTextBox</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="p">}</span>
-
-    <span class="nx">disableCheckClick</span><span class="p">();</span>
-
-    <span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'li'</span><span class="p">);</span>
-    <span class="k">while</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-    <span class="p">}</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'block'</span><span class="p">;</span>
-
-    <span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'h3'</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-    <span class="p">}</span>
-    <span class="kd">var</span> <span class="nx">t</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'ul'</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'brokenlink'</span><span class="p">).</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-    <span class="p">}</span>
-
-	<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'block'</span><span class="p">;</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'執行中...'</span><span class="p">;</span>
-
-    <span class="nx">transactions</span><span class="p">.</span><span class="nx">clearAll</span><span class="p">();</span>
-
-    <span class="nx">transactions</span><span class="p">.</span><span class="nx">taskQueue</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="k">new</span> <span class="nx">Task</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">urlTextBox</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="p">);</span>
-
-    <span class="nx">transactions</span><span class="p">.</span><span class="nx">depth</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'depth'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
-
-	<span class="c1">//if( goOutSide ) {</span>
-	<span class="c1">//  transactions.urlBase = false;</span>
-	<span class="c1">//else {</span>
-    <span class="nx">transactions</span><span class="p">.</span><span class="nx">urlBase</span> <span class="o">=</span> <span class="nx">urlTextBox</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
-    <span class="c1">//}</span>
-
-    <span class="nx">transactions</span><span class="p">.</span><span class="nx">setPool</span><span class="p">(</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'poolsize'</span><span class="p">).</span><span class="nx">value</span> <span class="p">);</span>
-
-	<span class="nx">transactions</span><span class="p">.</span><span class="nx">done</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="nx">transactions</span><span class="p">.</span><span class="nx">travel</span><span class="p">();</span>
-    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">enableCheckClick</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">elm</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">elm</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// IE</span>
-        <span class="nx">elm</span><span class="p">.</span><span class="nx">attachEvent</span><span class="p">(</span><span class="s1">'onclick'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span> <span class="c1">// DOM</span>
-        <span class="nx">elm</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'click'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">disableCheckClick</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">elm</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">elm</span><span class="p">.</span><span class="nx">detachEvent</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// IE</span>
-        <span class="nx">elm</span><span class="p">.</span><span class="nx">detachEvent</span><span class="p">(</span><span class="s1">'onclick'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span> <span class="c1">// DOM</span>
-        <span class="nx">elm</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="s1">'click'</span><span class="p">,</span> <span class="nx">checkGo</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="p">(</span><span class="kd">function</span> <span class="nx">checkStandby</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">enableCheckClick</span><span class="p">();</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'s'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'transactions_status'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="s1">'none'</span><span class="p">;</span>
-    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'check'</span><span class="p">).</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="s1">'確定'</span><span class="p">;</span>
-<span class="p">})();</span>
-<span class="o">&lt;</span><span class="sr">/script&gt;</span><span class="err">
-</span>
-<span class="c">&lt;!--</span><span class="p">?</span><span class="nx">php</span>
-<span class="nx">xoops_cp_footer</span><span class="p">();</span>
-<span class="p">?</span><span class="o">--&gt;</span>
-</code></pre>
-
-
-<h6>proxy.php</h6>
-<p>
-因為 XmlHttpRequest 有相同網址資源存取限制，所以 Brokenlink detector 需要一個 proxy 以讀取其他網頁的內容。Proxy 可以用任何工具撰寫，只要記住 Brokenlink detector 總是以 <code>?url=連結網址</code> 的形式調用 proxy。例如: <code>proxy.php?url=連結網址</code>。
-</p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">//  Proxy for XmlHttpRequest of JavaScript
+{% highlight javascript %}
+<!--?php
+include '../../../include/cp_header.php';
+if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
+	include "../language/".$xoopsConfig['language']."/main.php";
+}
+//global $xoopsDB;
+//$myts =& MyTextSanitizer::getInstance();
+$pagetitle = "<h4>"._MD_ADMIN_NAME."</h4>";
+
+xoops_cp_header();
+?-->
+<script type="text/javascript">
+//  Brokenlink detector
 //  Copyright (C) 2006 shirock
 //  ------------------------------------------------------------------------ //
 //  This program is free software; you can redistribute it and/or modify     //
@@ -758,99 +52,809 @@ by shirock.
 //  along with this program; if not, write to the Free Software              //
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //
 // ------------------------------------------------------------------------- //
-</span>
-<span class="cm">/* for Xoops
+/*
+	Simply XmlHttpRequest creator. by shirock.
+*/
+function NewXmlHttpRequest() {
+	var HttpRequest = null;
+	try {
+  		HttpRequest = new XMLHttpRequest();
+  		// for almost all browsers. (Maybe included M$IE7)
+	} catch (tryMSIE){
+  		try {
+    		HttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+  		} catch (tryMSIE2) {
+    		try {
+      			HttpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+    		} catch (NotSupported) {
+      			HttpRequest = null;
+    		}
+  		}
+	}
+	return HttpRequest;
+}
+
+function AsyncRequest(method, url, callback, postdata) {
+	this.method = method;
+
+	this.url = url;
+	this.setUrl = function(value) {
+	    this.url = value;
+	}
+
+	this.callback = callback;
+	this.setCallback = function(value) {
+	    this.callback = value;
+	}
+
+	this.postdata = postdata;
+
+	this.send = function() {
+		if( this.url ) {
+			this.HttpRequest = NewXmlHttpRequest();
+
+            var o = this;
+            this.HttpRequest.onreadystatechange = function() {
+        		if (o.HttpRequest.readyState == 4) {
+                    var obj = {
+                        status: o.HttpRequest.status,
+            		    statusText: o.HttpRequest.statusText,
+            		    responseText: o.HttpRequest.responseText,
+            		    responseXML: o.HttpRequest.responseXML,
+            		    argument: o.callback.argument
+                    };
+
+        			if(o.HttpRequest.status >= 200 && o.HttpRequest.status < 300) {
+        				o.callback.success(obj);
+        			}
+        			else {
+        				o.callback.failure(obj);
+        			}
+        		}
+        	}
+
+			this.HttpRequest.open(this.method, this.url, true);
+		    this.HttpRequest.send(this.postdata);
+		}
+	}
+
+	return this;
+}
+
+/*
+HTTP 1.1 status code define,
+also see RFC-2616(http://www.faqs.org/rfcs/rfc2616)
+by shirock.
+*/
+AsyncRequest.prototype.HTTPStatusCode = {
+	"100" : 'Continue',
+	"101" : 'Switching Protocols',
+	"200" : 'OK',
+	"201" : 'Created',
+	"202" : 'Accepted',
+	"203" : 'Non-Authoritative Information',
+	"204" : 'No Content',
+	"205" : 'Reset Content',
+	"206" : 'Partial Content',
+	"300" : 'Multiple Choices',
+	"301" : 'Moved Permanently',
+	"302" : 'Found',
+	"303" : 'See Other',
+	"304" : 'Not Modified',
+	"305" : 'Use Proxy',
+	"307" : 'Temporary Redirect',
+	"400" : 'Bad Request',
+	"401" : 'Unauthorized',
+	"402" : 'Payment Required',
+	"403" : 'Forbidden',
+	"404" : 'Not Found',
+	"405" : 'Method Not Allowed',
+	"406" : 'Not Acceptable',
+	"407" : 'Proxy Authentication Required',
+	"408" : 'Request Time-out',
+	"409" : 'Conflict',
+  	"410" : 'Gone',
+	"411" : 'Length Required',
+	"412" : 'Precondition Failed',
+	"413" : 'Request Entity Too Large',
+	"414" : 'Request-URI Too Large',
+	"415" : 'Unsupported Media Type',
+	"416" : 'Requested range not satisfiable',
+	"417" : 'Expectation Failed',
+	"500" : 'Internal Server Error',
+	"501" : 'Not Implemented',
+	"502" : 'Bad Gateway',
+	"503" : 'Service Unavailable',
+	"504" : 'Gateway Time-out',
+	"505" : 'HTTP Version not supported'
+}
+</script>
+
+<style type='text/css'>
+.status_standby {
+    color: green;
+}
+.status_busy {
+    color: red;
+}
+#transactions_status caption {
+	width: 300px;
+	border-bottom: 1px #c0c0c0 double;
+}
+#transactions_status td {
+	border: 0;
+	width: 20px;
+	text-align: center;
+}
+
+#brokenlink ul {
+	display: block;
+	list-style-position: inside;
+}
+#brokenlink ul li {
+}
+#brokenlink ul .ok {
+	list-style-image: url(../images/bookopen.gif);
+}
+#brokenlink ul .error {
+	color: red;
+	list-style-image: url(../images/user_logout.gif);
+}
+#brokenlink ul li .href {
+	padding-right: 5px;
+}
+#brokenlink ul li .errorMessage {
+	padding-left: 5px;
+	border-left: 2px #000 solid;
+
+	text-decoration: underline;
+    color: red;
+}
+</style>
+<input type='text' id='url' name='url' size='60' maxlength='1024' value='<?=XOOPS_URL?>/'/><br/>
+<label>偵測深度: </label>
+<select id='depth' name='depth'>
+	<option value='1'>1</option>
+	<option value='2'>2</option>
+	<option value='3'>3</option>
+	<option value='4'>4</option>
+	<option value='5'>5</option>
+	<option value='6'>6</option>
+</select>
+&nbsp;
+<label>工作數: </label>
+<select id='poolsize' name='poolsize'>
+	<option value='1'>1</option>
+	<option value='5'>5</option>
+	<option value='10'>10</option>
+	<option value='15'>15</option>
+	<option value='20'>20</option>
+</select>
+
+<button type='button' id='check'>確定</button>
+
+<table id='transactions_status' width='300' border='1' cellspacing='0' style='display: none;'>
+<caption>工作指示燈</caption>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+
+<div id='brokenlink'>
+</div>
+
+<ul id='s'>
+</ul>
+
+<script type='text/javascript'>
+function _append_item(task, ul, level) {
+	var item = document.createElement('li');
+	ul.appendChild(item);
+	item.style.paddingLeft = (20*level) + 'px';
+
+	var spanHref = document.createElement('span');
+	item.appendChild(spanHref);
+	spanHref.innerHTML = task.url;
+	spanHref.className = 'href';
+
+	if(task.status.code == 200) {
+	    item.className = 'ok';
+	}
+	else {
+	    item.className = 'error';
+
+		var spanErrorMessage = document.createElement('span');
+		item.appendChild(spanErrorMessage);
+		spanErrorMessage.innerHTML = 'ERROR: ' + task.status.code
+	        + ', ' + task.status.text;
+		spanErrorMessage.className = 'errorMessage';
+	}
+
+	if(task.childUrls.length > 0 && task.level >= level) {
+        var subUl = document.createElement('ul');
+        ul.appendChild(subUl);
+        level++;
+
+        for(var i = 0; i < task.childUrls.length; i++) {
+            //var_dump( i + ' : ' + task.childUrls[i] );
+            if(transactions.visitedUrls[ task.childUrls[i] ]) {
+            	subTask = transactions.visitedUrls[ task.childUrls[i] ].argument.task;
+	            _append_item(subTask, subUl, level);
+			}
+			else {
+			    window.alert(task.childUrls[i] + ' is not in visitedUrls.');
+			}
+        }
+
+	}
+}
+
+function showComplishedQueue() {
+	//var_dump(visitedUrls);
+	document.getElementById('transactions_status').style.display = 'none';
+	var r = document.getElementById('brokenlink');
+	var p = document.createElement('h3');
+	p.innerHTML = 'Complished!';
+	r.appendChild(p);
+	var ul = document.createElement('ul');
+	r.appendChild(ul);
+
+	_append_item(transactions.complishedQueue[0], ul, 0);
+
+	checkStandby();
+};
+
+function _global_transactions_status_change(index, stat) {
+    var status = document.getElementById('transactions_status');
+    status.getElementsByTagName('td')[index].className = 'status_' + stat;
+}
+function _global_transactions_status_standby(index) {
+    _global_transactions_status_change(index, 'standby');
+}
+function _global_transactions_status_busy(index) {
+    _global_transactions_status_change(index, 'busy');
+}
+function _global_transactions_status_init( size ) {
+	var status_bar = document.getElementById('transactions_status').getElementsByTagName('tr')[0];
+	var td = status_bar.getElementsByTagName('td');
+	while(td.length > 0) {
+	    status_bar.removeChild( td[0] );
+	}
+	for(var i = 0; i < size; i++) {
+    	var td = document.createElement('td');
+    	status_bar.appendChild(td);
+    	td.innerHTML = '#';
+    	_global_transactions_status_standby(i);
+	}
+}
+
+function Callback(transactions) {
+	this.argument = {
+		'taskQueue': transactions.taskQueue,
+		'complishedQueue': transactions.complishedQueue,
+		'visitedUrls': transactions.visitedUrls,
+		'transactions': transactions,
+		'transactionsIndex': null,
+		'task': null
+	};
+
+	this.success = function(o) {
+		var task = o.argument.task;
+		var url = task.url;
+		//var level = task.level;
+		o.argument.visitedUrls[ task.url.toString() ] = o;
+
+		var isOutSide = true;
+		if( o.argument.transactions.urlBase == false
+		|| url.match( new RegExp('^' + o.argument.transactions.urlBase,'i') )  )
+		{
+			// if urlBase is false, it means no limit, can detect outer page.
+			// so think as not outside.
+		    isOutSide = false;
+		}
+
+		if( !isOutSide && task.level < o.argument.transactions.depth) {
+		    url = url.replace(/^\s*/, '').replace(/\s*$/, ''); // trim
+		    var matches = url.split('?');
+		    var baseUrl = matches[0];
+		    var i = baseUrl.lastIndexOf('/');
+		    if( i == baseUrl.indexOf('//')+1) {
+		        baseUrl += '/';
+		    }
+		    else {
+		        baseUrl = baseUrl.substring(0, i + 1 );
+		    }
+
+		    var host = baseUrl.substring(0, baseUrl.indexOf('/', baseUrl.indexOf('//')+2));
+		    var matches = o.responseText.match(/<a[^<]*\s+href=(['"]?)[a-z0-9_:\.\/~%-]+.*\1/gi);
+			var wo_matches = o.responseText.match(/window\.open\((['"]?)[a-z0-9_:\.\/~%-]+.*\1/gi);
+			if(matches) {
+			    if(wo_matches) {
+			    	matches = matches.concat(wo_matches);
+				}
+			}
+			else {
+			    matches = wo_matches;
+			}
+
+		    if(matches) {
+		        var href;
+		        for(var i = 0; i < matches.length; i++) {
+		            if( matches[i].charAt(0) == '<') {
+		            	href = /<a[^<]*\s+href=(['"]?)([a-z0-9_:\.\/~%-]+).*\1/i.exec(matches[i])[2];
+					}
+					else {
+		            	href = /window\.open\((['"]?)([a-z0-9_:\.\/~%-]+).*\1/i.exec(matches[i])[2];
+					}
+
+		            var isLocalHref = false;
+		            // Does start with protocol:// ?
+		            var parts = href.match(/^\w+:/);
+		            if( !parts || parts.length <= 0) {
+		            	if(href.charAt(0) == '/') {
+		            	    href = host + href;
+		            	}
+		            	else {
+		                	href = baseUrl + href;
+		            	}
+
+		            	isLocalHref = true;
+		            }
+		            else {
+		                if(parts[0] != "http:"
+						&& parts[0] != "https:")
+		            	{
+		                    continue;   // skip, not http or https
+		            	}
+
+		            	var indexLastDoubleSlashes = href.lastIndexOf('//');
+		            	var indexLastSlash = href.lastIndexOf('/');
+		            	if(indexLastDoubleSlashes == indexLastSlash - 1) {
+		            	   href += '/';
+		            	   // it's a root directory without '/' as trail char.
+		            	}
+
+		            	if(href.substring(0, host.length) == host) {
+		            		isLocalHref = true;
+		            	}
+		            	else {
+		            		isLocalHref = false;
+		            	}
+		            }
+
+					this.appendChildUrls(task, href);
+
+		            if( o.argument.visitedUrls[href] && o.argument.visitedUrls[href].argument ) {
+		                // had visited, skip.
+		                continue;
+		            }
+		            else {
+		                o.argument.visitedUrls[ href.toString() ] = false;
+		               	o.argument.taskQueue.push( new Task(task.level+1, href) );
+		            }
+
+		        } // for each matches
+			} // end of if(matches)
+		} // end of if(level < o.argument.depth)
+
+		this.endTransaction(o);
+
+		var s = document.getElementById('s');
+		var item = document.createElement('li');
+		item.innerHTML = o.argument.task.url + ': ok.';
+		item.innerHTML += " childUrls: " + task.childUrls.length;
+		s.appendChild(item);
+	} // end of event handler success
+
+	this.failure = function(o) {
+		//window.alert('failure');
+		transactions.visitedUrls[ o.argument.task.url.toString() ] = o;
+		this.endTransaction(o);
+
+		var s = document.getElementById('s');
+		var item = document.createElement('li');
+		item.style.color = 'red';
+		item.innerHTML = o.argument.task.url + ': failure.';
+		item.innerHTML += " childUrls: " + o.argument.task.childUrls.length;
+		s.appendChild(item);
+	} // end of event handler failure
+
+	this.appendChildUrls = function(task, href) {
+		var isInChildUrls = false;
+		for(var i = 0; i < task.childUrls.length; i++) {
+		    if( task.childUrls[i] == href) {
+		        isInChildUrls = true;
+		        break;
+			}
+		}
+		if( !isInChildUrls ) {
+		    task.childUrls.push( href );
+		}
+	}
+
+	this.endTransaction = function(o) {
+		//release slot
+		o.argument.transactions.poolCheckout( o.argument.transactionsIndex );
+
+		this.appendComplishedTask(o);
+		this.checkPoolAndTask(o.argument.transactions);
+	} // end of function Callback.endTransaction
+
+	this.appendComplishedTask = function(o) {
+		var task = o.argument.task;
+		task.status.code = o.status;
+		if( AsyncRequest.prototype.HTTPStatusCode[ o.status.toString() ] ) {
+			task.status.text = AsyncRequest.prototype.HTTPStatusCode[ o.status.toString() ];
+			//the o.statusText always returns 'OK'...
+		}
+		else {
+		    task.status.text = 'Undefined Error!';
+		}
+		o.argument.complishedQueue.push( task );
+	} // end of function Callback.appendComplishedTask
+
+	this.checkPoolAndTask = function(transactions) {
+		if(transactions.taskQueue.length <= 0
+		&& transactions.isPoolAllDone() == true)
+		{
+			window.clearInterval( transactions.interval );
+			//window.alert('complished');
+			if(!transactions.done) {
+				transactions.done = true;
+				showComplishedQueue();
+			}
+		}
+	} // end of function Callback.checkPoolAndTask
+
+} // end of function Callback
+
+function Task(level, url) {
+	this.level = level;
+	this.url = url;
+	this.status = {
+	  code: null,
+	  text: null
+	};
+	this.childUrls = new Array();
+}
+
+var transactions = {
+    Transaction: function Transaction(transactions) {
+		this.transaction = new AsyncRequest( 'GET', null, null, null );
+		this.callback = new Callback( transactions ); // pass transactions self.
+	},
+
+	taskQueue: new Array(),
+	clearTaskQueue: function() {
+	    this.taskQueue = new Array();
+	},
+
+	complishedQueue: new Array(),
+	clearComplishedQueue: function() {
+	    this.complishedQueue = new Array();
+	},
+
+	visitedUrls: {
+	}, // new empty object.
+
+	urlBase: false,
+	depth: 1,
+	done: false,
+
+	//proxy: '<?=XOOPS_URL?>/modules/brokenlink/admin/proxy.php',
+	proxy: 'proxy.php',
+
+	pool: [ null ],
+	poolBusy: 0,
+	setPool: function(size) {
+		this.pool = new Array(size);
+		for(var i = 0; i < size; i++) {
+			this.pool[i] = null;
+		}
+		poolBusy = 0;
+
+		_global_transactions_status_init(size);
+	},
+
+	poolCheckin: function(task) {
+	    var index = false;
+		for(var i = 0; i < this.pool.length; i++) {
+			if(this.pool[i] == null) {
+				_global_transactions_status_busy(i);
+
+				this.pool[i] = new this.Transaction(this);
+				this.poolBusy++;
+				index = i;
+
+				this.pool[i].callback.argument.transactionsIndex = i;
+				this.pool[i].callback.argument.task = task;
+
+				this.pool[i].transaction.setUrl( this.proxy + '?url=' + task.url /*anchor.href*/ );
+				this.pool[i].transaction.setCallback( this.pool[i].callback );
+				this.pool[i].transaction.send();
+
+				break;
+			}
+		} // end of for
+		return index;
+	}, // end of function transaction.poolCheckin
+
+	poolCheckout: function(index) {
+	    this.pool[ index ] = null;
+	    this.poolBusy--;
+
+	    _global_transactions_status_standby(index);
+	},
+
+	isPoolAllDone: function() {
+	    return ( this.poolBusy > 0 ? false : true);
+	},
+
+	_getTransaction: function(task) {
+		var index = this.poolCheckin(task);
+		return ( index === false ? false : true );
+	},
+
+	getPage: function(task) {
+		task.url = task.url.replace(/^\s*/, '').replace(/\s*$/, ''); // trim
+
+   		/*
+		var matches = url.split('?');
+		var baseUrl = matches[0];
+		var i = baseUrl.lastIndexOf('/');
+		if( i == baseUrl.indexOf('//')+1) {
+		    baseUrl += '/';
+		}
+		else {
+			baseUrl = baseUrl.substring(0, i + 1 );
+		}
+		var host = baseUrl.substring(0, baseUrl.indexOf('/', baseUrl.indexOf('//')+2));
+		var anchor = {
+		  'host': host,
+		  'base': baseUrl,
+		  'level': level,
+		  'href': url
+		};*/
+
+		if(this._getTransaction(task) == false) {
+		  this.taskQueue.push(task);
+		}
+
+	},
+
+  	interval: null,
+
+	clearAll: function() {
+	    this.clearTaskQueue();
+	    this.clearComplishedQueue();
+	    this.visitedUrls = {};
+	    this.setPool(1);
+	    if(this.interval != null) {
+	        window.clearInterval( this.interval );
+		}
+	    this.interval = null;
+	    this.done = false;
+	},
+
+  travel: function() {
+	if(this.taskQueue.length <= 0) {
+	    return false;
+	}
+	else {
+      if(this.interval == null) {
+        this.interval = window.setInterval('transactions.travel()', 500);
+      }
+    }
+	var task = this.taskQueue.pop();
+	this.getPage(task);
+
+	return true;
+  }
+
+};
+
+function checkGo(el) {
+    var urlTextBox = document.getElementById('url');
+    if(urlTextBox.value.length <= 0) {
+        return false;
+    }
+
+    disableCheckClick();
+
+    var t = document.getElementById('s').getElementsByTagName('li');
+    while(t.length > 0) {
+        document.getElementById('s').removeChild(t[0]);
+    }
+    document.getElementById('s').style.display = 'block';
+
+    var t = document.getElementById('brokenlink').getElementsByTagName('h3');
+    if(t.length) {
+        document.getElementById('brokenlink').removeChild(t[0]);
+    }
+    var t = document.getElementById('brokenlink').getElementsByTagName('ul');
+    if(t.length) {
+        document.getElementById('brokenlink').removeChild(t[0]);
+    }
+
+	document.getElementById('transactions_status').style.display = 'block';
+    document.getElementById('check').innerHTML = '執行中...';
+
+    transactions.clearAll();
+
+    transactions.taskQueue.push( new Task(0, urlTextBox.value) );
+
+    transactions.depth = document.getElementById('depth').value;
+
+	//if( goOutSide ) {
+	//  transactions.urlBase = false;
+	//else {
+    transactions.urlBase = urlTextBox.value;
+    //}
+
+    transactions.setPool( document.getElementById('poolsize').value );
+
+	transactions.done = false;
+    transactions.travel();
+    return false;
+}
+
+function enableCheckClick() {
+    var elm = document.getElementById('check');
+    if (elm.attachEvent) { // IE
+        elm.attachEvent('onclick', checkGo);
+    }
+    else { // DOM
+        elm.addEventListener('click', checkGo, false);
+    }
+}
+
+function disableCheckClick() {
+    var elm = document.getElementById('check');
+    if (elm.detachEvent) { // IE
+        elm.detachEvent('onclick', checkGo);
+    }
+    else { // DOM
+        elm.removeEventListener('click', checkGo, false);
+    }
+}
+
+(function checkStandby() {
+    enableCheckClick();
+    document.getElementById('s').style.display = 'none';
+    document.getElementById('transactions_status').style.display = 'none';
+    document.getElementById('check').innerHTML = '確定';
+})();
+</script>
+
+<!--?php
+xoops_cp_footer();
+?-->
+{% endhighlight %}
+
+
+<h6>proxy.php</h6>
+<p>
+因為 XmlHttpRequest 有相同網址資源存取限制，所以 Brokenlink detector 需要一個 proxy 以讀取其他網頁的內容。Proxy 可以用任何工具撰寫，只要記住 Brokenlink detector 總是以 <code>?url=連結網址</code> 的形式調用 proxy。例如: <code>proxy.php?url=連結網址</code>。
+</p>
+
+{% highlight javascript %}
+<?php
+//  Proxy for XmlHttpRequest of JavaScript
+//  Copyright (C) 2006 shirock
+//  ------------------------------------------------------------------------ //
+//  This program is free software; you can redistribute it and/or modify     //
+//  it under the terms of the GNU General Public License as published by     //
+//  the Free Software Foundation; either version 2 of the License, or        //
+//  (at your option) any later version.                                      //
+//                                                                           //
+//  You may not change or alter any portion of this comment or credits       //
+//  of supporting developers from this source code or any supporting         //
+//  source code which is considered copyrighted (c) material of the          //
+//  original comment or credit authors.                                      //
+//                                                                           //
+//  This program is distributed in the hope that it will be useful,          //
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of           //
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
+//  GNU General Public License for more details.                             //
+//                                                                           //
+//  You should have received a copy of the GNU General Public License        //
+//  along with this program; if not, write to the Free Software              //
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //
+// ------------------------------------------------------------------------- //
+
+/* for Xoops
 include '../../../mainfile.php';
 
 if (!defined('XOOPS_ROOT_PATH')) {
 	header("HTTP/1.0 403", true, 403);
     exit();
 }
-*/</span>
+*/
 
-<span class="k">function</span> <span class="nf">ProxyGetPage</span> <span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">(</span><span class="nv">$url</span><span class="p">);</span>
+function ProxyGetPage ($url, $opts) {
+	$ch = curl_init($url);
 
-	<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">header</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+	$response->header = array();
 
-	<span class="nb">curl_setopt</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_HTTPHEADER</span><span class="p">,</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">header</span><span class="p">);</span>
+	curl_setopt ($ch, CURLOPT_HTTPHEADER, $response->header);
 
-	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_SSL_VERIFYPEER</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'verifypeer'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'verifypeer'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">false</span><span class="p">)</span> <span class="p">);</span>
-	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'returntransfer'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'returntransfer'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">true</span><span class="p">)</span> <span class="p">);</span>
-	<span class="c1">//curl_setopt($ch,    CURLOPT_VERBOSE, 1); ########### debug
-</span>	<span class="c1">//curl_setopt($ch, CURLOPT_USERAGENT, $agent);
-</span>	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEJAR</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiejar'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiejar'</span><span class="p">]</span> <span class="o">:</span> <span class="nx">XOOPS_ROOT_PATH</span><span class="o">.</span><span class="s1">'/cache/curl_cookie'</span><span class="p">)</span> <span class="p">);</span>
-	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_COOKIEFILE</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiefile'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'cookiefile'</span><span class="p">]</span> <span class="o">:</span> <span class="nx">XOOPS_ROOT_PATH</span><span class="o">.</span><span class="s1">'/cache/curl_cookie'</span><span class="p">)</span> <span class="p">);</span>
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, (isset($opts['verifypeer']) ? $opts['verifypeer'] : false) );
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, (isset($opts['returntransfer']) ? $opts['returntransfer'] : true) );
+	//curl_setopt($ch,    CURLOPT_VERBOSE, 1); ########### debug
+	//curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+	curl_setopt($ch, CURLOPT_COOKIEJAR, (isset($opts['cookiejar']) ? $opts['cookiejar'] : XOOPS_ROOT_PATH.'/cache/curl_cookie') );
+	curl_setopt($ch, CURLOPT_COOKIEFILE, (isset($opts['cookiefile']) ? $opts['cookiefile'] : XOOPS_ROOT_PATH.'/cache/curl_cookie') );
 
-	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_CONNECTTIMEOUT</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'connecttimeout'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'connecttimeout'</span><span class="p">]</span> <span class="o">:</span> <span class="mi">30</span><span class="p">)</span> <span class="p">);</span>
-	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FAILONERROR</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'failonerror'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'failonerror'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">true</span><span class="p">)</span> <span class="p">);</span>
-	<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_FOLLOWLOCATION</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'followlocation'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'followlocation'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">true</span><span class="p">)</span> <span class="p">);</span>
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, (isset($opts['connecttimeout']) ? $opts['connecttimeout'] : 30) );
+	curl_setopt($ch, CURLOPT_FAILONERROR, (isset($opts['failonerror']) ? $opts['failonerror'] : true) );
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, (isset($opts['followlocation']) ? $opts['followlocation'] : true) );
 
-	<span class="k">if</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$opts</span><span class="p">[</span><span class="s1">'post'</span><span class="p">])</span> <span class="k">and</span> <span class="nv">$opts</span><span class="p">[</span><span class="s1">'post'</span><span class="p">]</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_POST</span><span class="p">,</span> <span class="kc">true</span> <span class="p">);</span>
-		<span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CUROPT_POSTFIELDS</span><span class="p">,</span> <span class="nv">$_POST</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-	    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span> <span class="nx">CURLOPT_POST</span><span class="p">,</span> <span class="kc">false</span> <span class="p">);</span>
-	<span class="p">}</span>
+	if(isset($opts['post']) and $opts['post'] == true) {
+		curl_setopt($ch, CURLOPT_POST, true );
+		curl_setopt($ch, CUROPT_POSTFIELDS, $_POST);
+	}
+	else {
+	    curl_setopt($ch, CURLOPT_POST, false );
+	}
 
-	<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">text</span> <span class="o">=</span> <span class="nb">curl_exec</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+	$response->text = curl_exec ($ch);
 
-	<span class="k">if</span><span class="p">(</span><span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">))</span> <span class="p">{</span>
-		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span> <span class="o">=</span> <span class="nb">curl_errno</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
-		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span> <span class="o">=</span> <span class="nb">curl_error</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
-	<span class="p">}</span>
-	<span class="k">else</span> <span class="p">{</span>
-		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-		<span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
-	<span class="p">}</span>
-	<span class="nb">curl_close</span> <span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
-	<span class="k">return</span> <span class="nv">$response</span><span class="p">;</span>
-<span class="p">}</span>
+	if(curl_errno($ch)) {
+		$response->errno = curl_errno($ch);
+		$response->error = curl_error($ch);
+	}
+	else {
+		$response->errno = 0;
+		$response->error = '';
+	}
+	curl_close ($ch);
+	return $response;
+}
 
 
-<span class="cm">/*===============================================================*/</span>
-<span class="cm">/* for Xoops
+/*===============================================================*/
+/* for Xoops
 require_once XOOPS_ROOT_PATH."/kernel/object.php";
 
-$config_handler =&amp; xoops_gethandler('config');
+$config_handler =& xoops_gethandler('config');
 $criteria = new CriteriaCompo(new Criteria('conf_modid', 0));
-$criteria-&gt;add(new Criteria('conf_catid', XOOPS_CONF_METAFOOTER));
-$config =&amp; $config_handler-&gt;getConfigs($criteria, true);
+$criteria->add(new Criteria('conf_catid', XOOPS_CONF_METAFOOTER));
+$config =& $config_handler->getConfigs($criteria, true);
 
 if (empty($xoopsUser)) {
     header("HTTP/1.0 403", true, 403);
     exit();
 }
-*/</span>
+*/
 
-<span class="nv">$opts</span> <span class="o">=</span> <span class="k">array</span> <span class="p">(</span>
-	<span class="s1">'returntransfer'</span> <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">,</span>
-	<span class="s1">'connecttimeout'</span> <span class="o">=&gt;</span> <span class="mi">10</span>
-<span class="p">);</span>
+$opts = array (
+	'returntransfer' => false,
+	'connecttimeout' => 10
+);
 
-<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">])</span> <span class="k">or</span> <span class="k">empty</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">]))</span> <span class="p">{</span>
-	<span class="nb">header</span><span class="p">(</span><span class="s2">"HTTP/1.0 404 "</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="mi">404</span><span class="p">);</span>
-    <span class="k">exit</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-	<span class="nv">$url</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'url'</span><span class="p">];</span>
-<span class="p">}</span>
+if(!isset($_GET['url']) or empty($_GET['url'])) {
+	header("HTTP/1.0 404 ", true, 404);
+    exit();
+}
+else {
+	$url = $_GET['url'];
+}
 
-<span class="nv">$response</span> <span class="o">=</span> <span class="nx">ProxyGetPage</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$opts</span><span class="p">);</span>
+$response = ProxyGetPage($url, $opts);
 
-<span class="k">if</span><span class="p">(</span><span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-	<span class="k">switch</span><span class="p">(</span><span class="nv">$response</span><span class="o">-&gt;</span><span class="na">errno</span><span class="p">)</span> <span class="p">{</span>
-	    <span class="k">case</span> <span class="mi">22</span><span class="o">:</span>
-	        <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/(.+): (\d{3})$/'</span><span class="p">,</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">,</span> <span class="nv">$ers</span><span class="p">);</span>
-	        <span class="nb">header</span><span class="p">(</span><span class="s2">"HTTP/1.0 </span><span class="si">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span> <span class="p">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span><span class="s2">", true, </span><span class="nv">$ers[2]</span><span class="s2">);
-	        //echo "</span><span class="nx">HTTP</span><span class="o">/</span><span class="mf">1.0</span> <span class="p">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span> <span class="p">{</span><span class="nv">$ers</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span><span class="s2">";
+if($response->errno != 0) {
+	switch($response->errno) {
+	    case 22:
+	        preg_match('/(.+): (\d{3})$/', $response->error, $ers);
+	        header("HTTP/1.0 {$ers[2]} {$ers[1]}", true, $ers[2]);
+	        //echo "HTTP/1.0 {$ers[2]} {$ers[1]}";
 	        break;
 	    default:
-	        header("</span><span class="nx">HTTP</span><span class="o">/</span><span class="mf">1.0</span> <span class="mi">404</span> <span class="p">{</span><span class="nv">$response</span><span class="o">-&gt;</span><span class="na">error</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="mi">404</span><span class="p">);</span>
-	        <span class="k">break</span><span class="p">;</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+	        header("HTTP/1.0 404 {$response->error}", true, 404);
+	        break;
+	}
+}
+?>
+{% endhighlight %}
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/4052641.html</div>

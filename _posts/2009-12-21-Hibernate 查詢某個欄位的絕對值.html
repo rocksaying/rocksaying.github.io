@@ -19,127 +19,135 @@ permalink: /archives/11126093.html
 <p>
 Implements Hibernate's UserType to define a custom class for absolute integer.
 </p>
-<pre class="highlight"><code><span class="kn">package</span> <span class="n">tw</span><span class="o">.</span><span class="na">idv</span><span class="o">.</span><span class="na">rock</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.io.Serializable</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.sql.PreparedStatement</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.sql.ResultSet</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.sql.SQLException</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.sql.Types</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.hibernate.Hibernate</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.hibernate.usertype.UserType</span><span class="o">;</span>
 
-<span class="cm">/**
+{% highlight java %}
+package tw.idv.rock;
+import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import org.hibernate.Hibernate;
+import org.hibernate.usertype.UserType;
+
+/**
  * Custom class for absolute values on the way out from the database, Hibernate 3 version.
  * This is based on Paul Newport's work.
  * @see https://www.hibernate.org/388.html
  * @author rock
- */</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AbsoluteInteger</span> <span class="kd">implements</span> <span class="n">UserType</span> <span class="o">{</span>
-    <span class="kd">public</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">sqlTypes</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[]</span> <span class="o">{</span> <span class="n">Types</span><span class="o">.</span><span class="na">INTEGER</span> <span class="o">};</span>
-    <span class="o">}</span>
+ */
+public class AbsoluteInteger implements UserType {
+    public int[] sqlTypes() {
+        return new int[] { Types.INTEGER };
+    }
 
-    <span class="nd">@SuppressWarnings</span><span class="o">(</span><span class="s">"unchecked"</span><span class="o">)</span>
-	<span class="kd">public</span> <span class="n">Class</span> <span class="n">returnedClass</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="kt">int</span><span class="o">.</span><span class="na">class</span><span class="o">;</span>
-    <span class="o">}</span>
+    @SuppressWarnings("unchecked")
+	public Class returnedClass() {
+        return int.class;
+    }
 
-    <span class="kd">public</span> <span class="kt">boolean</span> <span class="n">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">x</span><span class="o">,</span> <span class="n">Object</span> <span class="n">y</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="o">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">y</span><span class="o">)</span> <span class="o">||</span> <span class="o">(</span><span class="n">x</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">y</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">x</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">y</span><span class="o">)));</span>
-    <span class="o">}</span>
+    public boolean equals(Object x, Object y) {
+        return (x == y) || (x != null && y != null && (x.equals(y)));
+    }
 
-    <span class="kd">public</span> <span class="n">Object</span> <span class="n">nullSafeGet</span><span class="o">(</span><span class="n">ResultSet</span> <span class="n">inResultSet</span><span class="o">,</span> <span class="n">String</span><span class="o">[]</span> <span class="n">names</span><span class="o">,</span> <span class="n">Object</span> <span class="n">o</span><span class="o">)</span>
-        <span class="kd">throws</span> <span class="n">SQLException</span> <span class="o">{</span>
-        <span class="n">Integer</span> <span class="n">val</span> <span class="o">=</span>
-            <span class="o">(</span><span class="n">Integer</span><span class="o">)</span> <span class="n">Hibernate</span><span class="o">.</span><span class="na">INTEGER</span><span class="o">.</span><span class="na">nullSafeGet</span><span class="o">(</span><span class="n">inResultSet</span><span class="o">,</span> <span class="n">names</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
-        <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">abs</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
-    <span class="o">}</span>
+    public Object nullSafeGet(ResultSet inResultSet, String[] names, Object o)
+        throws SQLException {
+        Integer val =
+            (Integer) Hibernate.INTEGER.nullSafeGet(inResultSet, names[0]);
+        return Math.abs(val);
+    }
 
-    <span class="kd">public</span> <span class="kt">void</span> <span class="n">nullSafeSet</span><span class="o">(</span>
-        <span class="n">PreparedStatement</span> <span class="n">inPreparedStatement</span><span class="o">,</span>
-        <span class="n">Object</span> <span class="n">o</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i</span><span class="o">)</span>
-        <span class="kd">throws</span> <span class="n">SQLException</span> <span class="o">{</span>
+    public void nullSafeSet(
+        PreparedStatement inPreparedStatement,
+        Object o, int i)
+        throws SQLException {
 
-    	<span class="n">Integer</span> <span class="n">val</span> <span class="o">=</span> <span class="o">(</span><span class="n">Integer</span><span class="o">)</span> <span class="n">o</span><span class="o">;</span>
-    	<span class="n">inPreparedStatement</span><span class="o">.</span><span class="na">setInt</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">val</span><span class="o">);</span>
-    <span class="o">}</span>
+    	Integer val = (Integer) o;
+    	inPreparedStatement.setInt(i, val);
+    }
 
-    <span class="kd">public</span> <span class="n">Object</span> <span class="n">deepCopy</span><span class="o">(</span><span class="n">Object</span> <span class="n">o</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">o</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
-        <span class="o">}</span>
+    public Object deepCopy(Object o) {
+        if (o == null) {
+            return null;
+        }
 
-        <span class="k">return</span> <span class="k">new</span> <span class="n">Integer</span><span class="o">(((</span><span class="n">Integer</span><span class="o">)</span> <span class="n">o</span><span class="o">));</span>
-    <span class="o">}</span>
+        return new Integer(((Integer) o));
+    }
 
-    <span class="kd">public</span> <span class="kt">boolean</span> <span class="n">isMutable</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
-    <span class="o">}</span>
+    public boolean isMutable() {
+        return false;
+    }
 
-    <span class="kd">public</span> <span class="n">Object</span> <span class="n">assemble</span><span class="o">(</span><span class="n">Serializable</span> <span class="n">cached</span><span class="o">,</span> <span class="n">Object</span> <span class="n">owner</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">cached</span><span class="o">;</span>
-    <span class="o">}</span>
+    public Object assemble(Serializable cached, Object owner) {
+        return cached;
+    }
 
-    <span class="kd">public</span> <span class="n">Serializable</span> <span class="n">disassemble</span><span class="o">(</span><span class="n">Object</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="o">(</span><span class="n">Serializable</span><span class="o">)</span> <span class="n">value</span><span class="o">;</span>
-    <span class="o">}</span>
+    public Serializable disassemble(Object value) {
+        return (Serializable) value;
+    }
 
-    <span class="kd">public</span> <span class="n">Object</span> <span class="n">replace</span><span class="o">(</span><span class="n">Object</span> <span class="n">original</span><span class="o">,</span> <span class="n">Object</span> <span class="n">target</span><span class="o">,</span> <span class="n">Object</span> <span class="n">owner</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">original</span><span class="o">;</span>
-    <span class="o">}</span>
+    public Object replace(Object original, Object target, Object owner) {
+        return original;
+    }
 
-    <span class="kd">public</span> <span class="kt">int</span> <span class="n">hashCode</span><span class="o">(</span><span class="n">Object</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="na">hashCode</span><span class="o">();</span>
-    <span class="o">}</span>
+    public int hashCode(Object x) {
+        return x.hashCode();
+    }
 
-<span class="o">}</span>
-</code></pre>
+}
+{% endhighlight %}
 
 
 <p>
 Use this user type in Hibernate Mapping (HBM).
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0"?&gt;</span>
-<span class="cp">&lt;!DOCTYPE hibernate-mapping
+
+{% highlight java %}
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping
     PUBLIC "-//Hibernate/Hibernate Mapping DTD//EN"
-    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"&gt;</span>
-<span class="nt">&lt;hibernate-mapping&gt;</span>
-    <span class="nt">&lt;class</span> <span class="na">name=</span><span class="s">"tw.idv.rock.model.MyMap"</span> <span class="na">table=</span><span class="s">"mymap"</span><span class="nt">&gt;</span>
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="tw.idv.rock.model.MyMap" table="mymap">
     
-            <span class="nt">&lt;id</span> <span class="na">name=</span><span class="s">"id"</span> <span class="na">type=</span><span class="s">"int"</span> <span class="na">unsaved-value=</span><span class="s">"null"</span><span class="nt">&gt;</span>
-              <span class="nt">&lt;column</span> <span class="na">name=</span><span class="s">"id"</span> <span class="na">sql-type=</span><span class="s">"serial(10)"</span> <span class="nt">/&gt;</span>
-              <span class="nt">&lt;generator</span> <span class="na">class=</span><span class="s">"sequence"</span><span class="nt">&gt;</span>
-                <span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">"sequence"</span><span class="nt">&gt;</span>mymap_id_seq<span class="nt">&lt;/param&gt;</span>
-              <span class="nt">&lt;/generator&gt;</span>
-            <span class="nt">&lt;/id&gt;</span>
-            <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">"length"</span> <span class="na">type=</span><span class="s">"tw.idv.rock.AbsoluteInteger"</span><span class="nt">/&gt;</span>
-<span class="c">&lt;!--           
-            &lt;property name="length" type="int"/&gt;
---&gt;</span>
-    <span class="nt">&lt;/class&gt;</span>
-<span class="nt">&lt;/hibernate-mapping&gt;</span>
-</code></pre>
+            <id name="id" type="int" unsaved-value="null">
+              <column name="id" sql-type="serial(10)" />
+              <generator class="sequence">
+                <param name="sequence">mymap_id_seq</param>
+              </generator>
+            </id>
+            <property name="length" type="tw.idv.rock.AbsoluteInteger"/>
+<!--           
+            <property name="length" type="int"/>
+-->
+    </class>
+</hibernate-mapping>
+{% endhighlight %}
 
 
 <p>
 HQL Query
 </p>
-<pre class="highlight"><code><span class="n">Query</span> <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">createQuery</span><span class="o">(</span><span class="s">"from MyMap where length &gt;= :length"</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">setInteger</span><span class="o">(</span><span class="s">"length"</span><span class="o">,</span> <span class="n">minLength</span><span class="o">);</span>
-<span class="n">items</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="na">list</span><span class="o">();</span>
-</code></pre>
+
+{% highlight java %}
+Query query = session.createQuery("from MyMap where length >= :length")
+    .setInteger("length", minLength);
+items = query.list();
+{% endhighlight %}
 
 
 <p>
 然而，透過 Hibernate 的 UserType 途徑取得欄位的絕對值之效能，遠遜於透過 SQL 的 <code>abs()</code> 函數。
 </p>
 
-<pre class="highlight"><code><span class="n">SQLQuery</span> <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">createSQLQuery</span><span class="o">(</span><span class="s">"select id, abs(length) as length "</span> 
-        <span class="o">+</span> <span class="s">" from "</span> <span class="o">+</span> <span class="n">MyMap</span><span class="o">.</span><span class="na">tableQuoteName</span><span class="o">()</span> <span class="o">+</span> <span class="s">" where length &gt;= :length"</span><span class="o">);</span>
-    <span class="n">query</span><span class="o">.</span><span class="na">addEntity</span><span class="o">(</span><span class="n">MyMap</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
-    <span class="n">query</span><span class="o">.</span><span class="na">setInteger</span><span class="o">(</span><span class="s">"length"</span><span class="o">,</span> <span class="n">minLength</span><span class="o">);</span>
-<span class="n">items</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="na">list</span><span class="o">();</span>
-</code></pre>
+
+{% highlight java %}
+SQLQuery query = session.createSQLQuery("select id, abs(length) as length " 
+        + " from " + MyMap.tableQuoteName() + " where length >= :length");
+    query.addEntity(MyMap.class);
+    query.setInteger("length", minLength);
+items = query.list();
+{% endhighlight %}
 
 
 <p>

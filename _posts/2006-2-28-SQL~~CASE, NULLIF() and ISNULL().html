@@ -20,29 +20,33 @@ permalink: /archives/1186702.html
 <div class="note">
 case when 欄位 is NULL then 設計人員指定的有意義值 else 欄位 end
 </div>
-<pre class="highlight"><code><span class="k">select</span> <span class="n">left_table</span><span class="p">.</span><span class="n">barcode</span><span class="p">,</span> 
-<span class="n">left_table</span><span class="p">.</span><span class="n">input_qty</span><span class="p">,</span> 
-<span class="k">case</span> <span class="k">when</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">is</span> <span class="k">NULL</span> 
-    <span class="k">then</span> <span class="mi">0</span> 
-    <span class="k">else</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">end</span> <span class="k">as</span> <span class="n">output_qty</span><span class="p">,</span> 
-<span class="k">case</span> <span class="k">when</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">is</span> <span class="k">NULL</span> 
-    <span class="k">then</span> <span class="n">left_table</span><span class="p">.</span><span class="n">input_qty</span> 
-    <span class="k">else</span> <span class="n">left_table</span><span class="p">.</span><span class="n">input_qty</span> <span class="o">-</span> <span class="n">right_table</span><span class="p">.</span><span class="n">output_qty</span> <span class="k">end</span> <span class="k">as</span> <span class="n">stock_qty</span> 
-<span class="k">from</span> <span class="n">left_table</span> 
-<span class="k">left</span> <span class="k">outer</span> <span class="k">join</span> <span class="n">right_table</span> <span class="k">on</span> <span class="n">right_table</span><span class="p">.</span><span class="n">barcode</span> <span class="o">=</span> <span class="n">left_tale</span><span class="p">.</span><span class="n">barcode</span>
-</code></pre>
+
+{% highlight sql %}
+select left_table.barcode, 
+left_table.input_qty, 
+case when right_table.output_qty is NULL 
+    then 0 
+    else right_table.output_qty end as output_qty, 
+case when right_table.output_qty is NULL 
+    then left_table.input_qty 
+    else left_table.input_qty - right_table.output_qty end as stock_qty 
+from left_table 
+left outer join right_table on right_table.barcode = left_tale.barcode
+{% endhighlight %}
 
 
 <h3>NULLIF() or ISNULL()</h3>
 <p>
 前述對 NULL 作修飾，以便後續處理的動作在實務上相當常用，因此有些 SQL DBMS 會提供函數形式的簡便寫法，例如 PostgreSQL 提供 NULLIF() ，而 Microsoft SQL Server 提供 ISNULL() ，此二者的用法完全一樣，當欄位值 (第一個參數) 為 NULL 時，傳回指定的替代值 (第二個參數) ，否則傳回欄位值。
 </p>
-<pre class="highlight"><code><span class="c1">-- PostgreSQL:
-</span><span class="k">nullif</span><span class="p">(</span> <span class="err">欄位</span><span class="p">,</span> <span class="err">設計人員指定的有意義值</span> <span class="p">)</span>
 
-<span class="c1">-- MS SQL Server:
-</span><span class="k">isnull</span><span class="p">(</span> <span class="err">欄位</span><span class="p">,</span> <span class="err">設計人員指定的有意義值</span> <span class="p">)</span>
-</code></pre>
+{% highlight sql %}
+-- PostgreSQL:
+nullif( 欄位, 設計人員指定的有意義值 )
+
+-- MS SQL Server:
+isnull( 欄位, 設計人員指定的有意義值 )
+{% endhighlight %}
 
 <p>
 ISNULL 在 SQL Standard 中是一個保留字，但目前並沒有定義標準用法，因此 MS SQL Server 提供的 ISNULL() 函數及用法，不見得可用在其它的 SQL DBMS 中，至少 PostgreSQL 就不這麼用。再者， ISNULL() 在字面上，往往被當作 is null 敘述的函數形式，易生誤解。總而言之， NULLIF() 及 ISNULL() 皆不可視為通用敘述，考慮到轉換、變更 DBMS 的情況，以及程式的移植性，還是建議使用較長的 CASE 敘述，而不要用 NULLIF()/ISNULL() 。

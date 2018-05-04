@@ -23,27 +23,29 @@ permalink: /archives/10972865.html
 <!--more-->
 <h4>平行指派，後綴式迴圈、無遞迴</h4>
 
-<pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
 
-<span class="k">def</span> <span class="nf">take</span> <span class="n">x</span>
-  <span class="c1">#yield</span>
-  <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="nf">shift</span><span class="p">,</span> <span class="n">x</span>
-<span class="k">end</span>
+{% highlight ruby %}
+a = [1, 2, 3]
+v = []
 
-<span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1">#這是一個小瑕玼</span>
+def take x
+  #yield
+  return x.shift, x
+end
 
-<span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="o">+=</span><span class="mi">1</span><span class="p">],</span> <span class="n">a</span> <span class="o">=</span> <span class="n">take</span> <span class="n">a</span> <span class="k">while</span> <span class="n">a</span><span class="p">.</span><span class="nf">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
-  <span class="c1">#上行讀作: 當 a 還有東西時，就拿出一個放到 v 中。</span>
-<span class="nb">p</span> <span class="n">a</span>
-<span class="nb">p</span> <span class="n">v</span>
+i = -1  #這是一個小瑕玼
 
-<span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-<span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="o">+=</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span> <span class="o">=</span> <span class="n">take</span> <span class="n">v</span> <span class="k">until</span> <span class="n">v</span><span class="p">.</span><span class="nf">size</span> <span class="o">&lt;</span> <span class="mi">1</span>
-  <span class="c1">#上行讀作: 從 v 拿出一個東西放到 a 中，直到 v 裡面沒有東西。</span>
-<span class="nb">p</span> <span class="n">a</span>
-<span class="nb">p</span> <span class="n">v</span>
-</code></pre>
+v[i+=1], a = take a while a.size > 0
+  #上行讀作: 當 a 還有東西時，就拿出一個放到 v 中。
+p a
+p v
+
+i = -1
+a[i+=1], v = take v until v.size < 1
+  #上行讀作: 從 v 拿出一個東西放到 a 中，直到 v 裡面沒有東西。
+p a
+p v
+{% endhighlight %}
 
 
 <p>
@@ -52,24 +54,26 @@ permalink: /archives/10972865.html
 </p>
 
 <h4>遞迴式</h4>
-<pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
 
-<span class="c1">#take([H|T]) -&gt; H, take(T);</span>
-<span class="c1">#take([]) -&gt; [].</span>
+{% highlight ruby %}
+a = [1, 2, 3]
+v = []
 
-<span class="k">def</span> <span class="nf">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
-  <span class="k">if</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">x</span><span class="p">.</span><span class="nf">shift</span>
-    <span class="n">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
-  <span class="k">end</span>
-  <span class="k">return</span> <span class="n">x</span>
-<span class="k">end</span>
+#take([H|T]) -> H, take(T);
+#take([]) -> [].
 
-<span class="n">take</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span>
-<span class="nb">p</span> <span class="n">a</span>
-<span class="nb">p</span> <span class="n">v</span>
-</code></pre>
+def take x, y
+  if x.size > 0
+    y << x.shift
+    take x, y
+  end
+  return x
+end
+
+take a, v
+p a
+p v
+{% endhighlight %}
 
 
 <h4>Smalltalk 式介詞應用，加上迭代器</h4>
@@ -78,61 +82,65 @@ permalink: /archives/10972865.html
 那我就用 Ruby 來玩一下類似 Smalltalk 在訊息中使用介詞的表達能力吧。
 </p>
 
-<pre class="highlight"><code><span class="c1"># take(V, [H|T]) -&gt; take(V, T);</span>
-<span class="c1"># take(_, []) -&gt; [].</span>
 
-<span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="n">v</span> <span class="o">=</span> <span class="p">[]</span>
+{% highlight ruby %}
+# take(V, [H|T]) -> take(V, T);
+# take(_, []) -> [].
 
-<span class="k">def</span> <span class="nf">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">preposition</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span>
-  <span class="k">if</span> <span class="n">preposition</span> <span class="o">==</span> <span class="ss">:from</span>
-    <span class="n">take</span> <span class="n">y</span><span class="p">,</span> <span class="ss">:to</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span>
-  <span class="k">else</span>
-    <span class="k">if</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
-      <span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">x</span><span class="p">.</span><span class="nf">shift</span>
-      <span class="k">yield</span> <span class="n">y</span><span class="p">.</span><span class="nf">last</span> <span class="k">if</span> <span class="nb">block_given?</span>
-      <span class="n">take</span> <span class="n">x</span><span class="p">,</span> <span class="n">preposition</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">p</span>
-    <span class="k">end</span>
-  <span class="k">end</span>
-  <span class="k">return</span> <span class="n">x</span>
-<span class="k">end</span>
+a = [1, 2, 3]
+v = []
 
-<span class="n">take</span> <span class="n">a</span><span class="p">,</span> <span class="ss">:to</span><span class="p">,</span> <span class="n">v</span>
-<span class="c1">#英文是我們的第一外國語言，應該不用解釋上面那一句話了吧？</span>
-<span class="c1"># a -&gt; v</span>
+def take x, preposition, y, &p
+  if preposition == :from
+    take y, :to, x, &p
+  else
+    if x.size > 0
+      y << x.shift
+      yield y.last if block_given?
+      take x, preposition, y, &p
+    end
+  end
+  return x
+end
 
-<span class="nb">p</span> <span class="n">a</span>
-<span class="nb">p</span> <span class="n">v</span>
+take a, :to, v
+#英文是我們的第一外國語言，應該不用解釋上面那一句話了吧？
+# a -> v
 
-<span class="c1">#介詞變成 from ，所以方向反過來了。</span>
-<span class="c1"># a &lt;- v</span>
-<span class="n">take</span> <span class="n">a</span><span class="p">,</span> <span class="ss">:from</span><span class="p">,</span> <span class="n">v</span>
-<span class="nb">p</span> <span class="n">a</span>
-<span class="nb">p</span> <span class="n">v</span>
+p a
+p v
 
-<span class="nb">puts</span> <span class="s1">'印出每次取得的東西'</span>
-<span class="n">take</span><span class="p">(</span> <span class="n">a</span><span class="p">,</span> <span class="ss">:to</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span> <span class="p">{</span><span class="o">|</span><span class="n">n</span><span class="o">|</span>
-  <span class="nb">puts</span> <span class="s2">"Take </span><span class="si">#{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span>
-<span class="p">}</span>
-<span class="nb">p</span> <span class="n">a</span>
-<span class="nb">p</span> <span class="n">v</span>
-</code></pre>
+#介詞變成 from ，所以方向反過來了。
+# a <- v
+take a, :from, v
+p a
+p v
+
+puts '印出每次取得的東西'
+take( a, :to, v ) {|n|
+  puts "Take #{n}"
+}
+p a
+p v
+{% endhighlight %}
 
 
 <p>
 Smalltalk 可寫成:
 </p>
-<pre class="highlight"><code><span class="n">take</span> <span class="n">a</span> <span class="ss">to: </span><span class="n">v</span><span class="p">.</span>
-<span class="nf">take</span> <span class="n">a</span> <span class="ss">from: </span><span class="n">v</span><span class="p">.</span>
 
-<span class="nf">take</span><span class="p">:</span> <span class="n">x</span> <span class="ss">to: </span><span class="n">y</span>
-  <span class="s2">"your code"</span>
-  <span class="o">^</span><span class="n">x</span>
+{% highlight ruby %}
+take a to: v.
+take a from: v.
 
-<span class="ss">take: </span><span class="n">x</span> <span class="ss">from: </span><span class="n">y</span>
-  <span class="s2">"your code"</span>
-  <span class="o">^</span><span class="n">y</span>
-</code></pre>
+take: x to: y
+  "your code"
+  ^x
+
+take: x from: y
+  "your code"
+  ^y
+{% endhighlight %}
 
 <p>
 文如其名，近乎日常用語的抽象表達力。
@@ -143,9 +151,11 @@ Smalltalk 可寫成:
 <p>
 此外，當我在寫遞迴時，我腦中不由得想到 Erlang 的作法。每次從清單中取出頭部處理，尾部作為另一個清單交給下一個方法處理。
 </p>
-<pre class="highlight"><code><span class="nb">method</span><span class="p">([</span><span class="no">H</span><span class="o">|</span><span class="no">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="no">H</span><span class="p">,</span> <span class="nb">method</span><span class="p">(</span><span class="no">T</span><span class="p">);</span>
-<span class="nb">method</span><span class="p">([])</span> <span class="o">-&gt;</span> <span class="p">[]</span><span class="o">.</span>
-</code></pre>
+
+{% highlight ruby %}
+method([H|T]) -> H, method(T);
+method([]) -> [].
+{% endhighlight %}
 
 
 <p>

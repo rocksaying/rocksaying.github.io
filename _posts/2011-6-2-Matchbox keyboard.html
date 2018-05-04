@@ -41,11 +41,13 @@ Fix embedding bug
 若你碰到這個狀況時，需要修改 matchbox keyboard 的源碼修正它。編輯 src/matchbox-keyboard.c ，將下列所示的兩行程式碼註消。
 </p>
 
-<pre class="highlight"><code>  <span class="cm">/*
+
+{% highlight c %}
+/*
   if (want_embedding)
-    mb_kbd_ui_set_embeded (kb-&gt;ui, True);
-  */</span>
-</code></pre>
+    mb_kbd_ui_set_embeded (kb->ui, True);
+  */
+{% endhighlight %}
 
 
 <h6>
@@ -56,12 +58,12 @@ Build
 我使用取自 Ubuntu 源碼庫的源碼編譯。在 matchbox keyboard 源碼的根目錄下進行下列操作即可。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
  $ ./autogen.sh 
  $ ./configure --prefix=/usr
  $ make
  $ sudo make install-exec
-</pre>
+</code></pre>
 
 <p>
 最後一步將安裝 matchbox-keyboard 到 /usr/bin/matchbox-keyboard.
@@ -76,33 +78,33 @@ Build
 它會列出此虛擬鍵盤所屬的視窗容器的 <dfn>XID</dfn>，你需要這個 XID 才能從外部控制虛擬鍵盤的位置。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
  $ matchbox-keyboard --xid
  1234567
-</pre>
+</code></pre>
 
 <p>
 2. 以 python 為例，啟動 python 交談環境，輸入下列敘述。你將可觀察到虛擬鍵盤被控制的情形。
 </p>
 
-<pre class="highlight"><code>
-<span class="kn">import</span> <span class="nn">gtk</span>
 
-<span class="n">xid</span> <span class="o">=</span> <span class="mi">1234567</span>  <span class="c"># the XID of matchbox-keyboard</span>
+{% highlight c %}
+import gtk
 
-<span class="n">foreign_window</span> <span class="o">=</span> <span class="n">gtk</span><span class="o">.</span><span class="n">gdk</span><span class="o">.</span><span class="n">window_foreign_new</span><span class="p">(</span><span class="n">xid</span><span class="p">)</span>
+xid = 1234567  # the XID of matchbox-keyboard
 
-<span class="n">foreign_window</span><span class="o">.</span><span class="n">set_keep_above</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+foreign_window = gtk.gdk.window_foreign_new(xid)
 
-<span class="n">foreign_window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+foreign_window.set_keep_above(True)
 
-<span class="n">foreign_window</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mi">200</span><span class="p">)</span>
+foreign_window.show()
 
-<span class="n">foreign_window</span><span class="o">.</span><span class="n">set_decorations</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c"># disable all decorations.</span>
+foreign_window.move(200,200)
 
-<span class="n">foreign_window</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+foreign_window.set_decorations(0) # disable all decorations.
 
-</code></pre>
+foreign_window.hide()
+{% endhighlight %}
 
 
 <img src="http://pcdn1.rimg.tw/photos/956035_ayto3rt_l.png" alt="matchbox keyboard control demo"/>

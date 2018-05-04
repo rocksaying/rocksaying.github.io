@@ -121,23 +121,25 @@ permalink: /archives/2854997.html
 <p>
 第二步則要思考如何依排序結果更新報表的每列順序。<strong>所幸網頁上的報表內容係基於良好的 HTML 格式嚴謹地產生</strong>，如下所示:
 </p>
-<pre class="highlight"><code><span class="nt">&lt;table&gt;</span>
-    <span class="nt">&lt;thead&gt;</span>
-        <span class="nt">&lt;tr&gt;</span>
-            <span class="nt">&lt;td&gt;</span>
-            <span class="nt">&lt;/td&gt;</span>
-        <span class="nt">&lt;/tr&gt;</span>
-    <span class="nt">&lt;/thead&gt;</span>
-    <span class="nt">&lt;tbody&gt;</span>
-        <span class="nt">&lt;tr&gt;</span>
-            <span class="nt">&lt;td&gt;</span>
-            <span class="nt">&lt;/td&gt;</span>
-            <span class="nt">&lt;td&gt;</span>
-            <span class="nt">&lt;/td&gt;</span>
-        <span class="nt">&lt;/tr&gt;</span>
-    <span class="nt">&lt;/tbody&gt;</span>
-<span class="nt">&lt;/table&gt;</span>
-</code></pre>
+
+{% highlight javascript %}
+<table>
+    <thead>
+        <tr>
+            <td>
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+            </td>
+            <td>
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% endhighlight %}
 
 <p>
 由於其文件結構良好，只需要透過 HTML DOM 取得 <code>tr</code> 元素陣列，再重新安插其 DOM 節點的位置即可。
@@ -153,102 +155,106 @@ permalink: /archives/2854997.html
 <p>
 接著定義喚起排序動作的起始函數 <var>sortBy</var> ，只需要傳遞欄位名稱。遞減的排序函數 <var>funcSort_desc</var>、遞增的排序函數 <var>funcSort_asc</var>、自 DOM 中取得排序資料與資料列節點的函數 <var>getTbody</var>, <var>getRows</var> 。最後定義實際進行排序及更新頁面內容的函數 <var>doSort</var> 。下列為程式碼:
 </p>
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">sorter</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"currentType"</span> <span class="p">:</span>     <span class="s2">"item"</span><span class="p">,</span>
-    <span class="s2">"currentOrder"</span> <span class="p">:</span>    <span class="s2">"asc"</span><span class="p">,</span>
-    <span class="s2">"sortConfig"</span> <span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"item"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="p">:</span> <span class="mi">0</span>
-        <span class="p">},</span>
-        <span class="s2">"ean"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">1</span>
-        <span class="p">},</span>
-        <span class="s2">"pname"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">2</span>
-        <span class="p">},</span>
-        <span class="s2">"qty"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">3</span>
-        <span class="p">},</span>
-        <span class="s2">"amt"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">4</span>
-        <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="s2">"sortBy"</span> <span class="err">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">currentType</span> <span class="o">==</span> <span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">currentOrder</span> <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">currentOrder</span> <span class="o">==</span> <span class="s2">"asc"</span>
-                <span class="p">?</span> <span class="s2">"desc"</span>
-                <span class="p">:</span> <span class="s2">"asc"</span>
-            <span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">currentType</span> <span class="o">=</span> <span class="nx">t</span><span class="p">;</span>
-        <span class="p">}</span>
 
-        <span class="kd">var</span> <span class="nx">keyCellIndex</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">sortConfig</span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">currentType</span><span class="p">].</span><span class="nx">columnIndex</span><span class="p">;</span>
-        <span class="kd">var</span> <span class="nx">funcSort</span> <span class="o">=</span> <span class="k">this</span><span class="p">[</span><span class="s2">"funcSort_"</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">currentOrder</span><span class="p">];</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">doSort</span><span class="p">(</span><span class="nx">keyCellIndex</span><span class="p">,</span> <span class="nx">funcSort</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="s2">"funcSort_desc"</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">a</span><span class="p">.</span><span class="nx">key</span> <span class="o">-</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span><span class="p">;</span>
-    <span class="p">},</span>
-    <span class="s2">"funcSort_asc"</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span> <span class="o">-</span> <span class="nx">a</span><span class="p">.</span><span class="nx">key</span><span class="p">;</span>
-    <span class="p">},</span>
-    <span class="s2">"getRows"</span> <span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">tbody</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getTbody</span><span class="p">();</span>
-        <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="nx">tbody</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tr'</span><span class="p">);</span>
-        <span class="k">return</span> <span class="nx">rows</span><span class="p">;</span>
-    <span class="p">},</span>
-    <span class="s2">"getTbody"</span> <span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'table'</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tbody'</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-    <span class="p">},</span>
-    <span class="s2">"doSort"</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">keyCellIndex</span><span class="p">,</span> <span class="nx">sortFunc</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getRows</span><span class="p">();</span>
-        <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="p">[];</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">cell</span><span class="p">,</span> <span class="nx">row</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="nx">row</span><span class="p">;</span> <span class="nx">row</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-            <span class="nx">cell</span> <span class="o">=</span> <span class="nx">row</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">)[</span><span class="nx">keyCellIndex</span><span class="p">].</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
-            <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">"key"</span><span class="p">:</span> <span class="nx">cell</span><span class="p">,</span>
-                <span class="s2">"row"</span><span class="p">:</span> <span class="nx">row</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="nx">keys</span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="nx">sortFunc</span><span class="p">);</span>
+{% highlight javascript %}
+var sorter = {
+    "currentType" :     "item",
+    "currentOrder" :    "asc",
+    "sortConfig" : {
+        "item": {
+            "columnIndex" : 0
+        },
+        "ean": {
+            "columnIndex" : 1
+        },
+        "pname": {
+            "columnIndex" : 2
+        },
+        "qty": {
+            "columnIndex" : 3
+        },
+        "amt": {
+            "columnIndex" : 4
+        }
+    },
+    "sortBy" : function(t) {
+        if (this.currentType == t) {
+            this.currentOrder = (this.currentOrder == "asc"
+                ? "desc"
+                : "asc"
+            );
+        }
+        else {
+            this.currentType = t;
+        }
 
-        <span class="kd">var</span> <span class="nx">tbody</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getTbody</span><span class="p">();</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">r</span><span class="p">;</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-            <span class="nx">tbody</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">row</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+        var keyCellIndex = this.sortConfig[this.currentType].columnIndex;
+        var funcSort = this["funcSort_" + this.currentOrder];
+        this.doSort(keyCellIndex, funcSort);
+    },
+    "funcSort_desc" : function(a,b) {
+        return a.key - b.key;
+    },
+    "funcSort_asc" : function(a,b) {
+        return b.key - a.key;
+    },
+    "getRows" : function() {
+        var tbody = this.getTbody();
+        var rows = tbody.getElementsByTagName('tr');
+        return rows;
+    },
+    "getTbody" : function() {
+        return document.getElementsByTagName('table')[0].getElementsByTagName('tbody')[0];
+    },
+    "doSort" : function(keyCellIndex, sortFunc) {
+        var rows = this.getRows();
+        var keys = [];
+        for (var i = 0, cell, row = rows[0]; row; row = rows[++i]) {
+            cell = row.getElementsByTagName('td')[keyCellIndex].firstChild.nodeValue;
+            keys[i] = {
+                "key": cell,
+                "row": row
+            }
+        }
+        keys.sort(sortFunc);
+
+        var tbody = this.getTbody();
+        for (var i = 0, r = keys[i]; r; r = keys[++i]) {
+            tbody.appendChild(r.row);
+        }
+    }
+}
+{% endhighlight %}
 
 
 <p>
 底下是報表的原始內容 (簡化版) 。報表是由伺服端統計程式產生，所以修改伺服端統計程式的輸出動作，加上一行載入 JavaScript 的動作，並修改標題欄位為呼叫 JavaScript 排序動作的連結。
 </p>
-<pre class="highlight"><code><span class="nt">&lt;script</span> <span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"sorter.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-<span class="nt">&lt;h3&gt;</span>XX銷售報表<span class="nt">&lt;/h3&gt;</span>
-<span class="nt">&lt;table</span> <span class="na">border=</span><span class="s">"1"</span> <span class="na">cellspacing=</span><span class="s">"0"</span><span class="nt">&gt;</span>
-<span class="nt">&lt;thead&gt;</span>
-  <span class="nt">&lt;tr&gt;</span>
-    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"item"</span><span class="nt">&gt;&lt;a</span> <span class="na">href=</span><span class="s">"javascript:sorter.sortBy('item');"</span><span class="nt">&gt;</span>項次<span class="nt">&lt;/a&gt;&lt;/td&gt;</span>
-    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"ean"</span><span class="nt">&gt;&lt;a</span> <span class="na">href=</span><span class="s">"javascript:sorter.sortBy('ean');"</span><span class="nt">&gt;</span>條碼<span class="nt">&lt;/a&gt;&lt;/td&gt;</span>
-    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"pname"</span><span class="nt">&gt;&lt;a</span> <span class="na">href=</span><span class="s">"javascript:sorter.sortBy('pname');"</span><span class="nt">&gt;</span>商品名稱<span class="nt">&lt;/a&gt;&lt;/td&gt;</span>
-    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"qty"</span><span class="nt">&gt;&lt;a</span> <span class="na">href=</span><span class="s">"javascript:sorter.sortBy('qty');"</span><span class="nt">&gt;</span>銷售量<span class="nt">&lt;/a&gt;&lt;/td&gt;</span>
-    <span class="nt">&lt;td</span> <span class="na">class=</span><span class="s">"amt"</span><span class="nt">&gt;&lt;a</span> <span class="na">href=</span><span class="s">"javascript:sorter.sortBy('amt');"</span><span class="nt">&gt;</span>銷售額<span class="nt">&lt;/a&gt;&lt;/td&gt;</span>
-  <span class="nt">&lt;/tr&gt;</span>
-<span class="nt">&lt;/thead&gt;</span>
-<span class="nt">&lt;tbody</span> <span class="na">id=</span><span class="s">"reportTbody"</span><span class="nt">&gt;</span>
-  <span class="nt">&lt;tr&gt;</span>
-    <span class="nt">&lt;td&gt;</span>1<span class="nt">&lt;/td&gt;</span>
-    <span class="nt">&lt;td&gt;</span>4203803<span class="nt">&lt;/td&gt;</span>
-    <span class="nt">&lt;td&gt;</span>輕鬆錠<span class="nt">&lt;/td&gt;</span>
-    <span class="nt">&lt;td&gt;</span><span class="ni">&amp;nbsp;</span><span class="nt">&lt;/td&gt;</span>
-    <span class="nt">&lt;td&gt;</span><span class="ni">&amp;nbsp;</span><span class="nt">&lt;/td&gt;</span>
-  <span class="nt">&lt;/tr&gt;</span>
-<span class="nt">&lt;/tbody&gt;</span>
-<span class="nt">&lt;/table&gt;</span>
-</code></pre>
+
+{% highlight javascript %}
+<script type="text/javascript" src="sorter.js"></script>
+<h3>XX銷售報表</h3>
+<table border="1" cellspacing="0">
+<thead>
+  <tr>
+    <td class="item"><a href="javascript:sorter.sortBy('item');">項次</a></td>
+    <td class="ean"><a href="javascript:sorter.sortBy('ean');">條碼</a></td>
+    <td class="pname"><a href="javascript:sorter.sortBy('pname');">商品名稱</a></td>
+    <td class="qty"><a href="javascript:sorter.sortBy('qty');">銷售量</a></td>
+    <td class="amt"><a href="javascript:sorter.sortBy('amt');">銷售額</a></td>
+  </tr>
+</thead>
+<tbody id="reportTbody">
+  <tr>
+    <td>1</td>
+    <td>4203803</td>
+    <td>輕鬆錠</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</tbody>
+</table>
+{% endhighlight %}
 
 
 <h3>Refactoring</h3>
@@ -256,117 +262,121 @@ permalink: /archives/2854997.html
 透過上述快速的實作過程，我已經驗證了程式碼可行性。最後免不了要重整一下，最好是把上面的程式碼重整成一個可再用的 class 。重整重點有二：一、將原本的變數改寫成可生成新個體的函數型態，即 JavaScript 的類別。二、設定值與排序資料區域可作為引數傳遞。下列為重整後的程式碼，重整過程非常簡單而直覺，各位可以自行比較與思考。
 </p>
 
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">Sorter</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">requiredArgs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'table'</span><span class="p">,</span> <span class="s1">'currentType'</span><span class="p">,</span> <span class="s1">'currentOrder'</span><span class="p">,</span> <span class="s1">'sortConfig'</span><span class="p">];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">k</span> <span class="o">=</span> <span class="nx">requiredArgs</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">k</span><span class="p">;</span> <span class="nx">k</span> <span class="o">=</span> <span class="nx">requiredArgs</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-        <span class="k">this</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">config</span><span class="p">[</span><span class="nx">k</span><span class="p">];</span>
-    <span class="p">}</span>
 
-    <span class="kd">var</span> <span class="nx">funcSortMap</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">'desc'</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nx">a</span><span class="p">.</span><span class="nx">key</span> <span class="o">-</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span><span class="p">;</span>
-        <span class="p">},</span>
-        <span class="s1">'asc'</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span> <span class="o">-</span> <span class="nx">a</span><span class="p">.</span><span class="nx">key</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+{% highlight javascript %}
+function Sorter(config) {
+    var requiredArgs = ['table', 'currentType', 'currentOrder', 'sortConfig'];
+    for (var i = 0, k = requiredArgs[i]; k; k = requiredArgs[++i]) {
+        this[k] = config[k];
+    }
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">sortBy</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">currentType</span> <span class="o">==</span> <span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">currentOrder</span> <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">currentOrder</span> <span class="o">==</span> <span class="s1">'asc'</span>
-                <span class="p">?</span> <span class="s1">'desc'</span>
-                <span class="p">:</span> <span class="s1">'asc'</span>
-            <span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="k">this</span><span class="p">.</span><span class="nx">currentType</span> <span class="o">=</span> <span class="nx">t</span><span class="p">;</span>
-        <span class="p">}</span>
+    var funcSortMap = {
+        'desc': function(a,b) {
+            return a.key - b.key;
+        },
+        'asc': function(a,b) {
+            return b.key - a.key;
+        }
+    }
 
-        <span class="kd">var</span> <span class="nx">keyCellIndex</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">sortConfig</span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">currentType</span><span class="p">].</span><span class="nx">columnIndex</span><span class="p">;</span>
-        <span class="kd">var</span> <span class="nx">funcSort</span> <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">sortConfig</span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">currentType</span><span class="p">].</span><span class="nx">funcSortMap</span>
-            <span class="p">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">sortConfig</span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">currentType</span><span class="p">].</span><span class="nx">funcSortMap</span>
-            <span class="p">:</span> <span class="nx">funcSortMap</span>
-        <span class="p">)[</span><span class="k">this</span><span class="p">.</span><span class="nx">currentOrder</span><span class="p">];</span>
-        <span class="nx">doSort</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">[</span><span class="nx">keyCellIndex</span><span class="p">,</span> <span class="nx">funcSort</span><span class="p">]);</span>
-    <span class="p">}</span>
+    this.sortBy = function(t) {
+        if (this.currentType == t) {
+            this.currentOrder = (this.currentOrder == 'asc'
+                ? 'desc'
+                : 'asc'
+            );
+        }
+        else {
+            this.currentType = t;
+        }
 
-    <span class="kd">var</span> <span class="nx">tbody</span><span class="p">;</span>
-    <span class="kd">function</span> <span class="nx">getTbody</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">tbody</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="c1">//pass by id or DOM node?</span>
-            <span class="nx">tbody</span> <span class="o">=</span> <span class="p">(</span><span class="k">typeof</span> <span class="k">this</span><span class="p">.</span><span class="nx">table</span> <span class="o">==</span> <span class="s1">'string'</span>      <span class="c1">//pass by id</span>
-                <span class="p">?</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">table</span><span class="p">)</span>
-                <span class="p">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">table</span>    <span class="c1">//pass by DOM node</span>
-            <span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nx">tbody</span><span class="p">;</span>
-    <span class="p">}</span>
+        var keyCellIndex = this.sortConfig[this.currentType].columnIndex;
+        var funcSort = (this.sortConfig[this.currentType].funcSortMap
+            ? this.sortConfig[this.currentType].funcSortMap
+            : funcSortMap
+        )[this.currentOrder];
+        doSort.apply(this, [keyCellIndex, funcSort]);
+    }
 
-    <span class="kd">function</span> <span class="nx">getRows</span><span class="p">()</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">tbody</span> <span class="o">=</span> <span class="nx">getTbody</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-        <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="nx">tbody</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'tr'</span><span class="p">);</span>
-        <span class="k">return</span> <span class="nx">rows</span><span class="p">;</span>
-    <span class="p">}</span>
+    var tbody;
+    function getTbody() {
+        if ( !tbody ) {
+            //pass by id or DOM node?
+            tbody = (typeof this.table == 'string'      //pass by id
+                ? document.getElementById(this.table)
+                : this.table    //pass by DOM node
+            );
+        }
+        return tbody;
+    }
 
-    <span class="kd">function</span> <span class="nx">doSort</span><span class="p">(</span><span class="nx">keyCellIndex</span><span class="p">,</span> <span class="nx">sortFunc</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="nx">getRows</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-        <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="p">[];</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">cell</span><span class="p">,</span> <span class="nx">row</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="nx">row</span><span class="p">;</span> <span class="nx">row</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-            <span class="nx">cell</span> <span class="o">=</span> <span class="nx">row</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">)[</span><span class="nx">keyCellIndex</span><span class="p">].</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
-            <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s1">'key'</span><span class="p">:</span> <span class="nx">cell</span><span class="p">,</span>
-                <span class="s1">'row'</span><span class="p">:</span> <span class="nx">row</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="nx">keys</span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="nx">sortFunc</span><span class="p">);</span>
+    function getRows() {
+        var tbody = getTbody.call(this);
+        var rows = tbody.getElementsByTagName('tr');
+        return rows;
+    }
 
-        <span class="kd">var</span> <span class="nx">tbody</span> <span class="o">=</span> <span class="nx">getTbody</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">r</span><span class="p">;</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-            <span class="nx">tbody</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">row</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+    function doSort(keyCellIndex, sortFunc) {
+        var rows = getRows.call(this);
+        var keys = [];
+        for (var i = 0, cell, row = rows[0]; row; row = rows[++i]) {
+            cell = row.getElementsByTagName('td')[keyCellIndex].firstChild.nodeValue;
+            keys[i] = {
+                'key': cell,
+                'row': row
+            }
+        }
+        keys.sort(sortFunc);
+
+        var tbody = getTbody.call(this);
+        for (var i = 0, r = keys[i]; r; r = keys[++i]) {
+            tbody.appendChild(r.row);
+        }
+    }
+}
+{% endhighlight %}
 
 
 <p>
 下列是使用案例，配置一個<var>sorter</var>，引數中指示排序資料區域的 ID 、預設排序型態、順序，以及各資料型態的欄位位置。 HTML 部份則不需改變。
 </p>
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">sorter</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Sorter</span><span class="p">({</span>
-    <span class="s2">"table"</span> <span class="p">:</span> <span class="s2">"reportTbody"</span><span class="p">,</span>
-    <span class="s2">"currentType"</span> <span class="p">:</span>     <span class="s2">"item"</span><span class="p">,</span>
-    <span class="s2">"currentOrder"</span> <span class="p">:</span>    <span class="s2">"asc"</span><span class="p">,</span>
-    <span class="s2">"sortConfig"</span> <span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"item"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="p">:</span> <span class="mi">0</span>
-        <span class="p">},</span>
-        <span class="s2">"ean"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">1</span>
-        <span class="p">},</span>
-        <span class="s2">"pname"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">2</span><span class="p">,</span>
-            <span class="s2">"funcSortMap"</span> <span class="err">:</span> <span class="p">{</span>
-                <span class="s2">"desc"</span><span class="err">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">key</span> <span class="o">==</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-                    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">key</span> <span class="o">&gt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-                    <span class="k">else</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-                <span class="p">},</span>
-                <span class="s2">"asc"</span><span class="err">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">key</span> <span class="o">==</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-                    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">key</span> <span class="o">&gt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-                    <span class="k">else</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-                <span class="p">}</span>
-            <span class="p">}</span>
-        <span class="p">},</span>
-        <span class="s2">"qty"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">3</span>
-        <span class="p">},</span>
-        <span class="s2">"amt"</span><span class="err">:</span> <span class="p">{</span>
-            <span class="s2">"columnIndex"</span> <span class="err">:</span> <span class="mi">4</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">});</span>
-</code></pre>
+
+{% highlight javascript %}
+var sorter = new Sorter({
+    "table" : "reportTbody",
+    "currentType" :     "item",
+    "currentOrder" :    "asc",
+    "sortConfig" : {
+        "item": {
+            "columnIndex" : 0
+        },
+        "ean": {
+            "columnIndex" : 1
+        },
+        "pname": {
+            "columnIndex" : 2,
+            "funcSortMap" : {
+                "desc": function(a,b) {
+                    if (a.key == b.key) return 0;
+                    else if (a.key > b.key) return -1;
+                    else    return 1;
+                },
+                "asc": function(a,b) {
+                    if (a.key == b.key) return 0;
+                    else if (a.key > b.key) return 1;
+                    else    return -1;
+                }
+            }
+        },
+        "qty": {
+            "columnIndex" : 3
+        },
+        "amt": {
+            "columnIndex" : 4
+        }
+    }
+});
+{% endhighlight %}
 
 <script type="text/javascript">
 function Sorter(config) {
@@ -488,32 +498,34 @@ var sorter = new Sorter({
 <p>
 附帶一提，當排序資料很多時，瀏覽器會陷入不回應狀態。而底下的程式碼則是另一種版本的 DOM 節點更新程式碼。上述版本直接操作顯示中的節點，而下列版本則是先配置一個 tbody 節點，於背景排放資料列內容後，再替換整個 tbody 節點。理論上較快，但我實際使用時... 測不出效能差異 (IE, Firefox and Opera)。
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">doSort</span><span class="p">(</span><span class="nx">keyCellIndex</span><span class="p">,</span> <span class="nx">sortFunc</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="nx">getRows</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-    <span class="kd">var</span> <span class="nx">keys</span> <span class="o">=</span> <span class="p">[];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">cell</span><span class="p">,</span> <span class="nx">row</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="nx">row</span><span class="p">;</span> <span class="nx">row</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-        <span class="nx">cell</span> <span class="o">=</span> <span class="nx">row</span><span class="p">.</span><span class="nx">getElementsByTagName</span><span class="p">(</span><span class="s1">'td'</span><span class="p">)[</span><span class="nx">keyCellIndex</span><span class="p">].</span><span class="nx">firstChild</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">;</span>
-        <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">'key'</span><span class="p">:</span> <span class="nx">cell</span><span class="p">,</span>
-            <span class="s1">'row'</span><span class="p">:</span> <span class="nx">row</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="nx">keys</span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="nx">sortFunc</span><span class="p">);</span>
 
-    <span class="kd">var</span> <span class="nx">tbody</span> <span class="o">=</span> <span class="nx">getTbody</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">fr</span><span class="p">,</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">r</span><span class="p">;</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-        <span class="nx">tbody</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">row</span><span class="p">);</span>
-    <span class="p">}</span>
+{% highlight javascript %}
+function doSort(keyCellIndex, sortFunc) {
+    var rows = getRows.call(this);
+    var keys = [];
+    for (var i = 0, cell, row = rows[0]; row; row = rows[++i]) {
+        cell = row.getElementsByTagName('td')[keyCellIndex].firstChild.nodeValue;
+        keys[i] = {
+            'key': cell,
+            'row': row
+        }
+    }
+    keys.sort(sortFunc);
 
-    <span class="kd">var</span> <span class="nx">newTbody</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'tbody'</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">newRow</span><span class="p">,</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">r</span><span class="p">;</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">keys</span><span class="p">[</span><span class="o">++</span><span class="nx">i</span><span class="p">])</span> <span class="p">{</span>
-        <span class="nx">newRow</span> <span class="o">=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">row</span><span class="p">.</span><span class="nx">cloneNode</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
-        <span class="nx">newTbody</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">newRow</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="kd">var</span> <span class="nx">tbody</span> <span class="o">=</span> <span class="nx">getTbody</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-    <span class="nx">tbody</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">replaceChild</span><span class="p">(</span><span class="nx">newTbody</span><span class="p">,</span> <span class="nx">tbody</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
+    var tbody = getTbody.call(this);
+    for (var i = 0, fr, r = keys[i]; r; r = keys[++i]) {
+        tbody.appendChild(r.row);
+    }
+
+    var newTbody = document.createElement('tbody');
+    for (var i = 0, newRow, r = keys[i]; r; r = keys[++i]) {
+        newRow = r.row.cloneNode(true);
+        newTbody.appendChild(newRow);
+    }
+    var tbody = getTbody.call(this);
+    tbody.parentNode.replaceChild(newTbody, tbody);
+}
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

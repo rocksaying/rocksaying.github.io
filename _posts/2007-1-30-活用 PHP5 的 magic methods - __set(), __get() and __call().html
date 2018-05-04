@@ -18,37 +18,39 @@ PHP5 在動態性及個體導向兩方面都做了大幅度的加強。其中 <a
 首先看一個 PHP4 語法的類別。<cite>See also: <a href="http://tw.php.net/manual/en/language.oop.php">PHP Manual - Classes and Objects (PHP 4)</a></cite>
 </p>
 <h4>X.php in PHP4</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">X</span> <span class="p">{</span>
-    <span class="k">var</span> <span class="nv">$_value1</span><span class="p">;</span>
-    <span class="k">var</span> <span class="nv">$_value2</span><span class="p">;</span>
 
-    <span class="k">function</span> <span class="nf">X4</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_value1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_value2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+class X {
+    var $_value1;
+    var $_value2;
 
-    <span class="k">function</span> <span class="nf">setValue1</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_value1</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">function</span> <span class="nf">getValue1</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_value1</span><span class="p">;</span>
-    <span class="p">}</span>
+    function X4() {
+        $this->_value1 = 0;
+        $this->_value2 = 0;
+    }
 
-    <span class="k">function</span> <span class="nf">setValue2</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_value2</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">function</span> <span class="nf">getValue2</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_value2</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    function setValue1($v) {
+        $this->_value1 = $v;
+    }
+    function getValue1() {
+        return $this->_value1;
+    }
 
-<span class="nv">$x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">X</span><span class="p">;</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">setValue1</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">setValue2</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'('</span> <span class="o">.</span> <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">getValue1</span><span class="p">()</span> <span class="o">.</span> <span class="s1">','</span> <span class="o">.</span> <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">getValue2</span><span class="p">()</span> <span class="o">.</span> <span class="s1">')'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    function setValue2($v) {
+        $this->_value2 = $v;
+    }
+    function getValue2() {
+        return $this->_value2;
+    }
+}
+
+$x = new X;
+$x->setValue1(1);
+$x->setValue2(2);
+echo '(' . $x->getValue1() . ',' . $x->getValue2() . ')', "\n";
+?>
+{% endhighlight %}
 
 
 <p>
@@ -60,37 +62,39 @@ PHP5 在動態性及個體導向兩方面都做了大幅度的加強。其中 <a
 </p>
 
 <h4>X.php in PHP5</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">class</span> <span class="nc">X</span> <span class="p">{</span>
-    <span class="k">protected</span> <span class="nv">$_</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'value1'</span> <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="s1">'value2'</span> <span class="o">=&gt;</span> <span class="mi">0</span>
-    <span class="p">);</span>
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+class X {
+    protected $_ = array(
+        'value1' => 0,
+        'value2' => 0
+    );
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">setValue1</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value1'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">getValue1</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value1'</span><span class="p">];</span>
-    <span class="p">}</span>
+    public function __construct() {
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">setValue2</span><span class="p">(</span><span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value2'</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">getValue2</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value2'</span><span class="p">];</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    public function setValue1($v) {
+        $this->_['value1'] = $v;
+    }
+    public function getValue1() {
+        return $this->_['value1'];
+    }
 
-<span class="nv">$x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">X</span><span class="p">;</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">setValue1</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">setValue2</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'('</span> <span class="o">.</span> <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">getValue1</span><span class="p">()</span> <span class="o">.</span> <span class="s1">','</span> <span class="o">.</span> <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">getValue2</span><span class="p">()</span> <span class="o">.</span> <span class="s1">')'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    public function setValue2($v) {
+        $this->_['value2'] = $v;
+    }
+    public function getValue2() {
+        return $this->_['value2'];
+    }
+}
+
+$x = new X;
+$x->setValue1(1);
+$x->setValue2(2);
+echo '(' . $x->getValue1() . ',' . $x->getValue2() . ')', "\n";
+?>
+{% endhighlight %}
 
 <p>
 為何重整後改以關聯陣列的資料成員儲存私有屬性，而不直接用資料成員表示私有屬性呢？這跟 PHP 的「自識」能力 (或稱「反射」, Reflection) 有關。雖然關聯陣列和資料成員都可以動態增加內容，但受限於 PHP 的自識能力，使用關聯陣列儲存私有屬性較資料成員方便。因為使用資料成員的形式時無法以 <code>foreach</code> 走訪所有私有屬性。若用關聯陣列為容器存放屬性，便可以 <code>foreach</code> 走訪所有私有屬性。稍候的重整會顯示此用法的意義。
@@ -101,57 +105,59 @@ PHP5 在動態性及個體導向兩方面都做了大幅度的加強。其中 <a
 </p>
 
 <h4>X2.php</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'X.php'</span><span class="p">;</span>
 
-<span class="k">class</span> <span class="nc">X2</span> <span class="k">extends</span> <span class="nx">X</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__toString</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nv">$s</span> <span class="o">=</span> <span class="s1">'('</span><span class="p">;</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span> <span class="k">as</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$s</span> <span class="o">.=</span> <span class="nv">$v</span> <span class="o">.</span> <span class="s1">','</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="nv">$s</span> <span class="o">=</span> <span class="nb">substr</span><span class="p">(</span><span class="nv">$s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">strrpos</span><span class="p">(</span><span class="nv">$s</span><span class="p">,</span> <span class="s1">','</span><span class="p">))</span> <span class="o">.</span> <span class="s1">')'</span><span class="p">;</span>
-        <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$method</span> <span class="o">=</span> <span class="s1">'set'</span> <span class="o">.</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nv">$k</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$method</span><span class="p">))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$method</span><span class="p">(</span><span class="nv">$v</span><span class="p">);</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-        <span class="k">else</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'property undefined!'</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$k</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$method</span> <span class="o">=</span> <span class="s1">'get'</span> <span class="o">.</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nv">$k</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$method</span><span class="p">))</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$method</span><span class="p">();</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]))</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">];</span>
-        <span class="k">else</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'property undefined!'</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__isset</span><span class="p">(</span><span class="nv">$k</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+require_once 'X.php';
 
-<span class="nv">$x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">X</span><span class="p">;</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">setValue1</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">setValue2</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'('</span> <span class="o">.</span> <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">getValue1</span><span class="p">()</span> <span class="o">.</span> <span class="s1">','</span> <span class="o">.</span> <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">getValue2</span><span class="p">()</span> <span class="o">.</span> <span class="s1">')'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+class X2 extends X {
+    public function __construct() {
+        parent::__construct();
+    }
+    public function __toString() {
+        $s = '(';
+        foreach ($this->_ as $v) {
+            $s .= $v . ',';
+        }
+        $s = substr($s, 0, strrpos($s, ',')) . ')';
+        return $s;
+    }
+    public function __set($k, $v) {
+        $method = 'set' . ucfirst($k);
+        if (method_exists($this, $method))
+            $this->$method($v);
+        else if (isset($this->_[$k]))
+            $this->_[$k] = $v;
+        else
+            throw new Exception('property undefined!');
+    }
+    public function __get($k) {
+        $method = 'get' . ucfirst($k);
+        if (method_exists($this, $method))
+            return $this->$method();
+        else if (isset($this->_[$k]))
+            return $this->_[$k];
+        else
+            throw new Exception('property undefined!');
+    }
+    public function __isset($k) {
+        return isset($this->_[$k]);
+    }
+}
 
-<span class="nv">$x2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">X2</span><span class="p">;</span>
-<span class="nv">$x2</span><span class="o">-&gt;</span><span class="na">value1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<span class="nv">$x2</span><span class="o">-&gt;</span><span class="na">value2</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nv">$x2</span><span class="o">-&gt;</span><span class="na">value1</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'isset $x2-&gt;value2: '</span><span class="p">,</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$x2</span><span class="o">-&gt;</span><span class="na">value2</span><span class="p">)</span> <span class="o">?</span> <span class="s1">'true'</span> <span class="o">:</span> <span class="s1">'false'</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nv">$x2</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$x = new X;
+$x->setValue1(1);
+$x->setValue2(2);
+echo '(' . $x->getValue1() . ',' . $x->getValue2() . ')', "\n";
+
+$x2 = new X2;
+$x2->value1 = 1;
+$x2->value2 = 2;
+echo $x2->value1, "\n";
+echo 'isset $x2->value2: ', (isset($x2->value2) ? 'true' : 'false'), "\n";
+echo $x2, "\n";
+?>
+{% endhighlight %}
 
 <p>
 我們覆載 <code>__set(), __get()</code> 這兩個 magic methods 之後，表面上我們直接存取資料成員 <var>$x2->value1, $x2->value2</var> ，但實際上根本沒有這兩個資料成員，而是藉由 <code>__set()</code> 去調用屬性 <var>value1, value2</var> 的專屬存取行為 <var>$this->setValue1(), $this->setValue2()</var>(X2.php 第19行)。我們用 <a href="http://tw.php.net/manual/en/function.method-exists.php">method_exists()</a> 判斷是否定義了專屬存取行為，用 <a href="http://tw.php.net/manual/en/functions.variable-functions.php">變數函數 (variable function)</a> 的形式調用。同樣地，雖然實際上沒有 <var>$x2->value1, $x2->value2</var> 資料成員，但表面上有，因此又覆載了 <code>__isset()</code> 以判斷是否設定了屬性 <var>value1, value2</var> 。最後可以看到 <code>__toString()</code> 的覆載作用。而在 <code>__toString()</code> 中也可以看出用關聯陣列存放屬性時，我們可以很方便地使用 <code>foreach</code> 走訪所有屬性。
@@ -164,80 +170,82 @@ PHP5 在動態性及個體導向兩方面都做了大幅度的加強。其中 <a
 繼續自 X2 類別衍生一個新類別 X3 ，利用預設參數撰寫新的屬性存取行為。同時再利用 <code>__call()</code> 增加對函數名稱的相容性。
 </p>
 <h4>X3.php</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'X2.php'</span><span class="p">;</span>
 
-<span class="k">class</span> <span class="nc">X3</span> <span class="k">extends</span> <span class="nx">X2</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">();</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value3'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+require_once 'X2.php';
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">value3</span><span class="p">(</span><span class="nv">$v</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$v</span> <span class="o">===</span> <span class="k">NULL</span><span class="p">)</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value3'</span><span class="p">];</span> <span class="c1">// be a getter
-</span>        <span class="k">else</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="s1">'value3'</span><span class="p">]</span> <span class="o">+=</span> <span class="nv">$v</span><span class="o">*</span><span class="mi">2</span><span class="p">;</span> <span class="c1">// be a setter
-</span>    <span class="p">}</span>
+class X3 extends X2 {
+    public function __construct() {
+        parent::__construct();
+        $this->_['value3'] = 1;
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$k</span><span class="p">))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$k</span><span class="p">(</span><span class="nv">$v</span><span class="p">);</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$v</span><span class="p">;</span>
-        <span class="k">else</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'property undefined!'</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$k</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$k</span><span class="p">))</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nv">$k</span><span class="p">();</span>
-        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">]))</span>
-            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_</span><span class="p">[</span><span class="nv">$k</span><span class="p">];</span>
-        <span class="k">else</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'property undefined!'</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$args</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match_all</span><span class="p">(</span><span class="s1">'/(set|get)([A-Z][a-z0-9]+)+/'</span><span class="p">,</span> <span class="nv">$k</span><span class="p">,</span> <span class="nv">$words</span><span class="p">))</span> <span class="p">{</span>
-            <span class="nv">$firstWord</span> <span class="o">=</span> <span class="nv">$words</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span> <span class="c1">// set or get
-</span>            <span class="nv">$methodName</span> <span class="o">=</span> <span class="nb">strtolower</span><span class="p">(</span><span class="nb">array_shift</span><span class="p">(</span><span class="nv">$words</span><span class="p">[</span><span class="mi">2</span><span class="p">]));</span>
-            <span class="c1">//first word of property name
-</span>
-            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$words</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$word</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nv">$methodName</span> <span class="o">.=</span> <span class="nb">ucfirst</span><span class="p">(</span><span class="nv">$word</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nb">method_exists</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">))</span> <span class="p">{</span>
-                <span class="nv">$methodObj</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$methodName</span><span class="p">);</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nv">$firstWord</span> <span class="o">==</span> <span class="s1">'set'</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$methodObj</span><span class="p">,</span> <span class="nv">$args</span><span class="p">);</span>
-                    <span class="k">return</span><span class="p">;</span>
-                <span class="p">}</span>
-                <span class="k">else</span> <span class="p">{</span>
-                    <span class="k">return</span> <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$methodObj</span><span class="p">,</span> <span class="k">NULL</span><span class="p">);</span>
-                <span class="p">}</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s1">'property undefined!'</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    public function value3($v = NULL) {
+        if ($v === NULL)
+            return $this->_['value3']; // be a getter
+        else
+            $this->_['value3'] += $v*2; // be a setter
+    }
 
-<span class="nv">$x3</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">X3</span><span class="p">;</span>
-<span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">value1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">value2</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">value3</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">value3</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">getValue3</span><span class="p">(),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">value3</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
-<span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">setValue3</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
-<span class="k">echo</span> <span class="nv">$x3</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+    public function __set($k, $v) {
+        if (method_exists($this, $k))
+            $this->$k($v);
+        else if (isset($this->_[$k]))
+            $this->_[$k] = $v;
+        else
+            throw new Exception('property undefined!');
+    }
+    public function __get($k) {
+        if (method_exists($this, $k))
+            return $this->$k();
+        else if (isset($this->_[$k]))
+            return $this->_[$k];
+        else
+            throw new Exception('property undefined!');
+    }
+    public function __call($k, $args) {
+        if (preg_match_all('/(set|get)([A-Z][a-z0-9]+)+/', $k, $words)) {
+            $firstWord = $words[1][0]; // set or get
+            $methodName = strtolower(array_shift($words[2]));
+            //first word of property name
 
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$x3</span><span class="o">-&gt;</span><span class="na">value4</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="nv">$e</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+            foreach ($words[2] as $word) {
+                $methodName .= ucfirst($word);
+            }
+            if (method_exists($this, $methodName)) {
+                $methodObj = array(&$this, $methodName);
+                if ($firstWord == 'set') {
+                    call_user_func_array($methodObj, $args);
+                    return;
+                }
+                else {
+                    return call_user_func_array($methodObj, NULL);
+                }
+            }
+        }
+        throw new Exception('property undefined!');
+    }
+}
+
+$x3 = new X3;
+$x3->value1 = 1;
+$x3->value2 = 2;
+$x3->value3 = 3;
+echo $x3->value3(), "\n";
+echo $x3->getValue3(), "\n";
+$x3->value3(2);
+$x3->setValue3(2);
+echo $x3, "\n";
+
+try {
+    $x3->value4 = 0;
+}
+catch (Exception $e) {
+    echo $e;
+}
+?>
+{% endhighlight %}
 
 <p>
 X3.php 的第62行 (<code>echo $x3->getValue3();</code>) 與第64行 (<code>$x3->setValue3(2);</code>) ，都是透過 <code>__call()</code> 的覆載，才能調用到正確的 <var>$x3->value3()</var> (<a href="http://tw.php.net/manual/en/function.call-user-func-array.php">call_user_func_array()</a>)。不用擔心這會降低程式效能，因為 PHP5 只有在找不到明確定義的函數行為時，才會調用 <code>__call()</code> 。因此只要統一使用一致的函數名稱，便沒有機會調用 <code>__call()</code> 了。在本例中先後用了不一致的函數命名方式，才利用 <code>__call()</code> 容錯。

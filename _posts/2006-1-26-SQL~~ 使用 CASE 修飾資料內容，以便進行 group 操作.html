@@ -13,20 +13,22 @@ permalink: /archives/1051724.html
 <p>
 使用 CASE 修飾單號，將 M 開頭單號者，顯示為 'M通路' ，餘類推。如此便可再以 GROUP 進行群組求總和的操作。
 </p>
-<pre class="highlight"><code><span class="k">select</span> <span class="n">sale_stat</span><span class="p">.</span><span class="n">place</span><span class="p">,</span> <span class="k">sum</span><span class="p">(</span><span class="n">sale_stat</span><span class="p">.</span><span class="n">amt</span><span class="p">)</span> <span class="k">as</span> <span class="n">tamt</span>
-<span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">saleno</span><span class="p">,</span>
-        <span class="k">case</span>
-            <span class="k">when</span> <span class="n">cno</span> <span class="k">like</span> <span class="s1">'M%'</span> <span class="k">then</span> <span class="s1">'M通路'</span>
-            <span class="k">when</span> <span class="n">cno</span> <span class="k">like</span> <span class="s1">'PH%'</span> <span class="k">then</span> <span class="s1">'PH通路'</span>
-            <span class="k">when</span> <span class="n">cno</span> <span class="k">like</span> <span class="s1">'YA%'</span> <span class="k">then</span> <span class="s1">'YA通路'</span>
-        <span class="k">end</span> <span class="k">as</span> <span class="n">place</span><span class="p">,</span>
-        <span class="n">amt</span>
-    <span class="k">from</span> <span class="n">sale_orders</span>
-    <span class="k">where</span> <span class="p">(</span><span class="n">cno</span> <span class="k">like</span> <span class="s1">'M%'</span>  <span class="k">or</span> <span class="n">cno</span> <span class="k">like</span> <span class="s1">'PH%'</span> <span class="k">or</span> <span class="n">cno</span> <span class="k">like</span> <span class="s1">'YA%'</span><span class="p">)</span>
-    <span class="k">and</span> <span class="n">sale_date</span> <span class="o">&gt;=</span> <span class="s1">'20060101'</span> <span class="k">and</span> <span class="n">sale_date</span> <span class="o">&lt;=</span> <span class="s1">'20060131'</span> <span class="p">)</span>
-<span class="k">as</span> <span class="n">sale_stat</span>
-<span class="k">group</span> <span class="k">by</span> <span class="n">sale_stat</span><span class="p">.</span><span class="n">place</span>
-</code></pre>
+
+{% highlight sql %}
+select sale_stat.place, sum(sale_stat.amt) as tamt
+from (select saleno,
+        case
+            when cno like 'M%' then 'M通路'
+            when cno like 'PH%' then 'PH通路'
+            when cno like 'YA%' then 'YA通路'
+        end as place,
+        amt
+    from sale_orders
+    where (cno like 'M%'  or cno like 'PH%' or cno like 'YA%')
+    and sale_date >= '20060101' and sale_date <= '20060131' )
+as sale_stat
+group by sale_stat.place
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

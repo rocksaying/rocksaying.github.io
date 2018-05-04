@@ -17,104 +17,108 @@ permalink: /archives/3556355.html
 <p>
 例如下列的程式碼，就是用 struct 宣告一張個體行為介面表。完整程式碼可見於 <a href="http://home.educities.edu.tw/fbtip/software/bbslib-20010331.tar.gz">bbslib-20010331</a>。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
   string_i.h Header file of string interface.
     Copyright (C) 1998, Sh Yunchen, rock@bbs.isu.edu.tw
   Licensed by GNU Lesser General Public License.
-*/</span>
-<span class="cp">#if !defined( __STRING_I_H )
+*/
+#if !defined( __STRING_I_H )
 #define __STRING_I_H
-</span>
-<span class="k">struct</span> <span class="n">stringinterface</span>
-<span class="p">{</span>
-  <span class="kt">void</span><span class="o">*</span> <span class="n">striobj</span><span class="p">;</span>
-  <span class="kt">size_t</span> <span class="p">(</span><span class="o">*</span><span class="n">length</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">);</span>
-  <span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">text</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">);</span>
-  <span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">strcpy</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">);</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">stringinterface</span> <span class="n">string_i</span><span class="p">;</span>
 
-<span class="cp">#endif	// defined( __STRING_I_H )
-</span></code></pre>
+struct stringinterface
+{
+  void* striobj;
+  size_t (*length)(const void*);
+  char* (*text)(const void*);
+  char* (*strcpy)(void*, const char*);
+};
+typedef struct stringinterface string_i;
+
+#endif	// defined( __STRING_I_H )
+{% endhighlight %}
 
 
 <p>
 使用方式通常如下列所示。宣告一個 buffer struct ，定義需要的函數。建構函數中要配置並指派函數指標。注意，這是 C ，不是 C++ 。一切要自己來。用 Java 的用語說明，此 buffer 類別的用途，在於將 primitive type 的字串轉成 object 。亦即 buffer 是一個 Wrapper Class 。最後在 main 和 print_content_and_length 中展示了近似 C++ 的敘述。
 </p>
-<pre class="highlight"><code><span class="cm">/*
+
+{% highlight c %}
+/*
   buffer.c String buffer routines.
     Copyright (C) 1999, Sh Yunchen, shirock@mail.educities.edu.tw
   Licensed by GNU Lesser General Public License.
-*/</span>
-<span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "string_i.h"
-</span>
-<span class="k">struct</span> <span class="n">buffer</span>
-<span class="p">{</span>
-  <span class="n">string_i</span> <span class="n">striobj</span><span class="p">;</span>
-  <span class="kt">char</span><span class="o">*</span> <span class="n">bufptr</span><span class="p">;</span>
-  <span class="kt">void</span><span class="o">*</span> <span class="n">freeptr</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">buffer</span> <span class="n">buffer_t</span><span class="p">;</span>
 
-<span class="kt">size_t</span> <span class="nf">buffer_length</span><span class="p">(</span><span class="k">const</span> <span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">return</span> <span class="n">strlen</span><span class="p">(</span><span class="n">b</span><span class="o">-&gt;</span><span class="n">bufptr</span><span class="p">);</span>
-<span class="p">}</span>
+struct buffer
+{
+  string_i striobj;
+  char* bufptr;
+  void* freeptr;
+};
+typedef struct buffer buffer_t;
 
-<span class="kt">char</span><span class="o">*</span> <span class="nf">buffer_text</span><span class="p">(</span><span class="k">const</span> <span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">return</span> <span class="n">b</span><span class="o">-&gt;</span><span class="n">bufptr</span><span class="p">;</span>
-<span class="p">}</span>
+size_t buffer_length(const buffer_t*b) {
+  return strlen(b->bufptr);
+}
 
-<span class="kt">char</span><span class="o">*</span> <span class="nf">buffer_strcpy</span><span class="p">(</span><span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">return</span> <span class="n">strcpy</span><span class="p">(</span><span class="n">b</span><span class="o">-&gt;</span><span class="n">bufptr</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span>
-<span class="p">}</span>
+char* buffer_text(const buffer_t*b) {
+  return b->bufptr;
+}
 
-<span class="n">buffer_t</span><span class="o">*</span> <span class="nf">buffer_construct</span><span class="p">(</span><span class="n">buffer_t</span><span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="n">bufptr</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">buffer_t</span> <span class="o">*</span><span class="n">tmp</span><span class="p">;</span>
-  <span class="k">if</span><span class="p">(</span> <span class="n">b</span><span class="o">==</span><span class="nb">NULL</span> <span class="p">)</span>
-    <span class="n">tmp</span><span class="o">=</span><span class="p">(</span><span class="n">buffer_t</span> <span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer_t</span><span class="p">));</span>
-  <span class="k">else</span>
-    <span class="n">tmp</span><span class="o">=</span><span class="n">b</span><span class="p">;</span>
-  <span class="n">memset</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer_t</span><span class="p">));</span>
-  <span class="c1">// all of the elements set to clear (null).
-</span>  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">striobj</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span>
-  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">length</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_length</span><span class="p">;</span>
-  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">text</span>    <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_text</span><span class="p">;</span>
-  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">striobj</span><span class="p">.</span><span class="n">strcpy</span>  <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">))</span> <span class="n">buffer_strcpy</span><span class="p">;</span>
+char* buffer_strcpy(buffer_t*b, const char*src) {
+  return strcpy(b->bufptr, src);
+}
 
-  <span class="n">bufptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
-  <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">bufptr</span> <span class="o">=</span> <span class="n">bufptr</span><span class="p">;</span>
+buffer_t* buffer_construct(buffer_t*b, char*bufptr) {
+  buffer_t *tmp;
+  if( b==NULL )
+    tmp=(buffer_t *) malloc(sizeof(buffer_t));
+  else
+    tmp=b;
+  memset(tmp,0,sizeof(buffer_t));
+  // all of the elements set to clear (null).
+  tmp->striobj.striobj = tmp;
+  tmp->striobj.length  = (size_t (*)(const void*)) buffer_length;
+  tmp->striobj.text    = (char* (*)(const void*)) buffer_text;
+  tmp->striobj.strcpy  = (char* (*)(void*, const char*)) buffer_strcpy;
 
-  <span class="k">if</span><span class="p">(</span> <span class="n">b</span><span class="o">==</span><span class="nb">NULL</span> <span class="p">)</span>
-    <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">freeptr</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span> <span class="c1">//MALLOC
-</span>  <span class="k">else</span>
-    <span class="n">tmp</span><span class="o">-&gt;</span><span class="n">freeptr</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-  <span class="k">return</span> <span class="n">tmp</span><span class="p">;</span>
-<span class="p">}</span>
+  bufptr[0] = '\0';
+  tmp->bufptr = bufptr;
 
-<span class="cm">/*
+  if( b==NULL )
+    tmp->freeptr = tmp; //MALLOC
+  else
+    tmp->freeptr = NULL;
+  return tmp;
+}
+
+/*
   Define a function use string_i.
-*/</span>
-<span class="kt">void</span> <span class="nf">print_content_and_length</span><span class="p">(</span><span class="n">string_i</span><span class="o">*</span> <span class="n">str</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Length of %s is %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
-        <span class="n">str</span><span class="o">-&gt;</span><span class="n">text</span><span class="p">(</span><span class="n">str</span><span class="p">),</span> <span class="n">str</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
-<span class="p">}</span>
+*/
+void print_content_and_length(string_i* str) {
+    printf("Length of %s is %d\n",
+        str->text(str), str->length(str));
+}
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">buffer_t</span> <span class="n">buf</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">s</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+int main() {
+    buffer_t buf;
+    char s[1024];
 
-    <span class="n">buffer_construct</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
+    buffer_construct(&buf, s);
 
-    <span class="n">buf</span><span class="p">.</span><span class="n">striobj</span><span class="p">.</span><span class="n">strcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="s">"hello world"</span><span class="p">);</span>
+    buf.striobj.strcpy(&buf, "hello world");
 
-    <span class="n">print_content_and_length</span><span class="p">((</span><span class="n">string_i</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
-    <span class="c1">//因為address對齊了， &amp;buf = &amp;buf-&gt;striobj.
-</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+    print_content_and_length((string_i*) &buf);
+    //因為address對齊了， &buf = &buf->striobj.
+    return 0;
+}
+{% endhighlight %}
 
 
 <p>
@@ -125,7 +129,9 @@ permalink: /archives/3556355.html
 當然，C++/Java compiler 就不用那麼麻煩了。它會幫我們處理這些小事。它們會幫我們維護那張表，而 interface 的宣告內容就成為函數的說明文件之一。若以虛擬碼巨集表示:
 </p>
 
-<pre class="highlight"><code>declare interface ObjectAccess
+
+{% highlight c %}
+declare interface ObjectAccess
     method get(k)
     method set(k, v)
 end
@@ -154,20 +160,22 @@ test(a);
         #throw TYPE ERROR
     #end
 #end
-</code></pre>
+{% endhighlight %}
 
 
 <p>
 上述動作隱含於 C++/Java 的 compile 動作中，而在動態語言中往往是明顯地呈現在程式碼中。這並無不妥，因為動態語言往往具有中介語言／巨集語言的泛型表達能力。
 </p>
-<pre class="highlight"><code>function test(o) {
+
+{% highlight c %}
+function test(o) {
     if o.has_method?('get') and o.has_method?('set')
         do something
     else
         throw TYPE ERROR
     end
 }
-</code></pre>
+{% endhighlight %}
 
 <p>
 對於錯誤捕捉之事。靜態語言仰賴各種宣告資訊，提供 compiler 在編譯時期核對。但我因為以往有 C 語言實作的經驗，所以向來不太倚重 interface 防錯能力。

@@ -49,9 +49,9 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
 <p>
 首先產生公鑰。輸出的檔案名稱用預設值即可，'Enter passphrase' 按 enter 即可。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
  admin@a.mydomain$ ssh-keygen -t rsa
-</pre>
+</code></pre>
 <div class="note">
 為了方便區別操作指令的目標，本文的指令提示列會顯示目前帳號名稱與所在主機名稱。
 </div>
@@ -67,14 +67,14 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
 <p>
 因為我們目前還不能直接把這個公鑰複製到遠端主機 postgres 帳號的家目錄，所以我先複製到遠端主機 admin 帳號的家目錄。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
  admin@a.mydomain$ scp .ssh/id_rsa.pub b.mydomain:~
-</pre>
+</code></pre>
 
 <p>
 第三步，登入遠端主機，切換使用者為 postgres 。將剛剛複製過來的公鑰加入已認證公鑰列表(authorized_keys) 。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
  admin@a.mydomain$ ssh b.mydomain
  
  admin@b.mydomain$ sudo su postgres
@@ -90,14 +90,14 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
  admin@b.mydomain$ exit             # 登入 b.mydomain
  
  admin@a.mydomain$
-</pre>
+</code></pre>
 
 <p>
 到此完成公鑰發佈的工作。我們再試著 postgres 帳號登入遠端主機。設置成功的話， ssh 不會向我們詢問密碼。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
  admin@a.mydomain$ ssh postgres@b.mydomain
-</pre>
+</code></pre>
 
 
 <h3>
@@ -124,7 +124,7 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
 <p>
 在 b.mydomain 上執行，從 a.mydomain 吐出資料庫內容回來匯入 (dump -&gt; restore)。
 
-<pre class="language-term">
+<pre><code class="language-term">
  admin@b.mydomain$ ssh postgres@a.mydomain "pg_dump -F tar services | gzip " \
      | gunzip | pg_restore -c -d services
 
@@ -132,7 +132,7 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
 
  admin@b.mydomain$ ssh postgres@a.mydomain "pg_dump -c services | gzip " \
      | gunzip | psql services
-</pre>
+</code></pre>
 
 <h4>
 第二種方法，在主要主機上操作指令
@@ -140,7 +140,7 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
 <p>
 在 a.mydomain 上執行，將資料庫內容吐給 b.mydomain。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
  admin@a.mydomain$ pg_dump -c services | gzip | \
      ssh postgres@b.mydomain "gunzip | psql services"
 
@@ -148,12 +148,12 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
 
  admin@a.mydomain$ pg_dump -F tar services | gzip | \
      ssh postgres@b.mydomain "gunzip | pg_restore -c -d services"
-</pre>
+</code></pre>
 
 <div class="note">
 如果你只想要把資料庫內容備份在遠端主機的 tar.gz 檔案，可以這麼做:
 
-<pre class="language-term">
+<pre><code class="language-term">
  admin@a.mydomain$ pg_dump -F tar services | gzip | \
      ssh b.mydomain "cat > ~/database_services.tar.gz"
 
@@ -161,7 +161,7 @@ Using ssh to backup PostgreSQL database to remote host and restore in remote hos
  admin@a.mydomain$ pg_dump -F tar services | gzip ~/database_services.tar.gz
  admin@a.mydomain$ scp ~/database_services.tar.gz b.mydomain:~
 
-</pre>
+</code></pre>
 
 </div>
 

@@ -1,20 +1,21 @@
 <?php
-// <script type="syntaxhighlighter" class="brush: php"><![CDATA[
-// {% highlight %}
-
-// ]]></script>
-// {% endhighlight %}
-
-// <pre class="language-term">
-// </pre>
-// <pre><code class="language-term">
-// </code></pre>
-
 // ```text
 // <pre class="language-text"></pre>
 // or
 // <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
 // </code></pre></div></div>
+
+// 此類已修畢
+// <pre class="language-term">
+// </pre>
+// <pre><code class="language-term">
+// </code></pre>
+
+// 此類已修畢
+// <script type="syntaxhighlighter" class="brush: php"><![CDATA[
+// {% highlight %}
+// ]]></script>
+// {% endhighlight %}
 
 const TERM_BEGIN = '<pre class="language-term">';
 const TERM_END = '</pre>';

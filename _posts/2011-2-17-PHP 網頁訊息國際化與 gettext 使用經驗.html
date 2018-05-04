@@ -62,31 +62,33 @@ PHP 4.3.0 之後，setlocale() 允許傳多個區域代碼給它，它將逐一�
 至於舊版的 PHP 用戶，也有解。當 <dfn>setlocale()</dfn> 發現你給它的區域代碼不可用時，它會回傳 <dfn>false</dfn> 。利用這個特性，舊版 PHP 也可以自行撰寫嘗試動作。下列為範例
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-    <span class="nv">$possible_locale_name_list</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-        <span class="s1">'zh_TW.utf8'</span><span class="p">,</span> <span class="s1">'zh_TW'</span><span class="p">,</span> <span class="s1">'zh'</span>
-    <span class="p">);</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">PHP_VERSION_ID</span> <span class="o">&gt;=</span> <span class="mi">40300</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$possible_locale_name_list</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$possible_locale_name_list</span> <span class="k">as</span> <span class="nv">$l</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$l</span><span class="p">);</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nv">$result</span><span class="p">)</span>
-                <span class="k">break</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+{% highlight php %}
+<?php
+    $possible_locale_name_list = array(
+        'zh_TW.utf8', 'zh_TW', 'zh'
+    );
 
-    <span class="k">if</span> <span class="p">(</span> <span class="nv">$result</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$current_locale</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-        <span class="k">echo</span> <span class="s2">"目前的區碼是: </span><span class="nv">$current_locale</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"setlocale() 找不到符合的區碼</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    if (PHP_VERSION_ID >= 40300) {
+        $result = setlocale(LC_MESSAGES, $possible_locale_name_list);
+    }
+    else {
+        foreach ($possible_locale_name_list as $l) {
+            $result = setlocale(LC_MESSAGES, $l);
+            if ($result)
+                break;
+        }
+    }
+
+    if ( $result ) {
+        $current_locale = setlocale(LC_MESSAGES, 0);
+        echo "目前的區碼是: $current_locale\n";
+    }
+    else {
+        echo "setlocale() 找不到符合的區碼\n";
+    }
+?>
+{% endhighlight %}
 
 
 <h4>
@@ -104,57 +106,59 @@ PHP 4.3.0 之後，setlocale() 允許傳多個區域代碼給它，它將逐一�
 下列的範例程式 hello.php，有兩種執行形式。其一是在命令列執行，第一個參數指定訊息區碼。其二是網頁形式，在網頁網址後加上查詢字串 <em>?locale=區碼</em>。如果不指定區碼，那麼就會顯示原始訊息 - 倒寫的句子。
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nb">error_reporting</span><span class="p">(</span><span class="k">E_ALL</span><span class="p">);</span>
-<span class="nb">header</span><span class="p">(</span><span class="s1">'Content-type: text/plain; charset=utf-8'</span><span class="p">);</span>
 
-<span class="k">const</span> <span class="no">GETTEXT_PACKAGE</span> <span class="o">=</span> <span class="s1">'hello'</span><span class="p">;</span>
+{% highlight php %}
+<?php
+error_reporting(E_ALL);
+header('Content-type: text/plain; charset=utf-8');
 
-<span class="nv">$arg_locale</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span><span class="nx">PHP_SAPI</span> <span class="o">==</span> <span class="s1">'cli'</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nv">$argc</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="nv">$arg_locale</span> <span class="o">=</span> <span class="nv">$argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-<span class="p">}</span>
-<span class="k">else</span> <span class="p">{</span>
-    <span class="nb">header</span><span class="p">(</span><span class="s1">'Content-type: text/plain; charset=utf-8'</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'locale'</span><span class="p">]))</span>
-        <span class="nv">$arg_locale</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'locale'</span><span class="p">];</span>
-<span class="p">}</span>
+const GETTEXT_PACKAGE = 'hello';
+
+$arg_locale = false;
+if (PHP_SAPI == 'cli') {
+    if ($argc >= 2)
+        $arg_locale = $argv[1];
+}
+else {
+    header('Content-type: text/plain; charset=utf-8');
+    if (isset($_GET['locale']))
+        $arg_locale = $_GET['locale'];
+}
 
 
-<span class="k">if</span> <span class="p">(</span><span class="nv">$arg_locale</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$possible_locale_name_list</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-        <span class="nv">$arg_locale</span> <span class="o">.</span> <span class="s1">'.utf8'</span><span class="p">,</span> <span class="nv">$arg_locale</span>
-    <span class="p">);</span>
+if ($arg_locale) {
+    $possible_locale_name_list = array(
+        $arg_locale . '.utf8', $arg_locale
+    );
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">PHP_VERSION_ID</span> <span class="o">&gt;=</span> <span class="mi">40300</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$possible_locale_name_list</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$possible_locale_name_list</span> <span class="k">as</span> <span class="nv">$l</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$result</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="nv">$l</span><span class="p">);</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nv">$result</span><span class="p">)</span>
-                <span class="k">break</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+    if (PHP_VERSION_ID >= 40300) {
+        $result = setlocale(LC_MESSAGES, $possible_locale_name_list);
+    }
+    else {
+        foreach ($possible_locale_name_list as $l) {
+            $result = setlocale(LC_MESSAGES, $l);
+            if ($result)
+                break;
+        }
+    }
 
-    <span class="k">if</span> <span class="p">(</span> <span class="nv">$result</span> <span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$current_locale</span> <span class="o">=</span> <span class="nb">setlocale</span><span class="p">(</span><span class="nx">LC_MESSAGES</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-        <span class="k">echo</span> <span class="s2">"current locale: </span><span class="nv">$current_locale</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="s2">"failed to setlocale</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="p">}</span>
+    if ( $result ) {
+        $current_locale = setlocale(LC_MESSAGES, 0);
+        echo "current locale: $current_locale\n";
+    }
+    else {
+        echo "failed to setlocale\n";
+    }
 
-    <span class="nb">bindtextdomain</span><span class="p">(</span><span class="nx">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s1">'./locale'</span><span class="p">);</span> <span class="c1">// 區域化內容放置路徑
-</span>    <span class="nb">textdomain</span><span class="p">(</span><span class="nx">GETTEXT_PACKAGE</span><span class="p">);</span> <span class="c1">// 使用 hello.mo 的訊息
-</span>    <span class="nb">bind_textdomain_codeset</span><span class="p">(</span><span class="nx">GETTEXT_PACKAGE</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">);</span>
-<span class="p">}</span>
+    bindtextdomain(GETTEXT_PACKAGE, './locale'); // 區域化內容放置路徑
+    textdomain(GETTEXT_PACKAGE); // 使用 hello.mo 的訊息
+    bind_textdomain_codeset(GETTEXT_PACKAGE, 'utf-8');
+}
 
-<span class="k">echo</span> <span class="nx">_</span><span class="p">(</span><span class="s2">"好你"</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">echo</span> <span class="nx">_</span><span class="p">(</span><span class="s2">"行一第的息訊長。</span><span class="se">\n</span><span class="s2">行二第的息訊長。</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+echo _("好你"), "\n";
+echo _("行一第的息訊長。\n行二第的息訊長。\n");
+?>
+{% endhighlight %}
 
 
 <p>
@@ -175,7 +179,7 @@ PHP 4.3.0 之後，setlocale() 允許傳多個區域代碼給它，它將逐一�
 </p>
 
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ xgettext --language=php --from-code=utf-8 --output=hello.pot hello.php
 $ cp hello.pot hello-en_US.po
 $ edit hello-en_US.po
@@ -183,13 +187,13 @@ $ cp hello.pot hello-zh_TW.po
 $ edit hello-zh_TW.po
 $ msgfmt --output=locale/en/LC_MESSAGES/hello.mo hello-en_US.po
 $ msgfmt --output=locale/zh_TW/LC_MESSAGES/hello.mo hello-zh_TW.po
-</pre>
+</code></pre>
 
 <p>
 以下為範例程式以命令列形式執行的結果。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ php hello.php
 好你
 行一第的息訊長。
@@ -207,7 +211,7 @@ Hello
 First line of long message.
 Second line of long message.
 
-</pre>
+</code></pre>
 
 <p>
 以下為範例程式透過 Web 呈現的結果。

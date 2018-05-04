@@ -55,31 +55,33 @@ permalink: /archives/2687531.html
 <p>
 說到這裡，其實 SourceForge.net 等 FOSS 專案服務商就已經提供了整套工具了。起步不難。除了工具的使用。欲建立基於訊息溝通網絡的 FOSS 專案組織還有一些流程方法。最重要的應該是 Test-Driven Develpment 。大多數時候 (大約九成機會) ，我是藉由觀看測試案例碼才了解這個軟體單元如何使用。我說的測試案例碼，並不一定要是一般文字文件，絕大多數是指 xUnit 格式的測試案例程式碼 (<cite>See also: <a href="{{ site.baseurl }}/archives/2609801.html">先說故事再動手設計, 從一個簡單故事看 Test Driven Development</a></cite>)。也不一定要 xUnit 格式的測試案例程式碼，甚至傳統的測試碼形式也可以。
 </p>
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
+
+{% highlight text %}
+#include <stdio.h>
+#include <stdlib.h>
 #include "pair.h"
 #include "hash.h"
-</span>
-<span class="n">Pair</span><span class="o">*</span> <span class="n">pair_create</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">value</span><span class="p">);</span>
 
-<span class="n">Hash</span><span class="o">*</span> <span class="n">hash_create</span><span class="p">();</span>
-<span class="n">Hash</span><span class="o">*</span> <span class="n">hash_add</span><span class="p">(</span><span class="n">Hash</span><span class="o">*</span> <span class="n">hash</span><span class="p">,</span> <span class="k">const</span> <span class="n">Pair</span><span class="o">*</span> <span class="n">item</span><span class="p">);</span>
-<span class="n">Pair</span><span class="o">*</span> <span class="n">hash_get</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">key</span><span class="p">);</span>
+Pair* pair_create(const char* key, const void* value);
 
-<span class="cp">#if defined(TEST)
-</span><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">Hash</span><span class="o">*</span> <span class="n">map</span> <span class="o">=</span> <span class="n">hash_create</span><span class="p">();</span>
-    <span class="kt">char</span><span class="o">*</span> <span class="n">key</span> <span class="o">=</span> <span class="err">'</span><span class="n">A10203</span><span class="err">'</span><span class="p">;</span>
-    <span class="n">Pair</span><span class="o">*</span> <span class="n">element</span> <span class="o">=</span> <span class="n">pair_create</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="err">'</span><span class="n">john</span> <span class="n">smith</span><span class="err">'</span><span class="p">);</span>
-    <span class="n">hash_add</span><span class="p">(</span><span class="n">map</span><span class="p">,</span> <span class="n">element</span><span class="p">);</span>
-    <span class="n">Pair</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">hash_get</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%s: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pair_key</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">pair_value</span><span class="p">(</span><span class="n">x</span><span class="p">));</span>
+Hash* hash_create();
+Hash* hash_add(Hash* hash, const Pair* item);
+Pair* hash_get(const char*key);
 
-    <span class="n">Pair_i</span><span class="o">*</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%s: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">y</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">)(</span><span class="n">y</span><span class="p">),</span> <span class="p">(</span><span class="o">*</span><span class="n">yx</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">)(</span><span class="n">y</span><span class="p">));</span>
-<span class="p">}</span>
-<span class="cp">#endif
-</span></code></pre>
+#if defined(TEST)
+void main() {
+    Hash* map = hash_create();
+    char* key = 'A10203';
+    Pair* element = pair_create(key, 'john smith');
+    hash_add(map, element);
+    Pair* x = hash_get(key);
+    printf("%s: %s\n", pair_key(x), pair_value(x));
+
+    Pair_i* y = x;
+    printf("%s: %s\n", (*y->key)(y), (*yx->value)(y));
+}
+#endif
+{% endhighlight %}
 
 <p>
 上例是我以前寫 C 語言時的習慣。每實作一個功能模組，就會在底下用巨集 <code>#if defined(TEST) ... #endif</code> 包住測試程式碼。那個時候 (西元2000年以前) ，我還不知道什麼叫 Test-Driven Development ，而 XP/Agile 這兩個名詞根本還沒出現。但這種傳統方式，不也是一種 TDD 嗎？這些測試程式碼之所以重要，除了保障軟體品質外，就因這些測試程式碼可說是一個軟體單元的最佳使用範例。

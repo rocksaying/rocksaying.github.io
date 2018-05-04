@@ -14,49 +14,51 @@ permalink: /archives/3021213.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require</span> <span class="s1">'SpreadsheetReader/CSV/SpreadsheetReader_CSV.php'</span><span class="p">;</span>
 
-<span class="nv">$csvReader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SpreadsheetReader_CSV</span><span class="p">;</span>
-<span class="nv">$sheets</span> <span class="o">=</span> <span class="nv">$csvReader</span><span class="o">-&gt;</span><span class="na">read</span><span class="p">(</span><span class="s1">'test.csv'</span><span class="p">);</span>
+{% highlight php %}
+<?php
+require 'SpreadsheetReader/CSV/SpreadsheetReader_CSV.php';
 
-<span class="nv">$doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SimpleXMLElement</span><span class="p">(</span>
-<span class="s1">'&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+$csvReader = new SpreadsheetReader_CSV;
+$sheets = $csvReader->read('test.csv');
+
+$doc = new SimpleXMLElement(
+'<?xml version="1.0" encoding="utf-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
  xmlns:x="urn:schemas-microsoft-com:office:excel"
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40"&gt;&lt;/Workbook&gt;'</span>
-<span class="p">);</span>
+ xmlns:html="http://www.w3.org/TR/REC-html40"></Workbook>'
+);
 
-<span class="nv">$indexOfSheet</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$sheets</span> <span class="k">as</span> <span class="nv">$sheet</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">//&lt;Worksheet ss:Name="Sheet1"&gt;
-</span>    <span class="c1">//&lt;Table&gt;
-</span>    <span class="nv">$worksheetNode</span> <span class="o">=</span> <span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Worksheet'</span><span class="p">);</span>
-    <span class="c1">//$worksheetNode-&gt;addAttribute('ss:Name', 'sheet1');//BUG?
-</span>    <span class="nv">$worksheetNode</span><span class="p">[</span><span class="s1">'ss:Name'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'sheet'</span> <span class="o">.</span> <span class="p">(</span><span class="nv">$indexOfSheet</span><span class="o">++</span><span class="p">);</span>
+$indexOfSheet = 1;
+foreach ($sheets as $sheet) {
+    //<Worksheet ss:Name="Sheet1">
+    //<Table>
+    $worksheetNode = $doc->addChild('Worksheet');
+    //$worksheetNode->addAttribute('ss:Name', 'sheet1');//BUG?
+    $worksheetNode['ss:Name'] = 'sheet' . ($indexOfSheet++);
 
-    <span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span><span class="c1">//add a child with value '' by setter
-</span>    <span class="c1">//$tableNode = $worksheetNode-&gt;addChild('Table');/add a child by addChild()
-</span>
-    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$sheet</span> <span class="k">as</span> <span class="nv">$row</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//&lt;Row&gt;
-</span>        <span class="nv">$rowNode</span> <span class="o">=</span> <span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Row'</span><span class="p">);</span>
+    $worksheetNode->Table = '';//add a child with value '' by setter
+    //$tableNode = $worksheetNode->addChild('Table');/add a child by addChild()
+
+    foreach ($sheet as $row) {
+        //<Row>
+        $rowNode = $worksheetNode->Table->addChild('Row');
         
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$row</span> <span class="k">as</span> <span class="nv">$col</span><span class="p">)</span> <span class="p">{</span>
-            <span class="c1">//&lt;Cell&gt;&lt;Data ss:Type="Number"&gt;1&lt;/Data&gt;&lt;/Cell&gt;
-</span>            <span class="nv">$cellNode</span> <span class="o">=</span> <span class="nv">$rowNode</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span>
-            <span class="nv">$cellNode</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="nb">iconv</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">,</span> <span class="nv">$col</span><span class="p">);</span>
-            <span class="nv">$cellNode</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+        foreach ($row as $col) {
+            //<Cell><Data ss:Type="Number">1</Data></Cell>
+            $cellNode = $rowNode->addChild('Cell');
+            $cellNode->Data = iconv('big5', 'utf-8', $col);
+            $cellNode->Data['ss:Type'] = 'String';
+        }
+    }
+}
 
-<span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">asXML</span><span class="p">(</span><span class="s1">'test1.xml'</span><span class="p">);</span>
+$doc->asXML('test1.xml');
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 
 <div class="note">

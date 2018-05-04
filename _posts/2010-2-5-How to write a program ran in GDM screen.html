@@ -67,7 +67,7 @@ GTK 程式實作
 首先，我先用 Python 撰寫一個 GTK GTK 程式。名為 <var>hello.py</var>。它將捕抓 <dfn>SIGUSR1</dfn> 這個自定義訊號。我們可以透過這個訊號，控制它的顯示與隱藏行為。
 </p>
 
-<script type="syntaxhighlighter" class="brush: python"><![CDATA[
+{% highlight python %}
 #!/usr/bin/python
 
 import os
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     
     hello.main()
 
-]]></script>
+{% endhighlight %}
 
 <p>
 主要注意 <var>PID</var> 的保存。我將透過 signal 與此程式的程序互動，所以該程式將它的 PID (process id) 保存在 <dfn>/var/run/hello_py.pid</dfn> 內。
@@ -154,8 +154,7 @@ if __name__ == "__main__":
 首先，將程式的執行指令寫進 <dfn>/etc/gdm/Init/Default</dfn>。一般添加在該文件最後一行的 <code>exit 0</code> 的前面，並且請務必放到背景執行。如下: 
 </p>
 
-<pre class="language-term">
-
+<pre><code class="language-term">
 /usr/bin/python /home/rock/hello.py & 
 
 sudo xterm &
@@ -163,7 +162,7 @@ sudo xterm &
 # 我們可以在 xterm 中輸入指令，對 hello.py 送出訊號，觀察是否正確地顯示與隱藏。
 
 exit 0
-</pre>
+</code></pre>
 
 <p>
 注意，寫在 <dfn>Init/Default</dfn> script 中的指令，其程序的執行身份將會是 root 。
@@ -173,31 +172,29 @@ exit 0
 如果你希望用 GDM 的身份執行，可以加上 <code> sudo -u gdm </code>。如下:
 </p>
 
-<pre class="language-term">
-
+<pre><code class="language-term">
 sudo -u gdm xterm &
   
 exit 0
-</pre>
+</code></pre>
 
 <p>  
 接著，我要讓該程序在使用者登入桌面之前關閉。此階段的動作，要寫進 <dfn>/etc/gdm/PostLogin/Default</dfn> 。如下:
 </p>
 
-<pre class="language-term">
-
+<pre><code class="language-term">
 kill `cat /var/run/hello_py.pid`
 
 exit 0
-</pre>
+</code></pre>
 
 <p>
 當完成上述修改動作後，我們登出桌面，回到 GDM 的登入畫面。此時，我們應該可以看到一個 xterm 的視窗。接著我們在 xterm 中，對 hello.py 程序送出 SIGUSR1 的訊號，把它顯示出來。送訊號的指令很簡單，就是 <dfn>kill</dfn>。
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 # kill -USR1 `cat /var/run/hello_py.pid`
-</pre>
+</code></pre>
 
 <p>
 第一次執行時， hello.py 會顯示出來。第二次執行時，hello.py 會隱藏。
@@ -205,7 +202,8 @@ exit 0
 
 <p>
 了解各階段的動作，將更方便我們自定 GDM 啟動前後的各項行為。
-</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/11625175.html</div>
+</p>
+<div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/11625175.html</div>
 <div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
 <blockquote class="roodo-comment">
 <div class="roodo-comment-author">未留名 (#comment-20398493)</div>

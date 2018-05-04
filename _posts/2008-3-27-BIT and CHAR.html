@@ -20,37 +20,41 @@ BIT and BIT VARYING
 
 <h5>bit string literal</h5>
 <blockqoute>
-<pre class="highlight"><code><span class="o">&lt;</span><span class="n">bit</span> <span class="n">string</span> <span class="n">literal</span><span class="o">&gt;</span> <span class="p">::</span><span class="o">=</span>
-    <span class="n">B</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">bit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span>
-        <span class="p">[</span> <span class="err">{</span> <span class="o">&lt;</span><span class="n">separator</span><span class="o">&gt;</span><span class="p">...</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">bit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="err">}</span><span class="p">...</span> <span class="p">]</span>
 
-<span class="o">&lt;</span><span class="n">hex</span> <span class="n">string</span> <span class="n">literal</span><span class="o">&gt;</span> <span class="p">::</span><span class="o">=</span>
-    <span class="n">X</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">hexit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span>
-        <span class="p">[</span> <span class="err">{</span> <span class="o">&lt;</span><span class="n">separator</span><span class="o">&gt;</span><span class="p">...</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="p">[</span> <span class="o">&lt;</span><span class="n">hexit</span><span class="o">&gt;</span><span class="p">...</span> <span class="p">]</span> <span class="o">&lt;</span><span class="n">quote</span><span class="o">&gt;</span> <span class="err">}</span><span class="p">...</span> <span class="p">]</span>
-</code></pre>
+{% highlight sql %}
+<bit string literal> ::=
+    B <quote> [ <bit>... ] <quote>
+        [ { <separator>... <quote> [ <bit>... ] <quote> }... ]
+
+<hex string literal> ::=
+    X <quote> [ <hexit>... ] <quote>
+        [ { <separator>... <quote> [ <hexit>... ] <quote> }... ]
+{% endhighlight %}
 
 </blockquote>
 
 <p>
 數值 5 的 BIT 字串寫作 <code>B'101'</code> 或 <code> X'5'</code>。要插入一筆含有 BIT 字串欄位的紀錄時，如下例所示:
 </p>
-<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">"myTable"</span> <span class="p">(</span>
-    <span class="nv">"intValue"</span> <span class="n">int</span><span class="p">,</span>
-    <span class="nv">"bitString"</span> <span class="n">BIT</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
-    <span class="nv">"normalString"</span> <span class="n">CHAR</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="p">);</span>
 
-<span class="k">INSERT</span> <span class="k">INTO</span> <span class="nv">"myTable"</span> <span class="p">(</span>
-    <span class="nv">"intValue"</span><span class="p">,</span>
-    <span class="nv">"bitString"</span><span class="p">,</span> 
-    <span class="nv">"normalString"</span>
-<span class="p">)</span> 
-<span class="k">VALUES</span> <span class="p">(</span> 
-    <span class="mi">5</span><span class="p">,</span>
-    <span class="n">X</span><span class="s1">'5'</span><span class="p">,</span> 
-    <span class="s1">'5'</span> 
-<span class="p">);</span>
-</code></pre>
+{% highlight sql %}
+CREATE TABLE "myTable" (
+    "intValue" int,
+    "bitString" BIT(4),
+    "normalString" CHAR(1)
+);
+
+INSERT INTO "myTable" (
+    "intValue",
+    "bitString", 
+    "normalString"
+) 
+VALUES ( 
+    5,
+    X'5', 
+    '5' 
+);
+{% endhighlight %}
 
 
 
@@ -66,12 +70,14 @@ CANNOT cast to BIT/BIT VARYING.
 <cite>SQL92 6.10  cast specification</cite>
 </blockquote>
 
-<pre class="highlight"><code><span class="c1">-- 下列為正確寫法:
-</span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="nv">"myTable"</span> <span class="k">WHERE</span> <span class="nv">"bitString"</span> <span class="o">=</span> <span class="k">CAST</span><span class="p">(</span><span class="s1">'0101'</span> <span class="k">AS</span> <span class="n">BIT</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
 
-<span class="c1">-- 下列為錯誤寫法:
-</span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="nv">"myTable"</span> <span class="k">WHERE</span> <span class="nv">"bitString"</span> <span class="o">=</span> <span class="k">CAST</span><span class="p">(</span><span class="mi">5</span> <span class="k">AS</span> <span class="n">BIT</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
-</code></pre>
+{% highlight sql %}
+-- 下列為正確寫法:
+SELECT * FROM "myTable" WHERE "bitString" = CAST('0101' AS BIT(4));
+
+-- 下列為錯誤寫法:
+SELECT * FROM "myTable" WHERE "bitString" = CAST(5 AS BIT(4));
+{% endhighlight %}
 
 
 <p>

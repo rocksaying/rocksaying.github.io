@@ -15,8 +15,10 @@ permalink: /archives/1967501.html
 <strong>Class: FormSerializer</strong>, Licensed by GNU LGPL, Copyright (C) 2006 shirock@educities.edu.tw.
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">// Class: FormSerializer
+
+{% highlight php %}
+<?php
+// Class: FormSerializer
 // Copyright (C) 2006 shirock@educities.edu.tw
 // ------------------------------------------------------------------------
 // This library is free software; you can redistribute it and/or
@@ -39,76 +41,76 @@ permalink: /archives/1967501.html
 // The control will detect if there be a serialized one by hiself.
 // by shirock
 //
-</span>
-<span class="sd">/**
+
+/**
  * Class: FormSerializer
  *
  * PHP 5.1 above needed!
  *
  * @author shirock@educitiese.du.tw
- */</span>
-<span class="k">class</span> <span class="nc">FormSerializer</span> <span class="p">{</span>
+ */
+class FormSerializer {
 
-    <span class="sd">/**
+    /**
      * $status is an associative array to state serialized objects.
      *
      * @access protcted
      * @var array
-     */</span>
-    <span class="k">protected</span> <span class="nv">$status</span><span class="p">;</span>
+     */
+    protected $status;
 
-    <span class="sd">/**
+    /**
      * $id is an identity for this FormSerializer class.
      *
      * @access protected
      * @var string
-     */</span>
-    <span class="k">protected</span> <span class="nv">$id</span><span class="p">;</span>
+     */
+    protected $id;
 
-    <span class="sd">/**
+    /**
      * Constructor
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$id</span> <span class="o">=</span> <span class="s1">'my_serialization'</span><span class="p">,</span> <span class="nv">$serialized</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//if $_POST[$this-&gt;id] cound not unserialize (may be invalid data)
-</span>        <span class="c1">//it will set status with false. You would need to check below.
-</span>        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">id</span> <span class="o">=</span> <span class="nv">$id</span><span class="p">;</span>
-        <span class="k">if</span><span class="p">(</span> <span class="o">!</span><span class="k">empty</span><span class="p">(</span><span class="nv">$serialized</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span> <span class="o">=</span> <span class="nb">unserialize</span><span class="p">(</span> <span class="nb">gzinflate</span><span class="p">(</span> <span class="nb">base64_decode</span><span class="p">(</span><span class="nv">$serialized</span><span class="p">)</span> <span class="p">)</span> <span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span> <span class="o">=</span> <span class="nb">unserialize</span><span class="p">(</span> <span class="nb">gzinflate</span><span class="p">(</span> <span class="nb">base64_decode</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">])</span> <span class="p">)</span> <span class="p">);</span>
-        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="p">}</span>
-    <span class="p">}</span>
+     */
+    public function __construct($id = 'my_serialization', $serialized = NULL) {
+        //if $_POST[$this->id] cound not unserialize (may be invalid data)
+        //it will set status with false. You would need to check below.
+        $this->id = $id;
+        if( !empty($serialized) ) {
+            $this->status = unserialize( gzinflate( base64_decode($serialized) ) );
+        }
+        else if( isset($_POST[$this->id]) ) {
+            $this->status = unserialize( gzinflate( base64_decode($_POST[$this->id]) ) );
+        } else { $this->status = false; }
+    }
 
-    <span class="sd">/**
+    /**
      * Compress and encode all serialized objects stated in this FormSerializer.
      * If PHP does not run as CLI and set $output_tag as true, output a hidden
      * filed of HTML form which stored this.
      *
      * @param boolean $output_tag
      * @return all serialized objects stated in this as an encoded string.
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="o">&amp;</span><span class="nf">store</span><span class="p">(</span><span class="nv">$output_tag</span> <span class="o">=</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$serialized_status</span> <span class="o">=</span> <span class="nb">base64_encode</span><span class="p">(</span> <span class="nb">gzdeflate</span><span class="p">(</span> <span class="nb">serialize</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span><span class="p">)</span> <span class="p">)</span> <span class="p">);</span>
-        <span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="nv">$output_tag</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span> <span class="k">and</span> <span class="p">(</span><span class="nb">php_sapi_name</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">'cli'</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="c1">// not run in Command Line, output.
-</span>            <span class="k">echo</span> <span class="s2">"&lt;input id='</span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">id</span><span class="si">}</span><span class="s2">' name='</span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">id</span><span class="si">}</span><span class="s2">' type='hidden' value='</span><span class="si">{</span><span class="nv">$serialized_status</span><span class="si">}</span><span class="s2">'/&gt;"</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nv">$serialized_status</span><span class="p">;</span>
-    <span class="p">}</span>
+     */
+    public function &store($output_tag = true) {
+        $serialized_status = base64_encode( gzdeflate( serialize($this->status) ) );
+        if( ($output_tag == true) and (php_sapi_name() != 'cli') ) {
+            // not run in Command Line, output.
+            echo "<input id='{$this->id}' name='{$this->id}' type='hidden' value='{$serialized_status}'/>";
+        }
+        return $serialized_status;
+    }
 
-    <span class="sd">/**
+    /**
      * Magic Method. State $obj in this and access it as a FormSerializer's
      * member named $source_name.
      *
      * @param string $source_name
      * @param object $obj
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$source_name</span><span class="p">,</span> <span class="nv">$obj</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span><span class="p">[</span><span class="nv">$source_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">serialize</span><span class="p">(</span><span class="nv">$obj</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function __set($source_name, $obj) {
+        $this->status[$source_name] = serialize($obj);
+    }
 
-    <span class="sd">/**
+    /**
      * Magic Method. Get an object stated in this.
      *
      * Who allocate object, who serialize/unserialize that.
@@ -117,27 +119,27 @@ permalink: /archives/1967501.html
      * Control should check return result.
      *
      * @param string $source_name
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$source_name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span><span class="p">[</span><span class="nv">$source_name</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nb">unserialize</span><span class="p">(</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span><span class="p">[</span><span class="nv">$source_name</span><span class="p">]</span> <span class="p">);</span>
-            <span class="c1">//return unserialize(stripslashes($_POST[$serialized_name]));
-</span>        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+     */
+    public function __get($source_name) {
+        if( isset($this->status[$source_name]) ) {
+            return unserialize( $this->status[$source_name] );
+            //return unserialize(stripslashes($_POST[$serialized_name]));
+        }
+        else {
+            return false;
+        }
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__isset</span><span class="p">(</span><span class="nv">$source_name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span><span class="p">[</span><span class="nv">$source_name</span><span class="p">]);</span>
-    <span class="p">}</span>
+    public function __isset($source_name) {
+        return isset($this->status[$source_name]);
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__unset</span><span class="p">(</span><span class="nv">$source_name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">status</span><span class="p">[</span><span class="nv">$source_name</span><span class="p">]);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+    public function __unset($source_name) {
+        unset($this->status[$source_name]);
+    }
+}
+?>
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

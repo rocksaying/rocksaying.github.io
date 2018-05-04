@@ -90,55 +90,57 @@ Input exp:
 Regex 除了字串比對功能外，還有字串配對提取功能(match)。由於 strexp/ci_strcmp.c 中並無實作此功能，故另列範例程式碼於下。API說明參閱 manpage: regexec(3)。
 </p>
 
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;sys/types.h&gt;
-#include &lt;regex.h&gt;
-</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">regex_t</span> <span class="n">preg</span><span class="p">;</span>
-    <span class="n">regmatch_t</span> <span class="n">pmatch</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
-    <span class="kt">size_t</span> <span class="n">nmatch</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">cflags</span> <span class="o">=</span> <span class="n">REG_EXTENDED</span> <span class="o">|</span> <span class="n">REG_ICASE</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">rc</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">],</span> <span class="n">reg</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="n">str</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
 
-    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"Input exp: "</span><span class="p">);</span>
-        <span class="n">fgets</span><span class="p">(</span><span class="n">reg</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">stdin</span><span class="p">);</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">reg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'\n'</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
-        <span class="n">strtok</span><span class="p">(</span><span class="n">reg</span><span class="p">,</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+{% highlight c %}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <regex.h>
 
-        <span class="n">printf</span><span class="p">(</span><span class="s">"Input str: "</span><span class="p">);</span>
-        <span class="n">fgets</span><span class="p">(</span><span class="n">str</span><span class="p">,</span><span class="mi">256</span><span class="p">,</span><span class="n">stdin</span><span class="p">);</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">'\n'</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
-        <span class="n">strtok</span><span class="p">(</span><span class="n">str</span><span class="p">,</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+int main() {
+    regex_t preg;
+    regmatch_t pmatch[10];
+    size_t nmatch = 10;
+    int cflags = REG_EXTENDED | REG_ICASE;
+    int i, len, rc;
+    char buf[1024], reg[256], str[256];
 
-        <span class="k">if</span><span class="p">(</span> <span class="n">regcomp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preg</span><span class="p">,</span> <span class="n">reg</span><span class="p">,</span> <span class="n">cflags</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
-            <span class="n">puts</span><span class="p">(</span><span class="s">"regex compile error!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-            <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="p">}</span>
+    while(1) {
+        printf("Input exp: ");
+        fgets(reg, 256, stdin);
+        if(reg[0] == '\n') break;
+        strtok(reg,"\n");
 
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">regexec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preg</span><span class="p">,</span> <span class="n">str</span><span class="p">,</span> <span class="n">nmatch</span><span class="p">,</span> <span class="n">pmatch</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-        <span class="n">regfree</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preg</span><span class="p">);</span>
+        printf("Input str: ");
+        fgets(str,256,stdin);
+        if(str[0] == '\n') break;
+        strtok(str,"\n");
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="s">"no match</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-            <span class="k">continue</span><span class="p">;</span>
-        <span class="p">}</span>
+        if( regcomp(&preg, reg, cflags) != 0 ) {
+            puts("regex compile error!\n");
+            return 1;
+        }
 
-        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nmatch</span> <span class="o">&amp;&amp;</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_so</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">len</span> <span class="o">=</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_eo</span> <span class="o">-</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_so</span><span class="p">;</span>
-            <span class="n">strncpy</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">str</span> <span class="o">+</span> <span class="n">pmatch</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_so</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
-            <span class="n">buf</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
-            <span class="n">printf</span><span class="p">(</span><span class="s">"sub pattern %d is %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+        rc = regexec(&preg, str, nmatch, pmatch, 0);
+        regfree(&preg);
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre>
+        if (rc != 0) {
+            printf("no match\n");
+            continue;
+        }
+
+        for (i = 0; i < nmatch && pmatch[i].rm_so >= 0; ++i) {
+            len = pmatch[i].rm_eo - pmatch[i].rm_so;
+            strncpy(buf, str + pmatch[i].rm_so, len);
+            buf[len] = '\0';
+            printf("sub pattern %d is %s\n", i, buf);
+        }
+    }
+
+    return 0;
+}
+{% endhighlight %}
 
 <pre class="language-text">
 C:\User\fbtip&gt; gcc -o pmatch pmatch.c -lregex

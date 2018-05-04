@@ -22,37 +22,39 @@ As of PHP 5, objects are assigned by reference unless explicitly told otherwise 
 <p>
 如果我們希望透過指派動作得到複製體，則必須使用關鍵字 <dfn>clone</dfn> 明確地告知 PHP5 產生一個複製體(右值的複製體)指派給對象(左值)(<span class="note">PHP5 預設的複製動作是淺拷貝(shallow copy)。可覆寫<code>__clone()</code>自定複製內容。See also: <a href="http://tw.php.net/manual/en/language.oop5.cloning.php">PHP Manual: Object cloning</a></span>)。如下列所示。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="cm">/*
+
+{% highlight php %}
+<?php
+/*
  * 1. normal assign
- */</span>
-<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StdClass</span><span class="p">;</span> <span class="c1">//equal: $o = (object)null;
-</span><span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+ */
+$o = new StdClass; //equal: $o = (object)null;
+$ar = array();
 
-<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$o</span><span class="o">-&gt;</span><span class="na">a</span> <span class="o">=</span> <span class="nv">$i</span><span class="p">;</span> <span class="c1">//print_r($o);
-</span>    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$o</span><span class="p">;</span> <span class="c1">//print_r($ar);
-</span><span class="p">}</span>
+for ($i = 0; $i < 3; ++$i) {
+    $o->a = $i; //print_r($o);
+    $ar[] = $o; //print_r($ar);
+}
 
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$ar</span> <span class="k">as</span> <span class="nv">$a</span><span class="p">)</span>
-    <span class="k">echo</span> <span class="nv">$a</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+foreach ($ar as $a)
+    echo $a->a, "\n";
 
-<span class="cm">/*
+/*
  * 2. assign by clone
- */</span>
-<span class="nv">$o</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StdClass</span><span class="p">;</span>
-<span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+ */
+$o = new StdClass;
+$ar = array();
 
-<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$o</span><span class="o">-&gt;</span><span class="na">a</span> <span class="o">=</span> <span class="nv">$i</span><span class="p">;</span> <span class="c1">//print_r($o);
-</span>    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="k">clone</span> <span class="nv">$o</span><span class="p">;</span> <span class="c1">//print_r($ar);
-</span><span class="p">}</span>
+for ($i = 0; $i < 3; ++$i) {
+    $o->a = $i; //print_r($o);
+    $ar[] = clone $o; //print_r($ar);
+}
 
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$ar</span> <span class="k">as</span> <span class="nv">$a</span><span class="p">)</span>
-    <span class="k">echo</span> <span class="nv">$a</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+foreach ($ar as $a)
+    echo $a->a, "\n";
 
-<span class="cp">?&gt;</span>
-</code></pre>
+?>
+{% endhighlight %}
 
 <p>
 上列範例中，先使用一般的指派方式，結果陣列 <var>$ar</var> 中的每個元素都相同，其實都參照變數 <var>$o</var>。接著改用加上關鍵字 <dfn>clone</dfn> 的指派方式，這才使得陣列 <var>$ar</var> 中的每個元素都是一個獨立的個體，內容各不相同。
@@ -68,26 +70,28 @@ PHP5 對 <dfn>object</dfn> 型態的變數之指派動作預設是「參照」�
 <p>
 下列示範當 <var>$s</var> 之資料型態分別是 <dfn>string</dfn> 與 <dfn>object</dfn> 時，PHP5 指派動作產生的結果差異。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$s</span> <span class="o">=</span> <span class="s1">'Hello'</span><span class="p">;</span>
-<span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$s</span> <span class="o">.=</span> <span class="nv">$i</span><span class="p">;</span>
-    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nv">$s</span> <span class="o">.=</span> <span class="s1">'x'</span><span class="p">;</span>
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$ar</span><span class="p">);</span>
 
-<span class="nv">$s</span> <span class="o">=</span> <span class="p">(</span><span class="nx">object</span><span class="p">)</span> <span class="s1">'Hello'</span><span class="p">;</span>
-<span class="nv">$ar</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
-<span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$s</span><span class="o">-&gt;</span><span class="na">scalar</span> <span class="o">.=</span> <span class="nv">$i</span><span class="p">;</span>
-    <span class="nv">$ar</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nv">$s</span><span class="o">-&gt;</span><span class="na">scalar</span> <span class="o">.=</span> <span class="s1">'x'</span><span class="p">;</span>
-<span class="nb">print_r</span><span class="p">(</span><span class="nv">$ar</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?php
+$s = 'Hello';
+$ar = array();
+for ($i = 0; $i < 3; ++$i) {
+    $s .= $i;
+    $ar[] = $s;
+}
+$s .= 'x';
+print_r($ar);
+
+$s = (object) 'Hello';
+$ar = array();
+for ($i = 0; $i < 3; ++$i) {
+    $s->scalar .= $i;
+    $ar[] = $s;
+}
+$s->scalar .= 'x';
+print_r($ar);
+?>
+{% endhighlight %}
 
 <p>
 先令 <var>$s</var> 之資料型態為字串 <dfn>string</dfn> ，再指派給陣列 <var>$ar</var>。結果顯示 <var>$ar</var> 各元素內容皆不相同，並非參照 <var>$s</var>。接著令 <var>$s</var> 之資料型態為 <dfn>object</dfn> ，再指派一次。結果顯示 <var>$ar</var> 各元素內容相同，其實都參照 <var>$s</var>。

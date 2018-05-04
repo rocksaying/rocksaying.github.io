@@ -18,86 +18,88 @@ permalink: /archives/2950655.html
 為了測試前述問題所在，以及完成寄送中文郵件的工作，我設計了一個替用的 mail 函數。對於了解 SMTP 協定內容的程序員而言，要自行設計一個 <code>mail()</code> 並不困難。下列便是我設計的 <code>mail()</code> 替用函數。它是一個對照組，用以測試並確認郵件內容變亂碼是 PHP 內建的  <code>mail()</code> 所造成的。由於設計目的之中包含了測試用途，所以程式碼中還留有觀察訊息的敘述。
 </p>
 <h4>MyMailer.php</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="cm">/*
+
+{% highlight php %}
+<?php
+/*
 MyMailer class
-Copyright (C) 2007 Shih Yuncheng &lt;shirock@educities.edu.tw&gt;
+Copyright (C) 2007 Shih Yuncheng <shirock@educities.edu.tw>
 This library is licensed under GNU Lesser General Public License.
-*/</span>
-<span class="k">class</span> <span class="nc">MyMailer</span> <span class="p">{</span>
-    <span class="k">private</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">waitSmtpResponse</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$sh</span><span class="p">,</span> <span class="nv">$code</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">echo</span> <span class="p">(</span><span class="nv">$response</span> <span class="o">=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nv">$sh</span><span class="p">));</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">strncmp</span><span class="p">(</span><span class="nv">$response</span><span class="p">,</span> <span class="nv">$code</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="p">{</span>
-            <span class="k">echo</span> <span class="nv">$response</span><span class="p">;</span>
-            <span class="k">return</span> <span class="nx">self</span><span class="o">::</span><span class="na">smtpFalse</span><span class="p">(</span><span class="nv">$sh</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-    <span class="p">}</span>
+*/
+class MyMailer {
+    private static function waitSmtpResponse(&$sh, $code) {
+        echo ($response = fgets($sh));
+        if (strncmp($response, $code, 3)) {
+            echo $response;
+            return self::smtpFalse($sh);
+        }
+        return true;
+    }
 
-    <span class="k">private</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">smtpFalse</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$sh</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nb">fclose</span><span class="p">(</span><span class="nv">$sh</span><span class="p">);</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="p">}</span>
+    private static function smtpFalse(&$sh) {
+        fclose($sh);
+        return false;
+    }
 
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">mail</span><span class="p">(</span><span class="nv">$To</span><span class="p">,</span> <span class="nv">$Subject</span><span class="p">,</span> <span class="nv">$message</span><span class="p">,</span> <span class="nv">$additional_headers</span><span class="o">=</span><span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$headerTable</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'To'</span><span class="p">,</span> <span class="s1">'Subject'</span><span class="p">);</span>
+    public static function mail($To, $Subject, $message, $additional_headers=false) {
+        $headerTable = array('To', 'Subject');
 
-        <span class="nv">$smtpServer</span> <span class="o">=</span> <span class="nb">get_cfg_var</span><span class="p">(</span><span class="s1">'SMTP'</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$smtpServer</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        $smtpServer = get_cfg_var('SMTP');
+        if (empty($smtpServer))
+            return false;
 
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nv">$mailFrom</span> <span class="o">=</span> <span class="nb">get_cfg_var</span><span class="p">(</span><span class="s1">'sendmail_from'</span><span class="p">)))</span> <span class="p">{</span>
-            <span class="nv">$headers</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="nv">$additional_headers</span><span class="p">);</span>
-            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$headers</span> <span class="k">as</span> <span class="nv">$header</span><span class="p">)</span> <span class="p">{</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/^From: ([^\b]+)/'</span><span class="p">,</span> <span class="nv">$header</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">))</span>
-                    <span class="nv">$mailFrom</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-            <span class="p">}</span>
-            <span class="k">if</span> <span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$mailFrom</span><span class="p">))</span>
-                <span class="k">return</span> <span class="nx">self</span><span class="o">::</span><span class="na">smtpFalse</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">);</span>
-        <span class="p">}</span>
+        if (!($mailFrom = get_cfg_var('sendmail_from'))) {
+            $headers = explode("\n", $additional_headers);
+            foreach ($headers as $header) {
+                if (preg_match('/^From: ([^\b]+)/', $header, $matches))
+                    $mailFrom = $matches[1];
+            }
+            if (empty($mailFrom))
+                return self::smtpFalse($fsock);
+        }
 
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nv">$fsock</span> <span class="o">=</span> <span class="nb">fsockopen</span><span class="p">(</span><span class="s1">'tcp://'</span><span class="o">.</span><span class="nv">$smtpServer</span><span class="p">,</span> <span class="nb">get_cfg_var</span><span class="p">(</span><span class="s1">'smtp_port'</span><span class="p">),</span>
-            <span class="nv">$errno</span><span class="p">,</span> <span class="nv">$errstr</span><span class="p">)))</span>
-        <span class="p">{</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="na">waitSmtpResponse</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s1">'220'</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        if (!($fsock = fsockopen('tcp://'.$smtpServer, get_cfg_var('smtp_port'),
+            $errno, $errstr)))
+        {
+            return false;
+        }
+        if (!self::waitSmtpResponse($fsock, '220'))
+            return false;
 
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"Helo </span><span class="si">{</span><span class="nv">$smtpServer</span><span class="si">}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="na">waitSmtpResponse</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s1">'250'</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        fwrite($fsock, "Helo {$smtpServer}\r\n");
+        if (!self::waitSmtpResponse($fsock, '250'))
+            return false;
 
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"Mail from: </span><span class="si">{</span><span class="nv">$mailFrom</span><span class="si">}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="na">waitSmtpResponse</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s1">'250'</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        fwrite($fsock, "Mail from: {$mailFrom}\r\n");
+        if (!self::waitSmtpResponse($fsock, '250'))
+            return false;
 
-        <span class="nv">$rcptSet</span> <span class="o">=</span> <span class="nb">explode</span><span class="p">(</span><span class="s1">','</span><span class="p">,</span> <span class="nv">$To</span><span class="p">);</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$rcptSet</span> <span class="k">as</span> <span class="nv">$rcpt</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"Rcpt to: </span><span class="si">{</span><span class="nv">$rcpt</span><span class="si">}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
-            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="na">waitSmtpResponse</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s1">'250'</span><span class="p">))</span>
-                <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="p">}</span>
+        $rcptSet = explode(',', $To);
+        foreach ($rcptSet as $rcpt) {
+            fwrite($fsock, "Rcpt to: {$rcpt}\r\n");
+            if (!self::waitSmtpResponse($fsock, '250'))
+                return false;
+        }
 
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"Data</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">self</span><span class="o">::</span><span class="na">waitSmtpResponse</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s1">'354'</span><span class="p">))</span> <span class="c1">//354 Enter mail
-</span>            <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        fwrite($fsock, "Data\r\n");
+        if (!self::waitSmtpResponse($fsock, '354')) //354 Enter mail
+            return false;
 
-        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$headerTable</span> <span class="k">as</span> <span class="nv">$cmd</span><span class="p">)</span>
-            <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"${cmd}: </span><span class="si">{</span><span class="nv">$$cmd</span><span class="si">}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$additional_headers</span><span class="p">)</span>
-            <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="nv">$additional_headers</span><span class="p">);</span>
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
+        foreach ($headerTable as $cmd)
+            fwrite($fsock, "${cmd}: {$$cmd}\r\n");
+        if ($additional_headers)
+            fwrite($fsock, $additional_headers);
+        fwrite($fsock, "\r\n");
 
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="nv">$message</span><span class="p">);</span>
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">.</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
+        fwrite($fsock, $message);
+        fwrite($fsock, "\r\n.\r\n");
 
-        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">,</span> <span class="s2">"Quit</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">);</span>
-        <span class="nb">fclose</span><span class="p">(</span><span class="nv">$fsock</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+        fwrite($fsock, "Quit\r\n");
+        fclose($fsock);
+    }
+}
+?>
+{% endhighlight %}
 
 <p>
 MyMailer 以靜態方法 <code>MyMailer::mail()</code> 實現郵件寄送行為，其用法與 PHP 內建的 <code>mail()</code> 完全相同。它將讀取 <code>php.ini</code> 中的 <var>SMTP</var> 與 <var>sendmail_from</var> 之設定值內容決定 SMTP 伺服器位址以及寄信人資訊，接著開啟 socket 連線直接與 SMTP 伺服器交談以完成郵件遞送工作。
@@ -105,19 +107,21 @@ MyMailer 以靜態方法 <code>MyMailer::mail()</code> 實現郵件寄送行為�
 <p>
 以下為一測試範例，將同一訊息分別以 PHP的 <code>mail()</code> 和我設計的 <code>MyMailer::mail()</code> 寄送，藉此觀察能否寄送中文郵件。從測試結果來看，我們可以發現 PHP 的 <code>mail()</code> 所寄送之內容會成亂碼 (但也有人不會碰到這種情形)。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require</span> <span class="s1">'MyMailer.php'</span><span class="p">;</span>
 
-<span class="nv">$mailTo</span> <span class="o">=</span> <span class="s1">'your@example.com'</span><span class="p">;</span> <span class="c1">// 請自行替換有效的收件地址
-</span><span class="nv">$message</span> <span class="o">=</span> <span class="s1">'test 測試'</span><span class="p">;</span>
-<span class="nv">$subject</span> <span class="o">=</span> <span class="s1">'TEST 測試'</span><span class="p">;</span>
-<span class="nv">$headers</span> <span class="o">=</span> <span class="s1">'Content-type: text/plain; charset="big5"'</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$headers</span> <span class="o">.=</span> <span class="s1">'From: my@example.com'</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span> <span class="c1">// 請自行替換寄件地址
-</span>
-<span class="nb">mail</span><span class="p">(</span><span class="nv">$mailTo</span><span class="p">,</span> <span class="nv">$subject</span><span class="p">,</span> <span class="nv">$message</span><span class="p">,</span> <span class="nv">$headers</span><span class="p">);</span>
-<span class="nx">MyMailer</span><span class="o">::</span><span class="na">mail</span><span class="p">(</span><span class="nv">$mailTo</span><span class="p">,</span> <span class="nv">$subject</span><span class="p">,</span> <span class="nv">$message</span><span class="p">,</span> <span class="nv">$headers</span><span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+{% highlight php %}
+<?php
+require 'MyMailer.php';
+
+$mailTo = 'your@example.com'; // 請自行替換有效的收件地址
+$message = 'test 測試';
+$subject = 'TEST 測試';
+$headers = 'Content-type: text/plain; charset="big5"' . "\r\n";
+$headers .= 'From: my@example.com' . "\r\n"; // 請自行替換寄件地址
+
+mail($mailTo, $subject, $message, $headers);
+MyMailer::mail($mailTo, $subject, $message, $headers);
+?>
+{% endhighlight %}
 
 <p>
 由於 PHP 內建的 <code>mail()</code> 功能頗為簡單，用於寄送簡單的 log 訊息尚可，寄送一般信件就略顯力有未逮。因此在開發應用軟體時，建議使用 <a href="http://pear.php.net/package/Mail">PEAR::Mail</a> 或是 <a href="http://phpmailer.sourceforge.net/">PHPMailer</a>。不僅可解決寄送中文郵件的困擾，尚可寄送夾帶附件的郵件，應多加利用。雖然兩者功能類似，但我建議依授權方式選擇。 PEAR::Mail 採 PHP/BSD license 授權發佈，而 PHPMailer 採 GPL/LGPL 授權發佈。故偏好 GPL/LGPL 授權的程序員應選擇採用 PHPMailer 。啥？用本文中的 MyMailer ? 那也成，順便提醒一下， MyMailer 也是採 GPL/LGPL 授權發佈。
@@ -129,33 +133,35 @@ MyMailer 以靜態方法 <code>MyMailer::mail()</code> 實現郵件寄送行為�
 <p>
 由於 PHP 僅提供 <code>base64_encode()</code> ，故下列範例之 <var>encoding code</var> 一律為 <code>b</code> 。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="c1">//資料皆為utf-8編碼
-</span><span class="nv">$messageHeaderMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'Subject'</span>   <span class="o">=&gt;</span>  <span class="s1">'中文標題測試'</span><span class="p">,</span>
-    <span class="s1">'From'</span>      <span class="o">=&gt;</span>  <span class="s1">'許功蓋 &lt;you@example.com&gt;'</span>
-<span class="p">);</span>
 
-<span class="nv">$charset</span> <span class="o">=</span> <span class="s1">'utf-8'</span><span class="p">;</span>
-<span class="nv">$messageEncoding</span> <span class="o">=</span> <span class="s1">'base64'</span><span class="p">;</span>
-<span class="nv">$headerFormat</span> <span class="o">=</span> <span class="s1">'=?'</span> <span class="o">.</span> <span class="nv">$charset</span> <span class="o">.</span> <span class="s1">'?'</span> <span class="o">.</span> <span class="nv">$messageEncoding</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">.</span> <span class="s1">'?%s?='</span><span class="p">;</span>
+{% highlight php %}
+<?php
+//資料皆為utf-8編碼
+$messageHeaderMap = array(
+    'Subject'   =>  '中文標題測試',
+    'From'      =>  '許功蓋 <you@example.com>'
+);
 
-<span class="nv">$headers</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
-<span class="k">foreach</span> <span class="p">(</span><span class="nv">$messageHeaderMap</span> <span class="k">as</span> <span class="nv">$k</span> <span class="o">=&gt;</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$headers</span> <span class="o">.=</span> <span class="nv">$k</span> <span class="o">.</span> <span class="s1">': '</span> <span class="o">.</span> <span class="nb">sprintf</span><span class="p">(</span><span class="nv">$headerFormat</span><span class="p">,</span> <span class="nb">base64_encode</span><span class="p">(</span><span class="nv">$v</span><span class="p">))</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nv">$headers</span> <span class="o">.=</span> <span class="s1">'Content-type: text/plain; charset='</span> <span class="o">.</span> <span class="nv">$charset</span> <span class="o">.</span> <span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">;</span>
+$charset = 'utf-8';
+$messageEncoding = 'base64';
+$headerFormat = '=?' . $charset . '?' . $messageEncoding[0] . '?%s?=';
 
-<span class="nv">$message</span> <span class="o">=</span> <span class="s1">'中文內容測試'</span><span class="p">;</span>
+$headers = '';
+foreach ($messageHeaderMap as $k => $v) {
+    $headers .= $k . ': ' . sprintf($headerFormat, base64_encode($v)) . "\r\n";
+}
+$headers .= 'Content-type: text/plain; charset=' . $charset . "\r\n";
 
-<span class="nx">MyMailer</span><span class="o">::</span><span class="na">mail</span><span class="p">(</span>
-    <span class="s1">'my@example.com'</span><span class="p">,</span>
-    <span class="nb">sprintf</span><span class="p">(</span><span class="nv">$headerFormat</span><span class="p">,</span> <span class="nb">base64_encode</span><span class="p">(</span><span class="nv">$messageHeaderMap</span><span class="p">[</span><span class="s1">'Subject'</span><span class="p">])),</span>
-    <span class="nv">$message</span><span class="p">,</span>
-    <span class="nv">$headers</span>
-<span class="p">);</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$message = '中文內容測試';
+
+MyMailer::mail(
+    'my@example.com',
+    sprintf($headerFormat, base64_encode($messageHeaderMap['Subject'])),
+    $message,
+    $headers
+);
+?>
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

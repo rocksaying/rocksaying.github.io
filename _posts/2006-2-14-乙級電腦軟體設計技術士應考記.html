@@ -28,82 +28,86 @@ permalink: /archives/1122912.html
 <p>
 題目一跟題目三類似。我就說一下第三題吧。實作一 fraction 類別 (分子／分母) ，並提供四則運算與大於、小於及等於的運算子。最後再以夥伴函數的功能，實作 &gt;&gt; 及 &lt;&lt; 的輸出入動作。我前面說到不能用 cout/cin 而被迫自己當場實作一組 In/Out class 的事，就是指這題。當然，題目本身並沒有要求考生實作一組 In/Out 。
 </p>
-<pre class="highlight"><code><span class="n">class</span> <span class="n">Fraction</span> <span class="p">{</span>
-<span class="n">private</span><span class="o">:</span>
-  <span class="kt">int</span> <span class="n">fc</span><span class="p">;</span> <span class="cm">/*分子*/</span>
-  <span class="kt">int</span> <span class="n">fm</span><span class="p">;</span> <span class="cm">/*分母，分母不得為0 */</span>
-<span class="n">public</span><span class="o">:</span>
-  <span class="n">Fraction</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">m</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
-      <span class="n">throw</span> <span class="s">"分母不得為0"</span><span class="p">;</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">=</span> <span class="n">m</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="n">Fraction</span><span class="o">&amp;</span> <span class="n">operator</span><span class="o">+</span> <span class="p">(</span><span class="n">Fraction</span><span class="o">&amp;</span> <span class="n">lv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">cc</span><span class="p">,</span><span class="n">cm</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">!=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">)</span> <span class="p">{</span>
-      <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">*=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">;</span>
-      <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">*</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span> <span class="o">+</span> <span class="n">lv</span><span class="p">.</span><span class="n">fc</span> <span class="o">*</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-      <span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">+=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fc</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="kt">int</span> <span class="n">operator</span><span class="o">==</span> <span class="p">(</span><span class="n">Fraction</span><span class="o">&amp;</span> <span class="n">lv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">cc</span><span class="p">,</span><span class="n">cm</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span> <span class="o">!=</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">return</span> <span class="p">((</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">*</span> <span class="n">lv</span><span class="p">.</span><span class="n">fm</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">lv</span><span class="p">.</span><span class="n">fc</span> <span class="o">*</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">fm</span><span class="p">));</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-      <span class="k">return</span> <span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">fc</span> <span class="o">==</span> <span class="n">lv</span><span class="p">.</span><span class="n">fc</span><span class="p">);</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+
+{% highlight c++ %}
+class Fraction {
+private:
+  int fc; /*分子*/
+  int fm; /*分母，分母不得為0 */
+public:
+  Fraction(int c=0, int m = 1) {
+    if(m <= 0)
+      throw "分母不得為0";
+    this->fc = c;
+    this->fm = m;
+  }
+  Fraction& operator+ (Fraction& lv) {
+    int cc,cm;
+    if( this->fm != lv.fm) {
+      this->fm *= lv.fm;
+      this->fc = this->fc * lv.fm + lv.fc * this->fm;
+    }
+    else {
+      this->fc += lv.fc;
+    }
+    return *this;
+  }
+  int operator== (Fraction& lv) {
+    int cc,cm;
+    if( this->fm != lv.fm) {
+      return ((this->fc * lv.fm) == (lv.fc * this->fm));
+    }
+    else {
+      return (this->fc == lv.fc);
+    }
+  }
+}
+{% endhighlight %}
 
 <p>
 題目二，給你一個 publication 類別，衍生 book 及 type 類別，以動態連結實作 getdata() 及 putdata() 兩個方法。
 </p>
-<pre class="highlight"><code><span class="n">class</span> <span class="n">Publication</span> <span class="p">{</span>
-  <span class="kt">char</span> <span class="o">*</span><span class="n">title</span><span class="p">;</span> <span class="cm">/*用 STL 的 string 也行，但我是用慣 C 語言方式的*/</span>
-  <span class="kt">float</span> <span class="n">price</span><span class="p">;</span>
-<span class="n">public</span><span class="o">:</span>
-  <span class="n">Publication</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">price</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">getdata</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">2048</span><span class="p">];</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Enter title: "</span><span class="p">);</span>
-    <span class="n">scanf</span><span class="p">(</span><span class="s">"%s"</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-      <span class="n">free</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
-    <span class="n">memcpy</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Enter price: "</span><span class="p">);</span>
-    <span class="n">scanf</span><span class="p">(</span><span class="s">"%f"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">);</span>
-  <span class="p">}</span>
-  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">putdata</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">" Title: %s, Price: %.1f "</span><span class="p">,</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">title</span><span class="p">,</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">};</span>
 
-<span class="n">class</span> <span class="n">Book</span> <span class="o">:</span> <span class="n">public</span> <span class="n">Publication</span> <span class="p">{</span>
-  <span class="kt">int</span> <span class="n">pages</span><span class="p">;</span>
-<span class="n">public</span><span class="o">:</span>
-  <span class="k">virtual</span> <span class="n">getdata</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">Publication</span><span class="o">::</span><span class="n">getdata</span><span class="p">();</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Enter pages: "</span><span class="p">);</span>
-    <span class="n">scanf</span><span class="p">(</span><span class="s">"%d"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">pages</span><span class="p">);</span>
-  <span class="p">}</span>
-  <span class="k">virtual</span> <span class="n">putdata</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">this</span><span class="o">-&gt;</span><span class="n">Publication</span><span class="o">::</span><span class="n">putdata</span><span class="p">();</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Pages: %d "</span><span class="p">,</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">pages</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+{% highlight c++ %}
+class Publication {
+  char *title; /*用 STL 的 string 也行，但我是用慣 C 語言方式的*/
+  float price;
+public:
+  Publication() {
+    this->title = NULL;
+    price = 0;
+  }
+  virtual void getdata() {
+    char buf[2048];
+    printf("Enter title: ");
+    scanf("%s", buf);
+    if(this->title != NULL) {
+      free(this->title);
+    }
+    this->title = (char*) malloc(strlen(buf));
+    memcpy(this->title, buf, strlen(buf)+1);
+    printf("Enter price: ");
+    scanf("%f", &this->price);
+  }
+  virtual void putdata() {
+    printf(" Title: %s, Price: %.1f ", this->title, this->price);
+  }
+};
+
+class Book : public Publication {
+  int pages;
+public:
+  virtual getdata() {
+    this->Publication::getdata();
+    printf("Enter pages: ");
+    scanf("%d", &this->pages);
+  }
+  virtual putdata() {
+    this->Publication::putdata();
+    printf("Pages: %d ", this->pages);
+  }
+}
+{% endhighlight %}
 
 <h6>相關文章</h6>
 <ul>

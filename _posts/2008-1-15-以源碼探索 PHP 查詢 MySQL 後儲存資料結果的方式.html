@@ -27,34 +27,37 @@ Source code version: PHP-5.2.5 release</h4>
 1.line: 1395-1400, context of mysql_query()
 </p>
 
-<pre class="highlight"><code>
+
+{% highlight c %}
 /* proto resource mysql_query(string query [, int link_identifier])
    Sends an SQL query to MySQL */
 PHP_FUNCTION(mysql_query)
 {
     php_mysql_do_query(INTERNAL_FUNCTION_PARAM_PASSTHRU, MYSQL_STORE_RESULT);
 }
-</code></pre>
+{% endhighlight %}
 
 <p>
  2.line: 1404-1409, context of mysql_unbuffered_query()
 </p>
 
-<pre class="highlight"><code>
+
+{% highlight c %}
 /* proto resource mysql_unbuffered_query(string query [, int link_identifier])
    Sends an SQL query to MySQL, without fetching and buffering the result rows */
 PHP_FUNCTION(mysql_unbuffered_query)
 {
     php_mysql_do_query(INTERNAL_FUNCTION_PARAM_PASSTHRU, MYSQL_USE_RESULT);
 }
-</code></pre>
+{% endhighlight %}
 
 
 <p>
 3.line: 1345-1359, context of php_mysql_do_query_general()
 </p>
-<pre class="highlight"><code>
-    if(use_store == MYSQL_USE_RESULT) {
+
+{% highlight c %}
+if(use_store == MYSQL_USE_RESULT) {
         mysql_result=mysql_use_result(&mysql->conn);
     } else {
         mysql_result=mysql_store_result(&mysql->conn);
@@ -69,7 +72,7 @@ PHP_FUNCTION(mysql_unbuffered_query)
     }
     MySG(result_allocated)++;
     ZEND_REGISTER_RESOURCE(return_value, mysql_result, le_result);
-</code></pre>
+{% endhighlight %}
 
 
 <p>
@@ -121,7 +124,8 @@ This structure represents the result of a query that returns rows (SELECT, SHOW,
 line: 316-332, context of MYSQL_RES
 </p>
 
-<pre class="highlight"><code>
+
+{% highlight c %}
 typedef struct st_mysql_res {
   my_ulonglong  row_count;
   MYSQL_FIELD   *fields;
@@ -139,7 +143,7 @@ typedef struct st_mysql_res {
   my_bool       unbuffered_fetch_cancelled;
   void *extension;
 } MYSQL_RES;
-</code></pre>
+{% endhighlight %}
 
 <p>
 <var>MYSQL_RES</var> 所包含的內容有二種情形。一種是 bufered, 另一種是 unbuffered 。剛好對應 <code>mysql_store_result(), mysql_use_result()</code> 的儲存策略。
@@ -151,7 +155,8 @@ typedef struct st_mysql_res {
 繼續觀察 <code>mysql_store_result()</code> 的源碼內容。line: 2802-2844, context of mysql_store_result()
 </p>
 
-<pre class="highlight"><code>
+
+{% highlight c %}
 MYSQL_RES * STDCALL mysql_store_result(MYSQL *mysql)
 {
   MYSQL_RES *result;
@@ -195,18 +200,19 @@ MYSQL_RES * STDCALL mysql_store_result(MYSQL *mysql)
   mysql->unbuffered_fetch_owner= 0;
   DBUG_RETURN(result);              /* Data fetched */
 }
-</code></pre>
+{% endhighlight %}
 
 <p>
 line: 1309-1312, context of cli_read_rows()
 </p>
 
-<pre class="highlight"><code>
+
+{% highlight c %}
 /* Read all rows (fields or data) from server */
 
 MYSQL_DATA *cli_read_rows(MYSQL *mysql,MYSQL_FIELD *mysql_fields,
               unsigned int fields)
-</code></pre>
+{% endhighlight %}
 
 <p>
 源碼內容顯示 <code>mysql_store_result()</code> 會註記資料結果為 "buffered"，並清除 "unbuffered" 策略的相關內容。藉由函數指標 <code>read_rows</code> 調用 <code>cli_read_rows()</code> ，將資料結果集讀取至 client 。

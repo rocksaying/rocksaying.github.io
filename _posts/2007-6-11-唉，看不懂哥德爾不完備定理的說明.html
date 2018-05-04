@@ -17,14 +17,16 @@ permalink: /archives/3451113.html
 <p>
 在設計程式時，一個非常基本以致於我們常常忽略的事情就是：我們必須給定資料，程式才能計算。例如當我寫下:
 </p>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">T</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">&gt;</span> <span class="nx">b</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nx">T</span><span class="p">();</span>
-</code></pre>
+
+{% highlight text %}
+function T() {
+    if (a > b)
+        return true;
+    else
+        return false;
+}
+T();
+{% endhighlight %}
 
 <p>
 這個程式不具可計算性。多數的編譯器會直接而明確地告訴你: a, b 未定義。我不諳數學的敘述方式，照我的理解，在數學中這表示未給定 a, b 兩集合。
@@ -34,50 +36,54 @@ permalink: /archives/3451113.html
 按照我的理解，經過一番修修改改之後，我寫下的程式形式如下列所示:
 </p>
 <h6>JavaScript</h6>
-<pre class="highlight"><code><span class="kd">function</span> <span class="nx">T</span><span class="p">(</span><span class="nx">S</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="nx">S</span><span class="p">(</span><span class="nx">S</span><span class="p">)</span> <span class="p">)</span>
-        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-<span class="p">}</span>
 
-<span class="kd">function</span> <span class="nx">test</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">a</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight text %}
+function T(S) {
+    if ( S(S) )
+        return true;
+    else
+        return false;
+}
 
-<span class="nx">print</span><span class="p">(</span> <span class="nx">T</span><span class="p">(</span><span class="nx">test</span><span class="p">)</span> <span class="p">);</span>
-<span class="nx">print</span><span class="p">(</span> <span class="nx">T</span><span class="p">(</span><span class="nx">T</span><span class="p">)</span> <span class="p">);</span>
-</code></pre>
+function test() {
+    var a = 100;
+    if (a > 10)
+        return true;
+    else
+        return false;
+}
+
+print( T(test) );
+print( T(T) );
+{% endhighlight %}
 
 
 <h6>C++</h6>
-<pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
-</span><span class="n">using</span> <span class="n">namespace</span> <span class="n">std</span><span class="p">;</span>
 
-<span class="n">bool</span> <span class="nf">T</span><span class="p">(</span><span class="n">bool</span> <span class="p">(</span><span class="o">*</span><span class="n">S</span><span class="p">)(...))</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="n">S</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="p">)</span>
-        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="p">}</span>
+{% highlight text %}
+#include <iostream>
+using namespace std;
 
-<span class="n">bool</span> <span class="nf">test</span><span class="p">(...)</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="p">}</span>
+bool T(bool (*S)(...)) {
+    if ( S(S) )
+        return true;
+    else
+        return false;
+}
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">T</span><span class="p">(</span><span class="n">test</span><span class="p">);</span>
-    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">T</span><span class="p">((</span><span class="n">bool</span><span class="p">(</span><span class="o">*</span><span class="p">)(...))</span> <span class="n">T</span><span class="p">);</span> <span class="c1">// T(T)
-</span><span class="p">}</span>
-</code></pre>
+bool test(...) {
+    int a = 100;
+    if (a > 10)
+        return true;
+    else
+        return false;
+}
+
+int main() {
+    cout << T(test);
+    cout << T((bool(*)(...)) T); // T(T)
+}
+{% endhighlight %}
 
 
 <p>

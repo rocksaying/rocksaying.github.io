@@ -10,10 +10,12 @@ permalink: /archives/1092066.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="k">select</span> <span class="n">rsu</span><span class="p">.</span><span class="n">uno</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="n">rsu</span><span class="p">.</span><span class="n">uno</span><span class="p">)</span> <span class="k">as</span> <span class="n">counts</span> <span class="k">from</span> <span class="n">rsu</span>
-<span class="k">where</span> <span class="n">rsu</span><span class="p">.</span><span class="n">record_date</span> <span class="o">=</span> <span class="s1">'2006-02-04'</span>
-<span class="k">group</span> <span class="k">by</span> <span class="n">rsu</span><span class="p">.</span><span class="n">uno</span> <span class="k">having</span> <span class="k">count</span><span class="p">(</span><span class="n">rsu</span><span class="p">.</span><span class="n">uno</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
-</code></pre>
+
+{% highlight sql %}
+select rsu.uno, count(rsu.uno) as counts from rsu
+where rsu.record_date = '2006-02-04'
+group by rsu.uno having count(rsu.uno) > 1
+{% endhighlight %}
 
 <p>
 最常見的 aggregate method 就是 SUM() 和 COUNT()  。由於 aggregate method 往往要搭配 GROUP BY 使用，因此對 GROUP BY 和 HAVING 的用法，產生了一個常見的誤解，即以為 HAVING 只能用在 GROUP BY 之後。然而， HAVING 其實是用於對 aggregate method 之結果作條件篩選，由於 aggregate method 可以不配合 GROUP BY 使用，所以 HAVING 也可以出現在沒有 GROUP BY 的查詢中。

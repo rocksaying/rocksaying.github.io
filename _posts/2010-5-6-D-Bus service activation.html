@@ -63,24 +63,26 @@ System bus service 的 .service 文件，多一個 <var>User</var> 欄位，指�
 <p>接著，配合 dbus daemon lauhcn helper 啟動 System bus service 程序的安全機制，我們還要新增一份與 service 同名的組態文件。在此例中，此文件名稱是 blog.rock.sys.conf 。最少內容如下:
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;!DOCTYPE busconfig PUBLIC
- "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
- "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"&gt;</span>
-<span class="nt">&lt;busconfig&gt;</span>
-  <span class="c">&lt;!-- Only root could launch this service --&gt;</span>
-  <span class="nt">&lt;policy</span> <span class="na">user=</span><span class="s">"root"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;allow</span> <span class="na">own=</span><span class="s">"blog.rock.sys"</span><span class="nt">/&gt;</span>
-  <span class="nt">&lt;/policy&gt;</span>
 
-  <span class="c">&lt;!-- Allow anyone to invoke methods of interface --&gt;</span>
-  <span class="nt">&lt;policy</span> <span class="na">context=</span><span class="s">"default"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;allow</span> <span class="na">send_destination=</span><span class="s">"blog.rock.sys"</span>
-           <span class="na">send_interface=</span><span class="s">"org.freedesktop.DBus.Introspectable"</span><span class="nt">/&gt;</span>
-    <span class="nt">&lt;allow</span> <span class="na">send_destination=</span><span class="s">"blog.rock.sys"</span>
-           <span class="na">send_interface=</span><span class="s">"blog.rock.sys"</span><span class="nt">/&gt;</span>
-  <span class="nt">&lt;/policy&gt;</span>
-<span class="nt">&lt;/busconfig&gt;</span>
-</code></pre>
+{% highlight text %}
+<!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <!-- Only root could launch this service -->
+  <policy user="root">
+    <allow own="blog.rock.sys"/>
+  </policy>
+
+  <!-- Allow anyone to invoke methods of interface -->
+  <policy context="default">
+    <allow send_destination="blog.rock.sys"
+           send_interface="org.freedesktop.DBus.Introspectable"/>
+    <allow send_destination="blog.rock.sys"
+           send_interface="blog.rock.sys"/>
+  </policy>
+</busconfig>
+{% endhighlight %}
 
 
 <p>將此文件複製到 <dfn>/etc/dbus-1/system.d</dfn>。安排好這兩份文件後，Dbus daemon launch helper 就會知道該如何啟動這個程序。

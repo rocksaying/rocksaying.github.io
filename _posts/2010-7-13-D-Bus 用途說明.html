@@ -21,34 +21,35 @@ D-Bus 用於 IPC 需求
 <p>下列所示即為 what-listen 的範例程式碼。我使用 Ruby 撰寫它。
 </p>
 
-<pre class="highlight"><code><span class="c1">#!/usr/bin/ruby
-</span>
-<span class="c1"># coding: utf-8
-</span>
-<span class="nb">require</span> <span class="s1">'dbus'</span>
 
-<span class="n">bus</span> <span class="o">=</span> <span class="no">DBus</span><span class="p">.</span><span class="nf">session_bus</span>
+{% highlight text %}
+#!/usr/bin/ruby
 
-<span class="n">rhythmbox_service_name</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox'</span>
-<span class="n">rhythmbox_player_object_path</span> <span class="o">=</span> <span class="s1">'/org/gnome/Rhythmbox/Player'</span>
-<span class="n">rhythmbox_player_interface_name</span> <span class="o">=</span> <span class="s1">'org.gnome.Rhythmbox.Player'</span>
+# coding: utf-8
 
-<span class="n">rhythmbox</span> <span class="o">=</span> <span class="n">bus</span><span class="p">.</span><span class="nf">service</span><span class="p">(</span><span class="n">rhythmbox_service_name</span><span class="p">).</span><span class="nf">object</span><span class="p">(</span><span class="n">rhythmbox_player_object_path</span><span class="p">)</span>
-<span class="n">rhythmbox</span><span class="p">.</span><span class="nf">introspect</span>
-<span class="n">rhythmbox</span><span class="p">.</span><span class="nf">default_iface</span> <span class="o">=</span> <span class="n">rhythmbox_player_interface_name</span>
+require 'dbus'
 
-<span class="n">rhythmbox</span><span class="p">.</span><span class="nf">on_signal</span><span class="p">(</span><span class="s1">'playingUriChanged'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">uri</span><span class="o">|</span>
-    <span class="nb">puts</span> <span class="s2">"Rhythmbox changes to play </span><span class="si">#{</span><span class="n">uri</span><span class="si">}</span><span class="s2">"</span>
-<span class="k">end</span>
+bus = DBus.session_bus
 
-<span class="n">uri</span> <span class="o">=</span> <span class="n">rhythmbox</span><span class="p">.</span><span class="nf">getPlayingUri</span>
-<span class="nb">puts</span> <span class="s2">"Rhythmbox is playing </span><span class="si">#{</span><span class="n">uri</span><span class="si">}</span><span class="s2">"</span>
+rhythmbox_service_name = 'org.gnome.Rhythmbox'
+rhythmbox_player_object_path = '/org/gnome/Rhythmbox/Player'
+rhythmbox_player_interface_name = 'org.gnome.Rhythmbox.Player'
 
-<span class="n">main</span> <span class="o">=</span> <span class="no">DBus</span><span class="o">::</span><span class="no">Main</span><span class="p">.</span><span class="nf">new</span>
-<span class="n">main</span> <span class="o">&lt;&lt;</span> <span class="n">bus</span>
-<span class="n">main</span><span class="p">.</span><span class="nf">run</span>
+rhythmbox = bus.service(rhythmbox_service_name).object(rhythmbox_player_object_path)
+rhythmbox.introspect
+rhythmbox.default_iface = rhythmbox_player_interface_name
 
-</code></pre>
+rhythmbox.on_signal('playingUriChanged') do |uri|
+    puts "Rhythmbox changes to play #{uri}"
+end
+
+uri = rhythmbox.getPlayingUri
+puts "Rhythmbox is playing #{uri}"
+
+main = DBus::Main.new
+main << bus
+main.run
+{% endhighlight %}
 
 
 <p>關於 Rhythmbox 提供的 D-Bus 服務內容，請自行進往其官方網站查詢。我的另兩篇文章: <a href="{{ site.baseurl }}/archives/12193781.html">Write a PHP DBus client</a> 用 PHP 實作 what-listen 程式；<a href="{{ site.baseurl }}/archives/11949071.html">Write a D-Bus service by Ruby</a> 說明 Ruby 如何使用 D-Bus 。
@@ -62,39 +63,40 @@ D-Bus 作為 API 架構
 <p>舉個簡單的例子來說，若我以 Python 設計了一個 Hello 類別，具有一個 say() 方法。如下列所示(程式碼有所刪減):
 </p>
 
-<pre class="highlight"><code><span class="c">#!/usr/bin/python
-</span>
-<span class="kn">import</span> <span class="nn">dbus</span>
 
-<span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="n">dbus</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
-    <span class="nd">@dbus.service.method</span><span class="p">(</span><span class="s">'blog.rock.Hello'</span><span class="p">,</span> <span class="n">in_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">,</span> <span class="n">out_signature</span><span class="o">=</span><span class="s">'s'</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">say</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">"I say </span><span class="si">%</span><span class="s">s"</span> <span class="o">%</span> <span class="n">message</span>
+{% highlight text %}
+#!/usr/bin/python
 
-<span class="c">#hello.say("hello world")
-</span>
+import dbus
 
-</code></pre>
+class Hello(dbus.service.Object):
+    @dbus.service.method('blog.rock.Hello', in_signature='s', out_signature='s')
+    def say(self, message):
+        return "I say %s" % message
+
+#hello.say("hello world")
+{% endhighlight %}
 
 
 
 <p>當我用 Ruby 設計一個程式，需要呼叫上述 Hello 類別的 say() 方法時，透過 D-Bus ，我可以像是在呼叫純 Ruby 方法般地使用它。如下列所示(程式碼有所刪減)。
 </p>
 
-<pre class="highlight"><code><span class="c1">#!/usr/bin/ruby
-</span>
-<span class="c1"># coding: utf-8
-</span>
-<span class="nb">require</span> <span class="s1">'dbus'</span>
 
-<span class="n">hello</span> <span class="o">=</span> <span class="n">bus</span><span class="p">.</span><span class="nf">service</span><span class="p">(</span><span class="n">hello_service</span><span class="p">).</span><span class="nf">object</span><span class="p">(</span><span class="n">hello_path</span><span class="p">)</span>
-<span class="n">hello</span><span class="p">.</span><span class="nf">introspect</span>
-<span class="n">hello</span><span class="p">.</span><span class="nf">default_iface</span> <span class="o">=</span> <span class="n">hello_interface</span>
+{% highlight text %}
+#!/usr/bin/ruby
 
-<span class="n">what_say</span> <span class="o">=</span> <span class="n">hello</span><span class="p">.</span><span class="nf">say</span><span class="p">(</span><span class="s2">"hello world"</span><span class="p">)</span>
-<span class="nb">puts</span> <span class="n">what_say</span>
+# coding: utf-8
 
-</code></pre>
+require 'dbus'
+
+hello = bus.service(hello_service).object(hello_path)
+hello.introspect
+hello.default_iface = hello_interface
+
+what_say = hello.say("hello world")
+puts what_say
+{% endhighlight %}
 
 
 <p>

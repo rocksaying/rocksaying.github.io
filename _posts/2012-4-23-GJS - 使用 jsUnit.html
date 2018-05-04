@@ -24,21 +24,21 @@ GJS 自帶 jsUnit 模組，可以讓編程人員針對自己所寫的 javascript
 慣例上，將掛載 jsUnit 模組的空間取名為 <dfn>jsunit</dfn>。
 </p>
 
-<pre class="highlight"><code>pan class="cp">
+
+{% highlight javascript %}
 #!/usr/bin/gjs
-</span><span class="kd">var</span> <span class="nx">jsunit</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">jsUnit</span><span class="p">;</span>
+var jsunit = imports.jsUnit;
 
-<span class="kd">function</span> <span class="nx">test_true</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">jsunit</span><span class="p">.</span><span class="nx">assertTrue</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+function test_true() {
+    jsunit.assertTrue(1 == 1);
+}
 
-<span class="kd">function</span> <span class="nx">test_true_failed</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">jsunit</span><span class="p">.</span><span class="nx">assertTrue</span><span class="p">(</span><span class="s2">"This is a failure."</span><span class="p">,</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">2</span><span class="p">);</span>
-<span class="p">}</span>
+function test_true_failed() {
+    jsunit.assertTrue("This is a failure.", 1 == 2);
+}
 
-<span class="nx">jsunit</span><span class="p">.</span><span class="nx">gjstestRun</span><span class="p">(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">jsunit</span><span class="p">.</span><span class="nx">setUp</span><span class="p">,</span> <span class="nx">jsunit</span><span class="p">.</span><span class="nx">tearDown</span><span class="p">);</span>
-
-</code></pre>
+jsunit.gjstestRun(window, jsunit.setUp, jsunit.tearDown);
+{% endhighlight %}
 
 
 <p>
@@ -57,12 +57,12 @@ GJS 自帶 jsUnit 模組，可以讓編程人員針對自己所寫的 javascript
 <p>在命令列執行之結果如下:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ gjs jsunit-example1.js
 
 $ echo $?
 1
-</pre>
+</code></pre>
 
 <p>
 這個測試案例有一個失敗項目，所以程序執行結果($?)必不為 0 。在 Unix 家族中，程序執行結果不為 0 時，皆表示執行過程發生錯誤或失敗狀況。
@@ -76,22 +76,22 @@ $ echo $?
 將 jsUnit 提供的函數載入到全體作用域(window)，使用時就不必加上空間的名稱。
 </p>
 
-<pre class="highlight"><code>pan class="cp">
+
+{% highlight javascript %}
 #!/usr/bin/gjs 
-</span><span class="kr">const</span> <span class="nx">_Lang</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">lang</span><span class="p">;</span>
-<span class="nx">_Lang</span><span class="p">.</span><span class="nx">copyProperties</span><span class="p">(</span><span class="nx">imports</span><span class="p">.</span><span class="nx">jsUnit</span><span class="p">,</span> <span class="nb">window</span><span class="p">);</span> <span class="c1">// 將指定空間的屬性全部複製到全體作用域。</span>
+const _Lang = imports.lang;
+_Lang.copyProperties(imports.jsUnit, window); // 將指定空間的屬性全部複製到全體作用域。
 
-<span class="kd">function</span> <span class="nx">test_true</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">assertTrue</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="mi">1</span><span class="p">);</span>
-<span class="p">}</span>
+function test_true() {
+    assertTrue(1 == 1);
+}
 
-<span class="kd">function</span> <span class="nx">test_true_failed</span><span class="p">()</span> <span class="p">{</span>
-    <span class="nx">assertTrue</span><span class="p">(</span><span class="s2">"This is a failure."</span><span class="p">,</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">2</span><span class="p">);</span>
-<span class="p">}</span>
+function test_true_failed() {
+    assertTrue("This is a failure.", 1 == 2);
+}
 
-<span class="nx">gjstestRun</span><span class="p">(</span><span class="nb">window</span><span class="p">);</span>
-
-</code></pre>
+gjstestRun(window);
+{% endhighlight %}
 
 
 <p>
@@ -121,15 +121,15 @@ $ echo $?
 指定 <var>GJS_DEBUG_OUTPUT</var> 之後，命令列的執行結果將如下所示:
 </p>
 
-<pre class="language-term">
+<pre><code class="language-term">
 $ export GJS_DEBUG_OUTPUT=stderr
-$ gjs jsunit-example2.js 2&gt;&amp;1 | grep LOG
+$ gjs jsunit-example2.js 2>&1 | grep LOG
     JS LOG: running test test_true
     JS LOG: running test test_true_failed
     JS LOG: "It is a failure."
     JS LOG: 1 tests failed in this file
     JS LOG: Failures were: test_true_failed
-</pre>
+</code></pre>
 
 <p>
 這下它的執行報告就方便我們收斂程式除錯的範圍了。
@@ -146,26 +146,26 @@ Whenever you are tempted to type something into a print statement or a debugger 
 <cite>Martin Fowler</cite>
 </blockquote>
 
-<pre class="highlight"><code>pan class="cp">
+
+{% highlight javascript %}
 #!/usr/bin/gjs
-</span><span class="kr">const</span> <span class="nx">_Lang</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">lang</span><span class="p">;</span>
-<span class="nx">_Lang</span><span class="p">.</span><span class="nx">copyProperties</span><span class="p">(</span><span class="nx">imports</span><span class="p">.</span><span class="nx">jsUnit</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+const _Lang = imports.lang;
+_Lang.copyProperties(imports.jsUnit, this);
 
 
-<span class="kd">function</span> <span class="nx">hello</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
-    <span class="cm">/* type something into a debugger expression. */</span>
-    <span class="c1">//if (!msg)</span>
-    <span class="c1">//    throw new Error("You must pass a message.");</span>
+function hello(msg) {
+    /* type something into a debugger expression. */
+    //if (!msg)
+    //    throw new Error("You must pass a message.");
     
-    <span class="cm">/* write it as a test instead. */</span>
-    <span class="nx">assertNotUndefined</span><span class="p">(</span><span class="s2">"You must pass a message."</span><span class="p">,</span> <span class="nx">msg</span><span class="p">);</span>
+    /* write it as a test instead. */
+    assertNotUndefined("You must pass a message.", msg);
 
-    <span class="k">return</span> <span class="s2">"Hello "</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
-<span class="p">}</span>
+    return "Hello " + msg;
+}
 
-<span class="nx">print</span><span class="p">(</span><span class="nx">hello</span><span class="p">());</span>
-
-</code></pre>
+print(hello());
+{% endhighlight %}
 
 
 <h4>

@@ -46,219 +46,223 @@ permalink: /archives/2884871.html
 <p>
 PHP 將方法混入個體或類別的方式，接近 C# 的委派方式，如同《<a href="{{ site.baseurl }}/archives/2872705.html">Delegate in C# and Module in Ruby</a>》所示。所以我以 delegate 表示混入方法。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="cm">/*
+
+{% highlight php %}
+<?php
+/*
 MixableClass - A PHP mix-in class
-Copyright (C) 2007 Shih Yuncheng &lt;shirock@educities.edu.tw&gt;
+Copyright (C) 2007 Shih Yuncheng <shirock@educities.edu.tw>
 
 This library is licensed under GNU Lesser General Public License.
-*/</span>
-<span class="k">abstract</span> <span class="k">class</span> <span class="nc">MixableClass</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="nv">$methods</span><span class="p">;</span> <span class="c1">// object methods
-</span>    <span class="k">protected</span> <span class="nv">$_methods</span><span class="p">;</span>    <span class="c1">// instance methods
-</span>
-    <span class="sd">/**
+*/
+abstract class MixableClass {
+    public static $methods; // object methods
+    protected $_methods;    // instance methods
+
+    /**
      * 為混成類別增刪方法。
      * @access public
      * @static
      * @param $o    類別名稱(字串)，或是一個實例。
      * @param $m    委託者之名稱。
      * @param $fn   委派者之名稱。若為 false 則取消委派。
-     */</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="nf">delegate</span><span class="p">(</span><span class="nv">$o</span><span class="p">,</span> <span class="nv">$m</span><span class="p">,</span> <span class="nv">$fn</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">function_exists</span><span class="p">(</span><span class="nv">$fn</span><span class="p">)</span> <span class="k">or</span> <span class="nv">$fn</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$c</span> <span class="o">=</span> <span class="p">(</span><span class="nb">is_string</span><span class="p">(</span><span class="nv">$o</span><span class="p">)</span>
-                <span class="o">?</span> <span class="nv">$o</span>
-                <span class="o">:</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$o</span><span class="p">)</span>
-            <span class="p">);</span>
-            <span class="c1">//echo "\tadd method: {$c}::\$methods['{$k}'] = '{$v}';\n";
-</span>            <span class="nv">$fn</span> <span class="o">=</span> <span class="p">(</span><span class="nv">$fn</span> <span class="o">===</span> <span class="kc">false</span>
-                <span class="o">?</span> <span class="s1">'false'</span>
-                <span class="o">:</span> <span class="s2">"'</span><span class="nv">$fn</span><span class="s2">'"</span>
-            <span class="p">);</span>
-            <span class="k">eval</span><span class="p">(</span><span class="s2">"</span><span class="si">{</span><span class="nv">$c</span><span class="si">}</span><span class="s2">::</span><span class="se">\$</span><span class="s2">methods['</span><span class="si">{</span><span class="nv">$m</span><span class="si">}</span><span class="s2">'] = </span><span class="si">{</span><span class="nv">$fn</span><span class="si">}</span><span class="s2">;"</span><span class="p">);</span>
-            <span class="c1">// PHP does not allow syntax as $c::$methods.
-</span>        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s2">"</span><span class="nv">$fn</span><span class="s2"> is not a function.</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+     */
+    public static function delegate($o, $m, $fn) {
+        if (function_exists($fn) or $fn === false) {
+            $c = (is_string($o)
+                ? $o
+                : get_class($o)
+            );
+            //echo "\tadd method: {$c}::\$methods['{$k}'] = '{$v}';\n";
+            $fn = ($fn === false
+                ? 'false'
+                : "'$fn'"
+            );
+            eval("{$c}::\$methods['{$m}'] = {$fn};");
+            // PHP does not allow syntax as $c::$methods.
+        }
+        else {
+            throw new Exception("$fn is not a function.\n");
+        }
+    }
 
-    <span class="sd">/**
+    /**
      * 為實例之原型 (即其混成類別) 增刪方法。
      * @access public
      * @param $m    委託者之名稱。
      * @param $fn   委派者之名稱。若為 false 則取消委派。
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">prototypeDelegate</span><span class="p">(</span><span class="nv">$m</span><span class="p">,</span> <span class="nv">$fn</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">self</span><span class="o">::</span><span class="na">delegate</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$m</span><span class="p">,</span> <span class="nv">$fn</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function prototypeDelegate($m, $fn) {
+        self::delegate(&$this, $m, $fn);
+    }
 
-    <span class="sd">/**
+    /**
      * 為實例增刪方法。不影嚮其他個體。
      * @access public
      * @param $m    委託者之名稱。
      * @param $fn   委派者之名稱。若為 false 則取消委派。
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">instanceDelegate</span><span class="p">(</span><span class="nv">$m</span><span class="p">,</span> <span class="nv">$fn</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">function_exists</span><span class="p">(</span><span class="nv">$fn</span><span class="p">)</span> <span class="k">or</span> <span class="nv">$fn</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_methods</span><span class="p">[</span><span class="nv">$m</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$fn</span><span class="p">;</span>
-            <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="p">}</span>
+     */
+    public function instanceDelegate($m, $fn) {
+        if (function_exists($fn) or $fn === false) {
+            $this->_methods[$m] = $fn;
+            return true;
+        }
+        return false;
+    }
 
-    <span class="sd">/**
+    /**
      * 以 setter 形式為實例增刪方法。不影嚮其他個體。
      * 如以下所示，兩者相同:
-     * $x-&gt;instanceDelegate('myBar', 'bar');
-     * $x-&gt;myBar = 'bar';
+     * $x->instanceDelegate('myBar', 'bar');
+     * $x->myBar = 'bar';
      * @access public
      * @param $k    委託者之名稱。
      * @param $v    委派者之名稱。若為 false 則取消委派。
-     */</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">function_exists</span><span class="p">(</span><span class="nv">$v</span><span class="p">))</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">instanceDelegate</span><span class="p">(</span><span class="nv">$k</span><span class="p">,</span> <span class="nv">$v</span><span class="p">);</span>
-    <span class="p">}</span>
+     */
+    public function __set($k, $v) {
+        if (function_exists($v))
+            $this->instanceDelegate($k, $v);
+    }
 
-    <span class="k">protected</span> <span class="k">static</span> <span class="nx">function</span><span class="o">&amp;</span> <span class="nx">getDelegatedMethod</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$o</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">$f</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nv">$fp</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-        <span class="k">for</span> <span class="p">(</span><span class="nv">$c</span> <span class="o">=</span> <span class="nb">get_class</span><span class="p">(</span><span class="nv">$o</span><span class="p">);</span>
-             <span class="nv">$p</span> <span class="o">=</span> <span class="nb">get_parent_class</span><span class="p">(</span><span class="nv">$c</span><span class="p">);</span>
-             <span class="nv">$c</span> <span class="o">=</span> <span class="nv">$p</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nv">$fp</span> <span class="o">=</span> <span class="k">eval</span><span class="p">(</span><span class="s2">"return (isset(</span><span class="si">{</span><span class="nv">$c</span><span class="si">}</span><span class="s2">::</span><span class="se">\$</span><span class="s2">methods['</span><span class="si">{</span><span class="nv">$f</span><span class="si">}</span><span class="s2">'])
-                ? </span><span class="si">{</span><span class="nv">$c</span><span class="si">}</span><span class="s2">::</span><span class="se">\$</span><span class="s2">methods['</span><span class="si">{</span><span class="nv">$f</span><span class="si">}</span><span class="s2">']
-                : false );"</span><span class="p">))</span>
-            <span class="p">{</span>
-                <span class="c1">//echo "\t return {$fp} - {$c}::\$methods['{$f}'] \n";
-</span>                <span class="k">break</span><span class="p">;</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="nv">$fp</span><span class="p">;</span>
-    <span class="p">}</span>
+    protected static function& getDelegatedMethod(&$o, &$f) {
+        $fp = false;
+        for ($c = get_class($o);
+             $p = get_parent_class($c);
+             $c = $p)
+        {
+            if ($fp = eval("return (isset({$c}::\$methods['{$f}'])
+                ? {$c}::\$methods['{$f}']
+                : false );"))
+            {
+                //echo "\t return {$fp} - {$c}::\$methods['{$f}'] \n";
+                break;
+            }
+        }
+        return $fp;
+    }
 
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__call</span><span class="p">(</span><span class="nv">$f</span><span class="p">,</span> <span class="nv">$a</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_methods</span><span class="p">[</span><span class="nv">$f</span><span class="p">]))</span>
-            <span class="nv">$fp</span> <span class="o">=&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_methods</span><span class="p">[</span><span class="nv">$f</span><span class="p">];</span>
-        <span class="k">else</span>
-            <span class="nv">$fp</span> <span class="o">=&amp;</span> <span class="nx">self</span><span class="o">::</span><span class="na">getDelegatedMethod</span><span class="p">(</span><span class="nv">$this</span><span class="p">,</span> <span class="nv">$f</span><span class="p">);</span>
+    public function __call($f, $a) {
+        if (isset($this->_methods[$f]))
+            $fp =& $this->_methods[$f];
+        else
+            $fp =& self::getDelegatedMethod($this, $f);
 
-        <span class="k">if</span> <span class="p">(</span><span class="nv">$fp</span> <span class="k">and</span> <span class="nb">array_unshift</span><span class="p">(</span><span class="nv">$a</span><span class="p">,</span> <span class="o">&amp;</span><span class="nv">$this</span><span class="p">))</span>
-            <span class="k">return</span> <span class="nb">call_user_func_array</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span> <span class="nv">$a</span><span class="p">);</span>
-        <span class="k">else</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nx">Exception</span><span class="p">(</span><span class="s2">"Method </span><span class="si">{</span><span class="nv">$f</span><span class="si">}</span><span class="s2"> not delegated!</span><span class="se">\n</span><span class="s2">"</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+        if ($fp and array_unshift($a, &$this))
+            return call_user_func_array($fp, $a);
+        else
+            throw new Exception("Method {$f} not delegated!\n");
+    }
+}
+?>
+{% endhighlight %}
 
 
 <h4>MyClass_test.php</h4>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'MixableClass.php'</span><span class="p">;</span>
 
-<span class="k">function</span> <span class="nf">foo</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"FOO </span><span class="si">{</span><span class="nv">$This</span><span class="o">-&gt;</span><span class="na">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">function</span> <span class="nf">bar</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"BAR</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="k">function</span> <span class="nf">foobar</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$This</span><span class="p">,</span> <span class="nv">$n</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"FOOBAR (</span><span class="si">{</span><span class="nv">$n</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="nv">$This</span><span class="o">-&gt;</span><span class="na">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span> <span class="p">;</span>
-<span class="p">}</span>
+{% highlight php %}
+<?php
+require_once 'MixableClass.php';
 
-<span class="k">class</span> <span class="nc">MyClass</span> <span class="k">extends</span> <span class="nx">MixableClass</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="nv">$methods</span><span class="p">;</span>    <span class="c1">// every subclass must define it.
-</span>    <span class="k">public</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nx">self</span><span class="o">::</span><span class="nv">$methods</span><span class="p">))</span> <span class="p">{</span>
-            <span class="nx">self</span><span class="o">::</span><span class="nv">$methods</span><span class="p">[</span><span class="s1">'foo'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'foo'</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+function foo(&$This) {
+    echo "FOO {$This->name}\n";
+}
+function bar(&$This) {
+    echo "BAR\n";
+}
+function foobar(&$This, $n) {
+    echo "FOOBAR ({$n}) {$This->name}\n" ;
+}
 
-<span class="nv">$x</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass</span><span class="p">(</span><span class="s1">'Xman'</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'invoke $x-&gt;foo()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
+class MyClass extends MixableClass {
+    public static $methods;    // every subclass must define it.
+    public $name;
+    public function __construct($name) {
+        if (!isset(self::$methods)) {
+            self::$methods['foo'] = 'foo';
+        }
+        $this->name = $name;
+    }
+}
 
-<span class="k">class</span> <span class="nc">MyClass2</span> <span class="k">extends</span> <span class="nx">MyClass</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="nv">$methods</span><span class="p">;</span>
-<span class="p">}</span>
+$x = new MyClass('Xman');
+echo 'invoke $x->foo()', "\n";
+$x->foo();
 
-<span class="nv">$y</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass2</span><span class="p">(</span><span class="s1">'Yman'</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'invoke $y-&gt;foo()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$y</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
+class MyClass2 extends MyClass {
+    public static $methods;
+}
 
-<span class="k">class</span> <span class="nc">MyClass3</span> <span class="k">extends</span> <span class="nx">MyClass2</span> <span class="p">{</span>
-    <span class="k">public</span> <span class="k">static</span> <span class="nv">$methods</span><span class="p">;</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$name</span><span class="p">);</span>
-        <span class="k">foreach</span> <span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">'bar'</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$fn</span><span class="p">)</span>
-            <span class="nx">self</span><span class="o">::</span><span class="nv">$methods</span><span class="p">[</span><span class="nv">$fn</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$fn</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+$y = new MyClass2('Yman');
+echo 'invoke $y->foo()', "\n";
+$y->foo();
 
-<span class="nv">$z</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass3</span><span class="p">(</span><span class="s1">'Zman'</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'invoke $z-&gt;foo(), $z-&gt;bar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$z</span><span class="o">-&gt;</span><span class="na">foo</span><span class="p">();</span>
-<span class="nv">$z</span><span class="o">-&gt;</span><span class="na">bar</span><span class="p">();</span>
+class MyClass3 extends MyClass2 {
+    public static $methods;
+    public function __construct($name) {
+        parent::__construct(&$name);
+        foreach (array('bar') as $fn)
+            self::$methods[$fn] = $fn;
+    }
+}
 
-<span class="k">echo</span> <span class="s2">"========== 動態混入/委派 =============</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s1">'invoke $z-&gt;foobar("z")'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-    <span class="nv">$z</span><span class="o">-&gt;</span><span class="na">foobar</span><span class="p">(</span><span class="s1">'z'</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"ERR: fobar 尚未混入 MyClass3 ; MyClass3 尚未委派 foobar 行為.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+$z = new MyClass3('Zman');
+echo 'invoke $z->foo(), $z->bar()', "\n";
+$z->foo();
+$z->bar();
 
-<span class="k">echo</span> <span class="s2">"foobar 混入 MyClass2 ; MyClass2 委派 foobar 行為.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$y</span><span class="o">-&gt;</span><span class="na">prototypeDelegate</span><span class="p">(</span><span class="s1">'foobar'</span><span class="p">,</span> <span class="s1">'foobar'</span><span class="p">);</span>
-<span class="c1">//MyClass2::delegate('MyClass2', 'foobar', 'foobar');
-</span>
-<span class="k">echo</span> <span class="s1">'invoke $z-&gt;foobar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$z</span><span class="o">-&gt;</span><span class="na">foobar</span><span class="p">(</span><span class="s1">'z'</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'子承父。MyClass2 的衍生類別 (MyClass3) 承繼其委派之 foobar.'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
+echo "========== 動態混入/委派 =============\n";
+try {
+    echo 'invoke $z->foobar("z")', "\n";
+    $z->foobar('z');
+}
+catch (Exception $e) {
+    echo "ERR: fobar 尚未混入 MyClass3 ; MyClass3 尚未委派 foobar 行為.\n";
+}
 
-<span class="nv">$y2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass2</span><span class="p">(</span><span class="s1">'Y2man'</span><span class="p">);</span>
-<span class="k">echo</span> <span class="s1">'invoke $y2-&gt;foobar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$y2</span><span class="o">-&gt;</span><span class="na">foobar</span><span class="p">(</span><span class="s1">'y2'</span><span class="p">);</span>
+echo "foobar 混入 MyClass2 ; MyClass2 委派 foobar 行為.\n";
+$y->prototypeDelegate('foobar', 'foobar');
+//MyClass2::delegate('MyClass2', 'foobar', 'foobar');
 
-<span class="k">echo</span> <span class="s1">'invoke $x-&gt;foobar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$x</span><span class="o">-&gt;</span><span class="na">foobar</span><span class="p">(</span><span class="s1">'x'</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"ERR: 父不承子。MyClass2 的基礎類別 (MyClass) 仍無 foobar 行為.</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+echo 'invoke $z->foobar()', "\n";
+$z->foobar('z');
+echo '子承父。MyClass2 的衍生類別 (MyClass3) 承繼其委派之 foobar.', "\n";
 
-<span class="k">echo</span> <span class="s2">"========== 實例行為委派，不混入類別中 =============</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">myBar</span> <span class="o">=</span> <span class="s1">'bar'</span><span class="p">;</span>
-<span class="k">echo</span> <span class="s1">'invoke $x-&gt;myBar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="nv">$x</span><span class="o">-&gt;</span><span class="na">myBar</span><span class="p">();</span>
+$y2 = new MyClass2('Y2man');
+echo 'invoke $y2->foobar()', "\n";
+$y2->foobar('y2');
 
-<span class="nv">$x2</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyClass</span><span class="p">(</span><span class="s1">'X2man'</span><span class="p">);</span>
+echo 'invoke $x->foobar()', "\n";
+try {
+    $x->foobar('x');
+}
+catch (Exception $e) {
+    echo "ERR: 父不承子。MyClass2 的基礎類別 (MyClass) 仍無 foobar 行為.\n";
+}
 
-<span class="k">echo</span> <span class="s1">'invoke $x2-&gt;myBar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$x2</span><span class="o">-&gt;</span><span class="na">myBar</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"ERR: myBar 並未混入類別</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
+echo "========== 實例行為委派，不混入類別中 =============\n";
+$x->myBar = 'bar';
+echo 'invoke $x->myBar()', "\n";
+$x->myBar();
 
-<span class="k">echo</span> <span class="s1">'invoke $y-&gt;myBar()'</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="k">try</span> <span class="p">{</span>
-    <span class="nv">$y</span><span class="o">-&gt;</span><span class="na">myBar</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">echo</span> <span class="s2">"ERR: myBar 並未混入類別</span><span class="se">\n</span><span class="s2">"</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+$x2 = new MyClass('X2man');
+
+echo 'invoke $x2->myBar()', "\n";
+try {
+    $x2->myBar();
+}
+catch (Exception $e) {
+    echo "ERR: myBar 並未混入類別\n";
+}
+
+echo 'invoke $y->myBar()', "\n";
+try {
+    $y->myBar();
+}
+catch (Exception $e) {
+    echo "ERR: myBar 並未混入類別\n";
+}
+?>
+{% endhighlight %}
 
 <br/>
 執行結果:

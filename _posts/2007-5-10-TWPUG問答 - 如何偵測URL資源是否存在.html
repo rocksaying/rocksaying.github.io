@@ -12,41 +12,43 @@ permalink: /archives/3215473.html
 </p>
 
 <!--more-->
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">function</span> <span class="nf">checkUrl</span><span class="p">(</span><span class="nv">$url</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nb">preg_match</span><span class="p">(</span><span class="s1">'/^(?P&lt;protocol&gt;[a-z]+):\/\/(?P&lt;hostname&gt;[\w\._-]+)(?P&lt;resource&gt;\/.*)/'</span><span class="p">,</span>
-        <span class="nv">$url</span><span class="p">,</span> <span class="nv">$uriSet</span><span class="p">);</span>
-    <span class="nv">$portMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'http'</span> <span class="o">=&gt;</span> <span class="mi">80</span><span class="p">,</span> <span class="s1">'https'</span> <span class="o">=&gt;</span> <span class="mi">443</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$portMap</span><span class="p">[</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'protocol'</span><span class="p">]]))</span>
-        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="k">else</span>
-        <span class="nv">$port</span> <span class="o">=</span> <span class="nv">$portMap</span><span class="p">[</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'protocol'</span><span class="p">]];</span>
-    <span class="nv">$fh</span> <span class="o">=</span> <span class="nb">fsockopen</span><span class="p">(</span><span class="s1">'tcp://'</span><span class="o">.</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'hostname'</span><span class="p">],</span> <span class="nv">$port</span><span class="p">,</span> <span class="nv">$errno</span><span class="p">,</span> <span class="nv">$errstr</span><span class="p">,</span> <span class="mi">30</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$fh</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">//echo "$errstr ($errno)&lt;br /&gt;\n";
-</span>        <span class="nv">$rc</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
-    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-        <span class="nv">$cmd</span> <span class="o">=</span> <span class="s2">"HEAD </span><span class="si">{</span><span class="nv">$uriSet</span><span class="p">[</span><span class="s1">'resource'</span><span class="p">]}</span> <span class="nx">HTTP</span><span class="o">/</span><span class="mf">1.1</span><span class="nx">\r\n</span><span class="s2">";
-        </span><span class="nv">$cmd</span><span class="s2"> .= "</span><span class="nx">Host</span><span class="o">:</span> <span class="nx">www</span><span class="o">.</span><span class="nx">example</span><span class="o">.</span><span class="nx">com\r\n</span><span class="s2">";
-        </span><span class="nv">$cmd</span><span class="s2"> .= "</span><span class="nx">Connection</span><span class="o">:</span> <span class="nx">Close\r\n\r\n</span><span class="s2">";
 
-        fputs(</span><span class="nv">$fh</span><span class="s2">, </span><span class="nv">$cmd</span><span class="s2">);
-        </span><span class="nv">$response</span><span class="s2"> = fgets(</span><span class="nv">$fh</span><span class="s2">);
-        list(</span><span class="nv">$h</span><span class="s2">, </span><span class="nv">$rc</span><span class="s2">) = explode(' ', </span><span class="nv">$response</span><span class="s2">);
-        while(!feof(</span><span class="nv">$fh</span><span class="s2">))
-            fgets(</span><span class="nv">$fh</span><span class="s2">);
-        fclose(</span><span class="nv">$fh</span><span class="s2">);
+{% highlight php %}
+<?php
+function checkUrl($url) {
+    preg_match('/^(?P<protocol>[a-z]+):\/\/(?P<hostname>[\w\._-]+)(?P<resource>\/.*)/',
+        $url, $uriSet);
+    $portMap = array('http' => 80, 'https' => 443);
+    if (!isset($portMap[$uriSet['protocol']]))
+        return false;
+    else
+        $port = $portMap[$uriSet['protocol']];
+    $fh = fsockopen('tcp://'.$uriSet['hostname'], $port, $errno, $errstr, 30);
+    if (!$fh) {
+        //echo "$errstr ($errno)<br />\n";
+        $rc = false;
+    } else {
+        $cmd = "HEAD {$uriSet['resource']} HTTP/1.1\r\n";
+        $cmd .= "Host: www.example.com\r\n";
+        $cmd .= "Connection: Close\r\n\r\n";
+
+        fputs($fh, $cmd);
+        $response = fgets($fh);
+        list($h, $rc) = explode(' ', $response);
+        while(!feof($fh))
+            fgets($fh);
+        fclose($fh);
         
     }
-    return </span><span class="nv">$rc</span><span class="s2">;
+    return $rc;
 }
 
-echo checkUrl('http://www.google.com.tw/intl/en_com/images/logo_plain.png'), "</span><span class="nx">\n</span><span class="s2">";
+echo checkUrl('http://www.google.com.tw/intl/en_com/images/logo_plain.png'), "\n";
 
-echo checkUrl('http://www.google.com.tw/intl/en_com/images/logo_plain.xxx'), "</span><span class="nx">\n</span><span class="s2">";
+echo checkUrl('http://www.google.com.tw/intl/en_com/images/logo_plain.xxx'), "\n";
 
-?&gt;
-</span></code></pre>
+?>
+{% endhighlight %}
 
 <p>
 以<code>fsockopen()</code>開啟TCP網路連線，送出 HTTP HEAD method 請求(第15-17行)。接著讀取伺服器回應，並解析狀態碼(第19-20行)。最後回傳結果。

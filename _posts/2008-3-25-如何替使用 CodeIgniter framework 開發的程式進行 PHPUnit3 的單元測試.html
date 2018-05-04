@@ -26,52 +26,54 @@ CodeIgniter 必要的三個常數: <var>APPPATH, BASEPATH, EXT</var>。
 CodeIgniter 的 Database class 使用了2個函數: <code>log_message(), show_error()</code>。我們要定義那2個函數。函數內容很簡單，最簡單的內容就是什麼都不做。 
 </p>
 
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">require_once</span> <span class="s1">'PHPUnit/Framework.php'</span><span class="p">;</span>
 
-<span class="nb">define</span><span class="p">(</span><span class="s1">'APPPATH'</span><span class="p">,</span> <span class="nb">realpath</span><span class="p">(</span><span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">))</span> <span class="o">.</span> <span class="s1">'/../src/'</span><span class="p">);</span>
-<span class="nb">define</span><span class="p">(</span><span class="s1">'BASEPATH'</span><span class="p">,</span> <span class="nb">realpath</span><span class="p">(</span><span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">))</span> <span class="o">.</span> <span class="s1">'/../src/core/'</span><span class="p">);</span>
-<span class="nb">define</span><span class="p">(</span><span class="s1">'EXT'</span><span class="p">,</span> <span class="s1">'.php'</span><span class="p">);</span>
+{% highlight php %}
+<?php
+require_once 'PHPUnit/Framework.php';
 
-<span class="k">require_once</span> <span class="nx">BASEPATH</span> <span class="o">.</span> <span class="s1">'database/DB.php'</span><span class="p">;</span>
+define('APPPATH', realpath(dirname(__FILE__)) . '/../src/');
+define('BASEPATH', realpath(dirname(__FILE__)) . '/../src/core/');
+define('EXT', '.php');
 
-<span class="nb">define</span><span class="p">(</span><span class="s1">'TESTSUITEPATH'</span><span class="p">,</span> <span class="nb">realpath</span><span class="p">(</span><span class="nb">dirname</span><span class="p">(</span><span class="k">__FILE__</span><span class="p">))</span> <span class="o">.</span> <span class="s1">'/'</span><span class="p">);</span>
+require_once BASEPATH . 'database/DB.php';
 
-<span class="sd">/**
+define('TESTSUITEPATH', realpath(dirname(__FILE__)) . '/');
+
+/**
  * log_message(), a mock function.
- */</span> 
-<span class="k">function</span> <span class="nf">log_message</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">// nothing
-</span><span class="p">}</span>
-<span class="k">function</span> <span class="nf">show_error</span><span class="p">(</span><span class="nv">$msg</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// nothing
-</span><span class="p">}</span>
+ */ 
+function log_message() {
+    // nothing
+}
+function show_error($msg) {
+    // nothing
+}
 
-<span class="k">class</span> <span class="nc">MyWebApp_TestCase</span> <span class="k">extends</span> <span class="nx">PHPUnit_Framework_TestCase</span> <span class="p">{</span>
-    <span class="sd">/**
+class MyWebApp_TestCase extends PHPUnit_Framework_TestCase {
+    /**
      * DSN, dbdriver://username:password@hostname/database    
      * @var string 
-     */</span>
-    <span class="k">protected</span> <span class="nv">$DSN</span> <span class="o">=</span> <span class="s1">'postgre://xxx:xxx@localhost/myWebApp'</span><span class="p">;</span>
+     */
+    protected $DSN = 'postgre://xxx:xxx@localhost/myWebApp';
     
-    <span class="sd">/**
+    /**
      * Instance of CI's database class    
      * @var object     
-     */</span>
-    <span class="k">protected</span> <span class="nv">$db</span><span class="p">;</span>     
+     */
+    protected $db;     
 
-    <span class="k">protected</span> <span class="k">function</span> <span class="nf">initDB</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">try</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">db</span> <span class="o">=</span> <span class="nx">DB</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">DSN</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">fail</span><span class="p">(</span><span class="s1">'Connect database error!'</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+    protected function initDB() {
+        try {
+            $this->db = DB($this->DSN);
+        }
+        catch (Exception $e) {
+            $this->fail('Connect database error!');
+        }
+    }
 
-<span class="p">}</span>
-<span class="cp">?&gt;</span>
-</code></pre>
+}
+?>
+{% endhighlight %}
 
 
 <p>

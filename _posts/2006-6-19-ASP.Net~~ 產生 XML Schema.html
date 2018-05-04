@@ -11,67 +11,71 @@ permalink: /archives/1776571.html
 
 <!--more-->
 <h4>將 DataSet 結構描述資訊寫為 XML 結構描述 (XSD)</h4>
-<pre class="highlight"><code><span class="n">DataSet</span> <span class="n">ds</span> <span class="o">=</span> <span class="n">new</span> <span class="n">DataSet</span><span class="p">(</span><span class="s">"TEST"</span><span class="p">);</span>
-<span class="n">DataTable</span> <span class="n">dt</span> <span class="o">=</span> <span class="n">ds</span><span class="p">.</span><span class="n">Tables</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"T1"</span><span class="p">);</span>
-<span class="n">dt</span><span class="p">.</span><span class="n">Columns</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"id"</span><span class="p">,</span> <span class="n">typeof</span><span class="p">(</span><span class="n">Int32</span><span class="p">));</span>
-<span class="n">dt</span><span class="p">.</span><span class="n">Columns</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="s">"name"</span><span class="p">,</span> <span class="n">typeof</span><span class="p">(</span><span class="n">String</span><span class="p">));</span>
-<span class="n">ds</span><span class="p">.</span><span class="n">WriteXmlSchema</span><span class="p">(</span><span class="n">Console</span><span class="p">.</span><span class="n">Out</span><span class="p">);</span>
-</code></pre>
+
+{% highlight c# %}
+DataSet ds = new DataSet("TEST");
+DataTable dt = ds.Tables.Add("T1");
+dt.Columns.Add("id", typeof(Int32));
+dt.Columns.Add("name", typeof(String));
+ds.WriteXmlSchema(Console.Out);
+{% endhighlight %}
 
 
 <h4>使用 System.Xml.Schema 類別</h4>
-<pre class="highlight"><code><span class="c1">// &lt;xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
-</span><span class="n">XmlSchema</span> <span class="n">schema</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchema</span><span class="p">();</span>
 
-<span class="c1">// &lt;xs:element name="TEST"&gt;
-</span><span class="n">XmlSchemaElement</span> <span class="n">elementTEST</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
-<span class="n">elementTEST</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"TEST"</span><span class="p">;</span>
+{% highlight c# %}
+// <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+XmlSchema schema = new XmlSchema();
 
-<span class="c1">// &lt;xs:complexType&gt;
-</span><span class="n">XmlSchemaComplexType</span> <span class="n">complexType</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaComplexType</span><span class="p">();</span>
+// <xs:element name="TEST">
+XmlSchemaElement elementTEST = new XmlSchemaElement();
+elementTEST.Name = "TEST";
 
-<span class="c1">// &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
-</span><span class="n">XmlSchemaChoice</span> <span class="n">choice</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaChoice</span><span class="p">();</span>
-<span class="n">choice</span><span class="p">.</span><span class="n">MinOccurs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="n">choice</span><span class="p">.</span><span class="n">MaxOccursString</span> <span class="o">=</span> <span class="s">"unbounded"</span><span class="p">;</span>
+// <xs:complexType>
+XmlSchemaComplexType complexType = new XmlSchemaComplexType();
 
-<span class="c1">// &lt;xs:element name="T1"&gt;
-</span><span class="n">XmlSchemaElement</span> <span class="n">elementT1</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
-<span class="n">elementT1</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"T1"</span><span class="p">;</span>
+// <xs:choice minOccurs="0" maxOccurs="unbounded">
+XmlSchemaChoice choice = new XmlSchemaChoice();
+choice.MinOccurs = 0;
+choice.MaxOccursString = "unbounded";
 
-<span class="c1">// &lt;xs:complexType&gt;
-</span><span class="n">XmlSchemaComplexType</span> <span class="n">complexType2</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaComplexType</span><span class="p">();</span>
+// <xs:element name="T1">
+XmlSchemaElement elementT1 = new XmlSchemaElement();
+elementT1.Name = "T1";
 
-<span class="c1">// &lt;xs:sequence&gt;
-</span><span class="n">XmlSchemaSequence</span> <span class="n">sequence</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaSequence</span><span class="p">();</span>
+// <xs:complexType>
+XmlSchemaComplexType complexType2 = new XmlSchemaComplexType();
 
-<span class="c1">// &lt;xs:element name="ID" type="xs:int"&gt;
-</span><span class="n">XmlSchemaElement</span> <span class="n">elementID</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
-<span class="n">elementID</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"ID"</span><span class="p">;</span>
-<span class="n">elementID</span><span class="p">.</span><span class="n">SchemaTypeName</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlQualifiedName</span><span class="p">(</span><span class="s">"int"</span><span class="p">,</span> <span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="p">);</span>
+// <xs:sequence>
+XmlSchemaSequence sequence = new XmlSchemaSequence();
 
-<span class="c1">// &lt;xs:element name="Name" type="xs:string"&gt;
-</span><span class="n">XmlSchemaElement</span> <span class="n">elementName</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlSchemaElement</span><span class="p">();</span>
-<span class="n">elementName</span><span class="p">.</span><span class="n">Name</span> <span class="o">=</span> <span class="s">"Name"</span><span class="p">;</span>
-<span class="n">elementName</span><span class="p">.</span><span class="n">SchemaTypeName</span> <span class="o">=</span> <span class="n">new</span> <span class="n">XmlQualifiedName</span><span class="p">(</span><span class="s">"string"</span><span class="p">,</span> <span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="p">);</span>
+// <xs:element name="ID" type="xs:int">
+XmlSchemaElement elementID = new XmlSchemaElement();
+elementID.Name = "ID";
+elementID.SchemaTypeName = new XmlQualifiedName("int", "http://www.w3.org/2001/XMLSchema");
 
-<span class="n">sequence</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementID</span><span class="p">);</span>
-<span class="n">sequence</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementName</span><span class="p">);</span>
+// <xs:element name="Name" type="xs:string">
+XmlSchemaElement elementName = new XmlSchemaElement();
+elementName.Name = "Name";
+elementName.SchemaTypeName = new XmlQualifiedName("string", "http://www.w3.org/2001/XMLSchema");
 
-<span class="n">complexType2</span><span class="p">.</span><span class="n">Particle</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">;</span>
+sequence.Items.Add(elementID);
+sequence.Items.Add(elementName);
 
-<span class="n">elementT1</span><span class="p">.</span><span class="n">SchemaType</span> <span class="o">=</span> <span class="n">complexType2</span><span class="p">;</span>
+complexType2.Particle = sequence;
 
-<span class="n">choice</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementT1</span><span class="p">);</span>
+elementT1.SchemaType = complexType2;
 
-<span class="n">complexType</span><span class="p">.</span><span class="n">Particle</span> <span class="o">=</span> <span class="n">choice</span><span class="p">;</span>
+choice.Items.Add(elementT1);
 
-<span class="n">elementTEST</span><span class="p">.</span><span class="n">SchemaType</span> <span class="o">=</span> <span class="n">complexType</span><span class="p">;</span>
+complexType.Particle = choice;
 
-<span class="n">schema</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">elementTEST</span><span class="p">);</span>
+elementTEST.SchemaType = complexType;
 
-<span class="n">schema</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="n">Console</span><span class="p">.</span><span class="n">Out</span><span class="p">);</span>
-</code></pre>
+schema.Items.Add(elementTEST);
+
+schema.Write(Console.Out);
+{% endhighlight %}
 
 <p>
 粗略試了一下，很明顯，直接操作 System.Xml.Schema 是個笨方法，這種方法的程式碼，比它產生的 XML Schema 的文件內容還多。藉由 DataSet 作為中介變數，不僅程式簡化許多，也直接對應 Database table 的 Schema ，我們向 Database 查詢並將結果存入 DataSet 後，可以直接一個 WriteXMLSchema() 就獲得對應 Database table schema 的 XML Schema，在操作上反而更為直覺。

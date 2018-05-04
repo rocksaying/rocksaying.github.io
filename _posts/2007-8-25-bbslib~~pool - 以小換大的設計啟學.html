@@ -19,13 +19,15 @@ bbslib::pool 是一個簡單的記憶體配置功能 (源碼: <a href="http://ho
 <p>
 舉個例子來說，如果要做個 link-list 的結構，其 node 如下:
 </p>
-<pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">node</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="n">data</span><span class="p">[</span><span class="mi">120</span><span class="p">];</span>
-    <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
-<span class="p">}</span> <span class="n">node_t</span><span class="p">;</span>
-<span class="cm">/* sizeof(node_t) = 128 bytes */</span>
-</code></pre>
+
+{% highlight c %}
+typedef struct node {
+    char data[120];
+    struct node *prev;
+    struct node *next;
+} node_t;
+/* sizeof(node_t) = 128 bytes */
+{% endhighlight %}
 
 <p>
 如果有 10 個 node ，則用 malloc 的話，要呼叫 10次，一共要 10個 page 的空間 (這還不包括 kernel 維護這些 page 的記憶體空間)，假設一個 page 是 1K ，至少浪費了 (1024-128)*10 的內容... 如果是用 bbslib::pool 呢？ 把這個 10 個node 塞進pool，則只會呼叫 2次 malloc() 。省下了多次 kernel time 。
@@ -40,27 +42,29 @@ bbslib::pool 是一個簡單的記憶體配置功能 (源碼: <a href="http://ho
 <h5>
 實作說明
 </h5>
-<pre class="highlight"><code><span class="k">struct</span> <span class="n">pool</span>
-<span class="p">{</span>
-	<span class="n">string_i</span> <span class="n">striobj</span><span class="p">;</span>	<span class="c1">// 具有 string_i 所承諾的行為的物件;
-</span>	<span class="kt">char</span> <span class="o">*</span><span class="n">content</span><span class="p">;</span>        <span class="c1">// pool 儲存區，Zero-end string;
-</span>	<span class="kt">size_t</span> <span class="n">length</span><span class="p">;</span>        <span class="c1">// Length of string, less terminating null character;
-</span>	<span class="kt">size_t</span> <span class="n">size</span><span class="p">;</span>          <span class="c1">// The (current) available size of content;
-</span>	<span class="kt">size_t</span> <span class="n">increment</span><span class="p">;</span>     <span class="c1">// 每次容量增加量，預設為 POOLBLKSIZ
-</span>	<span class="k">enum</span> <span class="p">{</span>
-		<span class="n">POOL_MALLOC</span><span class="p">,</span>
-		<span class="n">POOL_AUTO</span>
-	<span class="p">}</span> <span class="n">type</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">pool</span> <span class="n">pool_t</span><span class="p">;</span>
 
-<span class="c1">// _SC_PAGESIZE not part of POSIX.1
-</span><span class="cp">#if defined( _SC_PAGESIZE )
+{% highlight c %}
+struct pool
+{
+	string_i striobj;	// 具有 string_i 所承諾的行為的物件;
+	char *content;        // pool 儲存區，Zero-end string;
+	size_t length;        // Length of string, less terminating null character;
+	size_t size;          // The (current) available size of content;
+	size_t increment;     // 每次容量增加量，預設為 POOLBLKSIZ
+	enum {
+		POOL_MALLOC,
+		POOL_AUTO
+	} type;
+};
+typedef struct pool pool_t;
+
+// _SC_PAGESIZE not part of POSIX.1
+#if defined( _SC_PAGESIZE )
 #define POOLBLKSIZ  sysconf(_SC_PAGESIZE)   // per block size
 #else
 #define POOLBLKSIZ 1024
 #endif
-</span></code></pre>
+{% endhighlight %}
 
 <p>
 POOLBLKSIZ 設為 1024 是因大多數的 32bit OS 是以 1024 bytes 為 1 page 。1 page 是 OS 在配置記憶體時的最小單位。我已確知的 OS 其 page 大小:

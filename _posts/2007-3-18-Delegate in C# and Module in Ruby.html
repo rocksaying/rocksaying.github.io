@@ -19,22 +19,24 @@ permalink: /archives/2872705.html
 首先，我們先看看 Ruby 的混成(mix-in)的作法。我定義了一個模組 <code>MySampleModule</code> 及一個類別 <code>MyClass</code>。<code>MyClass</code> 類之建構子定義了一個實例變數 <var>@title</var>。 Ruby 的實例變數對應於 C++/C#/Java 中的私有資料成員 (See also: <a href="http://zh.wikibooks.org/w/index.php?title=Ruby_Programming/Syntax/Variables_and_Constants&variant=zh-tw#.E5.AF.A6.E4.BE.8B.E8.AE.8A.E6.95.B8.28Instance_Variable.29">Ruby Reference: Instance Variable</a>)。而在 <code>MySampleModule</code> 模組中定義了一個方法 <code>show</code>，請注意到它將顯示 <var>@title</var> 的內容，而 <var>@title</var> 在模組中並未出現。Ruby 對此採動態繫結策略：根據實際調用此方法之個體決定 <var>@title</var> 指涉何者。
 </p>
 
-<pre class="highlight"><code><span class="k">module</span> <span class="nn">MySampleModule</span>
-    <span class="k">def</span> <span class="nf">show</span>
-        <span class="nb">puts</span> <span class="vi">@title</span>
-    <span class="k">end</span>
-<span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">MyClass</span>
-    <span class="kp">include</span> <span class="no">MySampleModule</span>
-    <span class="k">def</span> <span class="nf">initialize</span>
-        <span class="vi">@title</span> <span class="o">=</span> <span class="s1">'xyz'</span><span class="p">;</span>
-    <span class="k">end</span>
-<span class="k">end</span>
+{% highlight text %}
+module MySampleModule
+    def show
+        puts @title
+    end
+end
 
-<span class="n">x</span> <span class="o">=</span> <span class="no">MyClass</span><span class="p">.</span><span class="nf">new</span>
-<span class="n">x</span><span class="p">.</span><span class="nf">show</span>
-</code></pre>
+class MyClass
+    include MySampleModule
+    def initialize
+        @title = 'xyz';
+    end
+end
+
+x = MyClass.new
+x.show
+{% endhighlight %}
 
 
 <h3>C# 之 delegate 的作法</h3>
@@ -44,33 +46,35 @@ permalink: /archives/2872705.html
 <p>
 為了方便閱讀， C#的例子中所用名稱和 Ruby的例子中一樣。與 Ruby 的模組語法相比，不難發現 delegate 的語法冗長多了。它必須先宣告 delegate 函數簽名 <code>methodDeleagte</code>，接著再宣告方法 <code>show</code> 並委派 <code>MySampleModule.show</code> 處理。語法上有兩個缺點。其一、若 <code>MySampleModule</code> 中有多個方法且函數簽名皆不同時，<code>MyClass</code> 就必須宣告多個 delegate 函數簽名。其二、當我們在 <code>MySampleModule</code> 中增加新的方法時，我們也必須在 <code>MyClass</code> 中增添委派的程式碼；Ruby 完全隱藏於 <code>include MySampleModule</code> 之中，我們不須處理。
 </p>
-<pre class="highlight"><code><span class="n">using</span> <span class="n">System</span><span class="p">;</span>
-<span class="n">public</span> <span class="n">class</span> <span class="n">SamplesDelegate</span>  <span class="p">{</span>
-    <span class="n">public</span> <span class="n">class</span> <span class="n">MySampleModule</span>  <span class="p">{</span>
-        <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">show</span><span class="p">()</span>  <span class="p">{</span>
-            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span> <span class="s">"Title: "</span><span class="p">);</span>
-            <span class="c1">//Console.WriteLine( "Title: {0}", this.title);
-</span>            <span class="c1">//ERROR! The solution is the same as PHP.
-</span>        <span class="p">}</span>
-    <span class="p">}</span>
 
-    <span class="n">public</span> <span class="n">class</span> <span class="n">MyClass</span> <span class="p">{</span>
-        <span class="c1">//include Module in Ruby
-</span>        <span class="n">public</span> <span class="n">delegate</span> <span class="kt">void</span> <span class="n">methodDelegate</span><span class="p">();</span>
-        <span class="n">public</span> <span class="n">methodDelegate</span> <span class="n">show</span> <span class="o">=</span> <span class="n">new</span> <span class="n">methodDelegate</span><span class="p">(</span><span class="n">MySampleModule</span><span class="p">.</span><span class="n">show</span><span class="p">);</span>
+{% highlight text %}
+using System;
+public class SamplesDelegate  {
+    public class MySampleModule  {
+        public static void show()  {
+            Console.WriteLine( "Title: ");
+            //Console.WriteLine( "Title: {0}", this.title);
+            //ERROR! The solution is the same as PHP.
+        }
+    }
 
-        <span class="n">private</span> <span class="n">String</span> <span class="n">title</span><span class="p">;</span>   <span class="c1">// @title in Ruby
-</span>        <span class="n">public</span> <span class="nf">MyClass</span><span class="p">()</span> <span class="p">{</span>
-            <span class="n">this</span><span class="p">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">"xyz"</span><span class="p">;</span> <span class="c1">// @title in ruby
-</span>        <span class="p">}</span>
-    <span class="p">}</span>
+    public class MyClass {
+        //include Module in Ruby
+        public delegate void methodDelegate();
+        public methodDelegate show = new methodDelegate(MySampleModule.show);
 
-    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">Main</span><span class="p">()</span>  <span class="p">{</span>
-        <span class="n">MyClass</span> <span class="n">x</span> <span class="o">=</span> <span class="n">new</span> <span class="n">MyClass</span><span class="p">();</span>
-        <span class="n">x</span><span class="p">.</span><span class="n">show</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre>
+        private String title;   // @title in Ruby
+        public MyClass() {
+            this.title = "xyz"; // @title in ruby
+        }
+    }
+
+    public static void Main()  {
+        MyClass x = new MyClass();
+        x.show();
+    }
+}
+{% endhighlight %}
 
 
 <p>

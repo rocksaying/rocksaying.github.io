@@ -18,22 +18,24 @@ permalink: /archives/2981347.html
 接下來將以 MS Excel 2000/XP 之 XML 格式為準，撰寫一個以 SimpleXML 建立 XML 文件的測試程式，並說明 SimpleXML 之部份使用事項。
 </p>
 <p>下例是 MS Excel 2000/XP 最基本的 XML 試算表範例:</p>
-<pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
-<span class="nt">&lt;Workbook</span> <span class="na">xmlns=</span><span class="s">"urn:schemas-microsoft-com:office:spreadsheet"</span>
- <span class="na">xmlns:o=</span><span class="s">"urn:schemas-microsoft-com:office:office"</span>
- <span class="na">xmlns:x=</span><span class="s">"urn:schemas-microsoft-com:office:excel"</span>
- <span class="na">xmlns:ss=</span><span class="s">"urn:schemas-microsoft-com:office:spreadsheet"</span>
- <span class="na">xmlns:html=</span><span class="s">"http://www.w3.org/TR/REC-html40"</span><span class="nt">&gt;</span>
- <span class="nt">&lt;Worksheet</span> <span class="na">ss:Name=</span><span class="s">"Sheet1"</span><span class="nt">&gt;</span>
-  <span class="nt">&lt;Table&gt;</span>
-   <span class="nt">&lt;Row&gt;</span>
-    <span class="nt">&lt;Cell&gt;&lt;Data</span> <span class="na">ss:Type=</span><span class="s">"Number"</span><span class="nt">&gt;</span>1<span class="nt">&lt;/Data&gt;&lt;/Cell&gt;</span>
-    <span class="nt">&lt;Cell&gt;&lt;Data</span> <span class="na">ss:Type=</span><span class="s">"String"</span><span class="nt">&gt;</span>測試<span class="nt">&lt;/Data&gt;&lt;/Cell&gt;</span>
-   <span class="nt">&lt;/Row&gt;</span>
-  <span class="nt">&lt;/Table&gt;</span>
- <span class="nt">&lt;/Worksheet&gt;</span>
-<span class="nt">&lt;/Workbook&gt;</span>
-</code></pre>
+
+{% highlight php %}
+<?xml version="1.0" encoding="utf-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Worksheet ss:Name="Sheet1">
+  <Table>
+   <Row>
+    <Cell><Data ss:Type="Number">1</Data></Cell>
+    <Cell><Data ss:Type="String">測試</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>
+{% endhighlight %}
 
 <p>
 試算表中的工作表元素由 <code>&lt;Worksheet&gt;</code>及<code>&lt;Table&gt;</code> 組成，其中 <code>&lt;Worksheet&gt;</code> 必須具備屬性 <var>ss:Name</var>。工作表之下為「列(<code>&lt;Row&gt;</code>)」，列之下為「儲存格(<code>&lt;Cell&gt;</code>)」。
@@ -42,57 +44,59 @@ permalink: /archives/2981347.html
 <p>
 下列為利用 SimpleXML 建立 XML 文件的測試程式。
 </p>
-<pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="nv">$doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SimpleXMLElement</span><span class="p">(</span>
-<span class="s1">'&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+
+{% highlight php %}
+<?php
+$doc = new SimpleXMLElement(
+'<?xml version="1.0" encoding="utf-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
  xmlns:x="urn:schemas-microsoft-com:office:excel"
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40"&gt;&lt;/Workbook&gt;'</span>
-<span class="p">);</span>
+ xmlns:html="http://www.w3.org/TR/REC-html40"></Workbook>'
+);
 
-<span class="c1">//&lt;Worksheet ss:Name="Sheet1"&gt;
-//&lt;Table&gt;
-</span><span class="nv">$worksheetNode</span> <span class="o">=</span> <span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Worksheet'</span><span class="p">);</span>
+//<Worksheet ss:Name="Sheet1">
+//<Table>
+$worksheetNode = $doc->addChild('Worksheet');
 
-<span class="c1">//$worksheetNode-&gt;addAttribute('ss:Name', 'sheet1');//BUG?
-</span><span class="nv">$worksheetNode</span><span class="p">[</span><span class="s1">'ss:Name'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'sheet1'</span><span class="p">;</span>
+//$worksheetNode->addAttribute('ss:Name', 'sheet1');//BUG?
+$worksheetNode['ss:Name'] = 'sheet1';
 
-<span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span><span class="c1">//add a child with value '' by setter
-//$tableNode = $worksheetNode-&gt;addChild('Table');/add a child by addChild()
-</span>
-<span class="c1">//&lt;Row&gt;
-</span><span class="nv">$row</span> <span class="o">=</span> <span class="nv">$worksheetNode</span><span class="o">-&gt;</span><span class="na">Table</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Row'</span><span class="p">);</span>
+$worksheetNode->Table = '';//add a child with value '' by setter
+//$tableNode = $worksheetNode->addChild('Table');/add a child by addChild()
 
-<span class="c1">//&lt;Cell&gt;&lt;Data ss:Type="Number"&gt;1&lt;/Data&gt;&lt;/Cell&gt;
-</span><span class="nv">$cell</span> <span class="o">=</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span>
+//<Row>
+$row = $worksheetNode->Table->addChild('Row');
 
-<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="c1">//shorthand
-//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell-&gt;Data = 2; //fullpath
-//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell[0]-&gt;Data = 2;
-//$cell-&gt;addChild('Data', 2);
-</span>
-<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span><span class="c1">//shorthand
-//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell-&gt;Data['ss:Type'] = 'String';//fullpath
-//$cell-&gt;Data-&gt;addAttribute('ss:Type', 'String'); //BUG?
-</span>
-<span class="nv">$cell</span> <span class="o">=</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span> <span class="c1">//shorthand
-//$cell = $doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;addChild('Cell'); //fullpath
-</span>
-<span class="c1">//$doc-&gt;Worksheet-&gt;Table-&gt;Row-&gt;Cell[1]-&gt;Data = 'hello';
-//$row-&gt;Cell[1]-&gt;Data = 'hello';
-</span><span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="s1">'hello'</span><span class="p">;</span>
-<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span>
+//<Cell><Data ss:Type="Number">1</Data></Cell>
+$cell = $row->addChild('Cell');
 
-<span class="nv">$cell</span> <span class="o">=</span> <span class="nv">$row</span><span class="o">-&gt;</span><span class="na">addChild</span><span class="p">(</span><span class="s1">'Cell'</span><span class="p">);</span> <span class="c1">//shorthand
-</span><span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span> <span class="o">=</span> <span class="nb">iconv</span><span class="p">(</span><span class="s1">'big5'</span><span class="p">,</span> <span class="s1">'utf-8'</span><span class="p">,</span> <span class="s1">'中文測試'</span><span class="p">);</span>
-<span class="nv">$cell</span><span class="o">-&gt;</span><span class="na">Data</span><span class="p">[</span><span class="s1">'ss:Type'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'String'</span><span class="p">;</span>
+$cell->Data = 2; //shorthand
+//$doc->Worksheet->Table->Row->Cell->Data = 2; //fullpath
+//$doc->Worksheet->Table->Row->Cell[0]->Data = 2;
+//$cell->addChild('Data', 2);
 
-<span class="nv">$doc</span><span class="o">-&gt;</span><span class="na">asXML</span><span class="p">(</span><span class="s1">'test1.xml'</span><span class="p">);</span>
+$cell->Data['ss:Type'] = 'String';//shorthand
+//$doc->Worksheet->Table->Row->Cell->Data['ss:Type'] = 'String';//fullpath
+//$cell->Data->addAttribute('ss:Type', 'String'); //BUG?
 
-<span class="cp">?&gt;</span>
-</code></pre>
+$cell = $row->addChild('Cell'); //shorthand
+//$cell = $doc->Worksheet->Table->Row->addChild('Cell'); //fullpath
+
+//$doc->Worksheet->Table->Row->Cell[1]->Data = 'hello';
+//$row->Cell[1]->Data = 'hello';
+$cell->Data = 'hello';
+$cell->Data['ss:Type'] = 'String';
+
+$cell = $row->addChild('Cell'); //shorthand
+$cell->Data = iconv('big5', 'utf-8', '中文測試');
+$cell->Data['ss:Type'] = 'String';
+
+$doc->asXML('test1.xml');
+
+?>
+{% endhighlight %}
 
 <p>
 首先，我提供一份空白試算表的 XML 內容給 <code>SimpleXMLElement</code> 建立最本的 SimpleXML 文件結構。<var>$doc</var> 便指向此文件之根節點 <code>&lt;Workbook&gt;</code> 。接著我以 <code>addChild()</code> 在根節點之下添加子節點 <code>&lt;Worksheet&gt;</code> 。

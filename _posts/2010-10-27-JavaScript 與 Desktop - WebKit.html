@@ -33,34 +33,36 @@ Debian/Ubuntu 的使用者需要安裝以下套件: gir1.0-gtk-2.0, gir1.0-webki
 我們來看看我們的第一個範例程式: gtk.js 。它的工作很簡單，調用 GTK 建立一個視窗，再往上面擺一個 WebKit 元件。至於視窗上的畫面內容，就全部使用 HTML+CSS 設計，交給 WebKit 元件呈現。
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">Gtk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">WebKit</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">WebKit</span><span class="p">;</span>
-<span class="c1">// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
-</span>
 
-<span class="nx">GLib</span><span class="p">.</span><span class="nx">set_prgname</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">);</span>
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+{% highlight javascript %}
+var GLib = imports.gi.GLib;
+var Gtk = imports.gi.Gtk;
+var WebKit = imports.gi.WebKit;
+// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
 
-<span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">();</span>
 
-<span class="c1">//GTK event: destroy
-</span>
-<span class="k">if</span> <span class="p">(</span><span class="s1">'signal'</span> <span class="k">in</span> <span class="nx">w</span><span class="p">)</span> <span class="c1">// Seed implementation
-</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">signal</span><span class="p">.</span><span class="nx">hide</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
-<span class="k">else</span>
-    <span class="nx">w</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"destroy"</span><span class="p">,</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
+GLib.set_prgname('hello');
+Gtk.init(0, null);
 
-<span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebKit</span><span class="p">.</span><span class="nx">WebView</span><span class="p">();</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">view</span><span class="p">);</span>
+var w = new Gtk.Window();
 
-<span class="nx">view</span><span class="p">.</span><span class="nx">load_html_string</span><span class="p">(</span><span class="s1">'&lt;p&gt;hello &lt;em&gt;world&lt;/em&gt;. '</span> <span class="o">+</span>
-    <span class="s1">'&lt;a href="http://www.google.com"&gt;Google&lt;/a&gt;&lt;/p&gt;'</span><span class="p">,</span>
-    <span class="s2">"file://null"</span><span class="p">);</span> <span class="c1">//base url
-</span>
+//GTK event: destroy
 
-<span class="cm">/*
+if ('signal' in w) // Seed implementation
+
+    w.signal.hide.connect(Gtk.main_quit);
+else
+    w.connect("destroy", Gtk.main_quit);
+
+var view = new WebKit.WebView();
+w.add(view);
+
+view.load_html_string('<p>hello <em>world</em>. ' +
+    '<a href="http://www.google.com">Google</a></p>',
+    "file://null"); //base url
+
+
+/*
 typedef enum
 {
   GTK_WIN_POS_NONE,
@@ -69,27 +71,26 @@ typedef enum
   GTK_WIN_POS_CENTER_ALWAYS,
   GTK_WIN_POS_CENTER_ON_PARENT
 } GtkWindowPosition;
-*/</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">set_position</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">//GTK_WIN_POS_CENTER
-</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">show_all</span><span class="p">();</span>
+*/
+w.set_position(1); //GTK_WIN_POS_CENTER
 
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Working..."</span><span class="p">)</span>
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">main</span><span class="p">();</span> <span class="c1">// gtk loop, quit by main_quit().
-</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Goodbye"</span><span class="p">);</span>
+w.show_all();
 
-</code></pre>
+print("Working...")
+Gtk.main(); // gtk loop, quit by main_quit().
+
+print("Goodbye");
+{% endhighlight %}
 
 
 <p>
 執行它，就會在畫面中間看到一個我們建立的視窗以及用 HTML 描述的內容。
 </p>
-<pre class="language-term">
+<pre><code class="language-term">
 $ gjs gtk.js
 Working...
 Goodbye
-</pre>
+</code></pre>
 
 <p>
 由於 gjs/seed 都是載入同一個 GNOME GTK Library ，所以兩者的 GTK 使用方式基本相同。但是對於 GTK Signal 的處理方式有所差異。gjs 使用 <dfn>Widget::connect()</dfn> 方法指派 GTK Signal 的傾聽者；seed 則是使用 <dfn>Widget::signal.???.connect()</dfn>。本文基本上以 gjs 為主要工具，故以下範例若無特別說明，皆只適用 gjs 。
@@ -125,37 +126,38 @@ XULRunner 和 WebKit 一樣，都是 HTTP client + HTML/CSS render + JavaScript 
 上列文件內容，我仍然保留著，都存在 /home/rock/hello_xulrunner/chrome/context 的目錄下。我接下來要做的事，就是用 <dfn>WebKitView::load_uri()</dfn> 方法，讓 WebKit 載入我放在那個目錄下的 index.html 。
 </p>
 
-<pre class="highlight"><code><span class="kd">var</span> <span class="nx">GLib</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">GLib</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">Gtk</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">Gtk</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">WebKit</span> <span class="o">=</span> <span class="nx">imports</span><span class="p">.</span><span class="nx">gi</span><span class="p">.</span><span class="nx">WebKit</span><span class="p">;</span>
-<span class="c1">// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
-</span>
 
-<span class="nx">GLib</span><span class="p">.</span><span class="nx">set_prgname</span><span class="p">(</span><span class="s1">'hello webkit'</span><span class="p">);</span>
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+{% highlight javascript %}
+var GLib = imports.gi.GLib;
+var Gtk = imports.gi.Gtk;
+var WebKit = imports.gi.WebKit;
+// apt-get install git1.0-gtk-2.0 gir1.0-webkit-1.0, gir1.0-soup-2.4
 
-<span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">Window</span><span class="p">();</span>
 
-<span class="c1">//GTK event: destroy
-</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s2">"destroy"</span><span class="p">,</span> <span class="nx">Gtk</span><span class="p">.</span><span class="nx">main_quit</span><span class="p">);</span>
+GLib.set_prgname('hello webkit');
+Gtk.init(0, null);
 
-<span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebKit</span><span class="p">.</span><span class="nx">WebView</span><span class="p">();</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">view</span><span class="p">);</span>
+var w = new Gtk.Window();
 
-<span class="c1">// WebKit: for security reason, you must give absolute path.
-</span>
-<span class="nx">view</span><span class="p">.</span><span class="nx">load_uri</span><span class="p">(</span><span class="s2">"file:///home/rock/hello_xulrunner/chrome/content/index.html"</span><span class="p">);</span>
+//GTK event: destroy
 
-<span class="nx">w</span><span class="p">.</span><span class="nx">set_position</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">//GTK_WIN_POS_CENTER
-</span>
-<span class="nx">w</span><span class="p">.</span><span class="nx">show_all</span><span class="p">();</span>
+w.connect("destroy", Gtk.main_quit);
 
-<span class="nx">Gtk</span><span class="p">.</span><span class="nx">main</span><span class="p">();</span> <span class="c1">// gtk loop, quit by main_quit().
-</span>
-<span class="nx">print</span><span class="p">(</span><span class="s2">"Goodbye"</span><span class="p">);</span>
+var view = new WebKit.WebView();
+w.add(view);
 
-</code></pre>
+// WebKit: for security reason, you must give absolute path.
+
+view.load_uri("file:///home/rock/hello_xulrunner/chrome/content/index.html");
+
+w.set_position(1); //GTK_WIN_POS_CENTER
+
+w.show_all();
+
+Gtk.main(); // gtk loop, quit by main_quit().
+
+print("Goodbye");
+{% endhighlight %}
 
 
 <img src="{{ site.baseurl }}/images/2ceed40d.png" alt="gjs gtk-webkit.js" />

@@ -16,51 +16,53 @@ permalink: /archives/467296.html
 </p>
 
 <h4>/* C Language */</h4>
-<pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">bytes</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">HEX</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="o">*</span><span class="n">pHEX</span><span class="p">;</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">HEX_TABLE</span> <span class="o">=</span> <span class="s">"0123456789ABCDEF"</span><span class="p">;</span>
 
-    <span class="cm">/*
+{% highlight text %}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main(int argc, char**argv) {
+    int n;
+    int bytes, len, f, r;
+    char HEX[256], *pHEX;
+    const char *HEX_TABLE = "0123456789ABCDEF";
+
+    /*
     本例只換算32bit整數。
 
     透過適當的字串轉數值的動作，下面的方式經過簡單地
     套上另一個迴圈後，可以處理無限大的數字。
     (字串轉換後的數值，放在 int 陣列中，並回傳總 bytes 。)
-    */</span>
+    */
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"Usage: %s octNumber</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">sscanf</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">"%d"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Input: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+    if (argc < 2) {
+        printf("Usage: %s octNumber\n", argv[0]);
+        exit(1);
+    }
+    sscanf(argv[1], "%d", &n);
+    printf("Input: %d\n", n);
 
-    <span class="n">bytes</span> <span class="o">=</span> <span class="kt">size_t</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+    bytes = size_t(n);
 
-    <span class="k">for</span> <span class="p">(</span><span class="n">pHEX</span> <span class="o">=</span> <span class="n">HEX</span><span class="p">,</span> <span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">n</span> <span class="o">&amp;&amp;</span> <span class="n">len</span> <span class="o">&lt;</span> <span class="n">bytes</span><span class="p">;</span> <span class="o">++</span><span class="n">len</span><span class="p">,</span> <span class="o">++</span><span class="n">pHEX</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span> <span class="p">)</span> <span class="p">{</span>
-  	   <span class="o">*</span><span class="n">pHEX</span> <span class="o">=</span> <span class="n">HEX_TABLE</span><span class="p">[</span><span class="n">n</span> <span class="o">&amp;</span> <span class="mh">0xF</span><span class="p">];</span>
-    <span class="p">}</span>
-    <span class="o">*</span><span class="n">pHEX</span> <span class="o">=</span> <span class="sc">'\0'</span><span class="p">;</span>
-    <span class="cm">/* 現在儲存的字串，是倒過來表示的，接下來將頭尾對調。 */</span>
+    for (pHEX = HEX, len = 0; n && len < bytes; ++len, ++pHEX, n = n >> 4 ) {
+  	   *pHEX = HEX_TABLE[n & 0xF];
+    }
+    *pHEX = '\0';
+    /* 現在儲存的字串，是倒過來表示的，接下來將頭尾對調。 */
 
-    <span class="n">len</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">HEX</span><span class="p">);</span>
+    len = strlen(HEX);
 
-    <span class="k">for</span><span class="p">(</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">len</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">f</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">len</span><span class="o">/</span><span class="mi">2</span><span class="p">);</span> <span class="n">f</span><span class="o">++</span><span class="p">,</span> <span class="n">r</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
-    	<span class="n">HEX</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">^=</span> <span class="n">HEX</span><span class="p">[</span><span class="n">r</span><span class="p">];</span> <span class="cm">/*swap HEX[f], HEX[r] */</span>
-    	<span class="n">HEX</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">^=</span> <span class="n">HEX</span><span class="p">[</span><span class="n">f</span><span class="p">];</span>
-    	<span class="n">HEX</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">^=</span> <span class="n">HEX</span><span class="p">[</span><span class="n">r</span><span class="p">];</span>
-    <span class="p">}</span>
+    for( f = 0, r = len -1; f < (len/2); f++, r--) {
+    	HEX[f] ^= HEX[r]; /*swap HEX[f], HEX[r] */
+    	HEX[r] ^= HEX[f];
+    	HEX[f] ^= HEX[r];
+    }
 
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Output: 0x%s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">HEX</span><span class="p">);</span>
-    <span class="cm">/*END*/</span>
-<span class="p">}</span>
-</code></pre>
+    printf("Output: 0x%s\n", HEX);
+    /*END*/
+}
+{% endhighlight %}
 
 
 <p>

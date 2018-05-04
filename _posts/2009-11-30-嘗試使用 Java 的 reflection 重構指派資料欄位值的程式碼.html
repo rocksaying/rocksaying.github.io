@@ -21,36 +21,38 @@ permalink: /archives/10867569.html
 對此，我一開始用了一個直接的解法。程式碼於下。
 </p>
 
-<pre class="highlight"><code><span class="kd">public</span> <span class="n">ReturnCode</span> <span class="nf">update</span><span class="p">(</span><span class="n">Product</span> <span class="n">item</span><span class="o">)</span> <span class="o">{</span>
-	<span class="n">ReturnCode</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Success</span><span class="o">;</span>
-	<span class="n">session</span> <span class="o">=</span> <span class="n">sessionFactory</span><span class="o">.</span><span class="na">openSession</span><span class="o">();</span>
-    <span class="n">Product</span> <span class="n">oldItem</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
 
-	<span class="k">try</span> <span class="o">{</span>
-		<span class="n">tx</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">beginTransaction</span><span class="o">();</span>
+{% highlight java %}
+public ReturnCode update(Product item) {
+	ReturnCode rc = ReturnCode.Success;
+	session = sessionFactory.openSession();
+    Product oldItem = null;
 
-		<span class="n">oldItem</span> <span class="o">=</span> <span class="n">session_findById</span><span class="o">(</span><span class="n">session</span><span class="o">,</span> <span class="n">item</span><span class="o">.</span><span class="na">getId</span><span class="o">());</span>
-		<span class="k">if</span> <span class="o">(</span><span class="n">oldItem</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-			<span class="n">oldItem</span><span class="o">.</span><span class="na">setContent</span><span class="o">(</span><span class="n">item</span><span class="o">.</span><span class="na">getContent</span><span class="o">());</span>
-			<span class="n">oldItem</span><span class="o">.</span><span class="na">setTitle</span><span class="o">(</span><span class="n">item</span><span class="o">.</span><span class="na">getTitle</span><span class="o">());</span>
-			<span class="n">oldItem</span><span class="o">.</span><span class="na">setPrice</span><span class="o">(</span><span class="n">item</span><span class="o">.</span><span class="na">getPrice</span><span class="o">());</span>
-			<span class="c1">//我知道這樣做非常愚蠢。但是ORM只認同這種做法。</span>
-			<span class="c1">//幸好這個資料結構只有兩三個欄位，而不是十幾個欄位。</span>
-    		<span class="n">session</span><span class="o">.</span><span class="na">update</span><span class="o">(</span><span class="n">oldItem</span><span class="o">);</span>
-		<span class="o">}</span>
-		<span class="k">else</span> <span class="o">{</span>
-			<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">NotExists</span><span class="o">;</span>
-		<span class="o">}</span>
-		<span class="n">tx</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
-	<span class="o">}</span>
-	<span class="k">catch</span><span class="o">(</span><span class="n">HibernateException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-		<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-		<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Failed</span><span class="o">;</span>
-	<span class="o">}</span>
-	<span class="n">session</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
-	<span class="k">return</span> <span class="n">rc</span><span class="o">;</span>
-<span class="o">}</span>
-</code></pre>
+	try {
+		tx = session.beginTransaction();
+
+		oldItem = session_findById(session, item.getId());
+		if (oldItem != null) {
+			oldItem.setContent(item.getContent());
+			oldItem.setTitle(item.getTitle());
+			oldItem.setPrice(item.getPrice());
+			//我知道這樣做非常愚蠢。但是ORM只認同這種做法。
+			//幸好這個資料結構只有兩三個欄位，而不是十幾個欄位。
+    		session.update(oldItem);
+		}
+		else {
+			rc = ReturnCode.NotExists;
+		}
+		tx.commit();
+	}
+	catch(HibernateException e) {
+		System.out.println(e.getMessage());
+		rc = ReturnCode.Failed;
+	}
+	session.close();
+	return rc;
+}
+{% endhighlight %}
 
 <p>
 請看上列程式碼中間那一連三行的 <code>oldItem.setXxx( item.getXxx() )</code>。
@@ -63,56 +65,58 @@ permalink: /archives/10867569.html
 Ok, 為了避免修改時的邊際效應，我決定用 Java 笨重的反射功能重構上述的程式碼。重構結果於下。
 </p>
 
-<pre class="highlight"><code><span class="kd">public</span> <span class="n">ReturnCode</span> <span class="nf">update</span><span class="p">(</span><span class="n">Product</span> <span class="n">item</span><span class="o">)</span> <span class="o">{</span>
-	<span class="n">ReturnCode</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Success</span><span class="o">;</span>
-	<span class="n">session</span> <span class="o">=</span> <span class="n">sessionFactory</span><span class="o">.</span><span class="na">openSession</span><span class="o">();</span>
-    <span class="n">Product</span> <span class="n">oldItem</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
 
-	<span class="k">try</span> <span class="o">{</span>
-		<span class="n">tx</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">beginTransaction</span><span class="o">();</span>
+{% highlight java %}
+public ReturnCode update(Product item) {
+	ReturnCode rc = ReturnCode.Success;
+	session = sessionFactory.openSession();
+    Product oldItem = null;
 
-		<span class="n">oldItem</span> <span class="o">=</span> <span class="n">session_findById</span><span class="o">(</span><span class="n">session</span><span class="o">,</span> <span class="n">item</span><span class="o">.</span><span class="na">getId</span><span class="o">());</span>
-		<span class="k">if</span> <span class="o">(</span><span class="n">oldItem</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-			<span class="c1">//oldItem.setContent(item.getContent());</span>
-			<span class="c1">//... !!!DRY!!!!</span>
-			<span class="k">try</span> <span class="o">{</span>
-				<span class="n">Class</span><span class="o">&lt;</span><span class="n">Product</span><span class="o">&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="o">(</span><span class="n">Class</span><span class="o">&lt;</span><span class="n">Product</span><span class="o">&gt;)</span> <span class="n">item</span><span class="o">.</span><span class="na">getClass</span><span class="o">();</span>
-				<span class="n">String</span> <span class="n">setMethodName</span> <span class="o">=</span> <span class="kc">null</span><span class="o">,</span> <span class="n">getMethodName</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-				<span class="n">Method</span> <span class="n">methods</span><span class="o">[]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="na">getMethods</span><span class="o">();</span>
-				<span class="k">for</span> <span class="o">(</span><span class="n">Method</span> <span class="n">method</span> <span class="o">:</span> <span class="n">methods</span> <span class="o">)</span> <span class="o">{</span>
-					<span class="n">setMethodName</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
-					<span class="c1">//找出 setXxx()</span>
-					<span class="k">if</span> <span class="o">(</span><span class="n">setMethodName</span><span class="o">.</span><span class="na">matches</span><span class="o">(</span><span class="s">"^set[A-Z].*"</span><span class="o">)</span> <span class="o">)</span> <span class="o">{</span>
-                        <span class="c1">//得出新方法名稱 getXxx</span>
-						<span class="n">getMethodName</span> <span class="o">=</span> <span class="n">setMethodName</span><span class="o">.</span><span class="na">replaceFirst</span><span class="o">(</span><span class="s">"^set"</span><span class="o">,</span> <span class="s">"get"</span><span class="o">);</span>
-						<span class="n">Method</span> <span class="n">getMethod</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="n">getMethodName</span><span class="o">);</span>
-						<span class="c1">// object = item.getXxx()</span>
-						<span class="n">Object</span> <span class="n">object</span> <span class="o">=</span> <span class="n">getMethod</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">item</span><span class="o">,</span> <span class="o">(</span><span class="n">Object</span><span class="o">[])</span><span class="kc">null</span><span class="o">);</span>
-						<span class="c1">// oldItem.setXxx(object)</span>
-						<span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">oldItem</span><span class="o">,</span> <span class="n">object</span><span class="o">);</span>
-					<span class="o">}</span>
-				<span class="o">}</span>
-				<span class="n">session</span><span class="o">.</span><span class="na">update</span><span class="o">(</span><span class="n">oldItem</span><span class="o">);</span>
-			<span class="o">}</span>
-			<span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-				<span class="c1">// relfection exception...</span>
-				<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-				<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Failed</span><span class="o">;</span>
-			<span class="o">}</span>
-		<span class="o">}</span>
-		<span class="k">else</span> <span class="o">{</span>
-			<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">NotExists</span><span class="o">;</span>
-		<span class="o">}</span>
-		<span class="n">tx</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
-	<span class="o">}</span>
-	<span class="k">catch</span><span class="o">(</span><span class="n">HibernateException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-		<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-		<span class="n">rc</span> <span class="o">=</span> <span class="n">ReturnCode</span><span class="o">.</span><span class="na">Failed</span><span class="o">;</span>
-	<span class="o">}</span>
-	<span class="n">session</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
-	<span class="k">return</span> <span class="n">rc</span><span class="o">;</span>
-<span class="o">}</span>
-</code></pre>
+	try {
+		tx = session.beginTransaction();
+
+		oldItem = session_findById(session, item.getId());
+		if (oldItem != null) {
+			//oldItem.setContent(item.getContent());
+			//... !!!DRY!!!!
+			try {
+				Class<Product> c = (Class<Product>) item.getClass();
+				String setMethodName = null, getMethodName = null;
+				Method methods[] = c.getMethods();
+				for (Method method : methods ) {
+					setMethodName = method.getName();
+					//找出 setXxx()
+					if (setMethodName.matches("^set[A-Z].*") ) {
+                        //得出新方法名稱 getXxx
+						getMethodName = setMethodName.replaceFirst("^set", "get");
+						Method getMethod = c.getMethod(getMethodName);
+						// object = item.getXxx()
+						Object object = getMethod.invoke(item, (Object[])null);
+						// oldItem.setXxx(object)
+						method.invoke(oldItem, object);
+					}
+				}
+				session.update(oldItem);
+			}
+			catch (Exception e) {
+				// relfection exception...
+				System.out.println(e.getMessage());
+				rc = ReturnCode.Failed;
+			}
+		}
+		else {
+			rc = ReturnCode.NotExists;
+		}
+		tx.commit();
+	}
+	catch(HibernateException e) {
+		System.out.println(e.getMessage());
+		rc = ReturnCode.Failed;
+	}
+	session.close();
+	return rc;
+}
+{% endhighlight %}
 
 
 <p>
@@ -121,16 +125,20 @@ Ok, 為了避免修改時的邊際效應，我決定用 Java 笨重的反射功�
 <p>
 PHP 表達的方式是:
 </p>
-<pre class="highlight"><code>foreach ($oldItem as $key =&gt; $value)
-    $oldItem-&gt;$key = $item-&gt;$key;
-</code></pre>
+
+{% highlight java %}
+foreach ($oldItem as $key => $value)
+    $oldItem->$key = $item->$key;
+{% endhighlight %}
 
 <p>
 JavaScript 表達的方式是:
 </p>
-<pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">key</span> <span class="k">in</span> <span class="nx">oldItem</span><span class="p">)</span>
-    <span class="nx">oldItem</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">item</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
-</code></pre>
+
+{% highlight java %}
+for (var key in oldItem)
+    oldItem[key] = item[key]
+{% endhighlight %}
 
 
 <p>
