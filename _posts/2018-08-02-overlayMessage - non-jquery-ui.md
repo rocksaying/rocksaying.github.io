@@ -47,7 +47,9 @@ window.onload = function(){
 #### show
 
 ```javascript
+
 overlayMessage.show(message, options)
+
 ```
 
 顯示全頁覆蓋訊息。訊息內容是 <var>message</var> 。訊息內容的 CSS 樣式名稱預設為 *overlay-message* 。但也可以在 <var>options</var> 參數表中，以關鍵字 *overlay-message* 指定使用別的 CSS 樣式。
@@ -77,7 +79,9 @@ overlayMessage.show('傳送資料中，請等待...', {
 #### off
 
 ```javascript
+
 overlayMessage.off()
+
 ```
 
 關閉全頁覆蓋訊息。
@@ -89,7 +93,7 @@ overlayMessage.off()
 
 ![overlayMessage 範例 - 載入頁面時就出現](https://i.imgur.com/OOWnfG8.png)
 
-當頁面程式關閉覆蓋訊息後，可以點擊頁面上的兩個按鈕，顯示帶有右上角關閉按鈕的覆蓋訊息。
+當頁面程式關閉覆蓋訊息後，可以點擊頁面上的兩個按鈕 'Default button' 或 'Custom button'，顯示帶有右上角關閉按鈕的覆蓋訊息。
 
 ![overlayMessage 範例 - 帶有關閉按鈕的覆蓋訊息](https://i.imgur.com/rh4YEOg.png)
 
