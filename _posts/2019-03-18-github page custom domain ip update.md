@@ -7,17 +7,14 @@ lastupdated: 2019-03-18
 
 今天更新部落格一份文件後， github 發了一封 "Page build warning" 的提示信，信中說我的網站域名指向一個過期的 IP 位址。
 
-```
-The custom domain for your GitHub Pages site is pointed at an outdated IP address. You must update your site's DNS records if you'd like it to be available via your custom domain. For more information, see https://help.github.com/en/articles/using-a-custom-domain-with-github-pages.
-```
+> The custom domain for your GitHub Pages site is pointed at an outdated IP address. You must update your site's DNS records if you'd like it to be available via your custom domain. For more information, see https://help.github.com/en/articles/using-a-custom-domain-with-github-pages.
+
 
 <!--more-->
 
 只是信中的連結文章並未提供真正有幫助的說明。所以我到 DNS 服務商 (我向中華電信註冊) 的管理頁面查看，得知我原本登記的 IP 位址是 192.30.252.153 。再用這個 IP 位址配上 github 關鍵字去 google ，找到真正有用的文章: [Troubleshooting custom domains](https://help.github.com/en/articles/troubleshooting-custom-domains) 。
 
-```
-If you're using an A record that points to 192.30.252.153 or 192.30.252.154, you'll need to update your DNS settings for your site to be available over HTTPS or served with a Content Delivery Network. 
-```
+> If you're using an A record that points to 192.30.252.153 or 192.30.252.154, you'll need to update your DNS settings for your site to be available over HTTPS or served with a Content Delivery Network. 
 
 重點是原本登記的 IP 位址是由 CDN 服務商提供。而 CDN 服務商變更了提供內容的 IP 位址，所以我在 DNS 代管服務中登記的 IP 位址也必須更新。
 
