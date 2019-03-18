@@ -93,7 +93,7 @@ link CSS <a href="http://www.google.com/">external link</a> link, <a href="http:
 
 This is \[an example\](http://example.com/ "Title") inline link. \[This link\](http://example.net/) has no title attribute. Or wrapped with \<a\> tag.
 
-post link: {% post_url post_file_name %}
+post link: {% post_url post_file_name %} , post_file_name 含日期，不含副檔名。
 site link: {{ site.baseurl }}
 
 see https://jekyllrb.com/docs/templates/
