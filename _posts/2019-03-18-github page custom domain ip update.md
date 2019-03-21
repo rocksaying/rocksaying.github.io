@@ -7,8 +7,7 @@ lastupdated: 2019-03-18
 
 今天更新部落格一份文件後， github 發了一封 "Page build warning" 的提示信，信中說我的網站域名指向一個過期的 IP 位址。
 
-> The custom domain for your GitHub Pages site is pointed at an outdated IP address. You must update your site's DNS records if you'd like it to be available via your custom domain. For more information, see https://help.github.com/en/articles/using-a-custom-domain-with-github-pages.
-
+> The custom domain for your GitHub Pages site is pointed at an outdated IP address. You must update your site's DNS records if you'd like it to be available via your custom domain. For more information, see <https://help.github.com/en/articles/using-a-custom-domain-with-github-pages>.
 
 <!--more-->
 
@@ -18,7 +17,7 @@ lastupdated: 2019-03-18
 
 重點是原本登記的 IP 位址是由 CDN 服務商提供。而 CDN 服務商變更了提供內容的 IP 位址，所以我在 DNS 代管服務中登記的 IP 位址也必須更新。
 
-可以用 *dig* 或 *ping* 指令去查 <var>你的 github 用戶名稱</var>.github.io 的新 IP 位址。我托管於 Github Page 的部落格實際分配的網域名稱是 *rocksaying.github.io* 。查詢指令結果如下所示:
+可以用 *dig* 或 *ping* 指令去查「github用戶名稱.github.io」的新 IP 位址。我托管於 Github Page 的部落格實際分配的網域名稱是 *rocksaying.github.io* 。查詢指令結果如下所示:
 
 ```term
 $ dig rocksaying.github.io
