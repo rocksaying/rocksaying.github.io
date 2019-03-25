@@ -61,6 +61,8 @@ $ openssl x509 -in xyz.der -nocert -subject
 
 ### 匯出憑證與金鑰
 
+#### 匯出根憑證/中繼憑證
+
 從 PKCS#12 PFX 格式文件匯出 PEM 格式的根憑證/中繼憑證 (output CA certificates):
 
 ~~~term
@@ -72,6 +74,8 @@ $ openssl pkcs12 -in xyz.pfx -nokeys -cacerts -nodes \
 此指令讀入 xyz.pfx ，並將匯出的根憑證或中繼憑證存檔為 CA.crt 。檔名按上段說明的慣例命名。
 
 我示範使用的 PFX 憑證是由 [Let's Encrypt](https://letsencrypt.org/) 發行的。它發行的憑證不加密碼，故 pass 後留白。若你拿到的 PFX 憑證需要密碼，則 <code>pass:</code> 後要接密碼。或者把 <code>-password pass:</code> 刪掉，執行時會要求你輸入密碼。
+
+#### 匯出網站憑證
 
 從 PFX 格式文件匯出 PEM 格式的網站憑證 (output client certificates):
 
@@ -85,6 +89,8 @@ $ openssl pkcs12 -in xzy.pfx -nokeys -clcerts -nodes \
 
 對憑證發行機構(CA)來說，你是它的客戶(client)。所以你的網站憑證被視為 client certificates 。
 
+#### 匯出網站私鑰
+
 從 PFX 格式文件匯出 PEM 格式的網站私鑰 (output client private key):
 
 ~~~term
@@ -94,6 +100,8 @@ $ openssl pkcs12 -in xzy.pfx -nocerts -nodes \
 ~~~
 
 此指令將讀入 xyz.pfx ，並將匯出的網站私鑰存檔為 my.domain.name.key 。檔名按上段說明的慣例命名。
+
+#### 合成 PFX
 
 將三種用途的 PEM 文件集合為一個 PFX 格式文件:
 
