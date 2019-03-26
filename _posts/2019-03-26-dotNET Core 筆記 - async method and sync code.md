@@ -14,7 +14,7 @@ lastupdated: 2019-03-26
 
 先看一下非同步形式程式碼範例，取自 [HttpClient Class Example](https://docs.microsoft.com/zh-tw/dotnet/api/system.net.http.httpclient?view=netcore-2.2)。
 
-```C#
+```csharp
 static async Task Main()
 {
    // Create a New HttpClient object and dispose it when done, so the app doesn't leak resources
@@ -50,7 +50,7 @@ static async Task Main()
 
 將上例的非同步形式程式碼改成同步形式程式碼，如下:
 
-```C#
+```csharp
 static void Main()
 {
    using (HttpClient client = new HttpClient())
@@ -81,4 +81,4 @@ static void Main()
 `Task<TResult>.Result` 是平台特性而不是 C# 語言特性。在 .NET 平台上運作的其他程式語言，也適用這個模式處理 .NET Core 的非同步方法。
 
 + [await (C# Reference)](https://docs.microsoft.com/zh-tw/dotnet/csharp/language-reference/keywords/await)
-+ [Task<TResult>.Result Property](https://docs.microsoft.com/zh-tw/dotnet/api/system.threading.tasks.task-1.result?view=netcore-2.2)
++ [Task.Result Property](https://docs.microsoft.com/zh-tw/dotnet/api/system.threading.tasks.task-1.result?view=netcore-2.2)
