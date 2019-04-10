@@ -34,8 +34,11 @@ Web 專案啟動時，將依據執行環境決定只讀取 *appsettings.json*  �
 你可以為執行環境取任何名稱。但 ASP.NET core 主要使用以下三個環境名稱: 
 
 + Development
+  代表開發環境。
 + Staging
+  代表測試環境。
 + Production
+  代表產品環境 (公開發表的作品)。
 
 如果沒有指定 <var>ASPNETCORE_ENVIRONMENT</var> 環境變數，則預設的執行環境是 *Production* 。因此 *appsettings.json*  是 *Production* 執行環境的組態，而 *appsettings.Development.json* 就是 *Development* 執行環境的組態。
 
@@ -66,6 +69,8 @@ Web 專案啟動時，將依據執行環境決定只讀取 *appsettings.json*  �
 你可以在不同的目標主機上，設定不同的 *Properties\launchSettings.json* 並指定自訂的執行環境名稱，配合 appsettings.{ENVIRONMENT}.json ，讓每個目標主機擁有各自的執行環境。
 
 但反過來說，你也要自己記得不同目標主機可能擁有各自的組態檔。我曾碰到有人問為什麼已經修改 *appsettings.json* 並上傳到目標主機了，卻依然使用舊的組態？那是因為他忘記目標主機上還擺了一組 launchSettings.json/appsettings.Custom.json 。而這組自訂的執行環境組態將覆蓋他修改過的組態。
+
+再舉一個應用範例。如果你有一台專門負責自動測試的虛擬主機，你可以在那台主機的環境變數中設定 <var>ASPNETCORE_ENVIRONMENT=Testing</var> ，那麼所有部署到這台自動測試主機上的 Web 專案都會進一步嘗試讀取 *appsettings.Testing.json* ，套用自動測試環境的組態。
 
 + [ASP.NET Core 的設定](https://docs.microsoft.com/zh-tw/aspnet/core/fundamentals/configuration/?view=aspnetcore-2.2)
 + [Use multiple environments in ASP.NET Core](https://docs.microsoft.com/zh-tw/aspnet/core/fundamentals/environments?view=aspnetcore-2.2)
