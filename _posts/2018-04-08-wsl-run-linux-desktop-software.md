@@ -3,6 +3,7 @@ title: Windows Subsystem for Linux (WSL) 使用 Linux 桌面軟體與中文字�
 category: computer
 tags: [wsl, linux, debian, windows, x-window, 中文]
 cover: https://i.imgur.com/xrY65Iy.png
+lastupdated: 2019-05-09
 ---
 
 自從微軟將 Windows Subsystem for Linux (WSL) 正式釋出後， Windows 10 的使用者不必安裝虛擬機也可配置 Linux 環境，還可在 Microsoft Store 下輕鬆選擇你想用的 Linux 散佈版本。像是 Ubuntu, Debian, Kali Linux 都已經有 Microsoft Store 上的 App 版本。只要準備 1GB 左右的系統磁碟空間，你就能像安裝 Windows App 般安裝一套 Linux 終端環境。
@@ -13,7 +14,7 @@ cover: https://i.imgur.com/xrY65Iy.png
 
 #### 套件需求
 
-想在 WSL 環境下使用 Linux 桌面應用軟體，基本需要額外 500MB 系統磁碟空間。 
+想在 WSL 環境下使用 Linux 桌面應用軟體，基本需要額外 500MB 系統磁碟空間。 如果你想裝整套桌面管理環境 (KDE, gnome-shell, unity)，那需要 1.5GB ~ 2GB 。
 
 我使用的 WSL 環境是 Ubuntu 和 Debian 。所以本文提到的軟體套件名稱與安裝工具，都針對 Ubuntu/Debian 。
 
@@ -26,7 +27,7 @@ cover: https://i.imgur.com/xrY65Iy.png
 * fonts-wqy-zenhei 
 * fonts-wqy-microhei 
 
-我個人選擇安裝下列 Linux 桌面應用軟體:
+在 WSL ，我不裝桌面管理環境 (KDE, gnome-shell, unity 之類)。只安裝個別的 GUI 軟體。我個人選擇安裝下列 Linux 桌面應用軟體:
 
 * gnome-commander : 左右雙面板的檔案管理器。
 * geany : 功能豐富，且不依賴完整桌面環境的文字編輯器。
@@ -74,7 +75,9 @@ X Window (沒有 s ) 是 UNIX 時代發展出的一套巧妙的視窗工作架�
 
 現代化的 Linux 桌面版本都遵循著 [freedesktop.org](www.freedesktop.org) 規劃內容，讓各種不同的 X 軟體開發框架有一致的桌面整合途徑。在這之中， D-Bus 是最主要的訊息匯流排協定，幾乎所有主要的 Linux 桌面軟體都透過 D-Bus 和桌面整合。所以要執行這些桌面軟體，還需要搞定 D-Bus 設置。
 
-在 WSL 環境下，安裝 *dbus-x11* 套件。 D-Bus 服務預設使用 *UNIX Domain Socket* 建立通訊管道。但是 Windows 並不支援這種 Socket 型態，所以 WSL 環境要改用 *TCP/IP Socket* 。
+在 WSL 環境下，安裝 *dbus-x11* 套件。按照 D-Bus 機制，需要用到 D-Bus 的時候， dbus daemon 將會自動執行，不需要使用者手動執行。
+
+D-Bus 服務預設使用 *UNIX Domain Socket* 建立通訊管道。但是 Windows 10 1803 版本之前並不支援這種 Socket 型態，所以 WSL 環境要改用 *TCP/IP Socket* 。Windows 10 1803 起，已實作 *UNIX Domain Socket* 功能，就不需要修改。
 
 編輯 */etc/dbus-1/session.conf* 加入下列設定改用 *TCP/IP Socket*:
 
@@ -102,7 +105,12 @@ WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。�
 ![安裝中文字型後](https://i.imgur.com/xrY65Iy.png)
 
 <div class="note">
-如果你想手動安裝更多中文字型，字型檔的目錄是在 WSL 環境內部的 /usr/share/font 或者 ~/.fonts 。在 WSL 終端視窗中，你可以把 /mnt/c/Windows/Fonts 的 TrueType 字型複製到 /usr/share/font/truetype 或是在 ~/.fonts 中建個符號連結指向 /mnt/c/Windows/Fonts 。
+<p>
+如果你想手動安裝更多中文字型，字型檔的目錄是在 WSL 環境內部的 /usr/share/font 或者 ~/.fonts 。
+</p>
+<p>
+在 WSL 終端視窗中，你可以把 /mnt/c/Windows/Fonts 的 TrueType 字型複製到 /usr/share/font/truetype 或是在 ~/.fonts 中建個符號連結指向 /mnt/c/Windows/Fonts 。
+</p>
 </div>
 
 不過呢，你會發現中文輸入不能用。雖然 Windows 的中文輸入法可以讓你在 WSL 的終端環境下輸入中文字，但卻不能用於 WSL 下的 Linux 桌面軟體。你需要再安裝 X Window 的輸入法。我個人是用 *hime* 。細節在參考筆記中都提到了，不再細說。
