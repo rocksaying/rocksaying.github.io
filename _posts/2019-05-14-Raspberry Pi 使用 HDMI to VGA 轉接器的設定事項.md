@@ -2,7 +2,7 @@
 title: Raspberry Pi 使用 HDMI to VGA 轉接器的設定事項
 category: computer
 tags: ["raspberry pi",hdmi,vga]
-lastupdated: 2019-05-14
+lastupdated: 2019-06-07
 cover: http://i.imgur.com/Xy0OHov.png
 ---
 
@@ -54,6 +54,8 @@ Raspberry Pi 的 HDMI 埠會提供符合 HDMI 規範的最低限度電源(5V/55m
 
 我通常會從 `hdmi_mode=4` 開始試驗。如果透過 HDMI to VGA 轉接器可以顯示，再往更大的解析度調整。
 
+我建議最小操作畫面是 800x600 ，這可以顯示大部份 GUI 工具的完整視窗內容，而不會有一部份視窗內容不在畫面上。例如 Raspbian 桌面的「Raspberry Pi 設定」(rc_gui) ，在 VGA 解析度下，視窗下方的確定、取消按鈕就不在畫面上，使用不方便。雖然 Linux 桌面支援按住 Alt 鍵再按住滑鼠左鍵拖動整個軟體視窗的操作方式，讓你把本來看不到的部份拖出來。但畫面太小還是不好看。
+
 *disable_overscan* 則會影響畫面顯示時是否允許出現黑邊區域。`disable_overscan=1` 時，若 LCD 螢幕最適解析度大於輸出解析度，則畫面上可能出現黑邊區域。而 `disable_overscan=0` 要求避免黑邊區域，但此時螢幕解析度將會略小於設定值。
 
 例如設定 `hdmi_mode=16` ，在 `disable_overscan=0` 時，解析度可能是 9??x6?? 而不是 1024x768 。
@@ -70,3 +72,10 @@ hdmi_group=2
 hdmi_mode=81
 disable_overscan=1
 ```
+
+##### VNC 解析度
+
+Raspbian 用戶以 VNC 登入 Raspberry Pi 時，基本畫面大小就是看前述的 HDMI 設定。根據下列情況，決定解析度。
+
+1. config.txt 沒有指定解析度，但有連接實體螢幕時，自動偵測螢幕最佳解析度。此時 VNC 的畫面解析度等於實際螢幕之解析度。
+2. config.txt 指定解析度時，不論有無連接實體螢幕， VNC 的畫面解析度都會是 config.txt 指定的大小。
