@@ -62,7 +62,7 @@ LINQ 中的字串值，寫成 SQL 時要把雙引號改成單引號。
 
 #### 迭代與別名 
 
-可以把 LINQ 中的迭代敘述 (object in Objects) 視同 SQL 的資料項別名 (Table as aliase) ，只是位置相反。
+可以把 LINQ 中的迭代敘述 (object in Objects) 視同 SQL 的資料項別名 (Table as alias) ，只是位置相反。
 LINQ 迭代取出的單一元素名稱，成了 SQL 敘述的資料項別名。
 
 LINQ 的 `pt in ProductionTickets` 相當於 SQL 的 `ProductionTickets as pt` 。其餘類推。
