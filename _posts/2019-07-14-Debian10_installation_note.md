@@ -9,10 +9,10 @@ lastupdated: 2019-07-14
 
 安裝步驟大致依照我以前的筆記。
 
-* [Debian 8 (jessie) 安裝筆記 基礎安裝篇]({% post_url 31064659 %})
-* [Debian 8 (jessie) 安裝筆記 中文環境篇]({% post_url 31556973 %})
-* [Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel]({% post_url 44330768 %})
-* [Debian 8 (jessie) WiFi 啟用後斷線]({% post_url Debian_8_(jessie)_wifi_disconnect %})
+* [Debian 8 (jessie) 安裝筆記 基礎安裝篇]({% post_url 2014-9-16-Debian 8 (jessie) 安裝筆記 基礎篇 %})
+* [Debian 8 (jessie) 安裝筆記 中文環境篇]({% post_url 2014-9-26-Debian 8 (jessie) 安裝筆記 中文環境篇 %})
+* [Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel]({% post_url 2015-5-18-Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel %})
+* [Debian 8 (jessie) WiFi 啟用後斷線]({% post_url 2016-03-29-Debian_8_(jessie)_wifi_disconnect %})
 * [我與小黑(ThinkPad X200s)之小紅點]({% post_url 2010-3-1-我與小黑(ThinkPad X200s)之小紅點 %})
 * [我與小黑(ThinkPad X200s)之旋轉螢幕]({% post_url 2010-3-5-我與小黑(ThinkPad X200s)之旋轉螢幕 %})
 
