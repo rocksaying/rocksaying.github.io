@@ -22,7 +22,7 @@ lastupdated: 2019-07-14
 
 #### 檔案系統配置
 
-硬碟分成 root 和 home 兩個分割區。 root 分割區在安裝時選擇重新格式化，全新安裝 Debian 10 。故安裝前先用 cloneZilla 備份此區內容 。
+硬碟分成 root 和 home 兩個分割區。 root 分割區在安裝時選擇重新格式化，全新安裝 Debian 10 。故安裝前先用 CloneZilla 備份此區內容 。
 
 Debian 10 格式化會加入新的檔案系統屬性 (metadata_csum)。這會讓舊版 Ubuntu Live CD 與 CloneZilla 的檔案系統檢查功能失敗。 CloneZilla 要選專家模式，備份工具要選 *dd* ，不要用預設的。
 
@@ -53,7 +53,7 @@ Firefox 的商標問題解套了，所以 Debian 重新將 Firefox 瀏覽器納�
 
 *vlc-plugin-pulse* 套件不再需要，不提供。
 
-*libav-tools* 套件已移除。重新回到 *ffpmeg* 套件。
+*libav-tools* 套件已移除。重新回到 *ffmpeg* 套件。
 
 #### 中文字體與輸入法
 

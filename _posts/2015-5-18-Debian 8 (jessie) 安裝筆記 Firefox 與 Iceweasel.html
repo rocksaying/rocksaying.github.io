@@ -1,14 +1,18 @@
 ---
-title: Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel
+title: Debian 8~10 (jessie~buster) 安裝筆記 Firefox 與 Iceweasel
 category: computer
 old-category: 電腦技術
 tags: [debian,jessie,kde]
+lastupdated: 2019-07-15
 permalink: /archives/44330768.html
-lastupdated: 2016-03-18
 ---
 <h4>Firefox 與 Iceweasel</h4>
 
-<p><em>最近更新日期: 2016-03-18 。隨著 Debian Jessic 轉為 stable 版本，Debian Mozilla 團隊調整了儲藏位置。於 Firefox 釋出 45.0 版時，又再次調整了 source list 路徑與套件名稱。</em></p>
+<p>2019-07-15 Debian 10 更新內容。Firefox 的商標問題解套了，所以 Debian 重新將 Firefox 瀏覽器納入主要套件清單，套件名稱為 firefox-esr 。
+至於 iceweasel 則停止發佈。消息來源: <a href="https://lwn.net/Articles/676799/">The end of the Iceweasel Age</a>。
+</p>
+
+<p>2016-03-18 更新內容。隨著 Debian Jessic 轉為 stable 版本，Debian Mozilla 團隊調整了儲藏位置。於 Firefox 釋出 45.0 版時，又再次調整了 source list 路徑與套件名稱。</p>
 
 <p>Mozilla 將 Firefox 的圖標註冊為商標，並附帶了一些使用限制。而 Debian 團隊為了擺脫商標使用限制，選擇自行維護一個衍生版本，此即 Iceweasel 。參考 「<a href="https://wiki.debian.org/Iceweasel">Iceweasel - Debian wiki</a>」。</p>
 
@@ -17,37 +21,12 @@ lastupdated: 2016-03-18
 <p><em>Debian 8 於 2015 年 4 月 25 日正式釋出。 Debian 8 安裝筆記請看「<a href="{{ site.baseurl }}/archives/31064659.html">基礎篇</a>」。</em></p>
 
 <!--more-->
-<h5>Iceweasel</h5>
-
-<p>Debian 提供的 Iceweasel 是 Firefox 的純 GPL 版兄弟。如果你不是非要 Firefox 不可的使用者，用 iceweasel 即可。</p>
-
-<p>同時建議安裝 gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good 這三個套件。這讓你的 Iceweasel 支援 Youtube HTML5 播放模式。</p>
-
-<p>Debian Iceweasel 團體會配合 Mozilla 的安全性更新內容釋出安全性更新小版本，但 Debian 8 的 Iceweasel 主版本仍然較舊 (現行為 38.7)。</p>
-
-<p>如果你仍然對這安全性更新頻率感到疑慮， Debian Mozilla 小隊也提供了和 Firefox 最新正式版本同步的 Iceweasel ，但被放在 Debian Jessie Backports 套件庫 <del>experimental 實驗性套件庫</del>。如果你想讓 Iceweasel 的版本緊跟著 Firefox 最新正式版本，可以按下列步驟操作:</p>
-
-<p>首先，在 /etc/apt/sources.list.d 下新增一個設定檔(檔名可取為 iceweasel-release.list)，內容是:</p>
-
-<pre class="language-text">
-deb http://mozilla.debian.net/ jessie-backports firefox-release
-</pre>
-
-<p>更新套件資訊後，先安裝 pkg-mozilla-archive-keyring 套件。這是套件來源驗證金鑰，安裝後才不會抱怨套件缺乏來源驗證。</p>
-
-<p>再以強制指定套件版本的參數安裝 firefox <del>iceweasel</del> ，如下所示。其中 firefox-l10n-zh-tw <del>iceweasel-l10n-zh-tw</del> 是 firefox <del>iceweasel</del> 的傳統中文語系套件。</p>
-
-<pre>
-<code class="language-term">$ apt-get update
-$ apt-get install pkg-mozilla-archive-keyring
-$ apt-get install -t jessie-backports firefoxl firefox-l10n-zh-tw
-</code></pre>
-
-<p>參考 <a href="http://mozilla.debian.net/">Debian Mozilla team APT archive</a> 。</p>
 
 <h5>Firefox</h5>
 
-<p><em>Firefox 提供的 Linux 編譯版本並非每次都開啟 gstreamer 支援。所以不一定提供 HTML5 的 h.264 影片播放功能。如果你不想安裝 flashplugin-nonfree 又常常看 Youtube 網站的話，還是裝 iceweasel 省事。</em></p>
+<p>Debian 10 的 firefox-esr 套件不會跟隨大版號。如果你習慣保持 Firefox 為官方最新版號的話，看本文手動安裝方式。</p>
+
+<p>Firefox 提供的 Linux 編譯版本並非每次都開啟 gstreamer 支援。所以不一定提供 HTML5 的 h.264 影片播放功能。如果你不想安裝 flashplugin-nonfree 又常常看 Youtube 網站的話，還是裝 iceweasel 省事。</p>
 
 <p>我選擇下列說明的手動操作安裝 Firefox 。下列示範的方式是用 root 身份，安裝在只有 root 能寫入的目錄區，故 firefox 本身的自動更新功能將會失效。如果你想要用 firefox 的自動更新功能，那就把 firefox 放在自己的家目錄，例如 $HOME/.local/firefox ，不要放在 /opt/firefox 。</p>
 
@@ -89,6 +68,35 @@ Terminal=false
 Type=Application
 Categories=Network;WebBrowser;
 </pre>
+
+<h5>Iceweasel</h5>
+
+<p>Debian 提供的 Iceweasel 是 Firefox 的純 GPL 版兄弟。如果你不是非要 Firefox 不可的使用者，用 iceweasel 即可。</p>
+
+<p>同時建議安裝 gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good 這三個套件。這讓你的 Iceweasel 支援 Youtube HTML5 播放模式。</p>
+
+<p>Debian Iceweasel 團體會配合 Mozilla 的安全性更新內容釋出安全性更新小版本，但 Debian 8 的 Iceweasel 主版本仍然較舊 (現行為 38.7)。</p>
+
+<p>如果你仍然對這安全性更新頻率感到疑慮， Debian Mozilla 小隊也提供了和 Firefox 最新正式版本同步的 Iceweasel ，但被放在 Debian Jessie Backports 套件庫 <del>experimental 實驗性套件庫</del>。如果你想讓 Iceweasel 的版本緊跟著 Firefox 最新正式版本，可以按下列步驟操作:</p>
+
+<p>首先，在 /etc/apt/sources.list.d 下新增一個設定檔(檔名可取為 iceweasel-release.list)，內容是:</p>
+
+<pre class="language-text">
+deb http://mozilla.debian.net/ jessie-backports firefox-release
+</pre>
+
+<p>更新套件資訊後，先安裝 pkg-mozilla-archive-keyring 套件。這是套件來源驗證金鑰，安裝後才不會抱怨套件缺乏來源驗證。</p>
+
+<p>再以強制指定套件版本的參數安裝 firefox <del>iceweasel</del> ，如下所示。其中 firefox-l10n-zh-tw <del>iceweasel-l10n-zh-tw</del> 是 firefox <del>iceweasel</del> 的傳統中文語系套件。</p>
+
+<pre>
+<code class="language-term">$ apt-get update
+$ apt-get install pkg-mozilla-archive-keyring
+$ apt-get install -t jessie-backports firefoxl firefox-l10n-zh-tw
+</code></pre>
+
+<p>參考 <a href="http://mozilla.debian.net/">Debian Mozilla team APT archive</a> 。</p>
+
 <h6>相關文章</h6>
 <ul>
 <li><a href="{{ site.baseurl }}/archives/31064659.html">Debian 8 (jessie) 安裝筆記 基礎篇</a></li>
