@@ -2,7 +2,7 @@
 title: .NET Core 筆記 - Anonymous Type List
 category: programming
 tags: [".net core","C#","csharp","型別"]
-lastupdated: 2019-05-13
+lastupdated: 2019-07-16
 ---
 
 如何配置一個匿名型別串列。
@@ -10,11 +10,18 @@ lastupdated: 2019-05-13
 首先，複習下列定義已知型別串列的語法。
 
 ```csharp
+
 int[] int_list1 = new int[] {1, 3};
-
 var int_list2 = new int[] {1, 3};
-
 var int_list3 = new [] {1, 3};
+
+var list41 = new double[] {1, 3, 5.5};
+var list42 = new [] {1, 3, 5.5};
+Console.WriteLine(list41.GetType() == list42.GetType());
+
+// error CS0826: 找不到隱含類型陣列的最佳類型
+//var list5 = new [] {1, 2, "s"};
+
 ```
 
 第一個例子是明確宣告等號兩邊型別的語法，也是最傳統的語法。
@@ -28,6 +35,7 @@ var int_list3 = new [] {1, 3};
 當有兩個或多個匿名型別之欄位型別與順序相同時，編譯器內部會將它們視為同一型別。因此，當多個匿名型別變數的宣告內容相同時，也允許將它們放在一個串列中，如此就得到一個匿名型別串列。如下例：
 
 ```csharp
+
 using System;
 using System.Linq;
 
@@ -44,6 +52,7 @@ var data2 = new {
 };
 
 var data_list = new [] {data1, data2}.ToList();
+
 ```
 
 1. 如果我們在配置匿名串列時，還不知道各元素的具體值，那麼我們需要先定義一個初始元素。這個初始元素只是為了讓編譯器推斷型別。
@@ -76,4 +85,5 @@ for (var i = 0; i < 10; ++i) {
 
 參考:
 
+* [本文範例程式碼](https://github.com/shirock/rocksources/tree/master/dotnet-core-example/anonymous-type-list)
 * [Anonymous Types (C# Programming Guide)](https://docs.microsoft.com/zh-tw/dotnet/csharp/programming-guide/classes-and-structs/anonymous-types)
