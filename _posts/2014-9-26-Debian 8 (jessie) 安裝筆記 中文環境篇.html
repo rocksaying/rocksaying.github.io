@@ -3,7 +3,8 @@ title: Debian 8~10 (jessie~buster) 安裝筆記 中文環境篇
 category: computer
 old-category: 電腦技術
 tags: [debian,jessie,ibus,hime,kde,ime]
-lastupdated: 2019-07-15
+lastupdated: 2019-07-17
+cover: https://i.imgur.com/kecoCSt.png
 permalink: /archives/31556973.html
 ---
 <p>我在「<a href="{{ site.baseurl }}/archives/31064659.html">基礎安裝篇</a>」就提到我安裝 Debian 時，預設的 LANG 是 C 或 en_US 。就算裝了桌面軟體套件，也全是英文訊息介面，也沒有中文輸入法。所以接下來就要說明如何安裝正體中文語系環境。包含下列項目:</p>
@@ -144,6 +145,156 @@ export QT_IM_MODULE=hime
 
 <p>文泉驛和文鼎的字體都按 Unicode 規範提供了超過六萬字的中、日、韓字碼(CJK)，足以應付大部份人的需求。如果你遇到需要細明體或微軟黑體的文件，可參考「<a href="{{ site.baseurl }}/archives/12397861.html">利用 X 字體別名，讓 Linux 桌面環境顯示文件中的標楷體、細明體</a>」的說明。但 Debian 沒有參考文件中提到的 30-cjk-aliases.conf 文件。我在此提供一份完整的字體設置文件，請放在 /etc/fonts/conf.d/90-chinese-aliases.conf 。</p>
 
+<h5>Debian 10 - 90-chinese-aliases.conf</h5>
+
+<p>Debian 10 的 fontconfig 設置方式有變。現在 alias 一次只能設定一個字型，不允許寫一組。
+但是成員 accept 仍然允許列出多個候選字型。其次， alias 要加上屬性 binding="same" 。</p>
+
+<p>
+另外，或許是 fontconfig 改變設置之故，有些軟體的字型渲染方式似乎認不得此處的別名設置。
+我在 Windows 環境用 LibreOffice 編輯的文件，其中的新細明體、標楷體、微軟正黑體字型，在 Debian 10 的 LibreOffice 開啟時都能正確地以替代字型呈現。
+但是 Firefox 和 Chromium 瀏覽器卻多少都有幾個字型沒有按別名替代。這一方面還要持續調校。
+</p>
+
+<img src="https://i.imgur.com/kecoCSt.png" alt="利用字型別名顯示Office文件內容" />
+
+<p>上圖右邊的字型選擇框的「標楷體」是以斜體字呈現，這表示這個字型不是這台主機實際安裝的字型，而是借用別的字型渲染。</p>
+
+{% highlight xml %}
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<!-- /etc/fonts/conf.d/90-chinese-aliases.conf -->
+<fontconfig>
+    <description>Chinese font families alias</description>
+
+    <!-- 設定正體中文視窗明體字的替代品 -->
+    <!-- 若有全字庫宋體，就用宋體；否則用思源字體 -->
+    <alias binding="same">
+        <family>細明體</family>
+        <accept>
+            <family>TW-Sung</family>
+            <family>全字庫正宋體</family>
+            <family>Noto Serif CJK TC</family>
+        </accept>
+    </alias>
+    <alias binding="same">
+        <family>MingLiu</family>
+        <accept>
+            <family>TW-Sung</family>
+            <family>全字庫正宋體</family>
+            <family>Noto Serif CJK TC</family>
+        </accept>
+    </alias>
+
+    <!-- 若有全字庫宋體，就用宋體；否則用思源字體 -->
+    <alias binding="same">
+        <family>新細明體</family>
+        <accept>
+            <family>TW-Sung</family>
+            <family>全字庫正宋體</family>
+            <family>Noto Serif CJK TC</family>
+        </accept>
+    </alias>
+    <alias binding="same">
+        <family>PMingLiu</family>
+        <accept>
+            <family>TW-Sung</family>
+            <family>全字庫正宋體</family>
+            <family>Noto Serif CJK TC</family>
+        </accept>
+    </alias>
+
+    <!-- 设定简体中文视窗宋体字的替代品 -->
+    <alias binding="same">
+        <family>SimSun</family>
+        <accept>
+            <family>Noto Serif CJK SC</family>
+        </accept>
+    </alias>
+    <alias binding="same">
+        <family>NSimSun</family>
+        <accept>
+            <family>Noto Serif CJK SC</family>
+        </accept>
+    </alias>
+
+    <!-- 指定思源字體或「文泉驛正黑(WenQuanYi Zen Hei)」作為 SimHei 的替代品 -->
+    <alias binding="same">
+        <family>SimHei</family>
+        <accept>
+            <family>Noto Sans CJK SC Regular</family>
+            <family>WenQuanYi Zen Hei</family>
+        </accept>
+    </alias>
+
+    <!-- 指定思源字體或文泉驛正黑作為「微軟雅黑體」的替代品 -->
+    <alias binding="same">
+        <family>微软雅黑</family>
+        <accept>
+            <family>Noto Sans CJK SC Regular</family>
+            <family>WenQuanYi Zen Hei</family>
+        </accept>
+    </alias>
+    <alias binding="same">
+        <family>Microsoft YaHei</family>
+        <accept>
+            <family>Noto Sans CJK SC Regular</family>
+            <family>WenQuanYi Zen Hei</family>
+        </accept>
+    </alias>
+
+    <!-- 指定思源字體或文泉驛正黑為「微軟正黑體」的替代品 -->
+    <alias binding="same">
+        <family>微軟正黑體</family>
+        <accept>
+            <family>Noto Sans CJK TC Regular</family>
+            <family>WenQuanYi Zen Hei</family>
+        </accept>
+    </alias>
+    <alias binding="same">
+        <family>Microsoft JhengHei</family>
+        <accept>
+            <family>Noto Sans CJK TC Regular</family>
+            <family>WenQuanYi Zen Hei</family>
+        </accept>
+    </alias>
+
+    <!-- 指定「思源黑體」為「文泉驛正黑」的替代品 -->
+    <!--
+    <alias binding="same">
+        <family>WenQuanYi Zen Hei</family>
+        <family>文泉驛正黑</family>
+        <family>WenQuanYi Micro Hei</family>
+        <family>文泉驛微米黑</family>
+        <accept>
+            <family>Noto Sans CJK TC Regular</family>
+        </accept>
+    </alias>
+    -->
+
+    <!-- 指定「文鼎楷書體」為「標楷體」的替代品 -->
+    <alias binding="same">
+        <family>標楷體</family>
+        <accept>
+            <family>TW-Kai</family>
+            <family>全字庫正楷體</family>
+            <family>AR PL UKai TW</family>
+        </accept>
+    </alias>
+    <alias binding="same">
+        <family>DFKai-SB</family>
+        <accept>
+            <!-- 若有全字庫正楷體，就用正楷體；否則用文鼎楷書體 -->
+            <family>TW-Kai</family>
+            <family>全字庫正楷體</family>
+            <family>AR PL UKai TW</family>
+        </accept>
+    </alias>
+
+</fontconfig>
+{% endhighlight %}
+
+<h5>Debian 8 - 90-chinese-aliases.conf</h5>
 
 {% highlight xml %}
 <?xml version="1.0"?>
