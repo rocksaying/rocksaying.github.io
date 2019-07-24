@@ -1,5 +1,5 @@
 ---
-title: Rasberry Pi eth0 有線網路設定的 fallback 組態
+title: Raspberry Pi eth0 有線網路設定的 fallback 組態
 tags: ["raspberry pi",rpi,dhcp]
 category: computer
 lastupdated: 2019-07-24
