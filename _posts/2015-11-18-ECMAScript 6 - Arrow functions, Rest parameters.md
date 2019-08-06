@@ -64,7 +64,7 @@ ES6 為不定數量參數的使用場合增加了一個 <code>...<var>symbol</va
 * 函數定義參數清單時，稱為 <dfn>Rest parameters (其餘參數)</dfn>。
 * 調用函數傳遞參數時，稱為 <dfn>Spread parameters (攤開參數)</dfn>。
 
-我在 [COSCUP 2014 遊記]({% post_url 2014-7-21-COSCUP 2014 遊記 %}) 中已記述了一些 <code>...</code> 的內容。
+我在 [COSCUP 2014 遊記]({% post_url 2014-7-21-COSCUP 2014 遊記 %}) 中已記述了一些 `...` 的內容。
 
 #### Rest parameters
 
@@ -72,7 +72,7 @@ ES6 為不定數量參數的使用場合增加了一個 <code>...<var>symbol</va
 
 現在 ES6 增加了 Reset parameters (其餘參數)功能，讓使用者自己命名了。而 Rest parameters 和 arguments 差別在於 arguments 存有全部參數清單項目，而 Rest parameters 只包含了沒有單獨賦於名稱的其餘參數。
 
-其餘參數顧名思義，必須是函數定義的參數清單內容最後一項。而 <code>...</code> 後緊跟著的符號名稱，就是函數內儲存其餘參數的陣列名稱。
+其餘參數顧名思義，必須是函數定義的參數清單內容最後一項。而 `...` 後緊跟著的符號名稱，就是函數內儲存其餘參數的陣列名稱。
 
 <div class="note">
 <p>arguments 的行為看起來很像陣列，其實不是。而 rest parameters 就真的是陣列了。
@@ -115,7 +115,7 @@ add_all(7,6,4,3,9,5,1);
 
 #### Spread parameters
 
-Spread parameters (攤開參數) 意指調用函數時，將緊跟著 <code>...</code> 的那個集合內容，攤開成獨自的參數(<span class="note">攤開對象必須是陣列或迭代器</span>)。而且它可以放在參數列的任何位置。
+Spread parameters (攤開參數) 意指調用函數時，將緊跟著 `...` 的那個集合內容，攤開成獨自的參數(<span class="note">攤開對象必須是陣列或迭代器</span>)。而且它可以放在參數列的任何位置。
 
 {% highlight javascript %}
 var a = [1,2,3];
@@ -140,6 +140,24 @@ console.log(s);
 
 對 library/framework 的設計者來說，攤開參數提供了很多設計與使用上的彈性。
 
+#### ... 運算子使用技巧
+
+除了「Reset parameters (其餘參數)」和「Spread parameters (攤開參數)」這兩個一般用法， `...` 運算子還可以用於陣列／個體的複製與合併。
+
+{% highlight javascript %}
+
+var a = [1,2,3];
+var b1 = a;  // a 和 b1 實際上參照到同一個陣列
+var b2 = [...a];  // 複製陣列。這種寫法才會產生一個新的複製體
+var b3 = [...a, ...b2];  // 合併陣列。相當於下列的 concat() 寫法。
+var b4 = [].concat(a, b2);
+
+var o1 = {'a': 1, 'b': 2};
+var o2 = {'x': 3, 'y': 4};
+var o3 = {...o1};  // 複製個體。
+var o4 = {...o1, ...o2};  // 合併個體。
+
+{% endhighlight %}
 
 ### Parameters default value 指定參數預設值
 
