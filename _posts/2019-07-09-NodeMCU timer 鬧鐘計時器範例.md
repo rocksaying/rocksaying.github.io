@@ -54,6 +54,14 @@ mytimer:start()
 
 #### 啟動後延遲載入主程式
 
+NodeMCU 啟動後，如果檔案系統有 *init.lua* 的話，就會主動執行它。
+但我通常把 init.lua 視為控制程式載入器，而不將真正的控制程式內容寫在 init.lua 內。
+我習慣把真正的控制程式內容寫在 main.lua ，由 init.lua 載入它。
+
+另外，由於 NodeMCU 連接的週邊元件可能需要一些啟動時間，所以我會讓 init.lua 等待一段時間後才載入 main.lua 。這就是下列程式在做的事。
+
+##### init.lua
+
 ```lua
 
 local startup_timer = tmr.create()
