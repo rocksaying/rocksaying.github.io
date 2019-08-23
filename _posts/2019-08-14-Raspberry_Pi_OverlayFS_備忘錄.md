@@ -2,7 +2,7 @@
 title: Raspberry Pi OverlayFS 檔案系統使用備忘錄
 tags: ["raspberry pi",rpi,overlay]
 category: computer
-lastupdated: 2019-08-14
+lastupdated: 2019-08-23
 ---
 
 Raspberry Pi 在 IoT 方案中，通常都不接鍵盤與螢幕，也沒有設計電源開關。
@@ -54,19 +54,30 @@ sudo update-rc.d dphys-swapfile disable
 
 #### 保存系統時間
 
-RPi 沒有內建電池維持系統時間。它一方面仰賴 NTP 網路校時，另一方面又將最近的時間保存在 /etc/fake-hwclock.data 。
-以便下次斷電重啟時，可以在網路校時之前就回復最近的時間。
+RPi 沒有內建電池維持系統時刻。它一方面仰賴 NTP 網路校時，另一方面又將最近的時刻保存在 /etc/fake-hwclock.data 。
+利用 fake-hwclock 服務可在網路校時之前就回復系統時刻到上次關機的時刻。 
 
-若是你的 RPi 運作在不連接網路的環境下，每次斷電一段時間重啟後，你就會發現 RPi 顯示的系統時間又慢了。道理就在這。
+fake-hwclock 每一小時儲存目前時刻。正常執行 shutdown 或 reboot 時也會儲存時刻。
 
-將 root 檔案系統置於 OverlayFS 保護之後，/etc/fake-hwclock.data 就不能保存時間了。
-建議透過符號連結的方式，將 /etc/fake-hwclock.data 指向可寫入資料的檔案系統下，例如 /var/log 。
+若是你的 RPi 運作在不連接網路的環境下，斷電一段時間重啟後，就會發現 RPi 顯示的系統時刻又慢了。道理就在這。
+
+將 root 檔案系統置於 OverlayFS 保護之後，/etc/fake-hwclock.data 就不能保存時刻了。
+故建議透過符號連結的方式，將 /etc/fake-hwclock.data 指向可寫入資料的檔案系統下，例如 /var/log 。
 
 ```term
 sudo systemctl stop fake-hwclock.service
 sudo mv /etc/fake-hwclock.data /var/log/fake-hwclock.data
 sudo ln -s /var/log/fake-hwclock.data /etc/fake-hwclock.data
 ```
+
+然後在 rc.local 中加入一行:
+
+```bash
+/sbin/fake-hwclock load force
+```
+
+這是因為 fake-hwclock.service 的執行時機比資料區掛載到 /var/log 的時機還早，造成 fake-hwclock 讀不到上次儲存的時刻資料。
+因此在 rc.local 中要求 fake-hwclock 再讀一次上次儲存的時刻資料。
 
 ##### 參考文件
 
