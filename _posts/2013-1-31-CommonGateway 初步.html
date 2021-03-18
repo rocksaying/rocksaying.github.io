@@ -162,6 +162,32 @@ ISBN of this book: 123
 <p>到此目前，我已經建立了一個非常基本的 <dfn>Book</dfn> 查詢功能的 Web 服務了。
 </p>
 
+<p>
+如果 Book:get() 方法是回傳 new BookModel() 而不是指派給控制項欄位，則視圖內要改用 $model 或 $Book 取得資料內容。
+例如:
+</p>
+
+{% highlight php %}
+class Book {
+    function get($isbn) {
+        if ($isbn != '123') {
+            HttpResponse::exception(HttpResponse::NOT_FOUND);
+        }
+        return new BookModel('123', 'book 123');
+    }
+}
+{% endhighlight %}
+
+<p>對應上述回傳值的視圖如下:
+</p>
+
+{% highlight html %}
+<html>
+<h2><?=$model->title?></h2>
+<p>ISBN of this book: <?=$model->isbn?>
+</p>
+</html>
+{% endhighlight %}
 
 <h5>問答時間
 </h5>
@@ -205,11 +231,15 @@ GET, POST, PUT, DELETE 或其它方法也一樣，如果你不需要，你就不
 <p>你只要在 <code>views</code> 子目錄建立符合預期名稱的目錄與視圖文件即可；也就是相同控制項名稱的子目錄，以及相同方法名稱的視圖文件。例如 <dfn>CG</dfn> 調用 <dfn>Book</dfn> 控制項的 <code>get()</code> 方法之後，就會自動載入 views/book/get.phtml 視圖。
 </p>
 
-<p>視圖也是一份 PHP 文件，所以它的副檔名首字冠上 'p' 以便和一般文件區隔。而副檔名後的內容則表示回傳給客戶端的視圖的文件型態。瀏覽器預設要求的文件型態是 <dfn>html</dfn> ，所以本文建立的視圖副檔名都是 <dfn>.phtml</dfn> 。稍後的文章會說明如何回傳像 JSON, XML 的文件給客戶端。
+<p>視圖也是一份 PHP 文件，所以它的副檔名首字冠上 'p' 以便和一般文件區隔。
+而副檔名後的內容則表示回傳給客戶端的視圖的文件型態。
+瀏覽器預設要求的文件型態是 <dfn>html</dfn> ，所以本文建立的視圖副檔名都是 <dfn>.phtml</dfn> 。
+稍後的文章會說明如何回傳像 JSON, XML 的文件給客戶端。
 </p>
 
 <p>最後，從 <dfn>CG</dfn> 的立場來看，它與控制項的關係是它調用了控制項的方法，所以控制項方法應該會把結果回傳給它。
-因此 <dfn>CG</dfn> 會自己從控制項方法的回傳內容決定最後要呈現給客戶端的資料是什麼，並將資料塞到視圖中。故你也不需要指派視圖的資料。
+因此 <dfn>CG</dfn> 會自己從控制項方法的回傳內容決定最後要呈現給客戶端的資料是什麼，並將資料塞到視圖中。
+故你也不需要指派視圖的資料。
 </p>
 
 <h6>
@@ -219,6 +249,7 @@ GET, POST, PUT, DELETE 或其它方法也一樣，如果你不需要，你就不
 <p>因為我設計 <dfn>CG</dfn> 時，主要搭配資料庫處理函數 <a href="https://schema-database.googlecode.com/">schema-database</a> 使用。
 而 schema-database 提供一個泛用型資料類別，可以映射資料庫的表格欄位成為資料模型(model)的屬性，也就不需要特地為了資料庫表格而建立一個關聯的資料模型類。
 因此 <dfn>CG</dfn> 沒有設計資料模型的處理策略。
+換句話說，你可以自由選擇你偏好的資料庫處理工具。
 </p>
 
 <p>本文範例中的 BookModel 只是示範用。如果實際搭配 schema-database ，我不用定義 BookModel 類別。
