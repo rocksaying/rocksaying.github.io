@@ -1,10 +1,10 @@
 ---
-title: 學習 ECMAScript 6 - Proxy 和 Reflect
+title: 學習 ECMAScript/JavaScript 6 - Proxy 和 Reflect
 category: programming
 tags: [javascript,ecmascript,es6,proxy,reflect,tdd]
 ---
 
-本篇要介紹 ECMAScript 6 新增的兩項罕用功能，即 <dfn>Proxy</dfn> (代理者) 和 <dfn>Reflect</dfn> (鏡像)。在本篇發表時，應該只有 Firefox 實作了這兩項。
+本篇要介紹 ECMAScript/JavaScript 6 新增的兩項罕用功能，即 <dfn>Proxy</dfn> (代理者) 和 <dfn>Reflect</dfn> (鏡像)。在本篇發表時，應該只有 Firefox 實作了這兩項。
 
 <!--more-->
 
@@ -67,12 +67,12 @@ Proxy 的用途並不廣泛，它主要用於設計測試框架。而 Reflect �
 * [ES6 In Depth: Proxies](https://hacks.mozilla.org/2015/07/es6-in-depth-proxies-and-reflect/)
 * MDN: [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
 * MDN: [Reflect](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect)
-* 石頭閒語: [ECMAScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
-* 石頭閒語: [ECMAScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
-* 石頭閒語: [ECMAScript 6 - for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
-* 石頭閒語: [ECMAScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
-* 石頭閒語: [ECMAScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
-* 石頭閒語: [ECMAScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
-* 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
-* 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
-* 石頭閒語: [ECMAScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
+* 石頭閒語: [ECMAScript/JavaScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})

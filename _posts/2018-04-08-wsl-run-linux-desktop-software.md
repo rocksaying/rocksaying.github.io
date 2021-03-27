@@ -85,7 +85,7 @@ D-Bus 服務預設使用 *UNIX Domain Socket* 建立通訊管道。但是 Window
 <listen>tcp:host=localhost,port=0</listen>
 ```
 
-Linux 桌面應用軟體這一部份，可參考「[Debian 8 (jessie) 安裝筆記 基礎篇](http://rocksaying.tw/archives/31064659.html)」，選擇你需要的軟體套件。
+Linux 桌面應用軟體這一部份，可參考「[Debian 8 (jessie) 安裝筆記 基礎篇](https://rocksaying.tw/archives/31064659.html)」，選擇你需要的軟體套件。
 
 
 #### 中文顯示與輸入
@@ -98,7 +98,7 @@ WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。�
 
 至於背景正常顯示中文的瀏覽器畫面，那是我的 Windows Firefox 內容。不是 WSL 內的 Linux Firefox 。
 
-原先以為要錯誤嘗試很多事，但靠著我以前留下的中文環境的安裝筆記，我一下就搞定了。在 WSL 環境下安裝 Linux 中文桌面環境的步驟，基本上就與我從 Debian/Ubuntu 基本安裝的基礎上加裝中文環境的步驟相同。參考「[Debian 8 (jessie) 安裝筆記 中文環境篇](http://rocksaying.tw/archives/31556973.html)」。 WSL 用例不必主動安裝 KDE 或 GNOME Desktop 套件。有套件依賴的時候，再自動安裝即可。
+原先以為要錯誤嘗試很多事，但靠著我以前留下的中文環境的安裝筆記，我一下就搞定了。在 WSL 環境下安裝 Linux 中文桌面環境的步驟，基本上就與我從 Debian/Ubuntu 基本安裝的基礎上加裝中文環境的步驟相同。參考「[Debian 8 (jessie) 安裝筆記 中文環境篇](https://rocksaying.tw/archives/31556973.html)」。 WSL 用例不必主動安裝 KDE 或 GNOME Desktop 套件。有套件依賴的時候，再自動安裝即可。
 
 安裝中文字型後，我先在 WSL 視窗中執行 *fc-list* 列出 X Server 找到的中文字型，確認文泉驛黑體可用。再同樣以 geany 開啟相同文件。現在中文字就正常顯示了。
 
@@ -120,6 +120,6 @@ WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。�
 
 * [【WSL】Windows Subsystem for Linux 安裝及基本配置！](https://blogs.msdn.microsoft.com/microsoft_student_partners_in_taiwan/2017/10/03/wsltune/)
 * [WSL interoperability with Windows](https://docs.microsoft.com/zh-tw/windows/wsl/interop)
-* [Debian 8 (jessie) 安裝筆記 基礎篇](http://rocksaying.tw/archives/31064659.html)
-* [Debian 8 (jessie) 安裝筆記 中文環境篇](http://rocksaying.tw/archives/31556973.html)
+* [Debian 8 (jessie) 安裝筆記 基礎篇](https://rocksaying.tw/archives/31064659.html)
+* [Debian 8 (jessie) 安裝筆記 中文環境篇](https://rocksaying.tw/archives/31556973.html)
 * [X Window系統](https://zh.wikipedia.org/wiki/X_Window%E7%B3%BB%E7%B5%B1)

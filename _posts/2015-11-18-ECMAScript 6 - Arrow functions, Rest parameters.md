@@ -1,11 +1,11 @@
 ---
-title: 學習 ECMAScript 6 - 新函數語法 - Arrow function, Rest and Spread parameters, Default value
+title: 學習 ECMAScript/JavaScript 6 - 新函數語法 - Arrow function, Rest and Spread parameters, Default value
 category: programming
 tags: [javascript,ecmascript,es6,function]
 lastupdated: 2017-01-13
 ---
 
-ECMAScript 6 為函數定義與操作增加了一些新的語法，在此一併介紹。它們分別是:
+ECMAScript/JavaScript 6 為函數定義與操作增加了一些新的語法，在此一併介紹。它們分別是:
 
 * 匿名函數箭形語法 (箭頭函數): Arrow functions
 * 不定數量參數: Rest parameters / Spread parameters
@@ -15,14 +15,14 @@ ECMAScript 6 為函數定義與操作增加了一些新的語法，在此一併�
 
 ### Arrow functions 箭頭函數
 
-ECMAScript 傳統的匿名函數定義語法只是去掉一般函數定義中的名稱部份。 ES6 則從 C# 借來了新的匿名函數語法，讓設計者少打一些字。並稱此新語法為 <dfn>Arrow functions (箭頭函數)</dfn>。因為我本來就會 C# ，這個 ES6 的新語法在我眼中反而有著熟悉感。
+ECMAScript/JavaScript 傳統的匿名函數定義語法只是去掉一般函數定義中的名稱部份。 ES6 則從 C# 借來了新的匿名函數語法，讓設計者少打一些字。並稱此新語法為 <dfn>Arrow functions (箭頭函數)</dfn>。因為我本來就會 C# ，這個 ES6 的新語法在我眼中反而有著熟悉感。
 
 <div class="note">
-在 C# 中，此語法就稱為「匿名函數」。但 ECMAScript 原本就有匿名函數語法。為了區別新舊，ES6 造了一個象形字 <dfn>Arrow functions</dfn> ，以新語法中的主要符號 <code>=&gt;</code> 的箭頭形狀稱呼這項新語法。我叫它匿名函數箭形語法。一般稱為<dfn>箭頭函數</dfn>。
+在 C# 中，此語法就稱為「匿名函數」。但 ECMAScript/JavaScript 原本就有匿名函數語法。為了區別新舊，ES6 造了一個象形字 <dfn>Arrow functions</dfn> ，以新語法中的主要符號 <code>=&gt;</code> 的箭頭形狀稱呼這項新語法。我叫它匿名函數箭形語法。一般稱為<dfn>箭頭函數</dfn>。
 </div>
 
 {% highlight javascript %}
-// ECMAScript 傳統函數定義語法
+// ECMAScript/JavaScript 傳統函數定義語法
 function(parameter_list) {
     return result;
 }
@@ -68,7 +68,7 @@ ES6 為不定數量參數的使用場合增加了一個 <code>...<var>symbol</va
 
 #### Rest parameters
 
-在 ECMAScript3 時代，就已經定義了基本的不定數量參數項目，它叫做 <dfn>Arguments</dfn> 。 每當函數被調用時，其內部都會配置一個型態為 <dfn>Arguments</dfn> 的 <var>arguments</var> 變數，用於存放傳給這個函數的所有參數內容。它以 key/value 形式存放參數清單項目，可用 <code>arguments[n]</code> 的方式取得參數。並具有 <dfn>length</dfn> 屬性。
+在 ECMAScript/JavaScript3 時代，就已經定義了基本的不定數量參數項目，它叫做 <dfn>Arguments</dfn> 。 每當函數被調用時，其內部都會配置一個型態為 <dfn>Arguments</dfn> 的 <var>arguments</var> 變數，用於存放傳給這個函數的所有參數內容。它以 key/value 形式存放參數清單項目，可用 <code>arguments[n]</code> 的方式取得參數。並具有 <dfn>length</dfn> 屬性。
 
 現在 ES6 增加了 Reset parameters (其餘參數)功能，讓使用者自己命名了。而 Rest parameters 和 arguments 差別在於 arguments 存有全部參數清單項目，而 Rest parameters 只包含了沒有單獨賦於名稱的其餘參數。
 
@@ -136,7 +136,7 @@ console.log(s);
 
 {% endhighlight %}
 
-攤開參數是一個很實用的改變。在 ECMAScript5 以前，要把一組參數攤開傳給函數時，只能用 <code>apply()</code> 。 但 <code>apply()</code> 同時也有改變函數內部 <var>this</var> 指涉對象的效果，而且這才是它的主要目的，故語意不清晰。對單純想要使用函數的人來說，這是個麻煩的副作用。
+攤開參數是一個很實用的改變。在 ECMAScript/JavaScript5 以前，要把一組參數攤開傳給函數時，只能用 <code>apply()</code> 。 但 <code>apply()</code> 同時也有改變函數內部 <var>this</var> 指涉對象的效果，而且這才是它的主要目的，故語意不清晰。對單純想要使用函數的人來說，這是個麻煩的副作用。
 
 對 library/framework 的設計者來說，攤開參數提供了很多設計與使用上的彈性。
 
@@ -161,9 +161,9 @@ var o4 = {...o1, ...o2};  // 合併個體。
 
 ### Parameters default value 指定參數預設值
 
-ECMAScript 原本就規定沒有傳值的參數，默認其值為 <dfn>undefined</dfn>。現在， ES6 允許使用者自己決定參數的預設值。它的語法很簡單，就是函數定義時，在參數後面加上 <code>=預設值</code>。而且預設值可以使用變數或另一個參數。
+ECMAScript/JavaScript 原本就規定沒有傳值的參數，默認其值為 <dfn>undefined</dfn>。現在， ES6 允許使用者自己決定參數的預設值。它的語法很簡單，就是函數定義時，在參數後面加上 <code>=預設值</code>。而且預設值可以使用變數或另一個參數。
 
-另外，在其他提供指定參數預設值功能的程式語言中，多數限定帶有預設值的參數必須放在參數清單後半部，不可將有預設值與無預設值的參數夾雜一起。但是 ECMAScript 無此限制。因為 ECMAScript 隱含規定每一個參數都有預設值 <dfn>undefined</dfn> 。
+另外，在其他提供指定參數預設值功能的程式語言中，多數限定帶有預設值的參數必須放在參數清單後半部，不可將有預設值與無預設值的參數夾雜一起。但是 ECMAScript/JavaScript 無此限制。因為 ECMAScript/JavaScript 隱含規定每一個參數都有預設值 <dfn>undefined</dfn> 。
 
 {% highlight javascript  %}
 function xyz(x, y, z) {
@@ -199,13 +199,13 @@ xyz('x', 'z');
 * [ES6 In Depth: Arrow functions](https://hacks.mozilla.org/2015/06/es6-in-depth-arrow-functions/)
 * [ES6 In Depth: Rest parameters and Defaults](https://hacks.mozilla.org/2015/05/es6-in-depth-rest-parameters-and-defaults/)
 * [COSCUP 2014 遊記]({% post_url 2014-7-21-COSCUP 2014 遊記 %})
-* 石頭閒語: [ECMAScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
-* 石頭閒語: [ECMAScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
-* 石頭閒語: [ECMAScript 6- for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
-* 石頭閒語: [ECMAScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
-* 石頭閒語: [ECMAScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
-* 石頭閒語: [ECMAScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
-* 石頭閒語: [ECMAScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
-* 石頭閒語: [ECMAScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
-* 石頭閒語: [ECMAScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
+* 石頭閒語: [ECMAScript/JavaScript 6- for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
+* 石頭閒語: [ECMAScript/JavaScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
 * [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)

@@ -6,7 +6,7 @@ lastupdated: 2018-03-17
 cover: https://i.imgur.com/ZRfesO9.jpg
 ---
 
-本案例於 Raspberry Pi 使用 [Grove - LoRa Radio](http://wiki.seeed.cc/Grove_LoRa_Radio/) 模組，實作基本的 LoRa 無線應用。 Raspberry Pi 的角色是 LoRa Gateway 。它負責收集其他 LoRa 設備的訊號，再透過 Internet 發佈到 MQTT 頻道上。
+本案例於 Raspberry Pi 使用 [Grove - LoRa Radio](https://wiki.seeed.cc/Grove_LoRa_Radio/) 模組，實作基本的 LoRa 無線應用。 Raspberry Pi 的角色是 LoRa Gateway 。它負責收集其他 LoRa 設備的訊號，再透過 Internet 發佈到 MQTT 頻道上。
 
 #### 作業系統與硬體支援
 
@@ -137,13 +137,13 @@ Grove LoRa Radio 的訊號發送模式是廣播模式，任何位在有效距離
 
 我是按照 pyRFM 預設的欄位意義使用。用 to 欄位表示 LoRa 訊號的目標設備代號，用 from 欄位表示 LoRa 訊號的發送設備代號。至於 id 和 flags 欄位則未使用。在本案例中， Pi 3 的角色是 LoRa 接收設備，所以它的設備代號就是其他 LoRa 設備送出訊號的 to 設備代號。其他 LoRa 設備要在 to 欄位中填上你派給 Pi 3 的 LoRa 代號，這樣你的程式才可以根據訊號的 to 欄位內容，判斷這個訊號是不是自己要處理。
 
-至於發送設備的設計內容，請參考 [Arduino Serial 與 String 使用經驗](http://rocksaying.tw/archives/2017/Arduino_Serial_and_String_exp2-readBytes.html) 這篇文章。這篇文章提到它如何指定 to 欄位與 from 欄位的內容。
+至於發送設備的設計內容，請參考 [Arduino Serial 與 String 使用經驗](https://rocksaying.tw/archives/2017/Arduino_Serial_and_String_exp2-readBytes.html) 這篇文章。這篇文章提到它如何指定 to 欄位與 from 欄位的內容。
 
 藉由定義 to 與 from 欄位的用途，就可以讓 Pi 3 的 LoRa 接收程式負擔起 LoRa Gateway 的角色。
 
 #### 發佈到 MQTT
 
-Python 使用 MQTT 的方法，請參考 [MQTT用戶端入門 - 三、Python 用戶端程式設計](http://rocksaying.tw/archives/2016/MQTT-3-Python-clients.html) 。但配合 LoRa 使用時，則要注意程式的同步性。
+Python 使用 MQTT 的方法，請參考 [MQTT用戶端入門 - 三、Python 用戶端程式設計](https://rocksaying.tw/archives/2016/MQTT-3-Python-clients.html) 。但配合 LoRa 使用時，則要注意程式的同步性。
 
 Python 的 *paho-mqtt* 在發佈訊息時採用同步操作模式。這表示當它在連接網路、交握 MQTT 協定與讀寫 MQTT 封包內容的期間，其執行緒不能接收 LoRa 訊號。但其他 LoRa 發送設備可不會知道接收端程式現在有沒有空接收訊號，仍然照自己的步調發出 LoRa 訊號。為了避免漏接訊號，接收端程式應該運用 *threading* 和 *queue* 實作多線非同步設計。
 
@@ -236,7 +236,7 @@ if ll.setOpModeSleep(True, True):
 
 ###### 參考文件
 
-* [Grove - LoRa Radio](http://wiki.seeed.cc/Grove_LoRa_Radio/)
+* [Grove - LoRa Radio](https://wiki.seeed.cc/Grove_LoRa_Radio/)
 * [The Raspberry Pi UARTs](https://www.raspberrypi.org/documentation/configuration/uart.md)
-* [Arduino Serial 與 String 使用經驗](http://rocksaying.tw/archives/2017/Arduino_Serial_and_String_exp2-readBytes.html)
-* [MQTT用戶端入門 - 三、Python 用戶端程式設計](http://rocksaying.tw/archives/2016/MQTT-3-Python-clients.html)
+* [Arduino Serial 與 String 使用經驗](https://rocksaying.tw/archives/2017/Arduino_Serial_and_String_exp2-readBytes.html)
+* [MQTT用戶端入門 - 三、Python 用戶端程式設計](https://rocksaying.tw/archives/2016/MQTT-3-Python-clients.html)

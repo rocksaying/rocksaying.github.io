@@ -3,7 +3,7 @@ title: 台灣 119 求救簡訊 APP 使用說明與開發筆記
 category: programming
 tags: [html5,gps,webapp,uwp]
 lastupdated: 2017-06-22
-cover: http://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png
+cover: https://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png
 comment: taiwan119gps
 ---
 
@@ -32,7 +32,7 @@ comment: taiwan119gps
 * 啟動程式時，最好在空曠或看得到天空的地點，提高 GPS 偵測位置準確度。
 * 發送簡訊使用 SMS 電信系統。你的設備必須提供 SMS 簡訊功能，如手機。如果你使用的手機收不到訊號的話，你需要移動到通信訊號良好的地方。
 
-![使用圖例](http://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png)
+![使用圖例](https://rocksaying.tw/webapp/119/taiwan-119-gps-snapshot.png)
 
 
 ### 安裝方式
@@ -50,7 +50,7 @@ comment: taiwan119gps
 
 #### Webapp
 
-台灣 119 求救簡訊 Webapp 網址: [http://rocksaying.tw/webapp/119/](http://rocksaying.tw/webapp/119/index.html) 。將此網址保存在瀏覽器書籤。
+台灣 119 求救簡訊 Webapp 網址: [https://rocksaying.tw/webapp/119/](https://rocksaying.tw/webapp/119/index.html) 。將此網址保存在瀏覽器書籤。
 
 由於這是單一網頁版本，只需要儲存單一的 html 文件就可使用。 **故選擇儲存離線網頁在手機中，可不連接網際網路的狀態下用瀏覽器開啟。**
 
@@ -61,7 +61,7 @@ comment: taiwan119gps
 
 我僅提供 UWP 的 .appx 安裝檔供人安裝。想透過 .appx 安裝的用戶，需要啟用 Windows 10 系統設定的「更新與安全性 > 開發人員專用 > 側載應用程式」。
 
-* 下載 [Appx 安裝檔](http://rocksaying.tw/webapp/119/Taiwan119GPS_1.0.0.0_AnyCPU.appx) 。
+* 下載 [Appx 安裝檔](https://rocksaying.tw/webapp/119/Taiwan119GPS_1.0.0.0_AnyCPU.appx) 。
 
 Windows UWP 版本的「台灣 119 求救簡訊」比 Webapp 版本多了一個功能。因為在 UWP 環境上，允許跨來源資料請求 (cross domain access)，所以它每次執行時，都會嘗試從內政部的「開放資料平台」更新各地消防局簡訊號碼。
 
@@ -93,10 +93,10 @@ URL 格式第一個欄位的意義是傳送協定 (scheme)。用戶可以根據�
 
 #### 消防局簡訊號碼
 
-在 [政府資料開放平臺](http://data.gov.tw/) 上，可以找到不少政府單位的開放資料。
+在 [政府資料開放平臺](https://data.gov.tw/) 上，可以找到不少政府單位的開放資料。
 
-* [119聽語障人士簡訊及傳真報案專線 資訊網頁](http://data.gov.tw/node/7917)
-* [各地消防局的簡訊號碼 開放資料](http://od.moi.gov.tw/api/v1/rest/datastore/301060000C-000384-003)
+* [119聽語障人士簡訊及傳真報案專線 資訊網頁](https://data.gov.tw/node/7917)
+* [各地消防局的簡訊號碼 開放資料](https://od.moi.gov.tw/api/v1/rest/datastore/301060000C-000384-003)
 
 
 #### 偵測所在地點

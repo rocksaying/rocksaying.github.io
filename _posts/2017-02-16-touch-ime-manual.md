@@ -19,11 +19,11 @@ GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see
-<http://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
+<https://www.gnu.org/licenses/lgpl-3.0-standalone.html>.
 
 You should see https://rocksources.googlecode.com/ to get more information about Touch IME.
 ```
-<img src="http://www.gnu.org/graphics/lgplv3-147x51.png" alt="LGPLv3"/>
+<img src="https://www.gnu.org/graphics/lgplv3-147x51.png" alt="LGPLv3"/>
 
 <!--more-->
 
@@ -64,7 +64,7 @@ source repo: [https://github.com/shirock/rocksources/tree/master/web/touch-ime](
 
 deb安裝: 安裝 touch-ime 。檔案將被安裝在 /usr/share/javascript/touch-ime 。以瀏覽器開啟範例文件，例如 file:///usr/share/javascript/touch-ime/index.html (部份瀏覽器不允許開啟 file:// 協定) 。
 
-參考: [Touch IME 介紹](http://rocksaying.tw/archives/25452026.html)。
+參考: [Touch IME 介紹](https://rocksaying.tw/archives/25452026.html)。
 
 ### 使用情境 (index.html)
 
@@ -125,7 +125,7 @@ deb安裝: 安裝 touch-ime 。檔案將被安裝在 /usr/share/javascript/touch
 
 基本上，如果你的 HTML5 應用軟體是執行在移動式環境的作業系統，例如 Firefox OS 、 Tizen 、Windows Phone 等。它們本身就已經提供了完善的輸入法系統，你不需要 touch-ime 。
 
-再者，若你的 HTML5 應用軟體執行在客製化的 Linux 桌面環境，那麼你首先應該考慮的輸入方案是使用 On-Screen 鍵盤 (軟體虛擬鍵盤) 。On-Screen 鍵盤可以輕易地和系統內建的輸入法系統，如 IBus, SCIM 等互動，達成使用者輸入的需求。這也是 [http://www.w3.org/TR/ime-api/ W3C Input Method Editor API] 目前建議的方式。
+再者，若你的 HTML5 應用軟體執行在客製化的 Linux 桌面環境，那麼你首先應該考慮的輸入方案是使用 On-Screen 鍵盤 (軟體虛擬鍵盤) 。On-Screen 鍵盤可以輕易地和系統內建的輸入法系統，如 IBus, SCIM 等互動，達成使用者輸入的需求。這也是 [https://www.w3.org/TR/ime-api/ W3C Input Method Editor API] 目前建議的方式。
 
 唯有你的系統不提供你需要的中文輸入法，或者你無法操控 On-Screen 鍵盤時，你才需要考慮使用 touch-ime 。
 
@@ -264,8 +264,8 @@ TouchInputMethod.set_resources_path(resources_folder_path);
 
 參考:
 
-* http://www.w3.org/TR/cors/
-* http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+* https://www.w3.org/TR/cors/
+* https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 
 #### 啟用輸入法引擎 enable_engines
 
@@ -545,7 +545,7 @@ mime.types 的路徑，依你的 Apache 設置而定。可能位在 /etc/httpd/m
 {% endhighlight %}
 
 
-實際的離線應用案例，可參考「[在 Windows Phone 8 上離線使用 Touch IME](http://rocksaying.tw/archives/25709686.html)」。
+實際的離線應用案例，可參考「[在 Windows Phone 8 上離線使用 Touch IME](https://rocksaying.tw/archives/25709686.html)」。
 
 ### 附加 On Screen Keyboard
 
@@ -572,5 +572,5 @@ Your page content.
 
 on-screen-keyboard.js 會在頁面載入完成後，安插一個隱藏的虛擬軟鍵盤節點，以便讓 touch-ime 使用。然後 on-screen-keyboard.js 會去傾聽 touch-ime 的 oncomposition 和 oncompositionend 事件，決定顯示或隱藏虛擬軟鍵盤。這個虛擬軟鍵盤懸浮在頁面上，使用者可以拖動其位置，以免其遮擋到頁面資訊。這些動作都是 on-screen-keyboard.js 內部處理負責的，程式設計人員基本上不必關心它。事實上，由於 on-screen-keyboard.js 的特殊設計，它是一個沒有名字可以指涉的黑箱，不開放任何行為給程式設計人員操作。它唯一開放的是它的源碼，所以想改變它就直接修改源碼吧。
 
-on-screen-keyboard.js 具體的使用範例可以參考源碼中的 on-screen-keyboard-demo.html 或 「[Touch IME 使用在嵌入 WebKit 的場合](http://rocksaying.tw/archives/25651856.html)」。
+on-screen-keyboard.js 具體的使用範例可以參考源碼中的 on-screen-keyboard-demo.html 或 「[Touch IME 使用在嵌入 WebKit 的場合](https://rocksaying.tw/archives/25651856.html)」。
 

@@ -16,14 +16,14 @@ tags: [raspberrypi,4g,iot,智慧農業]
 
 4G USB Modem ，在台灣一般稱為 4G USB 網卡。只是這個俗稱是錯的，非常容易造成誤解。我們俗稱的 4G USB 網卡，在作業系統眼中其實一直是 4G Modem (數據機)。嚴格說來，本文下一節提的 4G Router 才會被作業系統視為 USB 網卡。
 
-我以前曾經使用過 3G USB Modem ，參閱 [BandLuxe C270 使用筆記](http://rocksaying.tw/archives/15987847.html)。而 4G USB Modem 的使用經驗也差不多。那種內建驅動程式的兩段式啟用方式，幾乎成了 4G USB Modem 的通用設計。
+我以前曾經使用過 3G USB Modem ，參閱 [BandLuxe C270 使用筆記](https://rocksaying.tw/archives/15987847.html)。而 4G USB Modem 的使用經驗也差不多。那種內建驅動程式的兩段式啟用方式，幾乎成了 4G USB Modem 的通用設計。
 
 若你的 Raspberry Pi 作業系統是 Raspbian 。為了使用 4G USB Modem ，你需要安裝下列套件: usb-modeswitch, modemmanager, wvdial 。**如果運氣好**，你的 4G USB Modem 在插進 Raspberry Pi 時，系統就會觸發 usb-modeswitch 設定的啟用動作 - 解除 USB 裝置的內建儲存區，啟用 4G Modem 模組。接著， Modem manager 自動呼叫 wvdial 完成撥號接通 4G 基地台的動作，你的 Pi 就能上網了。
 
 但是，運氣不好的話， usb-modeswitch 可能認不得你的 4G USB Modem 而無法切換模式。 Modem manager 和 wvdial 可能搞錯你的 4G 基地台的撥號指令。總之，有很多的可能原因，讓你的 4G USB Modem 無法發揮作用。我找到下列兩篇相關的討論文章。如果你屬於不幸的一方，你可以試著參考這兩篇文章找尋解決方法。
 
 * [Connecting with Huawai E3372 modem](https://www.raspberrypi.org/forums/viewtopic.php?t=101582)
-* [Huawei E3372 in Linux (Raspberry PI)](http://nvdcstuff.blogspot.tw/2015/04/huawei-e3372-in-linux-raspberry-pi.html)
+* [Huawei E3372 in Linux (Raspberry PI)](https://nvdcstuff.blogspot.tw/2015/04/huawei-e3372-in-linux-raspberry-pi.html)
 
 #### 4G Router
 

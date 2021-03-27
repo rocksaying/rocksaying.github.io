@@ -120,6 +120,6 @@ $ openssl pkcs12 -export \
 
 關於自簽憑證 (self signed certificate) 的內容，請參考我下列兩篇文章。
 
-* [OpenSSL Library - 讀取 X509 certificate 的資訊](http://rocksaying.tw/archives/16158079.html)
-* [OpenSSL - SOD 安全文件概論](http://rocksaying.tw/archives/17362107.html)
+* [OpenSSL Library - 讀取 X509 certificate 的資訊](https://rocksaying.tw/archives/16158079.html)
+* [OpenSSL - SOD 安全文件概論](https://rocksaying.tw/archives/17362107.html)
 
