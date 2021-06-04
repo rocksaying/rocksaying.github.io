@@ -3,22 +3,29 @@ title: CommonGateway 介紹
 category: programming
 old-category: PHP
 tags: [php,restful,rest,common-gateway]
+lastupdated: 2021-06-04
 permalink: /archives/21318202.html
 ---
+
 <p>
-CommonGateway (index.php) 是一個簡化的 MVC 容器。按照 MVC 的設計模式，它將一個 Web 應用服務分成三個部份。
-資料模型(Model)、流程控制項(Controller)與視圖(View)。
-Model 主要就是透過 schema-database 或其他資料庫函數完成。
-因此程序人員需要實作的內容就是控制項與視圖。我實作 CommonGateway 便是要簡化一部份工作。
+CommanGateway Framework 是一個極小化的 PHP Web 框架。它的主程式就只有一個檔案 - index.php 。
+我原先甚至不將它稱為 framework ，而只是一個導入器。但解釋麻煩，還是按一般認知，當它是框架吧。
 </p>
 
 <p>
-CommonGateway 主要負責為程序人員完成下列工作:
+CommonGateway 主要設計目的是用於設計 RESTful API 或是 Single page web app 。
+它按照 MVC 的設計模式，將 Web 應用服務分成三個部份，即資料模型(Model)、流程控制項(Controller)與視圖(View)。
+CommonGateway 替設計人員處理控制項與視圖工作。
+至於資料模型則不是 CommonGateway 的責任。資料模型由設計人員透過其偏好的資料庫框架處理。
+</p>
+
+<p>
+CommonGateway 為設計人員完成下列工作:
 </p>
 
 <ul>
-    <li>CommonGateway 會根據 URL 路徑(PATH_INFO) 選擇 Web 應用服務的控制項。
-        正是這「依路徑選擇目標」的行為，而它又是 Common Gateway Interface (CGI) 的實作項目，故我將之命名為 CommonGateway 。
+    <li>根據 URL 路徑(PATH_INFO) 選擇 Web 應用服務的控制項。
+        正是這「依路徑選擇目標」的行為特徵，而且又是 Common Gateway Interface (CGI) 的實作項目，故我將此項目命名為 CommonGateway 。
     <li>它會將客戶端送出的文件資料，預先處理成關聯式陣列結構。
         除了傳統的 Query string 與 Form data ，它也能處理 HTTP PUT Method 會送出的資料。它也支援 JSON 型態的資料。
     <li>它會根據 RESTful 的原則，調用對應的控制項方法。
@@ -29,26 +36,22 @@ CommonGateway 主要負責為程序人員完成下列工作:
 <!--more-->
 
 <p>
-CommonGateway 純粹是一個 MVC 容器，不是框架也不是函數庫。
-它的定位更像是一個前台載入器 (front loader)，不以整合性為目標，不會整合 Log, Config, Database 等等的功能。
-它是面向 PHP 熟練者的工具。
-如果你原本就有偏好的工具庫，你可以繼續使用，不必為了使用 CommonGateway 而另外學習一套方法。
+CommonGateway 純粹是一個 MVC 容器，它的定位更像是一個前台載入器 (front loader)，不以整合性為目標，不會整合 Log, Config, Database 等等的功能。
+它是面向 PHP 熟練者的工具。如果你原本就有偏好的工具庫，你可以繼續使用，不必為了使用 CommonGateway 而另外學習一套方法。
 </p>
 
 <div class="note">
     <ul>
         <li>CommonGateway 的源碼託管於 github:
-            <a href="https://github.com/shirock/rocksources/tree/master/web/common-gateway">common-gateway</a> 。
-        <li>CommonGateway 的源碼只有一個 index.php 。
-            查看 CommonGateway 源碼: 「<a href="https://github.com/shirock/rocksources/blob/master/web/common-gateway/index.php">index.php</a>」。
-        <li>在源碼專案網站上，我也維護了一份 CommonGateway 的 wiki 頁面，
-            請參考「<a href="https://code.google.com/p/schema-database/wiki/CommonGateway">CommonGateway wiki</a>」。
+            <a href="https://github.com/shirock/common-gateway-framework/">common-gateway</a>。
+        <li>CommonGateway 的主程式只有一個 index.php 。
+            查看 CommonGateway 源碼: 「<a href="https://github.com/shirock/common-gateway-framework/blob/main/main/index.php">index.php</a>」。
         <li>CommonGateway的實作概念可以參考「<a href="{{ site.baseurl }}/archives/10568163.html">RESTful 介面實作示範</a>」。
     </ul>
 </div>
 
 <div class="note">
-我原先將源碼託管在 google code 。但 2015 年 3月時，google code 通知用戶將終止託管服務。故我現在轉移到 github 託管。想知道舊修改記錄的人，請參考「<a href="https://code.google.com/p/schema-database/source/browse/#svn%2Ftrunk%2Fweb">common-gateway history at google code</a>」。
+我原先將源碼託管在 google code 。但 2015 年 3月時，google code 通知用戶將終止託管服務。故我現在轉移到 github 託管。
 </div>
 
 <h4>
@@ -162,48 +165,49 @@ CommonGateway 首先根據 URL 的服務名稱搜尋控制器的程式碼文件�
 </p>
 
 <p>
-CommonGateway 結合了一些常見的名稱慣例，它的名稱可能組合與優先順序如下:
+CommonGateway 結合了一些常見的名稱慣例，設計者可按自己的使用習慣為文件取名。
+它的名稱可能組合與優先順序如下:
 </p>
 
 <p>
 第一例: URL 的服務名稱為 book 。控制器類別名稱為 Book，各文件名稱組合的採用順序如下:
 </p>
 <pre class="language-text">
-    controllers/book.php, views/book/, helpers/book.php.
-    controllers/Book.php, views/Book/, helpers/Book.php.
+    1st: controllers/book.php, views/book/, helpers/book.php.
+    2nd: controllers/Book.php, views/Book/, helpers/Book.php.
 </pre>
 
 <p>
 第二例: URL 的服務名稱為 Book 。控制器類別名稱為 Book，各文件名稱組合的採用順序如下:
 </p>
 <pre class="language-text">
-    controllers/Book.php, views/Book/, helpers/Book.php.
-    controllers/book.php, views/book/, helpers/book.php.
+    1st: controllers/Book.php, views/Book/, helpers/Book.php.
+    2nd: controllers/book.php, views/book/, helpers/book.php.
 </pre>
 
 <p>
 第三例: URL 的服務名稱為 book_profile 。控制器類別名稱為 Book_Profile，各文件名稱組合的採用順序如下:
 </p>
 <pre class="language-text">
-    controllers/book_profile.php, views/book_profile/, helpers/book_profile.php.
-    controllers/Book_Profile.php, views/Book_Profile/, helpers/Book_Profile.php.
-    controllers/BookProfile.php, views/BookProfile/, helpers/BookProfile.php.
+    1st: controllers/book_profile.php, views/book_profile/, helpers/book_profile.php.
+    2nd: controllers/Book_Profile.php, views/Book_Profile/, helpers/Book_Profile.php.
+    3rd: controllers/BookProfile.php, views/BookProfile/, helpers/BookProfile.php.
 </pre>
 
 <p>
 第四例: URL 的服務名稱為 Book_Profile 。控制器類別名稱為 Book_Profile，各文件名稱組合的採用順序如下:
 </p>
 <pre class="language-text">
-    controllers/Book_Profile.php, views/Book_Profile/, helpers/Book_Profile.php.
-    controllers/BookProfile.php, views/BookProfile/, helpers/BookProfile.php.
+    1st: controllers/Book_Profile.php, views/Book_Profile/, helpers/Book_Profile.php.
+    2nd: controllers/BookProfile.php, views/BookProfile/, helpers/BookProfile.php.
 </pre>
 
 <p>
 第五例: URL 的服務名稱為 bookProfile 。控制器類別名稱為 BookProfile，各文件名稱組合的採用順序如下:
 </p>
 <pre class="language-text">
-    controllers/bookProfile.php, views/bookProfile/, helpers/bookProfile.php.
-    controllers/BookProfile.php, views/BookProfile/, helpers/BookProfile.php.
+    1st: controllers/bookProfile.php, views/bookProfile/, helpers/bookProfile.php.
+    2nd: controllers/BookProfile.php, views/BookProfile/, helpers/BookProfile.php.
 </pre>
 
 <div class="note">
@@ -222,49 +226,50 @@ PHP 不會區分類別名稱的大小寫，所以 new Book(); 與 new book(); �
 CommonGateway 會自動根據服務名稱與 <var>$_SERVER['HTTP_ACCEPT']</var> 內容，載入對應的視圖。
 視圖的副檔名按 Ruby on Rails 型式，開頭為 p ，後接文件型態名稱。
 例如 HTML 文件的視圖副檔名為 phtml (這正是 PHP 最早期使用的副檔名)； XML 文件的視圖副檔名為 pxml。
-比較特別的是 JSON 文件的視圖，其副檔名為 pjs ，不是 pjson 。
-或者可以省略視圖，此時將自動調用 <code>json_encode($model)</code>。
 </p>
 
 <p>
-CommonGateway 會根據控制項回傳資料的型態，決定傳給視圖的資料來源(model)內容為何。
-回傳值處理規則如下列。
+比較特別的是 JSON 文件的視圖，其副檔名為 pjs ，不是 pjson 。
+或者可以省略視圖，此時將自動調用 <code>json_encode($model)</code>，
+參考「<a href="https://www.rocksaying.tw/archives/44123533.html">JSON 處理之自動回傳</a>」之說明。
+</p>
+
+<p>
+CommonGateway 會先調用控制項方法，並接收方法回傳值。然後按下列規則處理回傳值，變成視圖內的 $model 變數。
+回傳值處理規則請看「<a href="https://github.com/shirock/common-gateway-framework/blob/main/doc/return-value-as-model.md">控制項方法回傳資料如何成為視圖的資料來源</a>」。
+簡列於下:
 </p>
 
 <ul>
-    <li>介於100 ~ 599間的整數，視為控制項直接回傳 HTTP 狀態碼。 
-        CommonGateway 會將該狀態碼回傳給瀏覽器，而不載入任何視圖。
-
-    <li>null (或無回傳值) : 大部份控制項的動作沒有函數回傳值，故這是預設行為。
+    <li>若為 null (或無回傳值): 大部份控制項的方法不回傳內容，故這是預設行為。
         此時會將控制項的公開屬性當作資料來源(model)，將控制項的公開屬性內容展開成視圖活動範圍內的區域變數。
         例如控制項有公開屬性 title ，CommonGateway 會將此屬性指派為視圖的區域變數 $title 。
 
-    <li>true : 同回傳 null 的情形。
+    <li>若為 true : 同回傳 null 的情形。
 
-    <li>false : 視同控制項自行處理回應工作， CommonGateway 不會繼續載入視圖。
+    <li>若為 false : 視同控制項自行處理回應工作， CommonGateway 不會繼續載入視圖。
 
-    <li>array : CommonGateway 會將回傳的陣列視為資料來源，
+    <li>若為介於 100 ~ 599 間的整數，視為控制項直接回傳 HTTP 狀態碼。 
+        CommonGateway 會將該狀態碼回傳給瀏覽器，而不載入任何視圖。
+
+    <li>若為 array : CommonGateway 會將回傳的陣列視為資料來源，
         指派為視圖內的區域變數 $model，並將陣列內容展開成為視圖內的區域變數。
         注意，若陣列為數字索引陣列，則展開後的區域變數名稱之字首為 data_ 。
         例如 $model = array('a', 'b') ，則視圖內展開的區域變數內容將是
         $data_0 == 'a', $data_1 == 'b' ，餘類推。
 
-    <li>object : CommonGateway 會將回傳的個體視為資料來源，
+    <li>若為 object : CommonGateway 會將回傳的個體視為資料來源，
         指派為視圖內的區域變數 $model。
         此時在視圖內將可以調用該個體的方法。這可以取代視圖輔助器(helper)。
     
-    <li>若 $model 型態為 array 或 object ，則視圖內將同時分配一個和控制項名稱相同的別名。
-        例如控制項 MyBook 回傳的資料為 object ，則視圖內的 $model 等於 $MyBook 。
+    <li>若為 array 或 object ，則視圖內將同時分配一個和控制項名稱相同的別名。
+        例如控制項 MyBook 回傳的資料為 object ，包含一個資料欄位 Title 。
+        則在視圖內，可用 $model-&gt;Title 或 $MyBook-&gt;Title 取得 Title 內容。
+
 </ul>
 
 <p>
-其實 CommonGateway 的源碼和 wiki 頁面，我大概一年前就已經放入源碼庫了。
-但後來事情一忙，就忘了發佈在 blog 上。我還一直以為我已經發佈到 blog 了。
-最近打算在動手修改一些功能，先把這個介紹內容發佈出來，日後再更新修改內容。
-</p>
-
-<p>
-CommonGateway 除了引入 RoR 的設計概念外，實作時的 PHP 主要參考對象是 <a href="http://www.codeigniter.org.tw/">CodeIgniter</a> 。
+CommonGateway 除了引入 RoR 的設計概念外，實作時的 PHP 主要參考對象是 <a href="https://codeigniter.org.tw/">CodeIgniter</a> 。
 只是 CommonGateway 只著重在「web service」的設計工作，而不是網站設計。
 如果你需要一個簡潔有效網站設計框架，我會建議你使用 CodeIgniter 。
 </p>
@@ -273,8 +278,10 @@ CommonGateway 除了引入 RoR 的設計概念外，實作時的 PHP 主要參�
 <ul>
 <li><a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a></li>
 <li><a href="{{ site.baseurl }}/archives/21334380.html">CommonGateway初步第二篇 - JSON 的處理與資料上傳</a></li>
+<li><a href="{{ site.baseurl }}/archives/44123533.html">CommonGateway JSON 處理之自動回傳</a></li>
 <li><a href="{{ site.baseurl }}/archives/44121826.html">CommonGateway 控制項動作函數回傳狀態碼的作法之二</a></li>
 </ul>
+
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/21318202.html</div>
 <div class="roodo-comments"><hr/><h6>樂多舊回應</h6>
 <blockquote class="roodo-comment">
