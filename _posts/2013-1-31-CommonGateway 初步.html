@@ -3,16 +3,20 @@ title: CommonGateway 初步
 category: programming
 old-category: PHP
 tags: [php,restful,rest,common-gateway]
+lastupdated: 2021-06-05
 permalink: /archives/21320836.html
 ---
-<p><dfn>CommonGateway</dfn> (以下簡稱 <dfn>CG</dfn>) 概念請參閱「<a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>」。源碼託管於 github : <a href="https://github.com/shirock/rocksources/tree/master/web/common-gateway">common-gateway</a> ，主要程式碼只有一個 index.php 。或者參考下列命令列操作下載。但建議使用 git 管理。
+
+<p>
+<dfn>CommonGateway Framework</dfn> (以下簡稱 <dfn>CG</dfn>)。概念請見「<a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>」。源碼託管於 github : <a href="https://github.com/shirock/common-gateway-framework/">common-gateway-framework</a> ，主要程式碼只有一個 index.php 。
 </p>
 
-<pre class="language-text">
-wget https://raw.githubusercontent.com/shirock/rocksources/master/web/common-gateway/index.php
-</pre>
+<p>
+本文範例之完整內容請見「<a href="https://github.com/shirock/common-gateway-framework/tree/main/demo/api-first-step">demo/api-first-step</a>」。以下將逐步說明如何使用 CG 設計你的第一個 RESTful API 。
+</p>
 
-<p>把 <dfn>CG</dfn> (也就是那份 index.php) 放在網頁根目錄下，然後以瀏覽器開啟網頁。本文範例的網頁根目錄是 <code>/home/rock/web/cg</code> ，瀏覽器開啟的 URL 是 <code>http://localhost/cg/index.php</code> 。開啟後，會看到下列的提示內容:
+<p>
+把 <dfn>CG</dfn> (也就是那個 index.php) 放在網頁根目錄下，然後以瀏覽器或你慣用的 REST client 工具開啟網頁。本文範例的網頁根目錄是 <code>/home/rock/public/cg</code> ，瀏覽器開啟的 URL 是 <code>http://localhost/cg/index.php</code> 。開啟後，會看到下列的提示內容:
 </p>
 
 <pre class="language-text">
@@ -23,31 +27,42 @@ You may put your controller class in controllers/{class_name}.php.
 
 <!--more-->
 
-<p>看到提示了嗎？根據提示，建立 <dfn>controllers</dfn> 子目錄，再於 controllers 子目錄下建立 book.php ，用以撰寫本文示範用的 <dfn>Book</dfn> 控制項。 controllers/book.php 最初內容如下:
+<p>
+看到提示了嗎？根據提示，建立 <dfn>controllers</dfn> 子目錄，再於 controllers 子目錄下建立 book.php ，用以撰寫本文示範用的 <dfn>Book</dfn> 控制項。 controllers/book.php 最初內容如下:
 </p>
 
 {% highlight php %}
+
 <?php
 class Book {
 
 }
 ?>
+
 {% endhighlight %}
 
-<p>再用瀏覽器開啟 URL <code>http://localhost/cg/index.php/book</code> (以下提到 URL 時，會省略 index.php 前的部份)，<dfn>CG</dfn> 就會根據 URL 後面的路徑 "book" 去找 book.php 並執行它。因為我還沒在 <dfn>Book</dfn> 類別中實作任何東西，所以 <dfn>CG</dfn> 會顯示下列內容:
+<p>
+再用瀏覽器或 REST client 開啟 URL <code>http://localhost/cg/index.php/book</code> (以下提到 URL 時，會省略 index.php 前的主機部份)，<dfn>CG</dfn> 就會根據 URL 後面的路徑 "book" 去找 book.php 並執行它。因為我還沒在 <dfn>Book</dfn> 類別中實作任何東西，所以 <dfn>CG</dfn> 會顯示下列內容:
 </p>
 
 <pre class="language-text">
 501 This service does not implement get or index method.
 </pre>
 
-<p>以瀏覽器直接開啟 URL 時，預設的請求方法(<dfn>REQUEST_METHOD</dfn>)就是 <dfn>GET</dfn> ，所以 <dfn>CG</dfn> 會去調用 <code>get()</code> 或 <code>index()</code> 方法。而 <code>get()</code> 與 <code>index()</code> 的差異表現在語意上。 <code>index()</code> 用於列出 <dfn>Book</dfn> 記錄的索引列表，所以它不需給予參數。而 <code>get()</code> 至少要一個參數指示取回哪一筆 <dfn>Book</dfn> 記錄。
+<div class="note">
+使用 REST client 工具時，HTTP request header 請記得設置一行「Accept: application/json」。 CG 遵守 RESTful 規範，依請求標頭的 <dfn>Accept</dfn> 內容決定回傳的文件型態，而不是一律回傳 JSON 資料。
+</div>
+
+<p>
+以瀏覽器或 REST client 直接開啟 URL 時，預設的請求方法(<dfn>REQUEST_METHOD</dfn>)就是 <dfn>GET</dfn> ，所以 <dfn>CG</dfn> 會去調用 <code>get()</code> 或 <code>index()</code> 方法。而 <code>get()</code> 與 <code>index()</code> 的差異表現在語意上。 <code>index()</code> 用於列出 <dfn>Book</dfn> 記錄的索引列表，所以它不需給予參數。而 <code>get()</code> 至少要一個參數指示取回哪一筆 <dfn>Book</dfn> 記錄。
 </p>
 
-<p>我先寫 <code>index()</code>。就簡單列出兩筆書名記錄吧。
+<p>
+我先寫 <code>index()</code>。就簡單列出兩筆書名記錄吧。
 </p>
 
 {% highlight php %}
+
 <?php
 class Book {
     function index() {
@@ -71,21 +86,38 @@ class BookModel {
         $this->title = $title;
     }
 }
-
 ?>
+
 {% endhighlight %}
 
-<p>再次用瀏覽器讀取 index.php/book ，會看到下列內容:
+<p>
+再次用瀏覽器或 REST client 讀取 index.php/book 。
+</p>
+
+<p>
+瀏覽器會看到下列內容:
 </p>
 
 <pre class="language-text">
 Template is missing. Missing views/book/index.phtml.
 </pre>
 
-<p>根據提示，建立子目錄 views/book 。這裡將放置 <dfn>Book</dfn> 控制項所需要的視圖(View)。繼續建立視圖文件 index.phtml ，內容如下:
+<p>
+RESTful client 若正確設置 Accept 標頭，則會看到 JSON 資料，如下圖所示:
+</p>
+
+<img src="https://www.rocksaying.tw/images/2013-1-31-CommonGateway%20%E5%88%9D%E6%AD%A5-1.png" alt="restful client 範例圖" />
+
+<p>
+當客戶端送來的 Accept 標頭是 <code>application/json</code> 時， CG 會自動回傳 JSON 資料 (參考 <a href="{{ site.baseurl }}/archives/44123533.html">JSON 處理之自動回傳</a>)。用瀏覽器送來的 Accept 標頭則會是 html ，所以 CG 會按控制項方法，嘗試載入視圖 views/book/index.phtml 。以下繼續說明如何建立 HTML 視圖。
+</p>
+
+<p>
+根據提示，建立子目錄 views/book 。這裡將放置 <dfn>Book</dfn> 控制項所需要的視圖(View)。繼續建立視圖文件 index.phtml ，內容如下:
 </p>
 
 {% highlight html %}
+
 <html>
 <ul>
     <?php foreach ($books as $book): ?>
@@ -97,12 +129,15 @@ Template is missing. Missing views/book/index.phtml.
 Index date: <?=$time?>
 </p>
 </html>
+
 {% endhighlight %}
 
-<p>我的 <code>index()</code> 回傳了一個陣列 <var>$index_model</var>， <dfn>CG</dfn> 就會把它的內容展開變成視圖 index.phtml 中的區域變數內容，變數名稱就是陣列的鍵。所以在 index.phtml 會出現 <var>$books</var> 和 <var>$time</var> 兩個變數。然後用 PHP 的樣板語法印出 <var>$books</var> 和 <var>$time</var> 的內容。
+<p>
+範例 Book 的 <code>index()</code> 回傳了一個陣列 <var>$index_model</var>， <dfn>CG</dfn> 會按 <a href="{{ site.baseurl }}/archives/21318202.html">自己的回傳值轉換規則</a> 把它的內容展開變成視圖 index.phtml 中的區域變數內容，變數名稱就是陣列的鍵。所以在 index.phtml 會出現 <var>$books</var> 和 <var>$time</var> 兩個變數。然後用 PHP 的樣板語法印出 <var>$books</var> 和 <var>$time</var> 的內容。
 </p>
 
-<p>再次讀取 idnex.php/book ，終於出現能看的內容了。
+<p>
+再次讀取 idnex.php/book ，終於出現能看的內容了。
 </p>
 
 <pre class="language-text">
@@ -111,13 +146,15 @@ Index date: <?=$time?>
     456 : Book XYZ
 
 Index date: 2013-01-30 06:33:05
+
 </pre>
 
-
-<p>繼續實作 <code>get()</code> 方法，它需要一個 ISBN 參數以便查詢。這個參數內容會由 <dfn>CG</dfn> 根據 URL 路徑第二節的內容指派過來，我的 <dfn>Book</dfn> 不需要處理這件事。
+<p>
+繼續實作 <code>get()</code> 方法，它需要一個 ISBN 參數以便查詢。所以宣告 <code>get()</code> 方法參數清單的第一個參數為 <var>$isbn</var>。參數內容會由 <dfn>CG</dfn> 根據 URL 路徑第二節的內容傳遞過來，不需控制項插手。
 </p>
 
 {% highlight php %}
+
 class Book {
     function index() {
         // 省略...
@@ -131,26 +168,31 @@ class Book {
                     ->select();
         */
         if ($isbn != '123') {
-            HttpResponse::exception(HttpResponse::NOT_FOUND);
+            HttpResponse::not_found();
         }
         $this->book = new BookModel('123', 'book 123');
         return;
     }
 }
+
 {% endhighlight %}
 
-<p>建立 <dfn>GET</dfn> 對應的 get.phtml 視圖。由於 <code>get()</code> 方法沒有回傳值，所以 <dfn>CG</dfn> 會直接將 <dfn>Book</dfn> 當成資料模型(Model)，將它的公開屬性成員(<var>$this->book</var>)變成視圖 get.phtml 內的區域變數 <var>$book</var>。
+<p>
+接著建立 <dfn>GET</dfn> 對應的 get.phtml 視圖。此處 </code> <code>get()</code> 方法示範的是沒有回傳值處理方式，和上述 <code>index()</code> 所示範的方式不同。所以 <dfn>CG</dfn> 在此選擇的回傳值轉換規則是直接將 <dfn>Book</dfn> 控制項當成資料模型(<var>$model</var>)，將它的公開屬性成員(<var>$this->book</var>)變成視圖 get.phtml 內的區域變數 <var>$book</var>。
 </p>
 
 {% highlight html %}
+
 <html>
 <h2><?=$book->title?></h2>
 <p>ISBN of this book: <?=$book->isbn?>
 </p>
 </html>
+
 {% endhighlight %}
 
-<p>用瀏覽器開啟 index.php/book/123 ，會出現下列內容:
+<p>
+用瀏覽器開啟 index.php/book/123 ，會出現下列內容:
 </p>
 
 <pre class="language-text">
@@ -159,15 +201,17 @@ book 123
 ISBN of this book: 123
 </pre>
 
-<p>到此目前，我已經建立了一個非常基本的 <dfn>Book</dfn> 查詢功能的 Web 服務了。
+<p>
+到此目前，我已經建立了一個非常基本的 <dfn>Book</dfn> 查詢功能的 RESTful API 服務了。
 </p>
 
 <p>
-如果 Book:get() 方法是回傳 new BookModel() 而不是指派給控制項欄位，則視圖內要改用 $model 或 $Book 取得資料內容。
+如果 Book-&gt;get() 方法是回傳 <code>new BookModel()</code> ，則視圖內可用 $model 或 $book 取得資料內容。
 例如:
 </p>
 
 {% highlight php %}
+
 class Book {
     function get($isbn) {
         if ($isbn != '123') {
@@ -176,31 +220,23 @@ class Book {
         return new BookModel('123', 'book 123');
     }
 }
+
 {% endhighlight %}
 
-<p>對應上述回傳值的視圖如下:
-</p>
-
-{% highlight html %}
-<html>
-<h2><?=$model->title?></h2>
-<p>ISBN of this book: <?=$model->isbn?>
-</p>
-</html>
-{% endhighlight %}
-
-<h5>問答時間
+<h5>
+問答時間
 </h5>
 
-<p>本問答中沒提到的內容，可能在「<a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>」就說明了。也請參考。
+<p>
+本問答中沒提到的內容，可能在「<a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>」就說明了。
 </p>
 
 <h6>
-等等，我的控制項的父類別是什麼？
+問：等等，我的控制項的父類別是什麼？
 </h6>
 
 <p>
-使用過其他框架的使用者，應該會注意到本文的控制項類別 <dfn>Book</dfn> 沒有繼承任何父類別。
+答：使用過其他框架的使用者，應該會注意到本文的控制項類別 <dfn>Book</dfn> 沒有繼承任何父類別。
 </p>
 
 <p>
@@ -210,10 +246,11 @@ class Book {
 </p>
 
 <h6>
-我一定要實作 index 方法嗎？
+問：我一定要實作 index 方法嗎？
 </h6>
+
 <p>
-不需要。如果你的控制項原本就不打算提供索引服務，那就不需要實作 index 方法。
+答：不需要。如果你的控制項原本就不打算提供索引服務，那就不需要實作 index 方法。
 GET, POST, PUT, DELETE 或其它方法也一樣，如果你不需要，你就不必留個位子。
 </p>
 
@@ -222,42 +259,49 @@ GET, POST, PUT, DELETE 或其它方法也一樣，如果你不需要，你就不
 </p>
 
 <h6>
-我不用載入視圖與指派視圖的資料嗎？
+問：我不用載入視圖與指派視圖的資料嗎？
 </h6>
 
-<p><dfn>CG</dfn> 會根據使用方法自動載入對應的視圖(View)。
+<p>答：<dfn>CG</dfn> 會根據使用方法自動載入對應的視圖(View)。
+你只要在 <code>views</code> 子目錄建立符合預期名稱的目錄與視圖文件即可；也就是相同控制項名稱的子目錄，以及相同方法名稱的視圖文件。
 </p>
 
-<p>你只要在 <code>views</code> 子目錄建立符合預期名稱的目錄與視圖文件即可；也就是相同控制項名稱的子目錄，以及相同方法名稱的視圖文件。例如 <dfn>CG</dfn> 調用 <dfn>Book</dfn> 控制項的 <code>get()</code> 方法之後，就會自動載入 views/book/get.phtml 視圖。
+<p>
+例如 <dfn>CG</dfn> 調用 <dfn>Book</dfn> 控制項的 <code>get()</code> 方法之後，就會自動載入 views/book/get.phtml 視圖。
 </p>
 
-<p>視圖也是一份 PHP 文件，所以它的副檔名首字冠上 'p' 以便和一般文件區隔。
+<p>
+如果你的控制項想自己處理視圖，那就讓你的控制項方法回傳 <var>false</var> 。此時 <dfn>CG</dfn> 就不會用自己的方法去找尋與載入視圖。
+</p>
+
+<p>
+視圖也是一份 PHP 文件，所以它的副檔名首字冠上 'p' 以便和一般文件區隔。
 而副檔名後的內容則表示回傳給客戶端的視圖的文件型態。
 瀏覽器預設要求的文件型態是 <dfn>html</dfn> ，所以本文建立的視圖副檔名都是 <dfn>.phtml</dfn> 。
 稍後的文章會說明如何回傳像 JSON, XML 的文件給客戶端。
 </p>
 
-<p>最後，從 <dfn>CG</dfn> 的立場來看，它與控制項的關係是它調用了控制項的方法，所以控制項方法應該會把結果回傳給它。
+<p>
+最後，從 <dfn>CG</dfn> 的立場來看，它與控制項的關係是它調用了控制項的方法，所以控制項方法應該會把結果回傳給它。
 因此 <dfn>CG</dfn> 會自己從控制項方法的回傳內容決定最後要呈現給客戶端的資料是什麼，並將資料塞到視圖中。
 故你也不需要指派視圖的資料。
 </p>
 
 <h6>
-這裡說明了控制項和視圖的處理策略，但好像沒有規劃資料模型?
+問：這裡說明了控制項和視圖的處理策略，但好像沒有規劃資料模型?
 </h6>
 
-<p>因為我設計 <dfn>CG</dfn> 時，主要搭配資料庫處理函數 <a href="https://schema-database.googlecode.com/">schema-database</a> 使用。
-而 schema-database 提供一個泛用型資料類別，可以映射資料庫的表格欄位成為資料模型(model)的屬性，也就不需要特地為了資料庫表格而建立一個關聯的資料模型類。
-因此 <dfn>CG</dfn> 沒有設計資料模型的處理策略。
-換句話說，你可以自由選擇你偏好的資料庫處理工具。
+<p>
+答：<dfn>CG</dfn> 沒有設計資料模型的處理策略。
+換句話說，你可以自由選擇你偏好的資料庫框架。
 </p>
 
-<p>本文範例中的 BookModel 只是示範用。如果實際搭配 schema-database ，我不用定義 BookModel 類別。
-</p>
 <h6>相關文章</h6>
 <ul>
+<li><a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a></li>
 <li><a href="{{ site.baseurl }}/archives/21334380.html">CommonGateway初步第二篇 - JSON 的處理與資料上傳</a></li>
-<li><a href="{{ site.baseurl }}/archives/44121826.html">CommonGateway 控制項動作函數回傳狀態碼的作法之二</a></li>
 <li><a href="{{ site.baseurl }}/archives/44123533.html">CommonGateway JSON 處理之自動回傳</a></li>
+<li><a href="{{ site.baseurl }}/archives/44121826.html">CommonGateway 控制項動作函數回傳狀態碼的作法之二</a></li>
 </ul>
+
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/21320836.html</div>
