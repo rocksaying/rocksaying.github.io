@@ -3,10 +3,12 @@ title: CommonGateway 初步第二篇 - JSON 的處理與資料上傳
 category: programming
 old-category: PHP
 tags: [php,restful,rest,common-gateway]
+lastupdated: 2021-06-06
 permalink: /archives/21334380.html
 ---
+
 <p>
-接續「<a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a>」的內容，說明 CommonGateway 如何處理 JSON 文件與資料上傳。
+本文接續「<a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a>」的內容，說明 CommonGateway 如何處理 JSON 文件與資料上傳。
 </p>
 
 <h4>
@@ -24,6 +26,7 @@ HTTP協定定義了兩項關於文件型態的標頭(header)，一為 <dfn>Accep
 </p>
 
 <!--more-->
+
 <h5>
 Accept
 </h5>
@@ -45,7 +48,7 @@ HTTP/1.1: <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.
 </p>
 
 <p>
-不過在大多數的 RESTful 應用中，客戶端的 <dfn>Accept</dfn> 通常只會宣告一種文件型態。
+不過在 RESTful 應用場合，客戶端的 <dfn>Accept</dfn> 通常只會宣告一種文件型態：<code>Accept: application/json</code>。
 </p>
 
 <h5>
@@ -65,7 +68,7 @@ HTTP/1.1: <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.
 </blockquote>
 
 <p>
-舉例來說，瀏覽器上的表單(FORM)要提交表單內容給服務端程式，預設的文件型態會是 <code>multipart/form-data</code> 。服務端的 PHP 程式若要動態地產生一份 JPEG 圖檔內容回應給瀏覽器，則必須加上一行 <code>header('Content-Type: image/jpeg');</code> 。
+舉例來說，瀏覽器的表單(FORM)要提交表單內容給服務端程式，會宣告文件型態會是 <code>Content-Type: multipart/form-data</code> 。服務端的 PHP 程式若要動態地產生一份 JPEG 圖檔內容回應給瀏覽器，則必須加上一行 <code>header('Content-Type: image/jpeg');</code> 。
 </p>
 
 <p>
@@ -82,20 +85,16 @@ RESTful 客戶端
 
 <p>
 為了簡化本文內容，本文不會告訴你如何設計一個 RESTful 客戶端。
-請你自己找一個來用。 Firefox 的用戶可以考慮安裝擴充套件「<a href="https://addons.mozilla.org/en-us/firefox/addon/restclient/">RESTClient</a>」。RESTClient 的使用畫面如下圖所示:
+請你自己找一個來用。 Firefox 的用戶可以考慮安裝擴充套件「<a href="https://addons.mozilla.org/en-us/firefox/addon/restclient/">RESTClient</a>」。
 </p>
-
-<img src="http://pcdn1.rimg.tw/photos/3367985_q0gjs74_l.png"
-    alt="RESTClient 使用畫面"/>
 
 <p>
 本文後續內容將使用這些 RESTful 客戶端操作。
 </p>
 
 <div class="note">
-如果你想知道如何以 PHP 上傳資料給 RESTful 服務，可參考「<a href="{{ site.baseurl }}/archives/20068918.html">PHP 透過 HTTP POST 方法上傳資料與檔案給 RESTful 服務</a>」。
+如果你想知道 PHP 上傳資料給 RESTful 服務的程式細節，可參考「<a href="{{ site.baseurl }}/archives/20068918.html">PHP 透過 HTTP POST 方法上傳資料與檔案給 RESTful 服務</a>」。
 </div>
-
 
 <h4>
 回應 JSON 文件給客戶端
@@ -105,90 +104,57 @@ RESTful 客戶端
 CG 遵循 HTTP 協定內容，要求容戶端以標頭 <dfn>Accept</dfn> 描述它希望取得的文件型態。這也是大部份 RESTful 服務供應者所要求的使用方式。
 </p>
 
-<p>
-本文接續上一篇的進度。首先，宣告 <code>Accept: application/json</code> 標頭，請服務端回應 JSON 文件。
-</p>
+<p>在「<a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a>」中就提到，當客戶端送來的 Accept 標頭是 <code>application/json</code> 時， CG 會自動回傳 JSON 資料 (參考 <a href="{{ site.baseurl }}/archives/44123533.html">JSON 處理之自動回傳</a>)。</p>
+
+<h4>
+回應 XML 文件給客戶端
+</h4>
 
 <p>
-先不修改任何程式碼，用 RESTClient 送出請求，看看會回應什麼。
+先不修改任何程式碼，用 RESTClient 送出請求，但設置請求標頭 "Accept: application/xml" ，看看會回應什麼。
 </p>
 
 <ul>
-    <li>Headers: Accept: application/json
+    <li>Headers: Accept: application/xml
     <li>Method: GET
-    <li>URL: index.php/book<br/>
-    (此處省略了前面的位址)
+    <li>URL: index.php/book (此處省略了前面的位址)
 </ul>
 
 <p>
-Response Body (Raw):
+Response Body:
 </p>
 
 <pre class="language-text">
-Template is missing. Missing views/book/index.pjs.
+Template is missing. Missing views/book/index.pxml.
 </pre>
 
 <p>
-雖然第一篇中我已經實作了 index.phtml 而且也確實會回應內容給客戶端。但這次我加上了 <code>Accept: application/json</code> ，所以 CG 這次載入視圖時不是找 index.phtml 而是找 index.pjs 。
+雖然前篇中我已經實作了 index.phtml 而且也確實會回應內容給客戶端。但這次我加上了 <code>Accept: application/xml</code> ，所以 CG 這次載入視圖時不是找 index.phtml 而是找 index.pxml 。
 </p>
 
 <p>
-在第一篇中，我已經知道在 index 視圖中，會有兩個資料，分別是 <var>$books</var> 和 <var>$time</var>。我決定 JSON 文件中只需要用 <var>$books</var> 的內容就好，所以我簡單地調用 <code>json_encode()</code> 產生 <var>$books</var> 的 JSON 內容，回應給客戶端。
-index.pjs 實作內容如下。
+在前篇中，我已經知道在 index 視圖中，會有兩個資料，分別是 <var>$books</var> 和 <var>$time</var>。我決定 XML 文件中只需要用 <var>$books</var> 的內容就好。建立 views/book/index.pxml ，回傳的 XML 結構如下：
 </p>
 
-{% highlight php %}
-<?php
-echo json_encode($books);
-?>
+{% highlight xml %}
+
+<xml>
+  <books>
+    <?php foreach ($books as $book): ?>
+    <book isbn="<?=$book->isbn?>"><?=$book->title?></book>
+    <?php endforeach ?>
+  </books>
+</xml>
+
 {% endhighlight %}
 
 <p>
-CG 會依 <dfn>Accept</dfn> 載入對應的視圖，也會自動添加正確的 <dfn>Content-Type</dfn> 文件型態宣告。所以我不用寫出 <code>header('Content-Type: application/json');</code> 。
+CG 會依 <dfn>Accept</dfn> 載入對應的視圖，也會自動添加正確的 <dfn>Content-Type</dfn> 文件型態宣告。所以不用寫出 <code>header('Content-Type: application/xml');</code> 。
 </p>
 
 <p>
-RESTClient 再送出一次請求。現在我就會看到預期的 <var>$books</var> 內容了，而且是 JSON 文件。
+RESTClient 再送出一次請求。現在我就會看到預期的 <var>$books</var> 內容了，而且是 XML 文件。
 </p>
-
-<pre class="language-text">
-[{"isbn":"123","title":"book 123"},{"isbn":"456","title":"Book XYZ"}]
-</pre>
-
-<p>
-依樣畫葫蘆，接著實作 get.pjs 。
-</p>
-
-{% highlight php %}
-<?php
-echo json_encode($book);
-?>
-{% endhighlight %}
-
-<p>
-RESTClient 送出請求內容。
-</p>
-<ul>
-    <li>Headers: Accept: application/json
-    <li>Method: GET
-    <li>URL: index.php/book/123
-</ul>
-
-<p>
-得到下列 JSON 內容。
-</p>
-<pre class="language-text">
-{"isbn":"123","title":"book 123"}
-</pre>
-
-<p>
-只要你實作了 *.pxml 的內容，使用者就可索取 XML 文件內容；實作了 *.ppdf ，使用者就可取回 PDF 文件內容，以下類推。只要你實作了與 <dfn>Accept</dfn> 相對應的文件型態視圖(View)，CG 就會自動載入它，並將控制項(Controller)回傳的資料(Model)放入其中，最後將視圖所呈現的內容回應給客戶。
-</p>
-
-<p>
-既然這項工作決定的是最終呈現給客戶的內容，那麼 CG 就讓程式人員把焦點放在視圖的設計工作，而不用更動控制項或資料模型。
-</p>
-
 
 <h4>
 提交文件給服務端
@@ -199,14 +165,55 @@ RESTful 提交文件給服務端的方法有兩種。一為 POST ，對應資料
 </p>
 
 <h5>
-簡單的 Book 表單
+POST 實作
 </h5>
 
 <p>
-我先很快速地實作一個 Book 表單，以便我先用傳統的表單新增書籍資料。
+在 controllers/book.php 中添加 <dfn>post()</dfn> 內容。
 </p>
 
 {% highlight php %}
+
+class Book {
+    // ... 省略其他部份
+
+    function post() {
+        if (empty($_POST['isbn']) or empty($_POST['title']))
+            HttpResponse::badRequest();
+
+        $book = new BookModel($_POST['isbn'], $_POST['title']);
+        file_put_contents(getenv('TEMP') . '/book-' . $book->isbn, serialize($book));
+        return HttpResponse::OK;
+    }
+}
+
+{% endhighlight %}
+
+<div class="note">
+Book.php 完整內容請見「<a href="https://github.com/shirock/common-gateway-framework/tree/main/demo/api-first-step">demo/api-first-step</a>」。
+</div>
+
+<p>
+從 <var>$_POST</var> 中取得表單內容這件事，對 PHP 程式人員是常識。 CG 不會改變這項常識。
+範例不打算用資料庫，所以我只是很簡單地把書籍資料儲存在個別的檔案中，以 ISBN 為檔名。
+</p>
+
+<p>
+RESTful API 設計時，一般只需要回應狀態碼 200 (Ok) 或 201 (Created) 表示成功即可。錯誤通常回應狀態碼 400 (Bad request)、406 (Not acceptable) 或 409 (Conflict) 。所以我的方法直接回傳狀態碼 200 或 400 ，告訴 CG 僅需回應狀態碼，不必處理視圖。
+</p>
+
+<h5>
+以傳統表單新增書籍資料
+</h5>
+
+<p>
+為了示範 CG 無縫接軌傳統表單與 JSON 的提交工作，我先快速地實作一個 Book 表單，以便用傳統的表單新增書籍資料。
+</p>
+
+<p>controllers/BookForm.php</p>
+
+{% highlight php %}
+
 <?php
 class BookForm {
     function edit() {
@@ -214,11 +221,17 @@ class BookForm {
     }
 }
 ?>
+
 {% endhighlight %}
 
+<p>views/bookForm/edit.phtml</p>
+
 {% highlight html %}
+
 <html>
-<form action=<?=$_SERVER['SCRIPT_NAME'].'/book'?> method="POST">
+<meta charset="utf-8">
+
+<form action="<?=cg\html\request_url('book')?>" method="POST">
     <label for="isbn">ISBN: </label>
     <input type="text" id="isbn" name="isbn" />
     <br/>
@@ -228,7 +241,12 @@ class BookForm {
     <button type="submit">Submit</button>
 </form>
 </html>
+
 {% endhighlight %}
+
+<div class="note">
+這裡出現的 <code>cg\html\request_url()</code> 用途請見「<a href="https://github.com/shirock/common-gateway-framework/blob/main/doc/cg-html-functions.md">CommonGateway 的 HTML 公用函數</a>」。
+</div>
 
 <p>
 表單重點在於以 POST 方法提交表單內容給 index.php/book 。
@@ -238,78 +256,10 @@ class BookForm {
 在某些 RESTful 服務中，其實不提供這類傳統表單。它們僅提供 API ，而操作介面與表單等 UI 內容一律讓程式人員自己設計。
 </p>
 
-<h5>
-POST 實作
-</h5>
-
-<p>
-我想沒有必要再一步步引導了。我直接在 controllers/book.php 中添加 <dfn>post()</dfn> 內容。
-</p>
-
-{% highlight php %}
-class Book {
-    // ... 省略其他部份
-    function get($isbn) {
-        /*
-        $book = $query->from('book')->
-                    ->where(array('isbn' => $isbn))
-                    ->select();
-        */
-        $data_filepath = '/tmp/' . $isbn;
-        if (!file_exists($data_filepath)) {
-            HttpResponse::exception(HttpResponse::NOT_FOUND);
-        }
-
-        $this->book = unserialize(file_get_contents($data_filepath));
-        return;
-    }
-
-    function post() {
-        //var_dump($_POST);
-        //return false;
-        $book = new BookModel($_POST['isbn'], $_POST['title']);
-        file_put_contents('/tmp/' . $book->isbn, serialize($book));
-        return $book;
-    }
-}
-{% endhighlight %}
-
-<p>
-從 <var>$_POST</var> 中取得表單內容這件事，對 PHP 程式人員是常識。
-在此還不打算用資料庫，所以我只是很簡單地把書籍資料儲存在個別的檔案中，以 ISBN 為檔名。
-</p>
-
-<p>
-我再實作一個 views/book/post.phtml ，以便回應新增成功的訊息。
-不過在 RESTful 架構中，一般只需要回應狀態碼 200 (Ok) 或 201 (Created) 表示成功即可。錯誤通常回應狀態碼 400 (Bad request)、406 (Not acceptable) 或 409 (Conflict) 。
-</p>
-
-{% highlight html %}
-<html>
-<p>Create new book:
-<a href="<?=$_SERVER['SCRIPT_NAME'].'/book/'.$book->isbn?>">
-<?=$book->title?></a>.
-</p>
-</html>
-{% endhighlight %}
-
-<p>
-這個回應的網頁內容提供一個連結指向新增的書籍資料。
-</p>
-
-<h5>
-以傳統表單新增書籍資料
-</h5>
-
 <p>
 用瀏覽器開啟 index.php/bookForm/edit ，出現書籍資料表單。
-填入 ISBN 與 Title ，然後送出。例如填寫 ISBN: 123456，Title: BookXyz 。
-回應:
+填入 ISBN 與 Title ，然後送出。例如填寫 ISBN: 123456，Title: BookXyz 送出，瀏覽器會看到 200 OK 。若漏填 ISBN 或 Title ，瀏覽器會看到 400 Bad Request 。
 </p>
-
-<pre class="language-text">
-Create new book: BookXyz.
-</pre>
 
 <p>
 PHP 程式人員都很熟悉這個操作了，不作說明。
@@ -324,11 +274,11 @@ PHP 程式人員都很熟悉這個操作了，不作說明。
 </p>
 
 <p>
-答案是，什麼都不必寫。
+答案是，你的程式什麼都不必寫。
 </p>
 
 <p>
-以 RESTClient 提交內容給 index.php/book :
+你直接用 RESTClient 提交內容給 index.php/book 。提交設置如下所示:
 </p>
 
 <ul>
@@ -338,21 +288,12 @@ PHP 程式人員都很熟悉這個操作了，不作說明。
     <li>Body: <code>{"isbn": 789, "title": "NO 789"}</code>
 </ul>
 
-{% highlight html %}
-<html>
-<p>Create new book:
-<a href="/rock/cg/index.php/book/789">
-NO 789</a>.
-</p>
-</html>
-{% endhighlight %}
-
 <p>
 因為這次我用 POST 方法提交的文件型態是 JSON ，所以我要用 <dfn>Content-Type</dfn> 告訴服務端上傳的文件是 JSON 。當然文件內容(Body)也必須符合 JSON 格式。
 </p>
 
 <p>
-CG 在收到資料後，會根據 <dfn>Content-Type</dfn> 的宣告，從 <var>php://input</var> 讀取客戶端上傳的 JSON 文件內容，解碼它(<span class="note">CG目前僅支援傳統表單和JSON文件上傳</span>)。最後把解碼結果保存在 <var>$_POST</var> 與 <var>$_REQUEST</var> 變數中。
+CG 收到資料後，會根據 <dfn>Content-Type</dfn> 的宣告，從 <var>php://input</var> 讀取客戶端上傳的 JSON 文件內容，解碼它(<span class="note">CG目前僅支援傳統表單和JSON文件上傳</span>)。最後把解碼結果保存在 <var>$_POST</var> 與 <var>$_REQUEST</var> 變數中。
 </p>
 
 <p>
@@ -364,7 +305,7 @@ PUT 實作
 </h5>
 
 <p>
-對 CG 而言，PUT 和 POST 的處理策略相同。一樣地根據 <dfn>Content-Type</dfn> 將上傳資料保存在 <var>$_POST</var> 與 <var>$_REQUEST</var> 變數 (<span class="note">需要更新 CG 到 r60 以上版本才會這樣做</span>)。
+對 CG 而言，PUT 和 POST 的處理策略相同。同樣根據 <dfn>Content-Type</dfn> 將上傳資料保存在 <var>$_POST</var> 與 <var>$_REQUEST</var> 變數。
 </p>
 
 <p>
@@ -372,33 +313,25 @@ PUT 實作
 </p>
 
 {% highlight php %}
-class Book {
-    /**
-    @resource request
-     */
-    var $book;
 
+class Book {
     // ... 其他內容省略
 
     function put($isbn = false) {
         if (empty($isbn))
-            HttpResponse::exception(HttpResponse::BAD_REQUEST);
-        //global $HTTP_RAW_POST_DATA; var_dump($HTTP_RAW_POST_DATA);
-        //var_dump($GLOBALS['HTTP_RAW_POST_DATA']);
-        //var_dump($this->book); // CG inject.
-        //var_dump($_POST);
-        //var_dump($_REQUEST);
-        //return false;
-        $data_filepath = '/tmp/' . $isbn;
+            HttpResponse::badRequest();
+
+        $data_filepath = getenv('TEMP') . '/book-' . $isbn;
         if (!file_exists($data_filepath)) {
-            HttpResponse::exception(HttpResponse::NOT_FOUND);
+            HttpResponse::notFound();
         }
         $book = unserialize(file_get_contents($data_filepath));
         $book->title = $_REQUEST['title'];
         file_put_contents($data_filepath, serialize($book));
-        return $book;
+        return HttpResponse::OK;
     }
 }
+
 {% endhighlight %}
 
 <p>
@@ -411,40 +344,7 @@ PUT 用於更新現有的書籍資料，所以需要一個參數 <var>$isbn</var
 </p>
 
 <p>
-其次，此處有一個特殊的修改。我在 Book 類的屬性成員 <var>$book</var> 前加上了一個文件區塊，並在裡面寫了一個 <code>@resource request</code> 注記(annotation)。這個注記讓 CG 知道它可以將客戶端上傳的資料，注入這個屬性成員中。在 CG <a href="https://code.google.com/p/schema-database/source/detail?r=60">r60</a> 版本之前，PUT 方法只能透過這個途徑取得客戶端上傳資料。
-</p>
-
-<p>
-Book 中不必實作任何關於 <var>$this->book</var> 的內容，而是由 CG 透過屬性注入的途徑賦予 <var>$this->book</var> 實際內容。所以在 <dfn>put()</dfn> 就可以透過 <var>$this->book</var> 取得使用者上傳資料。
-</p>
-
-<div class="note">
-這個程式技巧被稱為「屬性注入」，是 IoC 模式的一種技巧。可參考我寫的「<a href="{{ site.baseurl }}/archives/18627329.html">PHP 自訂註記與屬性注入功能</a>」。想進一步了解 IoC 實作的人，參考「<a href="{{ site.baseurl }}/archives/13454601.html">PHP 實作 IoC/DI 設計模式</a>」。
-</div>
-
-<p>
-最後，加入 PUT 的視圖 views/book/put.phtml 。
-</p>
-
-{% highlight html %}
-<html>
-<p>Update book.
-Back to <a href="<?=$_SERVER['SCRIPT_NAME'].'/book/'.$book->isbn?>">
-<?=$book->title?></a>.
-</p>
-</html>
-{% endhighlight %}
-
-<p>
-在這個視圖中，有一個與 CG <a href="https://code.google.com/p/schema-database/source/detail?r=59">r59</a> 補強有關的用法。先前，當控制項回傳資料的型態是 object 時， CG 會賦予其變數名稱為 <var>$model</var>。在 <a href="https://code.google.com/p/schema-database/source/detail?r=59">r59</a> 的補強中， CG 還會賦予控制項同名名稱。
-</p>
-
-<p>
-在此例中，控制項的 <dfn>put()</dfn> 方法回傳的 <var>$book</var> 是一個 object ，又控制項名稱為 <dfn>book</dfn> 。故 CG 會賦予這個資料兩個變數名稱，一為 <var>$model</var> ，另一為 <var>$book</var> 。
-</p>
-
-<p>
-最後，以 RESTClient 提交內容給 index.php/book/789 :
+最後，以 RESTClient 提交下列內容到 index.php/book/789 :
 </p>
 
 <ul>
@@ -455,17 +355,8 @@ Back to <a href="<?=$_SERVER['SCRIPT_NAME'].'/book/'.$book->isbn?>">
 </ul>
 
 <p>
-Response Body (Raw):
+若你的 URL 最後一段漏了 ISBN ，服務會回應 400 Bad request 。若是無此記錄，則會回應 404 Not found 。成功修改則回應 200 。
 </p>
-
-{% highlight html %}
-<html>
-<p>Update book.
-Back to <a href="/rock/cg/index.php/book/789">
-NO 789 2nd edition</a>.
-</p>
-</html>
-{% endhighlight %}
 
 <h4>
 結語
@@ -476,14 +367,19 @@ POST 是傳統的 Web 應用上傳方法中，最常被應用的途徑。甚至�
 </p>
 
 <p>
-CG 是針對 PHP 熟練者的 RESTful MVC 容器。它的目標是一方面消除HTML表單與 RESTful 的資料來源差異性，另一方面保留原本的程式寫法與工具，而不讓程式人員牽就 framework 所提供的方法。所以它會儘可能地在符合 PHP 語義的前提下，將資料轉變為 PHP 程式人員熟悉的傳統用法；例如用 <var>$_POST</var> 取得使用者上傳的文件內容。
+CG 是針對 PHP 熟練者的 RESTful MVC 容器。它的目標是一方面消除 HTML 表單與 RESTful 的資料來源差異性，另一方面保留原本的程式寫法與工具，而不讓程式人員牽就 framework 所提供的方法。所以它會儘可能地在符合 PHP 語義的前提下，將資料轉變為 PHP 程式人員熟悉的傳統用法；例如用 <var>$_POST</var> 取得使用者上傳的文件內容。
 </p>
 
 <p>
-CG 所要展現的 RESTful 設計概念，在這兩篇文章中已經說明的差不多了。接下來會是一些比較零碎的主題。例如 Config 、更多的資源注入內容、基於 XForm 設計概念的 UI 設計方式以及搭配資料庫函數庫。
+CG 所要展現的 RESTful 設計概念，在初步的這兩篇文章中已經說明的差不多了。接下來會是一些比較零碎的主題。例如 Config 、更多的資源注入內容、設計 Web 網站。
 </p>
+
 <h6>相關文章</h6>
 <ul>
+<li><a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a></li>
+<li><a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a></li>
 <li><a href="{{ site.baseurl }}/archives/44123533.html">CommonGateway JSON 處理之自動回傳</a></li>
+<li><a href="{{ site.baseurl }}/archives/44121826.html">CommonGateway 控制項動作函數回傳狀態碼的作法之二</a></li>
 </ul>
+
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/21334380.html</div>
