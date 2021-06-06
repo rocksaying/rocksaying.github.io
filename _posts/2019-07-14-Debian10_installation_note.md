@@ -1,16 +1,16 @@
 ---
-title: Debian 10 安裝筆記
+title: Debian 10 安裝筆記升級篇
 category: computer
 tags: [debian,kde,buster,firefox,ime,中文,thinkpad,trackpoint]
-lastupdated: 2019-07-14
+lastupdated: 2021-06-06
 ---
 
 上星期 (2019-07-06) Debian 官方發行了 Debian 10 (buster)。正好我的筆電 Thinkpad X200s 上的 Debian 8 也實在有點舊了。就趁著週末重新安裝作業系統，升級到 Debian 10 。
 
 安裝步驟大致依照我以前的筆記。
 
-* [Debian 8 (jessie) 安裝筆記 基礎安裝篇]({% post_url 2014-9-16-Debian 8 (jessie) 安裝筆記 基礎篇 %})
-* [Debian 8 (jessie) 安裝筆記 中文環境篇]({% post_url 2014-9-26-Debian 8 (jessie) 安裝筆記 中文環境篇 %})
+* [Debian 8~10 安裝筆記 基礎安裝篇]({% post_url 2014-9-16-Debian 8 (jessie) 安裝筆記 基礎篇 %})
+* [Debian 8~10 安裝筆記 中文環境篇]({% post_url 2014-9-26-Debian 8 (jessie) 安裝筆記 中文環境篇 %})
 * [Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel]({% post_url 2015-5-18-Debian 8 (jessie) 安裝筆記 Firefox 與 Iceweasel %})
 * [Debian 8 (jessie) WiFi 啟用後斷線]({% post_url 2016-03-29-Debian_8_(jessie)_wifi_disconnect %})
 * [我與小黑(ThinkPad X200s)之小紅點]({% post_url 2010-3-1-我與小黑(ThinkPad X200s)之小紅點 %})
@@ -59,7 +59,37 @@ Firefox 的商標問題解套了，所以 Debian 重新將 Firefox 瀏覽器納�
 
 Debian 10 提供 Google 思源字體套件 (*fonts-noto* 等系列套件) 。安裝桌面環境時，就會順便安裝思源字體。文泉驛 (*fonts-wqy*) 和文鼎字體 (*ttf-arphic*) 不再是中文桌面環境所需字體套件。視個人需要安裝。
 
-*hime* 輸入法，配合 KDE 升級，其 KDE 模組套件從 hime-qt4-immodule 升級到 *hime-qt5-immodule* 。 
+*hime* 輸入法引擎，配合 KDE 升級，其 KDE 模組套件從 hime-qt4-immodule 升級到 *hime-qt5-immodule* 。
+但使用時發現在某些軟體中，看不到 hime 的選字區。很麻煩，所以改用 *fcitx* 輸入法引擎。
+
+*fcitx5* 在 KDE 桌面環境下，無法執行設定程式。出現錯誤訊息：「找不到模組 fcitx5。請用 kcmshell5 --list 看所有的模組清單」。我判斷 fcitx5 和 KDE 環境的可用性不佳。所以選擇安裝上一代的 fcitx 。
+
+我安裝的 fcitx 套件是:
+
+* fcitx
+* fcitx-frontend-qt5
+* fcitx-frontend-gtk2
+* fcitx-frontend-gtk3
+* kde-config-fcitx
+* fcitx-table-array30 : 行列30輸入法字根表。
+* fcitx-chewing : 酷音輸入法。
+
+自己編輯啟動指令稿 $HOME/.xsessionrc 加入下列設置:
+
+```text
+export LANG=zh_TW.utf8
+export LANGUAGE=zh_TW
+
+export GTK_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export QT_IM_MODULE=fcitx
+```
+
+在 KDE 的「系統設定 -> 啟動與關閉 -> 自動啟動」的設定頁面，增加一個桌面程式，選擇 *fcitx* 。以便在進入 KDE 桌面後，自動啟動 fcitx 。
+
+最後，從「系統設定 -> 區域設定 -> 輸入法」的設定頁面，設定你慣用的輸入法內容。
+
+![KDE 系統設定 - 輸入法](https://www.rocksaying.tw/images/debian10_kde_fcitx_setting.png)
 
 #### rc.local
 
