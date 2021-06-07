@@ -2,7 +2,7 @@
 title: Debian 10 安裝筆記升級篇
 category: computer
 tags: [debian,kde,buster,firefox,ime,中文,thinkpad,trackpoint]
-lastupdated: 2021-06-06
+lastupdated: 2021-06-07
 ---
 
 上星期 (2019-07-06) Debian 官方發行了 Debian 10 (buster)。正好我的筆電 Thinkpad X200s 上的 Debian 8 也實在有點舊了。就趁著週末重新安裝作業系統，升級到 Debian 10 。
@@ -71,7 +71,7 @@ Debian 10 提供 Google 思源字體套件 (*fonts-noto* 等系列套件) 。安
 * fcitx-frontend-gtk2
 * fcitx-frontend-gtk3
 * kde-config-fcitx
-* fcitx-table-array30 : 行列30輸入法字根表。
+* <del>fcitx-table-array30</del> : 行列30輸入法字根表。因為這個字根表不含一級簡碼，很難用。我自己轉了一份：「[Fcitx行列30字碼表添加一級簡碼]({% post_url 2021-06-07-fcitx輸入法引擎行列30字碼表添加一級簡碼 %})」。
 * fcitx-chewing : 酷音輸入法。
 
 自己編輯啟動指令稿 $HOME/.xsessionrc 加入下列設置:
