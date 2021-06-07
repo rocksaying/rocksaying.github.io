@@ -62,7 +62,7 @@ Debian 10 提供 Google 思源字體套件 (*fonts-noto* 等系列套件) 。安
 *hime* 輸入法引擎，配合 KDE 升級，其 KDE 模組套件從 hime-qt4-immodule 升級到 *hime-qt5-immodule* 。
 但使用時發現在某些軟體中，看不到 hime 的選字區。很麻煩，所以改用 *fcitx* 輸入法引擎。
 
-*fcitx5* 在 KDE 桌面環境下，無法執行設定程式。出現錯誤訊息：「找不到模組 fcitx5。請用 kcmshell5 --list 看所有的模組清單」。我判斷 fcitx5 和 KDE 環境的可用性不佳。所以選擇安裝上一代的 fcitx 。
+*fcitx5* 在 KDE 桌面環境下，無法執行設定程式。出現錯誤訊息：「找不到模組 fcitx5。請用 kcmshell5 --list 看所有的模組清單」。查了 Debian packages 的套件清單， fcitx5 似乎在 Debian buster 還不成熟，至少要 Debian bullseye 。所以選擇安裝上一代的 fcitx 。
 
 我安裝的 fcitx 套件是:
 
@@ -76,7 +76,7 @@ Debian 10 提供 Google 思源字體套件 (*fonts-noto* 等系列套件) 。安
 
 自己編輯啟動指令稿 $HOME/.xsessionrc 加入下列設置:
 
-```text
+```sh
 export LANG=zh_TW.utf8
 export LANGUAGE=zh_TW
 
