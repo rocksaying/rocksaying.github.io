@@ -1,12 +1,13 @@
 ---
-title: VirtualBox 與 Debian/Ubuntu 客端額外功能(Guest Additions)補遺
+title: VirtualBox 與 Debian/Ubuntu 客端額外功能(Guest Additions)安裝細節
 category: computer
-old-category: 電腦技術
-tags: [ubuntu,VirtualBox,debian]
+tags: [linux,debian,ubuntu,virtualbox,vm,]
+lastupdated: 2021-06-09
 permalink: /archives/11521083.html
 ---
+
 <p>
-本補遺收集的內容是安裝 Debian/Ubutnu 作為 VirtualBox Guest OS 的情形。如果你的 Guest OS 是 Windows 系統，本補遺對你無用。
+本文收集的內容是安裝 Debian/Ubutnu 作為 VirtualBox Guest OS 的情形。如果你的 Guest OS 是 Windows 系統，本文對你無用。
 </p>
 
 <ul>
@@ -19,29 +20,32 @@ permalink: /archives/11521083.html
     <li>螢幕解析度可調整項目變少了
     </li>
 
-    <li>掛載分享資料夾
+    <li>掛載共用資料夾
     </li>
 </ul>
 
 <!--more-->
-<div class="note">
-最近更新日期: 2010-09-15 <br/>
-首次發佈日期: 2010-01-26
-</div>
 
 <h4>
-必須要先安裝的套件
+安裝客端額外功能(Guest Additions)
 </h4>
+
+<p>
+首先要安裝三個系統套件，參考「<a href="https://wiki.debian.org/VirtualBox">VirtualBox - Debian Wiki</a>」。
+然後再插入 Guest Additions CD 映像，執行其中的 VBoxLinuxAdditions.run 。
+</p>
 
 <h5>
 一、安裝 <dfn>build-essential</dfn>
 </h5>
 <p>
-安裝 <dfn>build-essential</dfn> ，這將用於編譯 VirtualBox 客端功能的 Linux 核心模組。
+安裝程式編譯工具，將用於編譯 VirtualBox 客端功能的 Linux 核心模組。
 </p>
 
 <pre><code class="language-term">
+
 $ sudo apt-get install build-essential
+
 </code></pre>
 
 <h5>
@@ -52,7 +56,9 @@ $ sudo apt-get install build-essential
 </p>
 
 <pre><code class="language-term">
+
 $ sudo apt-get install dkms
+
 </code></pre>
 
 <p>
@@ -60,20 +66,58 @@ $ sudo apt-get install dkms
 </p>
 
 <h5>
-三、下載 VirtualBox Guest Additions ISO
+三、安裝當前 linux 核心版本標頭檔套件
 </h5>
 <p>
-當你使用 VirtualBox 選單的「安裝 Guest Additions ...」之後，VirtualBox 通常會自動下載客端額外功能軟體的 CD ISO 影像檔，並且自動掛載。
+這將用於編譯 VirtualBox 客端功能的 Linux 核心模組。Linux 核心標頭檔套件名稱是 linux-headers-???? 版本號碼。核心版本號碼可用指令 <code>uname -r</code> 查。最簡單的安裝指令如下:
 </p>
+
+<pre><code class="language-term">
+
+$ sudo apt-get install linux-headers-$(uname -r)
+
+</code></pre>
+
 <p>
-若你碰到未自動下載的情形時，也可自行到官方網站下載: <a href="http://download.virtualbox.org/virtualbox/3.1.6/VBoxGuestAdditions_3.1.6.iso">Download VBoxGuestAdditions_3.1.6.iso</a> 。下載後，再自行透過 CD 裝置掛載該 ISO 影像。
+升級 Linux 核心版本之後，也要安裝新核心版本的標頭檔套件。
 </p>
-<div class="note">
-Ubuntu 10.04 提供的 VirtualBox 是 3.1.6 OSE 版，所以上列連結提供的是 3.1.6.iso 。如果你安裝的 VirtualBox 版本不是 3.1.6 ，請自行瀏覽 <a href="http://download.virtualbox.org/virtualbox/">http://download.virtualbox.org/virtualbox/</a> 下載合適的版本。
-</div>
+
+<h5>
+四、下載 VirtualBox Guest Additions ISO
+</h5>
+
 <p>
-掛載 VBoxGuestAdditions CD ISO檔後，開啟它，並以 root 的權限執行其中的 <dfn>VBoxLinuxAdditions-x86.run</dfn> (32bit) ／ <dfn>VBoxLinuxAdditions-amd64.run</dfn> (64bit)。
+注意，當升級 Linux 核心版本或主機端(host)的 VirtualBox 版本之後，你都需要再做一次安裝 Guest Additions 的工作。
 </p>
+
+<p>
+選擇 VirtualBox 選單的「安裝 Guest Additions ...」或「裝置\插入 Guest Additions CD 映像」之後，VirtualBox 就會自動下載客端額外功能軟體的 CD ISO 影像檔，並放入虛擬機的光碟機中。
+</p>
+
+<p><del>
+若你碰到未自動下載的情形時，也可自行到官方網站下載: <a href="http://download.virtualbox.org/">Download VBoxGuestAdditions_3.1.6.iso</a> 。下載後，再自行透過 CD 裝置掛載該 ISO 影像。
+</del></p>
+
+<p>
+如果你的虛擬機正在桌面環境，那麼插入 Guest Additions CD 的動作應該會觸發自動掛載。如果你是在命令列環境，你得要手動掛載。如下:
+</p>
+
+<pre><code class="language-term">
+
+$ sudo mount -t iso9660 /dev/cdrom /mnt
+
+</code></pre>
+
+<p>
+掛載 VBoxGuestAdditions CD ISO檔後，開啟它，並以 root 的權限執行其中的 <dfn>VBoxLinuxAdditions-x86.run</dfn> (32bit) ／ <dfn>VBoxLinuxAdditions-amd64.run</dfn> (64bit)，或是 <dfn>VBoxLinuxAdditions.run</dfn> 。如下:
+</p>
+
+<pre><code class="language-term">
+
+$ cd /mnt
+$ sudo ./VBoxLinuxAdditions.run
+
+</code></pre>
 
 <h4>
 滑鼠整合沒作用(Mouse pointer integration not work)
@@ -144,19 +188,9 @@ See also: <a href="http://forums.virtualbox.org/viewtopic.php?f=3&t=15679">Howto
 </p>
 
 <h4>
-不能掛載分享資料夾
+不能掛載共用資料夾
 </h4>
+
 <p>
-請參考本人另兩篇說明文章。
+請參考「<a href="{{ site.baseurl }}/archives/7374721.html">Linux 掛載 VirtualBox 共用資料夾</a>」。
 </p>
-<ul>
-    <li><a href="{{ site.baseurl }}/archives/7374721.html">
-    Mount VirtualBox's shared folders in linux</a>
-    </li>
-    <li><a href="{{ site.baseurl }}/archives/10460743.html">
-    VirtualBox 以 Ubuntu 作為 Guest OS 時的客端額外功能使用筆記 </a>
-    </li>
-</ul>
-<p>
-See also: <a href="http://forums.virtualbox.org/viewtopic.php?f=29&t=15868">HOWTO: Use Shared Folders</a>.
-</p><div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/11521083.html</div>
