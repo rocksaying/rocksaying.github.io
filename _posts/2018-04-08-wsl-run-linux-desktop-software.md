@@ -1,5 +1,5 @@
 ---
-title: Windows Subsystem for Linux (WSL) 使用 Linux 桌面軟體與中文字型
+title: Windows Subsystem for Linux (WSL) 使用 Linux GUI 桌面軟體與中文字型
 category: computer
 tags: [wsl, linux, debian, windows, x-window, 中文]
 cover: https://i.imgur.com/xrY65Iy.png
