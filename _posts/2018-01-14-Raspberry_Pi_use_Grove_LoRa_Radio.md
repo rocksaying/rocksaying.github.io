@@ -1,7 +1,7 @@
 ---
 title: Raspberry Pi 使用 Grove LoRa 無線模組負擔 LoRa Gateway 角色
 category: programming
-tags: [raspberrypi,lora,mqtt,iot,智慧農業]
+tags: ["raspberry pi",rpi,lora,mqtt,iot,智慧農業]
 lastupdated: 2018-03-17
 cover: https://i.imgur.com/ZRfesO9.jpg
 ---

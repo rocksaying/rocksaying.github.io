@@ -1,7 +1,7 @@
 ---
 title: Raspberry Pi 使用 4G 數據網路
 category: computer
-tags: [raspberrypi,4g,iot,智慧農業]
+tags: ["raspberry pi",rpi,4g,iot,智慧農業]
 ---
 
 在進行智慧農業的案子時，如何讓 Raspberry Pi 連接 internet 也是一個令人困擾的問題。在空曠的農田中， WiFi 訊號收不到，乙太網路不夠長。在 Raspberry Pi 上裝一個 4G 網路設備，可說是必然的答案。在蒐集資料以及實際使用後，我個人認為使用 4G Router (俗稱 4G 行動分享器) 是最簡易的解決方案。
