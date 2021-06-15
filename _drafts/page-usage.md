@@ -42,6 +42,8 @@ comment 型態有三種，不同型態使用的回應串也不同。
 
 ## title 2
 
+h1 是文章標題。所以內文的標題層次可從 h2 開始。
+
 block-level HTML elements — e.g. \<div\>, \<table\>, \<pre\>, \<p\>, etc. — must be separated from surrounding content by blank lines, and the start and end tags of the block should not be indented with tabs or spaces.
 
 Span-level HTML tags — e.g. \<span\>, \<cite\>, or \<del\> — can be used anywhere in a Markdown paragraph.
