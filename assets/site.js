@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 //** start adjust image
 function setImageWithTitle() {
-  var p;
+  let p;
   if (this.parentElement.tagName == 'P' || this.parentElement.tagName == 'p') {
     p = this.parentElement;
   }
@@ -24,8 +24,8 @@ function setImageWithTitle() {
 }
 
 function toggleResizeImage() {
-  var dw = parseInt(this.getAttribute('data-width'));
-  var fs = parseInt(this.getAttribute('data-fullsize'));
+  let dw = parseInt(this.getAttribute('data-width'));
+  let fs = parseInt(this.getAttribute('data-fullsize'));
   //console.log(dw);
 
   if (dw <= parseInt(this.clientWidth) && fs == 0) {
@@ -44,8 +44,8 @@ function toggleResizeImage() {
   //this.nextElementSibling.style.width = this.width+'px';
 }
 
-var imgs=document.querySelectorAll('article img');
-var i, img;
+let imgs=document.querySelectorAll('article img');
+let i, img;
 for (i=0;i<imgs.length;++i) {
   img=imgs[i];
   img.title='圖'.concat(i+1,': ',(img.title?img.title:img.alt));
@@ -61,28 +61,22 @@ for (i=0;i<imgs.length;++i) {
 }
 //**** end adjust image
 
-// var categories = [
-// {'name':'<span class="iconfont">&#xf015;</span>', 'url':'/'},
-// {'name':'Programming', 'url':'/categories/programming.html'},
-// {'name':'電腦技術', 'url':'/categories/computer.html'},
-// {'name':'經濟學/奧地利經濟學派', 'url':'/categories/economics.html'},
-// {'name':'哲學/老子', 'url':'/categories/philosophy.html'},
-// {'name':'閱讀隨筆', 'url':'/categories/reading.html'},
-// {'name':'休閒生活', 'url':'/categories/life.html'},
-// {'name':'快報記事', 'url':'/categories/events.html'}
-// ];
-//
-// var cl=[];
-// categories.forEach(function(c, i){
-// cl.push('<div class="item"><a href="',
-//   c.url,'">', c.name,'</a></div>');
-// });
-// document.getElementById('site_categories').innerHTML=cl.join('');
-
-var inotes = document.querySelectorAll('section.post span.note');
+let inotes = document.querySelectorAll('section.post span.note');
 for (i = 0; i < inotes.length; ++i) {
     inotes[i].insertAdjacentHTML('beforebegin', '<span class="note_no">*'+(i+1)+'</span>');
     inotes[i].insertAdjacentHTML('afterbegin', '*'+(i+1)+' ');
+}
+
+// tag 觸發 google adsense 搜尋
+let tags = document.getElementsByClassName("tag");
+// 第一個是"分類"，跳過。
+for (i = 1; i < tags.length; ++i) {
+    tags[i].addEventListener('click', (ev)=>{
+        let gsc_input = document.getElementById("gsc-i-id1");
+        let gsc_btn = document.getElementsByClassName("gsc-search-button");
+        gsc_input.value = ev.target.innerText;
+        gsc_btn = gsc_btn[gsc_btn.length-1].click();
+    });
 }
 
 }, false);
