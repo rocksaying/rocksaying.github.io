@@ -5,8 +5,6 @@ tags: ["sqlite","postgresql","sql server", mariadb", "mysql"]
 lastupdated: 2021-07-15
 ---
 
-# SQL Datatypes 相容性整理
-
 我只整理數值、序號、文字和日期這四種類型。至於 BINARY, BIT, MONEY, 地理位置, XML 等通用性太低的類型，則不使用。
 
 下列是個人使用的資料庫系統，按個人喜好程度排列：
