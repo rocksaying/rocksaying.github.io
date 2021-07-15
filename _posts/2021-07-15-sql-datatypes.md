@@ -1,7 +1,7 @@
 ---
 title: SQL Datatypes 相容性整理
 category: programming
-tags: ["sqlite","postgresql","sql server", mariadb", "mysql"]
+tags: ["sqlite","postgresql","sql server", "mariadb", "mysql"]
 lastupdated: 2021-07-15
 ---
 
