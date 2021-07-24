@@ -44,7 +44,7 @@ NUMERIC 和 DECIMAL 是同義字。適用於帶小數點的精準數值，或比
 
 NUMERIC/DECIMAL 可用引數:
 
-* precision 包含小數點左右兩側數目的有效位數。每家 DBMS 的最大範圍不同。
+* precision 包含小數點左右兩側數目的有效位數。每家 DBMS 的最大範圍不同。省略 precision 引數時，各家預設也不同。
 * scale 小數位數。
 
 ```sql
@@ -59,6 +59,7 @@ NUMERIC
 
 ```
 
+* mssql 省略 precision 引數時，預設為 18 。其他 DBMS 未說明。
 * pgsql 省略 scale 引數時，預設為小數位數的上限，而不是 0 。
 
 ### REAL, FLOAT
@@ -101,6 +102,7 @@ sqlite 自動建立為表格中每一筆資料行建立 rowid/oid/\_rowid\_ ，�
 CREATE TABLE s (v INTEGER);
 INSERT INTO s VALUES (11), (22);
 SELECT rowid,* FROM s;
+-- select 的欄位清單必須明確寫出 rowid ，才會包含 rowid 內容。
 
 CREATE TABLE s2 (id INTEGER PRIMARY KEY, v INTEGER);
 INSERT INTO s2 (v) VALUES (33), (44);
@@ -182,7 +184,7 @@ sqlite 忽視長度引數，也就是它沒有長度限制。所以 VARCHAR  等
 日期和時間的型態與定義在 DBMS 差異很大。但所有 DBMS 都承認 ISO-8601 的表達格式。如下列所示：
 
 * 日期: yyyy-mm-dd 。例如 2021-07-14 (西元2021年7月14日)。
-* 時間: hh:mm:ss\[.fff\] 。例如 01:23:45 (1時23分45秒) 或 01:23:45.678 (1時23分45秒又678毫秒)。
+* 時間: hh:mm:ss\[.fff\] 。24小時制。例如 01:23:45 (上午1時23分45秒) 或 13:23:45.678 (下午1時23分45秒又678毫秒)。
 * 時區: 在時間後加上正負時數。例如台北時間 +08:00 。
 * 日期和時間: *dateTtime* ，'T' 是分隔字元。例如 2021-07-14T01:23:45 。有些 DBMS 接受用空格分隔日期和時間。
 
@@ -203,7 +205,7 @@ INSERT INTO dt VALUES (
 
 ### sqlite 的日期與時間
 
-sqlite 接受 DATE, DATETIME 等型態名稱，但沒有對應的儲存類別。實務上是用 TEXT 或 INTEGER 儲存，再用它內建的日期與時間函數轉換。
+sqlite 接受 DATE, DATETIME 等型態名稱，但沒有對應的儲存類別。實務上是用 TEXT 或 INTEGER 儲存，再用它內建的日期與時間函數計算。
 
 ### DATE, TIME
 
@@ -214,6 +216,7 @@ DATE 儲存日期，TIME 儲存時間。一般不包含時區。
 當你想在一個欄位中同時儲存日期和時間，各 DBMS 給的資料型態名稱都不一樣。
 
 pgsql 是 TIMESTAMP ，mssql 是 DATETIME2 ，mysql 則是 DATETIME 。
+
 mysql 有 TIMESTAMP 型態，但這是自動產生資料，不可修改。
 
 ## 參考來源
