@@ -2,7 +2,7 @@
 title: 學習 ECMAScript/JavaScript 6 - 新函數語法 - Arrow function, Rest and Spread parameters, Default value
 category: programming
 tags: [javascript,ecmascript,es6,function]
-lastupdated: 2017-01-13
+lastupdated: 2021-07-29
 ---
 
 ECMAScript/JavaScript 6 為函數定義與操作增加了一些新的語法，在此一併介紹。它們分別是:
@@ -32,25 +32,21 @@ function(parameter_list) {
     return result;
 }
 
-// 簡寫原則1: 有一個以上的參數時，可以省略表示參數清單的 () 。
+// 簡寫原則1: 只有一個參數時，可以省略表示參數清單的 () 。
 (x) => {}
   // or
 x => {}
-
-(x,y) => {}
-  // or
-x,y => {}
 
 // 簡寫原則1但書: 但沒有參數時，不可省略 () 。
 () => {}
 
 // 簡寫原則2: 函數本體只有一行敘述時，可以省略表示函數區塊的 {} 。
-//   而且這時自動將該行執行結果作為函數回傳值，不能使用 return 。
-x,y => {
+// 而且這時自動將該行執行結果作為函數回傳值，不能使用 return 。
+(x, y) => {
     return x+y;
 }
-  // or
-x,y => x+y
+// or
+(x, y) => x+y
 
 {% endhighlight %}
 
@@ -199,13 +195,15 @@ xyz('x', 'z');
 * [ES6 In Depth: Arrow functions](https://hacks.mozilla.org/2015/06/es6-in-depth-arrow-functions/)
 * [ES6 In Depth: Rest parameters and Defaults](https://hacks.mozilla.org/2015/05/es6-in-depth-rest-parameters-and-defaults/)
 * [COSCUP 2014 遊記]({% post_url 2014-7-21-COSCUP 2014 遊記 %})
+* [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)
 * 石頭閒語: [ECMAScript/JavaScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
-* 石頭閒語: [ECMAScript/JavaScript 6- for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
+* 石頭閒語: [ECMAScript/JavaScript 6 - for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
 * 石頭閒語: [ECMAScript/JavaScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - var, let 和 const]({% post_url 2015-12-04-ES6_var,let,const %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
-* [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)
+* 石頭閒語: [ECMAScript/JavaScript 6 - Promise]({% post_url 2021-07-29-ES6_Promise %})
