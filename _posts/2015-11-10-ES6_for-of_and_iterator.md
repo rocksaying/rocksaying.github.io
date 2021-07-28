@@ -2,6 +2,7 @@
 title: 學習 ECMAScript/JavaScript 6 - for-of 與 iterator
 category: programming
 tags: [javascript,ecmascript,es6,iterator]
+lastupdated: 2021-07-29
 ---
 
 在 ECMAScript/JavaScript 6 之前， ECMAScript/JavaScript 的迭代迴圈有下列三種:
@@ -25,6 +26,7 @@ var a = [1,2,3];
 for (let i = 0; i < a.length; ++i) {
     console.log(a[i]);
 }
+// output 1 2 3
 
 // A common anti-pattern of for-in loop.
 for (let i in a) {
@@ -34,6 +36,7 @@ for (let i in a) {
     and you may get some thing you don't expected.
     */
 }
+// output 1 2 3
 
 var o = {
     'a': 1,
@@ -45,6 +48,7 @@ var o = {
 for (let k in o) {
     console.log(k + ': ' + o[k]);
 }
+// output a:1 b:2 c:3
 {% endhighlight %}
 
 for-in 是初學 JavaScript 的人最常誤用的迭代操作，他們經常錯誤地使用 for-in 走訪陣列。直到 jQuery 出現之後，因為 jQuery 比較*酷* ，那些初學者改用 jQuery 的迭代方法操作陣列，這才讓 for-in 走訪陣列的錯誤用法逐漸消失。
@@ -58,6 +62,7 @@ a.forEach(function(v, i, self){
     console.log(v);
 });
 
+// 錯誤用例
 var o = {
     'a': 1,
     'b': 2,
@@ -75,18 +80,18 @@ o.forEach(function(v, k, self){
 
 {% highlight javascript %}
 for (k in a) {
-    console.log(k); // '0', '1', '2'
+    console.log(k); // output '0' '1' '2'
 }
 
 for (v of a) {
-    console.log(v); // 1, 2, 3
+    console.log(v); // output 1 2 3
 }
 
 for (k in o) {
-    console.log(k); // 'a', 'b', 'c'
+    console.log(k); // output 'a' 'b' 'c'
 }
 
-for (v of o) { // error
+for (v of o) { // error: o is not iterable
     console.log(v);
 }
 {% endhighlight %}
@@ -155,8 +160,10 @@ for (v of o) {
 ###### 相關文章
 
 * [ES6 In Depth: Iterators and the for-of loop](https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/)
+* [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)
 * 石頭閒語: [ECMAScript/JavaScript 6 - Template strings]({% post_url 2015-11-05-ES6_Template_strings %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Symbol]({% post_url 2015-11-09-ES6_symbol %})
+* 石頭閒語: [ECMAScript/JavaScript 6 - for-of 與 iterator]({% post_url 2015-11-10-ES6_for-of_and_iterator %})。
 * 石頭閒語: [ECMAScript/JavaScript 6 - Generator]({% post_url 2015-11-13-ECMAScript 6 - Generator %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - 新函數語法 - Arrow functions, Rest and Spread parameters, Default value]({% post_url 2015-11-18-ECMAScript 6 - Arrow functions, Rest parameters %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Destructuring]({% post_url 2015-12-01-ES6_Destructuring %})
@@ -164,4 +171,4 @@ for (v of o) {
 * 石頭閒語: [ECMAScript/JavaScript 6 - Proxy 和 Reflect]({% post_url 2015-12-08-ES6_Proxy_Reflect %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - Class]({% post_url 2016-01-28-ES6_Class %})
 * 石頭閒語: [ECMAScript/JavaScript 6 - 語法補遺]({% post_url 2017-01-17-ES6_語法補遺 %})
-* [Functional enhancements in ECMAScript 6](http://www.ibm.com/developerworks/library/wa-ecmascript6-neward-p2/index.html)
+* 石頭閒語: [ECMAScript/JavaScript 6 - Promise]({% post_url 2021-07-29-ES6_Promise %})
