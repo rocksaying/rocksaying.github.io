@@ -68,15 +68,15 @@ for (i = 0; i < inotes.length; ++i) {
 }
 
 // tag 觸發 google adsense 搜尋
-let tags = document.getElementsByClassName("tag");
+// let tags = document.getElementsByClassName("tag");
 // 第一個是"分類"，跳過。
-for (i = 1; i < tags.length; ++i) {
-    tags[i].addEventListener('click', (ev)=>{
-        let gsc_input = document.getElementById("gsc-i-id1");
-        let gsc_btn = document.getElementsByClassName("gsc-search-button");
-        gsc_input.value = ev.target.innerText;
-        gsc_btn = gsc_btn[gsc_btn.length-1].click();
-    });
-}
+// for (i = 1; i < tags.length; ++i) {
+    // tags[i].addEventListener('click', (ev)=>{
+        // let gsc_input = document.getElementById("gsc-i-id1");
+        // let gsc_btn = document.getElementsByClassName("gsc-search-button");
+        // gsc_input.value = ev.target.innerText;
+        // gsc_btn = gsc_btn[gsc_btn.length-1].click();
+    // });
+// }
 
 }, false);
