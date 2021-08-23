@@ -101,3 +101,12 @@ class Player
 二、狀態碼標頭除了代碼部份，還可以接續一行狀態訊息。所以完整的狀態碼標頭應該像 "Statue: 200 OK" 。但有些 http 客戶端函數庫會直接忽略後續的狀態訊息，只讓設計者取得狀態代碼。而有些則可讓設計者取得這兩部份。以 JavaScript 中的 [XMLHttpRequest API](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) 為例， XMLHttpRequest.status 屬性只表示狀態代碼，例如 200 ；而 XMLHttpRequest.statusText 屬性則包含整行訊息，例如 "200 OK" 。
 
 CG 的回應方法因此提供了一個狀態訊息參數，讓設計者可以更詳細地表達控制項的錯誤訊息。若未指定訊息參數，則 CG 會自行填入預設的狀態訊息。
+
+###### 相關文章
+
+* <a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>
+* <a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a>
+* <a href="{{ site.baseurl }}/archives/21334380.html">CommonGateway 第二步 - JSON 的處理與資料上傳</a>
+* <a href="{{ site.baseurl }}/archives/44121826.html">CommonGateway 控制項動作函數回傳狀態碼的作法</a>
+* <a href="{% post_url 2021-08-22-CommonGateway_authorize %}">CommonGateway Authorize 認證註記功能教學</a>
+* <a href="{% post_url 2021-08-23-CommonGateway_HTML公用函數與預設首頁 %}">CommonGateway HTML公用函數與預設首頁</a>
