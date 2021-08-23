@@ -113,3 +113,12 @@ CommonGateway 有兩種方式建立預設首頁。
 如果你正利用 CommonGateway Framework 設計一組 RESTful API 服務，可以用第一種方式作 API 服務的索引頁。
 
 當你用 CommonGateway Framework 設計一個網站時，建議用第二種方式建立你的網站首頁。此途徑可以使用 CommonGateway Framework 提供的所有資源。例如 @resource 、 @authorize 以及控制項的資源。
+
+###### 相關文章
+
+* [CommonGateway 介紹]({{ site.baseurl }}/archives/21318202.html)
+* [CommonGateway 初步]({{ site.baseurl }}/archives/21320836.html)
+* [CommonGateway 第二步 - JSON 的處理與資料上傳]({{ site.baseurl }}/archives/21334380.html)
+* [CommonGateway 控制項動作函數回傳狀態碼的作法]({{ site.baseurl }}/archives/44121826.html)
+* [CommonGateway Authorize 認證註記功能教學]({% post_url 2021-08-22-CommonGateway_authorize %})
+* [CommonGateway HTML公用函數與預設首頁]({% post_url 2021-08-23-CommonGateway_HTML公用函數與預設首頁 %})

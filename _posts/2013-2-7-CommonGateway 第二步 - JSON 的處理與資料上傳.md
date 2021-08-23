@@ -109,6 +109,8 @@ RESTClient 再送出一次請求。現在我就會看到預期的 <var>$books</v
 
 RESTful 提交文件給服務端的方法有兩種。一為 POST ，對應資料建立行為。二為 PUT ，對應資料更新行為。
 
+而服務端取得文件內容的方法，則是傳統的 <var>$_POST</var> 和 <var>$_REQUEST</var> 變數。就算是 JSON 文件，CG 也會幫你處理好，放到 <var>$_POST</var> 和 <var>$_REQUEST</var> 。
+
 ### POST 實作
 
 在 controllers/book.php 中添加 <dfn>post()</dfn> 內容。
