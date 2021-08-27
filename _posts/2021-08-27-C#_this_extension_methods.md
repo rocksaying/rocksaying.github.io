@@ -8,19 +8,19 @@ lastupdated: 2021-08-27
 朋友前兩天問了個 C# 語法問題：
 
 <blockquote>
-問個蠢問題 
+問個蠢問題<br/><br/>
 
-`public static byte[] xxxxxxxx(this short x)`
+`public static byte[] xxxxxxxx(this short x)`<br/><br/>
 
 這種場合this的用意是甚麼?
 </blockquote>
 
-第一眼，我的想法是「很 Python 的語法」。
-
-<!--more-->
+第一眼，我的想法是「很像 Python 的語法」。
 
 事實上，打從 C++ 開始，我用過的 OOPL 的 method call ，其隱含的意義都是 `method(this)` 。
 表面上，我們寫成 `個體.method()` ，但實際上，編譯器是弄成 `method(個體)` 。「個體」 是函數方法隱含的第一個參數。因為這樣，這個函數才知道操作對象是哪個東西。
+
+<!--more-->
 
 同樣的做法，我們也可以在 event handler 看到。所有 event handler 都把「發生事件的個體」 擺在它的第一個參數。
 
