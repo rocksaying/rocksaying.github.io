@@ -8,12 +8,6 @@ MQTT用戶端入門之二，本文說明 JavaScript 用戶端的程式設計內�
 
 你的 JavaScript 寄宿環境必須支持 WebSockets 介面。 WebSockets 是 HTML5 規範項目之一，主要網路瀏覽器近三年的版本基本都提供 WebSockets 介面。 node.js 使用者請自行確認。本文範例將以瀏覽器為操作環境。
 
-###### 系列文章
-
-* [MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
-* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
-* [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
-
 <!--more-->
 
 ### Mosquitto 昇級與設置
@@ -217,3 +211,12 @@ gate.open();
 * [Mosquitto Debian repository](http://mosquitto.org/2013/01/mosquitto-debian-repository/)
 * [Mosquitto websocksets setting](http://www.eclipse.org/mosquitto/man/mosquitto-conf-5.php)
 * [Paho JavaScript Client](https://eclipse.org/paho/clients/js/)
+
+###### MQTT用戶端入門系列文章
+
+* [一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
+* [三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+* [四、MQTT用戶端入門 - 四、在 Windows 10 安裝 mosquitto ]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
+* [五、Python 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
+* [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})

@@ -6,12 +6,6 @@ tags: [IoT,MQTT,mosquitto,paho,python,dbus]
 
 Debian 8 套件庫中提供了 python-mosquitto 作為 Mosquitto 的用戶端程式庫。但現在不用這個，改用 [Paho 專案](https://eclipse.org/paho/) 提供的 Python 用戶端程式庫: [Paho Python Client](https://eclipse.org/paho/clients/python/)。此程式庫具有泛用性，連接對象不限於 mosquitto ，亦可連接支援 MQTT 協定的其他 MQ 服務。
 
-###### 系列文章
-
-* [MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
-* [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
-* [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
-
 <!--more-->
 
 ### 安裝 Python 用戶端程式庫
@@ -423,3 +417,12 @@ Python D-Bus 設計內容請參考「[Python DBus 教學精要]({% post_url 2011
 * [Python Package Index - stdeb](https://pypi.python.org/pypi/stdeb)
 * [DBus 用途說明]({% post_url 2010-7-13-D-Bus 用途說明 %})
 * [Python DBus 教學精要]({% post_url 2011-4-14-Python DBus 教學精要 %})
+
+###### MQTT用戶端入門系列文章
+
+* [一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
+* [三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+* [四、MQTT用戶端入門 - 四、在 Windows 10 安裝 mosquitto ]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
+* [五、Python 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
+* [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})

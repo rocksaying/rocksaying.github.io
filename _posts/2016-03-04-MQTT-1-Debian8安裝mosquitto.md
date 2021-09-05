@@ -11,12 +11,6 @@ MQTT 是用於遙測裝置或行動式應用程式之間傳送訊息的協定。
 > MQTT 通訊協定預期用於無線及低頻寬網路。可針對行動式應用程式可靠地處理遞送訊息的複雜性，並保持低成本地進行網路管理。 MQTT 用戶端程式庫比較小。程式庫如同郵箱，使用連接至 MQTT 伺服器的其他 MQTT 應用程式傳送及接收訊息。透過傳送訊息（而不是保持連接至等待回應的伺服器），MQTT 應用程式可節約電池壽命。
 > <cite><a href="http://www-01.ibm.com/support/knowledgecenter/SSFKSJ_7.5.0/com.ibm.mm.tc.doc/tc00000_.htm?lang=zh-tw">IBM WebSphere MQ 資訊中心 MQTT 簡介</a></cite>
 
-###### 系列文章
-
-* [MQTT用戶端入門 - 二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
-* [MQTT用戶端入門 - 三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
-* [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
-
 <!--more-->
 
 ### Debian 套件
@@ -105,3 +99,12 @@ $ mosquitto_pub -t "tw/rocksaying/text" -m "test3" -q 2
 * [HiveMQ MQTT Essentials](http://www.hivemq.com/blog/mqtt-essentials/)
 * [MQTT V3.1 Protocol Specification](http://public.dhe.ibm.com/software/dw/webservices/ws-mqtt/mqtt-v3r1.html)
 * [IoT Standards](http://iot.eclipse.org/standards)
+
+###### MQTT用戶端入門系列文章
+
+* [一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
+* [三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
+* [四、MQTT用戶端入門 - 四、在 Windows 10 安裝 mosquitto ]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
+* [五、Python 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
+* [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
