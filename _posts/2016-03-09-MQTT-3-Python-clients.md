@@ -425,4 +425,5 @@ Python D-Bus 設計內容請參考「[Python DBus 教學精要]({% post_url 2011
 * [三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
 * [四、MQTT用戶端入門 - 四、在 Windows 10 安裝 mosquitto ]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
 * [五、Python 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
+* [六、透過NB-IoT電信模組發送MQTT訊息]({% post_url 2021-09-12-MQTT-6-NB-IoT_module %})
 * [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
