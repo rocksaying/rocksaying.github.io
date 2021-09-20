@@ -2,7 +2,7 @@
 title: MQTT用戶端入門 - 六、透過NB-IoT電信模組發送MQTT訊息，以Python和PHP為例
 category: programming
 tags: [IoT,MQTT,mosquitto,NB-IoT,LTE-M,python,php]
-lastupdated: 2021-09-05
+lastupdated: 2021-09-12
 ---
 
 [NB-IoT 或 LTE-M](https://en.wikipedia.org/wiki/LTE-M) 都是 3GPP 電信組織針對 IoT 應用制訂的低功耗廣域無線電技術(LPWAN)。NB-IoT 資料透過 LTE/4G 電信網路傳遞。簡單說就是和 LTE/4G 共用基地台。你的手機收得到 LTE/4G 訊號的地方，你的 IoT 裝置就能使用 NB-IoT 電信模組發送資料。而 NB-IoT 模組也可以直接插一般 LTE/4G SIM 卡使用，只是資費比 NB-IoT 貴。
