@@ -104,9 +104,10 @@ CG 的回應方法因此提供了一個狀態訊息參數，讓設計者可以�
 
 ###### 相關文章
 
-* <a href="{{ site.baseurl }}/archives/21318202.html">CommonGateway 介紹</a>
-* <a href="{{ site.baseurl }}/archives/21320836.html">CommonGateway 初步</a>
-* <a href="{{ site.baseurl }}/archives/21334380.html">CommonGateway 第二步 - JSON 的處理與資料上傳</a>
-* <a href="{{ site.baseurl }}/archives/44121826.html">CommonGateway 控制項動作函數回傳狀態碼的作法</a>
-* <a href="{% post_url 2021-08-22-CommonGateway_authorize %}">CommonGateway Authorize 認證註記功能教學</a>
-* <a href="{% post_url 2021-08-23-CommonGateway_HTML公用函數與預設首頁 %}">CommonGateway HTML公用函數與預設首頁</a>
+* [CommonGateway 介紹]({{ site.baseurl }}/archives/21318202.html)
+* [CommonGateway 初步]({{ site.baseurl }}/archives/21320836.html)
+* [CommonGateway 第二步 - JSON 的處理與資料上傳]({{ site.baseurl }}/archives/21334380.html)
+* [CommonGateway 控制項動作函數回傳狀態碼的作法]({{ site.baseurl }}/archives/44121826.html)
+* [CommonGateway Authorize 認證註記功能教學]({% post_url 2021-08-22-CommonGateway_authorize %})
+* [CommonGateway HTML公用函數與預設首頁]({% post_url 2021-08-23-CommonGateway_HTML公用函數與預設首頁 %})
+* [CommonGateway 的 View 類別，讓控制項指定自己要用的視圖]({% post_url 2021-11-23-CommonGateway_View %})
