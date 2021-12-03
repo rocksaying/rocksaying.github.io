@@ -105,7 +105,7 @@ void reapchild() {
 
 修改後的內容，可以同時適用在 BSD 或 SVR 的系統上。
 
-### 使用 sigaction 捕捉結束狀態
+### 4. 使用 sigaction 捕捉結束狀態
 
 如果父程序想知道子程序的結束狀態，那只有捕捉 `SIGCHLD` 的方法可用了。為了避免 `signal()` 在系統上的行為差異，這裡是用 `sigcation()` 。
 
