@@ -16,7 +16,7 @@ function setImageWithTitle() {
   p.style.textIndent = '0em';
   p.style.textAlign = 'center';
   p.style.marginTop = '-1.5em';
-  p.style.marginBottom = '2em';
+  p.style.marginBottom = '3em';
   this.insertAdjacentHTML('afterend',
     '<div class="img_title"><span class="icon icon-image"></span>'.concat(this.title.substr(1), '</div>'));
   this.setAttribute('data-width', this.width);
