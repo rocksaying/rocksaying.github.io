@@ -70,19 +70,19 @@ deb安裝: 安裝 touch-ime 。檔案將被安裝在 /usr/share/javascript/touch
 
 畫面上有4個輸入項目，使用者點取第一個文字輸入區，並切換到速成輸入法輸入。
 
-![範例圖 - 中文輸入](https://ajzhig.blu.livefilestore.com/y2pEtJfVzRu8xUDlbNqRYMA6ajWlJwLmQtY1PlB42l185G0thRuT_T-bTQhpbjYI52tbUfiYnQklb3HFK8hMnALxWGzGGWeFl2XDf041Q0h2fk/%E5%BF%AB%E7%85%A719.png?psid=1)
+![範例圖 - 中文輸入](/images/2013-8-13-image1.png)
 
 使用者點取 pass 欄位，因為該欄位的型態是 password ，故 touch-ime 自動切換到英數輸入。
 
-![範例圖 - password](https://w2uk4a.blu.livefilestore.com/y2pz76AJ_148t6zNWtr8HRBEHMJiNtONhFw8UPXTjXc69kzQCg32jZULWyi2SuJKVE66p906DO4y-bC9OQL1v_IkTmLVXE5sxpg83nqZ4yL4hM/%E5%BF%AB%E7%85%A720.png?psid=1)
+![範例圖 - password](/images/2013-8-13-image2.png)
 
 使用者點取 mail 欄位，因為該欄位的型態是 email ，故 touch-ime 自動切換到電郵輸入。
 
-![範例圖 - email](https://w2slvq.blu.livefilestore.com/y2pQuap5Xg3L-9l8V9cQKuo5fN88i_gRho7PXSXDEI-U2T5gXKaTe-VivxcYSuh_PYDQZ0zzN3wLbkVMMmUNvjxtJL057TUJBseiQdzHxd9iDw/%E5%BF%AB%E7%85%A721.png?psid=1)
+![範例圖 - email](/images/2013-8-13-image3.png)
 
 使用者點擊 Caps (大寫變換) 輸入法控制項，鍵盤區鍵面符號變大寫，出字也變大寫。
 
-![範例圖 - Caps](https://ajxgrg.blu.livefilestore.com/y2pBe254z-7AALxZ2VaqytoxELcEIoCTdBjwdKK5pHLCbb3SyF3IiEWtZdCyonm5NcP25cMVb1a9R7xCdbFpx8NNUaBmX6n-AoDGOF2Rytb-RQ/%E5%BF%AB%E7%85%A722.png?psid=1)
+![範例圖 - Caps](/images/2013-8-13-image4.png)
 
 
 ### 用例
