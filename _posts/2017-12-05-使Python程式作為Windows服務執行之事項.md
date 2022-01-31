@@ -81,7 +81,7 @@ C:> nssm install python-service-sample
 
 NSSM GUI 如下圖:
 
-![nssm install python-service-sample](https://i.imgur.com/Hp6R1S1.png)
+![nssm install python-service-sample](https://rocksaying.github.io/images/imgur/Hp6R1S1.png)
 
 NSSM GUI 可編輯項目相當多。但最主要的是第一頁 Application 應用程式的路徑、啟動後的工作目錄以及執行參數。
 
@@ -89,7 +89,7 @@ NSSM GUI 可編輯項目相當多。但最主要的是第一頁 Application 應�
 
 接著開啟「控制台／系統管理工具／服務」，找到剛剛新增的 Python 程式的服務。預設會在下次開機後自動啟動此服務。但此時應該還未啟動。如下圖:
 
-![控制台／系統管理工具／服務](https://i.imgur.com/4ftABK5.png)
+![控制台／系統管理工具／服務](https://rocksaying.github.io/images/imgur/4ftABK5.png)
 
 請按下「啟動」鈕啟動此服務，觀察 MQTT 主題，確認此示範程式是否正常工作。例如我用 mosquitto_sub 訂閱主題後，就會看到下列訊息:
 

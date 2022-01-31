@@ -19,7 +19,7 @@ Lenovo 網站上可以找到這些配件，但常常缺貨，更重要的是價�
 
 Lenovo Yoga Book 附贈的原子筆筆芯上，印有品牌名稱 Mini Star 。按圖索驥，很快就找到了。原廠就是 DT&CREATION Mini Star 筆芯。如下圖，連側面的筆芯型號都完全一致。
 
-![Mini Star](http://i.imgur.com/XGJbLwW.jpg)
+![Mini Star](http://rocksaying.github.io/images/imgur/XGJbLwW.jpg)
 
 三隻一盒，台幣 75 元。
 
@@ -32,7 +32,7 @@ Yoga Book 附贈的觸控筆採用 Wacom EMR 技術。這是比較早期的技�
 
 知道這個技術方向後，我找到了 Samsung Galaxy Note 7 觸控筆和無品牌電磁式觸控筆。而且它們還有側面按鈕可以在 OneNote 中當橡皮擦。
 
-![電磁式 觸控筆](http://i.imgur.com/o5tgve4.jpg)
+![電磁式 觸控筆](http://rocksaying.github.io/images/imgur/o5tgve4.jpg)
 
 在 Yoga Book 的 Create Pad 上書寫時，這兩隻的筆尖感壓完全正常，但側面按鈕原本是無用的，並未對應有用的動作。必須安裝 [Wacom feel driver](http://us.wacom.com/en/feeldriver/) 設定側面按鈕的用途。
 

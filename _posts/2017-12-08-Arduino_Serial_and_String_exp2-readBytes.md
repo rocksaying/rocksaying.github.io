@@ -2,10 +2,10 @@
 title: Arduino Serial 與 String 使用經驗 - readBytes
 category: programming
 tags: [arduino,serial,lora,智慧農業]
-cover: https://i.imgur.com/WhjgjLm.jpg
+cover: https://rocksaying.github.io/images/imgur/WhjgjLm.jpg
 ---
 
-![智慧農業 4.0 成果陳列區](https://i.imgur.com/WhjgjLm.jpg)
+![智慧農業 4.0 成果陳列區](https://rocksaying.github.io/images/imgur/WhjgjLm.jpg)
 
 繼前文「[readString 使用經驗]({% post_url 2017-12-07-Arduino_Serial_and_String_exp1-readString %})」，本文將談 [serial.readBytes()](https://www.arduino.cc/reference/en/language/functions/communication/serial/readbytes/) 的使用經驗。
 

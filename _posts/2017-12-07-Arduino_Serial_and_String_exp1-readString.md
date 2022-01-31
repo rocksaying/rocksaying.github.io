@@ -2,12 +2,12 @@
 title: Arduino Serial 與 String 使用經驗 - readString
 category: programming
 tags: [arduino,serial,lora,智慧農業]
-cover: https://i.imgur.com/WhjgjLm.jpg
+cover: https://rocksaying.github.io/images/imgur/WhjgjLm.jpg
 ---
 
 最近參與了一個智慧農業 4.0 相關的案子，這類案子通常都要整合環境感測模組（水位、氣溫）、無線訊號模組和自動控制系統。而且因為農地周圍常常沒有穩定的市電，故這些農業用途的設備基本都需要用電池供電。在低電力供應的限制下，我第一次用了 Arduino 控制週邊模組。 Arduino 開發工作本身並不困難，難在接上它的感測模組並沒有一定的資料輸出、入格式。幾乎每種感測模組都需要針對它的特性調整資料讀取動作。
 
-![智慧農業 4.0 成果發表會現場](https://i.imgur.com/GycXRGQ.jpg)
+![智慧農業 4.0 成果發表會現場](https://rocksaying.github.io/images/imgur/GycXRGQ.jpg)
 
 本文案例，感測模組接上 Arduino 控制板的 Serial 針腳，透過 Serial 埠送出感測資料。當 Arduino 讀到感測資料後，要將資料透過無線訊號模組傳送給遠地的資料收集裝置。基於無線訊號模組的資料傳輸特性，應將資料先放入封包，以封包為單位傳送出去。
 
@@ -108,7 +108,7 @@ void loop()
 
 最後提一下 *LowPower* 的動作。資料動作間隔十分鐘 (600秒) ，但我只進入省電狀態 74*8 = 592 秒。這是因為這些模組的時鐘不同步，多少有些誤差。可能感測模組認為已經過十分鐘了，而 Arduino 這邊還差 3 秒。這樣就會變成感測模組送完資料後， Arduino 才醒過來就讀不到資料的狀況。故時間間隔不能抓太準。
 
-![智慧農業 4.0 成果陳列區](https://i.imgur.com/WhjgjLm.jpg)
+![智慧農業 4.0 成果陳列區](https://rocksaying.github.io/images/imgur/WhjgjLm.jpg)
 
 ###### 參考資料
 
