@@ -113,7 +113,7 @@ mqtt client test...
 
 操作結果如下圖:
 
-<img src="http://i.imgur.com/BqEktuQ.png" alt="mqtt_js_demo 操作圖" />
+<img src="http://rocksaying.github.io/images/imgur/BqEktuQ.png" alt="mqtt_js_demo 操作圖" />
 
 #### 進階用例
 

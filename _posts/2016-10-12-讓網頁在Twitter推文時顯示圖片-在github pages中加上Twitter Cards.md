@@ -2,7 +2,7 @@
 title: 讓網頁在 Twitter 推文時顯示圖片 - 在 github pages 中加上 Twitter Cards 與 Open Graph 標籤
 category: computer
 tags: [twitter,open graph,github pages,jekyll,blog]
-cover: http://i.imgur.com/Rj0CL90.png
+cover: http://rocksaying.github.io/images/imgur/Rj0CL90.png
 ---
 
 我最近轉推網頁文章時，注意到同樣只放上文字和連結的推文，有些來源的網頁在我沒有附上圖片的情況下，依然會在推文中顯示網頁中的圖片。而且這類型的推文愈來愈多。這種推文的效果很好，我也想在我的部落格 (使用 github pages) 中加上這種效果。
@@ -11,7 +11,7 @@ cover: http://i.imgur.com/Rj0CL90.png
 
 首先看下圖。圖中是兩篇同樣只放上文字和網頁連結的推文，但呈現效果卻不相同。
 
-![有無圖片效果的兩則推文](http://i.imgur.com/96P0rzr.png)
+![有無圖片效果的兩則推文](http://rocksaying.github.io/images/imgur/96P0rzr.png)
 
 下方的推文只有文字內容。但上方的推文主動地顯示了該網頁中的圖片縮圖與摘要文字。看起來，上方推文的閱讀效果較佳。
 
@@ -60,7 +60,7 @@ Twitter Cards 要求的表達方式是欄位名稱要用 <dfn>meta</dfn> 標籤�
 <meta name="twitter:site" content="@tw_rocksaying">
 <meta property="og:site_name" content="石頭閒語">
 <meta property="og:title" content="文章標題">
-<meta property="og:image" content="http://i.imgur.com/Rj0CL90.png">
+<meta property="og:image" content="http://rocksaying.github.io/images/imgur/Rj0CL90.png">
 <meta property="og:description" content="摘要，bala bala.">
 {% endhighlight %}
 
@@ -77,7 +77,7 @@ Twitter Cards 要求的表達方式是欄位名稱要用 <dfn>meta</dfn> 標籤�
 title: 讓網頁在 Twitter 推文時顯示圖片 - 在 github pages 中加上 Twitter Cards 與 Open Graph 標籤
 category: computer
 tags: [twitter,open graph,github pages,jekyll]
-cover: http://i.imgur.com/Rj0CL90.png
+cover: http://rocksaying.github.io/images/imgur/Rj0CL90.png
 ---
 {% endhighlight %}
 
@@ -103,7 +103,7 @@ cover: http://i.imgur.com/Rj0CL90.png
 
 加入上述內容後，我又挑了幾篇文章加上 cover 欄位。把這些變動內容提交到我的 github pages 。再打開 [Twitter Card 驗證器](https://cards-dev.twitter.com/validator) ，輸入其中一個補上 cover 欄位的網頁文章，驗證效果。其驗證結果如下圖:
 
-![驗證含有 Twitter Cards 標籤的網頁效果](http://i.imgur.com/Rj0CL90.png)
+![驗證含有 Twitter Cards 標籤的網頁效果](http://rocksaying.github.io/images/imgur/Rj0CL90.png)
 
 驗證成功。以後我的部落格文章，只要設定了 cover 圖片，就可以在 Twitter 推文中呈現醒目的圖片。另外，因為我用了 Open Graph 標籤，所以在 Facebook 等社交網站上被分享時，也將有類似的呈現效果。
 
