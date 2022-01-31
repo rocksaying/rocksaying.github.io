@@ -2,7 +2,7 @@
 title: Windows Subsystem for Linux (WSL) 使用 Linux GUI 桌面軟體與中文字型
 category: computer
 tags: [wsl, linux, debian, windows, x-window, 中文]
-cover: https://i.imgur.com/xrY65Iy.png
+cover: https://rocksaying.github.io/images/imgur/xrY65Iy.png
 lastupdated: 2019-05-09
 ---
 
@@ -64,7 +64,7 @@ root$ echo "export DISPLAY=127.0.0.1:0" >> /etc/profile
 
 將 `DISPLAY` 的設置內容存入後，再開啟一個 WSL 視窗，讓它載入新的設置內容。在這個 WSL 視窗中執行 *xeyes* 看看你的桌面上是不是出現了一對 X 小眼睛。
 
-![xeyes on Windows Subsystem for Linux](https://i.imgur.com/3o8G19E.png)
+![xeyes on Windows Subsystem for Linux](https://rocksaying.github.io/images/imgur/3o8G19E.png)
 
 <div class="note">
 X Window (沒有 s ) 是 UNIX 時代發展出的一套巧妙的視窗工作架構，採用主從式通訊協定架構。和 Windows 的整合式視窗架構大不相同。詳情請看維基百科: <a href="https://zh.wikipedia.org/wiki/X_Window%E7%B3%BB%E7%B5%B1">X Window系統</a>。
@@ -92,7 +92,7 @@ Linux 桌面應用軟體這一部份，可參考「[Debian 8 (jessie) 安裝筆�
 
 我安裝了*geany* 文字編輯器，用它開啟一個中文內容的文件。在未安裝中文環境之前，執行畫面如下圖。
 
-![安裝中文字型前](https://i.imgur.com/vAwAR9E.png)
+![安裝中文字型前](https://rocksaying.github.io/images/imgur/vAwAR9E.png)
 
 WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。所以 geany 也會使用中文語系介面。但因為尚未安裝中文字型，故原本應顯示中文字的內容，全都以方塊豆腐字取代。
 
@@ -102,7 +102,7 @@ WSL 安裝好之後，預設就會採用 *zh_tw.UTF-8* 的正體中文組態。�
 
 安裝中文字型後，我先在 WSL 視窗中執行 *fc-list* 列出 X Server 找到的中文字型，確認文泉驛黑體可用。再同樣以 geany 開啟相同文件。現在中文字就正常顯示了。
 
-![安裝中文字型後](https://i.imgur.com/xrY65Iy.png)
+![安裝中文字型後](https://rocksaying.github.io/images/imgur/xrY65Iy.png)
 
 <div class="note">
 <p>

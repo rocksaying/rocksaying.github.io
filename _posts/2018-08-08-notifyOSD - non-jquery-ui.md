@@ -2,7 +2,7 @@
 title: notifyOSD - non-jquery-ui
 category: programming
 tags: [javascript, non-jquery, html]
-cover: https://i.imgur.com/PJnt8Vj.png
+cover: https://rocksaying.github.io/images/imgur/PJnt8Vj.png
 ---
 
 *notifyOSD* 是一個在畫面角落顯示提示訊息的網頁 UI 項目。以固定位置浮動視窗，顯示提示訊息。訊息採堆疊方式管理，新的訊息將疊在已有訊息之上，並在下方顯示已有幾筆提示訊息。
@@ -24,7 +24,7 @@ Source Repo: [non-jquery-ui](https://github.com/shirock/non-jquery-ui)
 
 在 [non-jquery-ui](https://github.com/shirock/non-jquery-ui) 源碼的 sample 目錄下有一份 notify-osd.html 使用範例。用例如下圖。
 
-![notifyOSD 範例](https://i.imgur.com/PJnt8Vj.png)
+![notifyOSD 範例](https://rocksaying.github.io/images/imgur/PJnt8Vj.png)
 
 首先從 [non-jquery-ui](https://github.com/shirock/non-jquery-ui) 取得 *notifyOSD* 的程式碼文件 ui/notify-osd.js 。同一目錄下有預先寫好的訊息顯示樣式表 ui/notify-osd.css ，修改樣式表以自訂提示訊息的外觀。
 

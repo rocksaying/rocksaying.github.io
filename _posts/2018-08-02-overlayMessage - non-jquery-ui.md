@@ -2,7 +2,7 @@
 title: overlayMessage - non-jquery-ui
 category: programming
 tags: [javascript, non-jquery, html]
-cover: https://i.imgur.com/OOWnfG8.png
+cover: https://rocksaying.github.io/images/imgur/OOWnfG8.png
 ---
 
 *overlayMessage* 是一個顯示全頁覆蓋訊息的網頁 UI 項目 。它完全獨立，不使用其他 JavaScript 套件。
@@ -91,10 +91,10 @@ overlayMessage.off()
 
 在 [non-jquery-ui](https://github.com/shirock/non-jquery-ui) 源碼的 sample 目錄下有一份 overlay-message.html 使用範例。這個範例頁面會在開啟時，就顯示覆蓋訊息提示使用者等待三秒。這是模擬頁面載入時，還在等待 Ajax 從服務端取回頁面所需資料的狀況。在覆蓋訊息存在期間，使用者不能操作頁面上的按鈕及文字輸入框。
 
-![overlayMessage 範例 - 載入頁面時就出現](https://i.imgur.com/OOWnfG8.png)
+![overlayMessage 範例 - 載入頁面時就出現](https://rocksaying.github.io/images/imgur/OOWnfG8.png)
 
 當頁面程式關閉覆蓋訊息後，可以點擊頁面上的兩個按鈕 'Default button' 或 'Custom button'，顯示帶有右上角關閉按鈕的覆蓋訊息。
 
-![overlayMessage 範例 - 帶有關閉按鈕的覆蓋訊息](https://i.imgur.com/rh4YEOg.png)
+![overlayMessage 範例 - 帶有關閉按鈕的覆蓋訊息](https://rocksaying.github.io/images/imgur/rh4YEOg.png)
 
 當覆蓋訊息出現時，頁面上的時鐘仍然持續更新，表示各事件函數依然在工作。因為 overlayMessage 不會擱置其他背景工作。而 `window.alert()` 則會擱置背景工作 (worker不受影嚮)。所以不希望影響背景工作的時候，你可以用 overlayMessage 取代 `window.alert()`。

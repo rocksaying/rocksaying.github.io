@@ -3,7 +3,7 @@ title: Raspberry Pi 使用 Grove LoRa 無線模組負擔 LoRa Gateway 角色
 category: programming
 tags: ["raspberry pi",rpi,lora,mqtt,iot,智慧農業]
 lastupdated: 2018-03-17
-cover: https://i.imgur.com/ZRfesO9.jpg
+cover: https://rocksaying.github.io/images/imgur/ZRfesO9.jpg
 ---
 
 本案例於 Raspberry Pi 使用 [Grove - LoRa Radio](https://wiki.seeed.cc/Grove_LoRa_Radio/) 模組，實作基本的 LoRa 無線應用。 Raspberry Pi 的角色是 LoRa Gateway 。它負責收集其他 LoRa 設備的訊號，再透過 Internet 發佈到 MQTT 頻道上。
@@ -31,7 +31,7 @@ Grove 模組隨附的連接線的母座規格不是 GPIO 用的杜邦端子規�
 
 Grove LoRa Radio 支援 3.3V 與 5V 工作電壓，所以它的 VCC 接在 GPIO 的 3.3V 或 5V 針腳皆可。它的 TX 接到 GPIO 的 RX ； RX 接到 GPIO 的 TX 。 TX/RX 互接雖然是基本知識，但還是要再次提醒初學者。
 
-![接線實例](https://i.imgur.com/iAiYVil.jpg)
+![接線實例](https://rocksaying.github.io/images/imgur/iAiYVil.jpg)
 
 
 #### Raspberry Pi 3 的 UART
@@ -221,11 +221,11 @@ if ll.setOpModeSleep(True, True):
 
 上列是參考設計。完整程式碼請看 [LoRa-gateway@rocksources](https://github.com/shirock/rocksources/tree/master/raspberry_pi/LoRa-gateway) 。
 
-![實際運用情形](https://i.imgur.com/ZRfesO9.jpg)
+![實際運用情形](https://rocksaying.github.io/images/imgur/ZRfesO9.jpg)
 
 上圖是配合完整範例附的 lora-sender.py 運作的情形。
 
-![使用案例圖](https://i.imgur.com/80jMWdF.jpg)
+![使用案例圖](https://rocksaying.github.io/images/imgur/80jMWdF.jpg)
 
 上圖是配合繼電器控制其他設備開關的案例。
 

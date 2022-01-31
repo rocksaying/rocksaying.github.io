@@ -3,7 +3,7 @@ title: Raspberry Pi 使用 HDMI to VGA 轉接器的設定事項
 category: computer
 tags: ["raspberry pi",hdmi,vga]
 lastupdated: 2019-06-07
-cover: http://i.imgur.com/Xy0OHov.png
+cover: http://rocksaying.github.io/images/imgur/Xy0OHov.png
 ---
 
 #### 用電需求
