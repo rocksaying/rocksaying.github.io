@@ -111,4 +111,5 @@ C# 內建的 string 類別並沒有 concat 這個方法。這個方法是我定�
 從設計人員的角度看，就像是我把 MyString 裡的方法，外掛到 string 上面了。
 
 具體來說， C# 編譯器的運作方式是從第一個參數有 *this* 修飾字的靜態方法中，找到符合型態簽章的靜態方法來用。
-如果程式寫 `1.concat('xyz')` 那就會錯誤。因為 C# 編譯器找不到符合 `concat(this int)` 簽章的靜態方法。
+本例 `"Hello ".concat("world")` 就是找符合 `concat(this string, string)` 簽章的靜態方法。
+如果程式寫 `1.concat("xyz")` 那就會錯誤。因為 C# 編譯器找不到符合 `concat(this int, string)` 簽章的靜態方法。
