@@ -1,5 +1,5 @@
 ---
-title: .NET Core 筆記 - ASP.NET Core 上傳檔案的檔案大小限制
+title: .NET 筆記 - ASP.NET Core 上傳檔案的檔案大小限制
 category: programming
 tags: ["asp.net core","iis"]
 lastupdated: 2019-04-30

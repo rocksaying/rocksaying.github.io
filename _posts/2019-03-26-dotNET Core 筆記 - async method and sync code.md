@@ -1,7 +1,7 @@
 ---
-title: .NET Core 筆記 - async method and sync code
+title: .NET 筆記 - async method and sync code; await and Task.Result
 category: programming
-tags: [".net",".net core",C#]
+tags: [".net",".net core","C#",csharp]
 lastupdated: 2019-03-26
 ---
 
@@ -76,7 +76,7 @@ static void Main()
 
 首先， `main()` 的宣告不用加上 `async Task` 。
 
-接著，因為非同步方法宣告的回傳值是 `Task` ，而我們要操作的正是 `Task` 的屬性 `Result` ，所以用方法串接語法接起來就好。例如 `GetAsync().Result`。
+接著，因為非同步方法宣告的回傳值型別是 `Task` ，而我們要操作的正是 `Task` 的屬性 `Result` ，所以用方法串接語法接起來就好。例如 `GetAsync().Result`。
 
 `Task<TResult>.Result` 是平台特性而不是 C# 語言特性。在 .NET 平台上運作的其他程式語言，也適用這個模式處理 .NET Core 的非同步方法。
 

@@ -1,5 +1,5 @@
 ---
-title: .NET Core 筆記 - ASP.NET Core appsettings.json 與執行環境
+title: .NET 筆記 - ASP.NET Core appsettings.json 與執行環境
 category: programming
 tags: [".net","asp.net core"]
 lastupdated: 2019-03-26

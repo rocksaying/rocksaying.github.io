@@ -1,5 +1,5 @@
 ---
-title: .NET Core 筆記 - ASP.NET Core 應用程式托管於IIS服務
+title: .NET 筆記 - ASP.NET Core 應用程式托管於IIS服務
 category: programming
 tags: ["asp.net core","iis"]
 lastupdated: 2019-04-10
@@ -33,11 +33,11 @@ IIS 服務主機必須安裝 *.NET Core Runtime & Hosting Bundle for Windows*  �
 3. 若你的應用程式需要讀寫或背景呼叫 script (如 PowerShell, Python 等)，則應選擇一般使用者帳號。
 4. 選擇一般使用者帳號，需要輸入密碼， IIS 會儲存起來。
 
-ASP.NET Core 應用程式以 `Startup()` 呼叫 python.exe 執行 python script 時，若發生錯誤且 HTTP 狀態碼為 103 時，就表示你執行 ASP.NET Core 的應用程式集區的使用者權限不夠。要用一般使用者帳號。
+舉例來說，ASP.NET Core 應用程式以 `Startup()` 呼叫 python.exe 執行 python script 時，若發生錯誤且 HTTP 狀態碼為 103 時，就表示你執行 ASP.NET Core 的應用程式集區的使用者權限不夠。要用一般使用者帳號。
 
 #### 部署除錯
 
-ASP.NET Core 開發時有個方便的地方，開發者通常使用 <kbd>donnet run</kbd> 啟動。此時你可以在終端視窗上直接看到 `Console.WriteLine()` 輸出的各種訊息，這裡可以抓到很多與程式邏輯無關的錯誤。
+ASP.NET Core 開發時有個方便的地方，開發者通常使用 <kbd>dotnet run</kbd> 啟動。此時你可以在終端視窗上直接看到 `Console.WriteLine()` 輸出的各種訊息，這裡可以抓到很多與程式邏輯無關的錯誤。
 
 當你的 ASP.NET Core 應用程式第一次部署到 IIS 上的時候，強烈建議修改你的應用程式所在目錄的 web.config ，設 `stdoutLogEnabled=true` ，並建立 *logs* 子目錄保存記錄檔案。這將啟用 IIS 的標準輸出資料的記錄功能，保存 `Console.WriteLine ()` 輸出的訊息。
 

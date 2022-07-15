@@ -1,7 +1,7 @@
 ---
-title: .NET Core 筆記 - Anonymous Type List
+title: .NET 筆記 - Anonymous Type List
 category: programming
-tags: [".net core","C#","csharp","型別"]
+tags: [".net","C#","csharp","型別"]
 lastupdated: 2019-07-16
 ---
 

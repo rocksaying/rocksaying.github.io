@@ -1,7 +1,7 @@
 ---
-title: C# 的 this 參數修飾字與 extension method 說明
+title: .NET 筆記 - C# 的 this 參數修飾字與 extension method 說明
 category: programming
-tags: [c#,csharp,擴充方法]
+tags: [".net","C#",csharp]
 lastupdated: 2021-08-27
 ---
 

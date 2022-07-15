@@ -1,5 +1,5 @@
 ---
-title: .NET Core 筆記 - ASP.NET Core 上傳檔案的模型繫結
+title: .NET 筆記 - ASP.NET Core 上傳檔案的模型繫結
 category: programming
 tags: ["asp.net core"]
 lastupdated: 2019-04-30
