@@ -167,7 +167,7 @@ public class SimpleMqttClient
     public SessionState Connect()
     {
             // Task.Run(()=>this.Client.ConnectAsync(Credentials)).Wait();
-        return Client.ConnectAsync(Credentials).Result;
+        return Client.ConnectAsync(Credentials, cleanSession: true).Result;
     }
 
 }
