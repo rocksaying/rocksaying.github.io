@@ -1,5 +1,5 @@
 ---
-title: MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto
+title: MQTT用戶端入門 - 一、在 Debian 8 安裝 mosquitto 與 MQTT 基本觀念
 category: programming
 tags: [IoT,MQTT,mosquitto,paho]
 ---
