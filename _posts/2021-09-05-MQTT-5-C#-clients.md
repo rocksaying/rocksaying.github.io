@@ -2,7 +2,7 @@
 title: MQTT用戶端入門 - 五、.NET/C# 用戶端程式設計
 category: programming
 tags: [IoT,MQTT,mosquitto,C#,csharp,.net]
-lastupdated: 2021-09-05
+lastupdated: 2022-08-26
 ---
 
 .NET 平台可以使用套件 [System.Net.Mqtt](https://www.nuget.org/packages/System.Net.Mqtt) 設計 MQTT 用戶端程式。從套件的名稱空間可知，這是 .NET 平台正式的 MQTT 套件。由微軟旗下的 xamarin 團隊負責開發，專案托管於 [System.Net.Mqtt 專案](https://github.com/xamarin/mqtt)。
@@ -180,6 +180,9 @@ public class SimpleMqttClient
 
 System.Net.Mqtt 採用 observer 設計模式處理訊息接收工作。先用 client 的 `SubscribeAsync()` 方法訂閱主題。再用 client 的 `MessageStream.Subscribe()` 指派訊息處理方法。我們可以在 client 串好幾個方法負責處理收到的訊息。
 
+*注意，`SubscribeAsync()` 的 qos 參數必須小於或等於 MqttConfiguration 的 `MaximumQualityOfService`*。
+詳情請看 [.NET MQTT 用戶端訂閱方法使用時的陷阱，關於 MaximumQualityOfService]({% post_url 2022-08-24-MQTT-dotNET-subscribe-trap %})。
+
 但 MQTT 客戶端有時會同時訂閱好幾個主題，而附加訊息處理方法的 `Subscribe()` 方法並沒有指定主題的參數。那麼我們的訊息處理方法要如何分別訊息的主題呢？要知道實務上，訊息處理方法會按照主題切割成好幾個小方法。每個方法各自處理自己感興趣的主題的訊息。
 
 第一個直接做法，就是在處理方法中判斷訊息的 <var>Topic</var> 屬性。如下：
@@ -224,10 +227,10 @@ mqClient.Client.MessageStream
 
 ###### MQTT用戶端入門系列文章
 
-* [一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [一、在 Debian 8 安裝 mosquitto 與 MQTT 基本觀念]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
 * [二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
 * [三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
-* [四、MQTT用戶端入門 - 四、在 Windows 10 安裝 mosquitto ]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
-* [五、Python 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
-* [六、透過NB-IoT電信模組發送MQTT訊息]({% post_url 2021-09-12-MQTT-6-NB-IoT_module %})
+* [四、在 Windows 10 安裝 mosquitto]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
+* [五、.NET/C# 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
 * [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
+* [透過NB-IoT電信模組發送MQTT訊息]({% post_url 2021-09-12-MQTT-6-NB-IoT_module %})
