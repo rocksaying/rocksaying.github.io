@@ -63,6 +63,8 @@ MQTT 的基本觀念請參考 [HiveMQ MQTT Essentials](http://www.hivemq.com/blo
 * 1: 至少一次 (at least once)。訊息一定會送出一次。但因為 broker 不會確認訂閱者是否收到訊息，所以它可能會重複發送訊息以確保送出一次。
 * 2: 確定一次 (exactly once)。訊息一定且只送出一次。 broker 會確認所有此主題的訂閱者都收到訊息。
 
+關於 qos 的工作細節，請看「 [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})」。
+
 ### mosquitto 用戶端工具
 
 mosquitto-clients 套件提供了兩個用戶端工具，方便使用者練習與開發時的測試工作。
@@ -102,10 +104,10 @@ $ mosquitto_pub -t "tw/rocksaying/text" -m "test3" -q 2
 
 ###### MQTT用戶端入門系列文章
 
-* [一、在 Debian 8 安裝 mosquitto]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
+* [一、在 Debian 8 安裝 mosquitto 與 MQTT 基本觀念]({% post_url 2016-03-04-MQTT-1-Debian8安裝mosquitto %})
 * [二、JavaScript 用戶端程式設計]({% post_url 2016-03-07-MQTT-2-JavaScript-setting %})
 * [三、Python 用戶端程式設計]({% post_url 2016-03-09-MQTT-3-Python-clients %})
-* [四、MQTT用戶端入門 - 四、在 Windows 10 安裝 mosquitto ]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
-* [五、Python 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
-* [六、透過NB-IoT電信模組發送MQTT訊息]({% post_url 2021-09-12-MQTT-6-NB-IoT_module %})
+* [四、在 Windows 10 安裝 mosquitto]({% post_url 2017-10-17-MQTT-4-Install-mosquitto-on-windows %})
+* [五、.NET/C# 用戶端程式設計]({% post_url 2021-09-05-MQTT-5-C#-clients %})
 * [MQTT qos 機制，發佈者如何確認訂閱者收到訊息？]({% post_url 2016-08-26-MQTT-qos_and_published %})
+* [透過NB-IoT電信模組發送MQTT訊息]({% post_url 2021-09-12-MQTT-6-NB-IoT_module %})
