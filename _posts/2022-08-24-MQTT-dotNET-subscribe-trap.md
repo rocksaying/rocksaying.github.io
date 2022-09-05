@@ -2,7 +2,7 @@
 title: .NET MQTT 用戶端訂閱方法使用時的陷阱，關於 MaximumQualityOfService
 category: programming
 tags: [IoT,MQTT,Xamarin,".net"]
-lastupdated: 2022-08-26
+lastupdated: 2022-09-06
 ---
 
 我有個用 .NET Core 開發的案子，需要透過 MQTT 取得設備狀態後顯示在螢幕上。
@@ -105,10 +105,19 @@ mqClient.SubscribeAsync(topic, MqttQualityOfService.ExactlyOnce);
 
 而對訂閱者來說， `SubscribeAsync()` 的 qos 參數必須小於或等於 `MaximumQualityOfService` 。
 否則的話，訂閱者最多可收到 20 次訊息。超過就會失效。
-但我不知道為什麼定這個數目。也不知道為何不擲出例外。
 
-這真是令人困惱的特性。 `SubscribeAsync()` 不擲出例外就算了，但訂閱者竟然還可以正常收到 20 次訊息？
-我實在不知這是臭蟲還是陷阱。
+因為我的 MQTT 服務端是用 [mosquitto](https://github.com/eclipse/mosquitto)，所以後來查了一下 issue ，找到固定 20 次失效的原因。
+20 次是 mosquitto 組態項目 *max_inflight_messages* 的預設值。
+mosquitto 預設服務端和訂閱者之間最多允許 20 筆處於遞送過程的訊息，超過這數目就不再發送訊息給訂閱者。
+但在本文的案例，訂閱者已經收到訊息了，為什麼訊息仍然被認定為「遞送中」？
+那是因為訂閱者沒有按照 qos 傳送回執 (PUBREL) 給服務端。
+參考「[Mosquitto broker stop publishing on subscribed topics](https://github.com/eclipse/mosquitto/issues/1821)」。(2022-09-06補充)
+
+儘管找到固定 20 次失效的原因，但問題還是在 System.Net.Mqtt 。
+它不按照訊息的 qos 完成回執，反而受到 `MaximumQualityOfService` 參數限制，累積大量「收到訊息卻不回報」的欠條，最後就失去訂閱內容了。
+
+我不知道 System.Net.Mqtt 為何如此設計，也不知道為何不擲出例外。
+這真是令人困惱的特性。難以歸類是臭蟲還是陷阱。
 
 我的實際案例使用的設備，回報狀態的週期最少是 2 分鐘以上。這表示至少前 40 分鐘都會正常運作。
 而我在做單元測試時，可不會測到 40 分鐘後才出現的錯誤狀況啊。著實被它耍了一把。
