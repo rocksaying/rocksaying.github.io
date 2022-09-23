@@ -137,7 +137,7 @@ Ubuntu 12.04 和 Debian 9 安裝 mars_nwe 的方式相同。只是 Ubuntu 12.04 
 編譯 mars-nwe-0.99.pl23 需安裝 cmake, g++, libgdbm-dev 這三個套件。
 
 我把編譯好的 mars-nwe_0.99.pl23 打包了，放在我的 github 上:
-[mars-nwe_0.99.pl23-0_i386.deb](https://github.com/shirock/rocksources/raw/master/linux/mars-nwe_0.99.pl23-0_i386.deb)
+[mars-nwe_0.99.pl23-1_i386.deb](https://github.com/shirock/rocksources/raw/master/linux/mars-nwe_0.99.pl23-1_i386.deb)。2022-09-24: 從 0.99.pl23-0 更新為 0.99.pl23-1 ，修正安裝 script 錯誤。
 
 安裝這個 mars-nwe_0.99.pl23-0_i386.deb 後，尚需安裝 libgdbm3 套件。
 
@@ -163,8 +163,39 @@ $ sudo make install
 ```
 
 make 會跳很多警告訊息，不必理會。反正結果是成功的。
+*注意，我試過在 64bit 系統下編譯。編譯成功，但實際上不能運作。*
 
 預設結果，執行檔將安裝在 /usr/local/sbin ，設定檔在 /usr/local/etc/mars_nwe/nwserv.conf 。
+系統服務執行檔是 /etc/init.d/mars-nwe 。
+若你想調整 nwserv.conf 或其他檔案的安裝路徑，請參考本文最後「修改編譯項目」一節。
+
+執行檔列表:
+
+* nwserv
+* dbmtool
+* ftrustee
+* ncpserv
+* nwbind
+* nwclient
+* nwconn
+* nwrouted
+
+一般來說，執行下列指令就可以啟動服務:
+
+```term
+
+$ sudo /etc/init.d/mars-nwe start
+
+```
+
+若測試無誤，想正式使用的話，再用系統提供的指令將它登記為自動執行服務。
+Debian 9 的設定指令是:
+
+```term
+
+$ sudo update-rc.d mars-nwe defaults
+
+```
 
 ### 設定 mars_nwe
 
@@ -172,7 +203,7 @@ make 會跳很多警告訊息，不必理會。反正結果是成功的。
 
 * RedHat 9: /etc/nwserv.conf
 * Deb 包 (mars-nwe_0.99.pl20-0): /etc/mars-nwe/nwserv.conf
-* Deb 包 (mars-nwe_0.99.pl23-0): /etc/nwserv.conf
+* 我的 Deb 包 [mars-nwe_0.99.pl23-1_i386.deb](https://github.com/shirock/rocksources/raw/master/linux/mars-nwe_0.99.pl23-1_i386.deb): /etc/nwserv.conf
 * 自行編譯預設組態: /usr/local/etc/mars_nwe/nwserv.conf
 
 #### 第 1 節設定 volume 
@@ -426,6 +457,22 @@ Case 3: LAN 只有一台 Debian 8 的 mars_nwe 服務主機，只啟用 802.3 �
 Case 4: LAN 只有一台 Debian 8 的 mars_nwe 服務器主機，但同時啟用 802.3, 802.2 ，DOS client 正常使用。
 
 我不知道客戶的 DOS client 做了什麼設定，但顯然它需要一台跑 802.2 的服務主機擔任路由工作。
+
+#### 修改編譯項目
+
+我編譯 mars_nwe 時，修改了兩處 cmake 設定，讓 nwserv.conf 和 nwserv.pid 這兩個檔案放在我習慣的路徑。
+我讓 nwserv.conf 位於 /etc/nwserv.conf ，而 nwserv.pid 在 /var/run/nwserv.pid 。
+
+修改方式是編輯 mars_nwe 源碼第一層目錄下的 CMakeLists.txt 。在開頭的 SET 段落處增加以下兩行設定值:
+
+```text
+
+SET (MARS_NWE_INSTALL_FULL_CONFDIR "/etc")
+SET (MARS_NWE_PID_DIR "/var/run")
+
+```
+
+修改後，再下指令 `$ cmake . ; make ` 重新編譯。
 
 ###### 參考資料
 
