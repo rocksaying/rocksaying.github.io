@@ -41,7 +41,9 @@ Linux 散佈套件的基礎安裝工具中也會包含這些 (除了 ocs-onthefl
 
 以第一顆 SATA 磁碟 (/dev/sda) 為例。
 
-`$ sfdisk -d /dev/sda`
+```term
+$ sfdisk -d /dev/sda
+```
 
 輸出範例:
 
@@ -60,7 +62,9 @@ label-id: abcd
 我們還需要知道 Filesystem UUID 。
 EXT2/EXT3/EXT4 檔案系統可用 tune2fs 配合選項 `-l` 查看 Filesystem UUID。例如:
 
-`$ tune2fs -l /dev/sda1 | grep UUID`
+```term
+$ tune2fs -l /dev/sda1 | grep UUID
+```
 
 註: 一般用 blkid 查看。但碰到修改 UUID 的場合， blkid 會顯示修改前的 UUID 。後面章節會提到需要修改 UUID 的理由。
 
@@ -79,19 +83,27 @@ EXT2/EXT3/EXT4 檔案系統可用 tune2fs 配合選項 `-l` 查看 Filesystem UU
 
 儲存分割區表為一個備份檔:
 
-`$ sgdisk $SOURCE --backup=partitions-info.sgdisk`
+```term
+$ sgdisk $SOURCE --backup=partitions-info.sgdisk
+```
 
 讀入備份檔的分割區表，寫入目的磁碟:
 
-`$ sgdisk --load-backup=partitions-info.sgdisk $DEST`
+```term
+$ sgdisk --load-backup=partitions-info.sgdisk $DEST
+```
 
 直接複製 SOURCE 的分割區表到 DEST:
 
-`$ sgdisk $SOURCE --replicate=$DEST`
+```term
+$ sgdisk $SOURCE --replicate=$DEST
+```
 
 隨機設定新的 Partition UUID:
 
-`$ sgdisk -G $DEST`
+```term
+$ sgdisk -G $DEST
+```
 
 ##### MBR 格式
 
@@ -99,32 +111,42 @@ EXT2/EXT3/EXT4 檔案系統可用 tune2fs 配合選項 `-l` 查看 Filesystem UU
 
 儲存分割區表為一個備份檔:
 
-`$ sfdisk -d $SOURCE > source-partition-table.sfdisk`
+```term
+$ sfdisk -d $SOURCE > source-partition-table.sfdisk
+```
 
 讀入備份檔的分割區表，寫入目的磁碟:
 
-`$ sfdisk $DEST < source-partition-table.sfdisk`
+```term
+$ sfdisk $DEST < source-partition-table.sfdisk
+```
 
 直接複製 SOURCE 的分割區表到 DEST:
 
-`$ sfdisk -d $SOURCE | sfdisk $DEST`
+```term
+$ sfdisk -d $SOURCE | sfdisk $DEST
+```
 
 為磁碟隨機設定新的 Disk UUID:
 
-`$ sfdisk --disk-id $DEST $disk-UUID`
+```term
+$ sfdisk --disk-id $DEST $disk-UUID
+```
 
 為分割區隨機設定新的 Partition UUID:
 
-`$ sfdisk --part-UUID $DEST $partN $new-UUID`
+```term
+$ sfdisk --part-UUID $DEST $partN $new-UUID
+```
 
 #### 分割區對分割區複製
 
 指令範例。由 Clonezilla 提供。
 
-`
+```term
 $ /usr/sbin/ocs-onthefly -e1 auto -e2 -r -j2 -sfsck -k 
   -p choose -f sda1 -d sdb1
-`
+```
 
 * -batch: 不提示任何確認。默認則是詢問兩次是否執行？
 * -f {來源分割區}: 這裡用的分割區名稱不需要包含 /dev 。
@@ -137,10 +159,10 @@ $ /usr/sbin/ocs-onthefly -e1 auto -e2 -r -j2 -sfsck -k
 如果不想直接分割區對拷，而是先產生備份影像檔的話，可以改用 ocs-sr 指令。
 例如下列指令將一次性備份 sda1, sda2, sda3 三個分割區影像至 /home/partimag/sda-parts-img 目錄下。
 
-`
+```term
 $ /usr/sbin/ocs-sr -q2 -c -j2 -z9p -i 4096 -sfsck -scs -senc 
   -p choose saveparts sda-parts-img sda1 sda2 sda3
-`
+```
 
 如果你想知道 `dd` 指令怎麼做，可以參考我這篇 [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})。
 
@@ -228,13 +250,19 @@ UUID=home-2222  /home
 
 啟動後，實際掛載情形可能是下列排列組合:
 
-* /       /dev/sda1
-* /home   /dev/sdb2
+```text
+
+/       /dev/sda1
+/home   /dev/sdb2
+```
 
 或者:
 
-* /       /dev/sdb1
-* /home   /dev/sda2
+```text
+
+/       /dev/sdb1
+/home   /dev/sda2
+```
 
 如果需要兩顆磁碟同時在線，解決方案有兩種。
 
@@ -246,14 +274,18 @@ UUID 依 Filesystem UUID 掛載。PARTUUID 則依 Partition UUID 掛載。
 
 EXT2/EXT3/EXT4 檔案系統使用 tune2fs 指令。例如:
 
-`$ tune2fs -U random /dev/sda1`
+```term
+$ tune2fs -U random /dev/sda1
+```
 
 選項參數 *random* 會隨機產生一個 UUID 。
 
 Swap 分割區則使用 mkswap 指令修改 Filesystem UUID 。
 假設 Swap 分割區是 /dev/sda4 ，指令如下:
 
-`$ mkswap --UUID ???? /dev/sda4`
+```term
+$ mkswap --UUID ???? /dev/sda4
+```
 
 ###### 資源連結
 
