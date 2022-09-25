@@ -175,7 +175,7 @@ $ /usr/sbin/ocs-sr -q2 -c -j2 -z9p -i 4096 -sfsck -scs -senc
 這個 shell script 執行時要提供兩個參數，分別指出母片和目的地的檔案名稱。
 例如 sda 和 sdb 。
 
-```shell
+```sh
 
 #!/bin/sh
 
