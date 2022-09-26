@@ -217,3 +217,72 @@ mkswap /dev/${DST}3
 echo "Done."
 
 ```
+
+#### 啟動問題
+
+1. 雖然重設了新的 Partition UUID ，但 Filesystem UUID 沒改。
+2. 分割區對分割區複製之後，兩邊的 Filesystem UUID 相同。
+
+兩顆磁碟分別上線，皆可正常啟動作業系統。
+然而兩顆磁碟同時上線時，作業系統可能會隨機挑選分割區掛載。
+
+因為 fstab 目前普遍採用的設定方式是認 Filesystem UUID 掛載。
+必須指定新的 Filesystem UUID 才能讓作業系統正確掛載分割區。
+
+例如兩顆磁碟的分割區與檔案系統 UUID 如下:
+
+```text
+
+sda1 UUID=root-1111 PARTUUID=part-a111
+sda2 UUID=home-2222 PARTUUID=part-a222
+
+sda1 UUID=root-1111 PARTUUID=part-b111
+sda2 UUID=home-2222 PARTUUID=part-b222
+```
+
+fstab 的內容是:
+
+```text
+
+UUID=root-1111  /
+UUID=home-2222  /home
+```
+
+啟動後，實際掛載情形可能是下列排列組合:
+
+```text
+
+/       /dev/sda1
+/home   /dev/sdb2
+```
+
+或者:
+
+```text
+
+/       /dev/sdb1
+/home   /dev/sda2
+```
+
+如果需要兩顆磁碟同時在線，解決方案有兩種。
+
+第一種， fstab 第一欄改用 PARTUUID 而不是 UUID 。
+
+UUID 依 Filesystem UUID 掛載。PARTUUID 則依 Partition UUID 掛載。
+
+第二種，修改 Filesystem UUID 。
+
+EXT2/EXT3/EXT4 檔案系統使用 tune2fs 指令。例如:
+
+```term
+$ tune2fs -U random /dev/sda1
+```
+
+選項參數 *random* 會隨機產生一個 UUID 。
+
+Swap 分割區則使用 mkswap 指令修改 Filesystem UUID 。
+假設 Swap 分割區是 /dev/sda4 ，指令如下:
+
+```term
+$ mkswap --UUID ???? /dev/sda4
+```
