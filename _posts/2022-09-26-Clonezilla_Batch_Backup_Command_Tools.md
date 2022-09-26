@@ -55,3 +55,15 @@ label-id: abcd
 /dev/sda1 : ..... UUID=1234
 
 ```
+
+*label* 欄是這顆磁碟的分割區表格式。*gpt* 自然是 GPT 格式。至於 MBR 格式則是顯示 *dos* 。
+
+但 fdisk/sfdisk/sgdisk 等工具只會列出 Disk UUID 和 Partition UUID 。
+我們還需要知道 Filesystem UUID 。
+EXT2/EXT3/EXT4 檔案系統可用 tune2fs 配合選項 `-l` 查看 Filesystem UUID。例如:
+
+```term
+$ tune2fs -l /dev/sda1 | grep UUID
+```
+
+註: 一般用 blkid 查看。但碰到修改 UUID 的場合， blkid 會顯示修改前的 UUID 。後面章節會提到需要修改 UUID 的理由。
