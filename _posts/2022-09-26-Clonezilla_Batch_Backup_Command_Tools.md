@@ -104,3 +104,64 @@ $ sgdisk $SOURCE --replicate=$DEST
 ```term
 $ sgdisk -G $DEST
 ```
+
+##### MBR 格式
+
+假設來源 (SOURCE) 為 /dev/sda ，目的 (DEST) 為 /dev/sdb 。
+
+儲存分割區表為一個備份檔:
+
+```term
+$ sfdisk -d $SOURCE > source-partition-table.sfdisk
+```
+
+讀入備份檔的分割區表，寫入目的磁碟:
+
+```term
+$ sfdisk $DEST < source-partition-table.sfdisk
+```
+
+直接複製 SOURCE 的分割區表到 DEST:
+
+```term
+$ sfdisk -d $SOURCE | sfdisk $DEST
+```
+
+為磁碟隨機設定新的 Disk UUID:
+
+```term
+$ sfdisk --disk-id $DEST $disk-UUID
+```
+
+為分割區隨機設定新的 Partition UUID:
+
+```term
+$ sfdisk --part-UUID $DEST $partN $new-UUID
+```
+
+#### 分割區對分割區複製
+
+指令範例。由 Clonezilla 提供。
+
+```term
+$ /usr/sbin/ocs-onthefly -e1 auto -e2 -r -j2 -sfsck -k 
+  -p choose -f sda1 -d sdb1
+```
+
+* -batch: 不提示任何確認。默認則是詢問兩次是否執行？
+* -f {來源分割區}: 這裡用的分割區名稱不需要包含 /dev 。
+* -d {目的分割區}: 格式同上。
+* -p choose: 操作完後詢問使用者下一步。
+* -p true: 操作完後回到命令列。
+
+參考 [ocs-onthefly doc](https://clonezilla.org/fine-print-live-doc.php?path=./clonezilla-live/doc/98_ocs_related_command_manpages/02-ocs-onthefly.doc)。
+
+如果不想直接分割區對拷，而是先產生備份影像檔的話，可以改用 ocs-sr 指令。
+例如下列指令將一次性備份 sda1, sda2, sda3 三個分割區影像至 /home/partimag/sda-parts-img 目錄下。
+
+```term
+$ /usr/sbin/ocs-sr -q2 -c -j2 -z9p -i 4096 -sfsck -scs -senc 
+  -p choose saveparts sda-parts-img sda1 sda2 sda3
+```
+
+如果你想知道 `dd` 指令怎麼做，可以參考我這篇 [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})。
