@@ -36,3 +36,22 @@ Linux 散佈套件的基礎安裝工具中也會包含這些 (除了 ocs-onthefl
 <div class="note">
 本文所有指令，都需要 sudo 。只是指令範例省略不寫。
 </div>
+
+#### 查看磁碟資訊
+
+以第一顆 SATA 磁碟 (/dev/sda) 為例。
+
+```term
+$ sfdisk -d /dev/sda
+```
+
+輸出範例:
+
+```text
+
+label: gpt
+label-id: abcd
+
+/dev/sda1 : ..... UUID=1234
+
+```
