@@ -286,3 +286,9 @@ Swap 分割區則使用 mkswap 指令修改 Filesystem UUID 。
 ```term
 $ mkswap --UUID ???? /dev/sda4
 ```
+
+###### 資源連結
+
+* [CloneZilla 再生龍 Live 下載](https://clonezilla.nchc.org.tw/clonezilla-live/download/)
+* [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})
+* [用 Ventoy 將 CloneZilla 和 GParted 放在同一隻 USB 開機碟]({% post_url 2022-01-30-CloneZilla_Gparted_Ventoy %})
