@@ -67,3 +67,40 @@ $ tune2fs -l /dev/sda1 | grep UUID
 ```
 
 註: 一般用 blkid 查看。但碰到修改 UUID 的場合， blkid 會顯示修改前的 UUID 。後面章節會提到需要修改 UUID 的理由。
+
+#### 儲存與複製分割區表
+
+只複製分割區表，不含分割區內的檔案。
+這是為了讓兩顆磁碟的分割區配置保持一致。
+手動操作 fdisk/sfdisk/sgdisk 等工具時，以 MB/GB 為單位的分配方式實際上並不能保證分割區配置一致。
+
+分割區表格式分成 MBR 和 GPT (GUID Partition Table) 兩種。
+使用的工具不一樣。
+
+##### GPT 格式
+
+假設來源 (SOURCE) 為 /dev/sda ，目的 (DEST) 為 /dev/sdb 。
+
+儲存分割區表為一個備份檔:
+
+```term
+$ sgdisk $SOURCE --backup=partitions-info.sgdisk
+```
+
+讀入備份檔的分割區表，寫入目的磁碟:
+
+```term
+$ sgdisk --load-backup=partitions-info.sgdisk $DEST
+```
+
+直接複製 SOURCE 的分割區表到 DEST:
+
+```term
+$ sgdisk $SOURCE --replicate=$DEST
+```
+
+隨機設定新的 Partition UUID:
+
+```term
+$ sgdisk -G $DEST
+```
