@@ -165,3 +165,55 @@ $ /usr/sbin/ocs-sr -q2 -c -j2 -z9p -i 4096 -sfsck -scs -senc
 ```
 
 如果你想知道 `dd` 指令怎麼做，可以參考我這篇 [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})。
+
+#### 批次處理範例
+
+設母片前兩個分割區是 EXT4 檔案系統，第三個分割區是 Swap 。
+並且已知母片第一個分割區的 Filesystem UUID 是 "1234-5678"。
+批次作業將檢查來源的 UUID ，以免操作方向相反而失去母片。
+
+這個 shell script 執行時要提供兩個參數，分別指出母片和目的地的檔案名稱。
+例如 sda 和 sdb 。
+
+```sh
+
+#!/bin/sh
+
+if [ "$2" = "" ]; then
+    echo "Usage: <SRC> <DST>"
+    echo "example: clone-disk sda sdb"
+    exit 1
+fi
+
+SRC="$1"
+DST="$2"
+
+# 檢查 SRC 是否為母片
+tune2fs -l /dev/${SRC}1 | grep 1234-5678
+if [ $? -ne 0 ]; then
+    echo "$SRC is not original disk."
+    exit 1
+fi
+
+echo "Data in ${DST} will be lost. Press Ctrl+C to break operation else continue."
+read K
+if [ $? -ne 0 ]; then
+    exit 0
+fi
+
+# 直接複製分割區表:
+sgdisk /dev/$SRC --replicate=/dev/$DST
+
+# 隨機設定新的 Partition UUID:
+sgdisk -G /dev/$DST
+
+# clone ext4 partitions
+ocs-onthefly -batch -e1 auto -e2 -r -j2 -sfsck -k -p true -f ${SRC}1 -d ${DST}1
+ocs-onthefly -batch -e1 auto -e2 -r -j2 -sfsck -k -p true -f ${SRC}2 -d ${DST}2
+
+# format swap parttion.
+mkswap /dev/${DST}3
+
+echo "Done."
+
+```
