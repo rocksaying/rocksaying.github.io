@@ -2,7 +2,7 @@
 title: 使用 CloneZilla 指令列工具批次生產相同配置的業務用磁碟
 category: computer
 tags: [clonezilla,fdisk,tune2fs,uuid]
-lastupdated: 2022-09-26
+lastupdated: 2022-10-04
 ---
 
 標題說的業務用磁碟是指多顆具有相同分割區配置，安裝 Linux 作業系統和客戶業務軟體，用在大量裝機場合的磁碟。
@@ -207,12 +207,14 @@ sgdisk /dev/$SRC --replicate=/dev/$DST
 # 隨機設定新的 Partition UUID:
 sgdisk -G /dev/$DST
 
+# format parttions.
+mkfs.ext4 -F /dev/${DST}1
+mkfs.ext4 -F /dev/${DST}2
+mkswap /dev/${DST}3
+
 # clone ext4 partitions
 ocs-onthefly -batch -e1 auto -e2 -r -j2 -sfsck -k -p true -f ${SRC}1 -d ${DST}1
 ocs-onthefly -batch -e1 auto -e2 -r -j2 -sfsck -k -p true -f ${SRC}2 -d ${DST}2
-
-# format swap parttion.
-mkswap /dev/${DST}3
 
 echo "Done."
 
