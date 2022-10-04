@@ -2,20 +2,21 @@
 title: 使用 CloneZilla 指令列工具批次生產相同配置的業務用磁碟
 category: computer
 tags: [clonezilla,fdisk,tune2fs,uuid]
-lastupdated: 2022-10-04
+lastupdated: 2022-10-05
 ---
 
 標題說的業務用磁碟是指多顆具有相同分割區配置，安裝 Linux 作業系統和客戶業務軟體，用在大量裝機場合的磁碟。
 此外，本文情境還將面臨分批採購、後續替換等狀況，故使用的磁碟會是不同型號、不同品牌、甚至標示容量也不相同。
 
-CloneZilla 的磁碟對拷功能雖然可以直接複製分割區配置，但那僅限兩顆磁碟實際容量一致或目的磁碟容量較大的情形。
-不適用本文所說的多顆磁碟不相同的情形。
-所以本文使用的指令操作，著重在以分割區為單位之複製工作，才能適應本文情境。
-
-<div class="note">
+CloneZilla 的磁碟對拷功能雖然可以直接複製分割區配置，但一般情形僅限兩顆磁碟實際容量一致或目的磁碟容量較大的情形。
 為了能複製到不同容量的磁碟，本文情境的分割區配置並不會用滿整顆磁碟的容量。
 實務上可能只配置 30GB 左右，以便複製到 32GB 或更大容量的磁碟。
-因此適合使用於 eMMC, CF卡, USB隨身碟, SSD 這一類的儲存媒體。
+這種分割區配置方式適合使用於 eMMC, CF卡, USB隨身碟, SSD 這一類的儲存媒體。
+
+這種做法，我以前也用在 Raspberry Pi 上。可以參考我這篇 [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})。
+
+<div class="note">
+2022-10-05: 大幅改寫，改以磁碟為複製單位，而不是分割區。
 </div>
 
 <!--more-->
@@ -74,12 +75,26 @@ $ tune2fs -l /dev/sda1 | grep UUID
 這是為了讓兩顆磁碟的分割區配置保持一致。
 手動操作 fdisk/sfdisk/sgdisk 等工具時，以 MB/GB 為單位的分配方式實際上並不能保證分割區配置一致。
 
+CloneZilla 複製磁碟時，加上參數 -k0 就會幫使用者複製分割區表。
+
 分割區表格式分成 MBR 和 GPT (GUID Partition Table) 兩種。
 使用的工具不一樣。
 
 ##### GPT 格式
 
 假設來源 (SOURCE) 為 /dev/sda ，目的 (DEST) 為 /dev/sdb 。
+
+查看磁碟目前的分割區表:
+
+```term
+$ sgdisk --print $SOURCE
+```
+
+清除原分割區，產生新的空白分割區表:
+
+```term
+$ sgdisk --clear $DEST
+```
 
 儲存分割區表為一個備份檔:
 
@@ -108,6 +123,12 @@ $ sgdisk -G $DEST
 ##### MBR 格式
 
 假設來源 (SOURCE) 為 /dev/sda ，目的 (DEST) 為 /dev/sdb 。
+
+查看磁碟目前的分割區表:
+
+```term
+$ sfdisk -l $SOURCE
+```
 
 儲存分割區表為一個備份檔:
 
@@ -139,32 +160,67 @@ $ sfdisk --disk-id $DEST $disk-UUID
 $ sfdisk --part-UUID $DEST $partN $new-UUID
 ```
 
-#### 分割區對分割區複製
+#### 磁碟對磁碟複製
 
-指令範例。由 Clonezilla 提供。
+使用 CloneZilla 的指令列工具 ocs-onthefly 或 ocs-sr 。
+
+共同參數說明:
+
+* -batch : 批次處理模式。不會向使用者確認任何事項。
+* -icds  : 不檢查目的磁碟的容量是否大於等於來源磁碟。本文開頭就說過使用情境必須加上此參數。並且特意控制過，不會有目的磁碟容量不足的狀況。
+* -k0    : 複製來源磁碟的分割區表到目的磁碟上。
+* -f {來源分割區} : 這裡用的分割區名稱不需要包含 /dev 。
+* -d {目的分割區} : 格式同上。
+* -p true : 操作完後回到命令列。
+
+配合參數 *-icds* 的前提是磁碟分割區配置並不用滿整個磁碟。
+如果分割區配置容量就超過目的磁碟總容量，則在目的磁碟上建立分割區表時就會失敗。
+
+##### 使用 ocs-onthefly 直接磁碟對磁碟複製
+
+假設來源為 sda ，目的地為 sdb 。
 
 ```term
-$ /usr/sbin/ocs-onthefly -e1 auto -e2 -r -j2 -sfsck -k 
-  -p choose -f sda1 -d sdb1
+$ ocs-onthefly -batch -icds -k0 -g auto -e1 auto -e2 -j2 -r -sfsck -p true -f sda -d sdb
 ```
 
-* -batch: 不提示任何確認。默認則是詢問兩次是否執行？
-* -f {來源分割區}: 這裡用的分割區名稱不需要包含 /dev 。
-* -d {目的分割區}: 格式同上。
-* -p choose: 操作完後詢問使用者下一步。
-* -p true: 操作完後回到命令列。
+參考[ocs-onthefly 手冊](https://clonezilla.org/fine-print-live-doc.php?path=./clonezilla-live/doc/98_ocs_related_command_manpages/02-ocs-onthefly.doc)。
 
-參考 [ocs-onthefly doc](https://clonezilla.org/fine-print-live-doc.php?path=./clonezilla-live/doc/98_ocs_related_command_manpages/02-ocs-onthefly.doc)。
+##### 使用 ocs-sr 從備份影像檔複製(還原)
 
-如果不想直接分割區對拷，而是先產生備份影像檔的話，可以改用 ocs-sr 指令。
-例如下列指令將一次性備份 sda1, sda2, sda3 三個分割區影像至 /home/partimag/sda-parts-img 目錄下。
+假設目的地為 sdb 。備份影像檔放在 /dev/sdc2 的 backup-disk-img 目錄。
+
+ocs-sr 要求備份影像檔目錄一定要是 `/home/partimag` 的子目錄。
+所以要先將存有備份影像檔的儲存設備掛載在 `/home/partimag` 目錄。
 
 ```term
-$ /usr/sbin/ocs-sr -q2 -c -j2 -z9p -i 4096 -sfsck -scs -senc 
-  -p choose saveparts sda-parts-img sda1 sda2 sda3
+$ mount /dev/sdc2 /home/partimag
+$ ocs-sr -batch -icds -k0 -g auto -e1 auto -e2 -j2 -r -p true restoredisk backup-disk-img sdb
 ```
 
-如果你想知道 `dd` 指令怎麼做，可以參考我這篇 [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})。
+參考[ocs-sr 手冊](https://clonezilla.org/fine-print-live-doc.php?path=./clonezilla-live/doc/98_ocs_related_command_manpages/01-ocs-sr.doc)。
+
+#### 分割區對分割區複製 (不使用)
+
+以分割區為複製單位時，目的分割區必須存在且已經格式化。
+對於一個全新磁碟來說，操作比較複雜。
+改成以磁碟為操作單位時，就不必考慮分割與格式化了。
+而且我還碰到 clonezilla 提供的指令不能用的狀況。就是下面這一條指令:
+
+```term
+$ /usr/sbin/ocs-onthefly -e1 auto -e2 -r -j2 -sfsck -k -p true -f sda1 -d sdb1
+```
+
+這個指令範例是我執行 CloneZilla UI 操作時，它告訴我的指令。
+
+我用 UI 操作就成功。但我使用這行指令時，卻會出現下列錯誤訊息:
+
+```term
+Variable tgt_d is not assigned in function do_d2d_local_restore.
+Program terminated!
+```
+
+我懷疑 CloneZilla UI 提供的指令是不是漏了參數。
 
 #### 批次處理範例
 
@@ -201,20 +257,11 @@ if [ $? -ne 0 ]; then
     exit 0
 fi
 
-# 直接複製分割區表:
-sgdisk /dev/$SRC --replicate=/dev/$DST
+# clone disk
+ocs-onthefly -batch -icds -k0 -g auto -e1 auto -e2 -j2 -r -sfsck -p true -f $SRC -d $DST
 
 # 隨機設定新的 Partition UUID:
 sgdisk -G /dev/$DST
-
-# format parttions.
-mkfs.ext4 -F /dev/${DST}1
-mkfs.ext4 -F /dev/${DST}2
-mkswap /dev/${DST}3
-
-# clone ext4 partitions
-ocs-onthefly -batch -e1 auto -e2 -r -j2 -sfsck -k -p true -f ${SRC}1 -d ${DST}1
-ocs-onthefly -batch -e1 auto -e2 -r -j2 -sfsck -k -p true -f ${SRC}2 -d ${DST}2
 
 echo "Done."
 
@@ -223,7 +270,7 @@ echo "Done."
 #### 啟動問題
 
 1. 雖然重設了新的 Partition UUID ，但 Filesystem UUID 沒改。
-2. 分割區對分割區複製之後，兩邊的 Filesystem UUID 相同。
+2. 磁碟複製之後，兩邊的 Filesystem UUID 相同。
 
 兩顆磁碟分別上線，皆可正常啟動作業系統。
 然而兩顆磁碟同時上線時，作業系統可能會隨機挑選分割區掛載。
@@ -283,10 +330,10 @@ $ tune2fs -U random /dev/sda1
 選項參數 *random* 會隨機產生一個 UUID 。
 
 Swap 分割區則使用 mkswap 指令修改 Filesystem UUID 。
-假設 Swap 分割區是 /dev/sda4 ，指令如下:
+假設 Swap 分割區是 /dev/sda4 ，配合 uuidgen 工具，可下指令:
 
 ```term
-$ mkswap --UUID ???? /dev/sda4
+$ mkswap --uuid `uuidgen` /dev/sda4
 ```
 
 ###### 資源連結
@@ -294,4 +341,3 @@ $ mkswap --UUID ???? /dev/sda4
 * [CloneZilla 再生龍 Live 下載](https://clonezilla.nchc.org.tw/clonezilla-live/download/)
 * [產生指定容量的 Raspberry Pi SD 卡磁碟映像]({% post_url 2019-08-23-Raspberry_Pi_產生指定容量_SD_image %})
 * [用 Ventoy 將 CloneZilla 和 GParted 放在同一隻 USB 開機碟]({% post_url 2022-01-30-CloneZilla_Gparted_Ventoy %})
-
