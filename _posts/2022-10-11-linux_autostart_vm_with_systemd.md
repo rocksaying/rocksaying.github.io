@@ -72,10 +72,8 @@ Debian/Ubuntu 通常名稱是 virtualbox.service ，其他散佈版本可能取�
 可以用下列的指令查看你的散佈版本為 VirtualBox 驅動程式載入服務取了什麼名稱。
 
 ```term
-
-$ sudo systemctl vbox*
-$ sudo systemctl virtualbox*
-
+$ sudo systemctl status virtualbox*
+$ sudo systemctl status vbox*
 ```
 
 ###### ExecStart
