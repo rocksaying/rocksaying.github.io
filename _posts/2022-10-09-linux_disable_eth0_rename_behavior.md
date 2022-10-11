@@ -30,9 +30,9 @@ $ sudo grub-mkconfig -o /boot/grub/grub.cfg
 <!--more-->
 
 起初， Linux kernel 對乙太網路裝置的介面命名方式都是按 eth0, eth1 的數字序列下來。
-然而現代的 Linux 散佈套件導入了更複製的命名規則，以應對多樣化的乙太網路裝置。
+然而現代的 Linux 散佈版本導入了更複製的命名規則，以應對多樣化的乙太網路裝置。
 例如主機板內建乙太網路裝置、獨立乙太網路擴充卡、USB網路卡等等。
-所以現代 Linux 散佈套件中，乙太網路裝置通常被賦予 eno0, ens1, enp2s3, enx0045678 這類樣式的介面名稱 ，而不再是傳統的 eth0, eth1 。
+所以現代 Linux 散佈版本中，乙太網路裝置通常被賦予 eno0, ens1, enp2s3, enx0045678 這類樣式的介面名稱 ，而不再是傳統的 eth0, eth1 。
 
 注意， Linux kernel 仍然用 eth? 這個名稱樣式。
 新的名稱樣式，是由 NetworkManager, networkd, [netplan](https://netplan.io/) 這些網路介面管理者負責的。
@@ -47,7 +47,7 @@ $ sudo dmesg | grep eth0
 
 ```
 
-現代 Linux 散佈套件的網路介面命名規則具體請看 [Consistent Network Device Naming]( https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/ch-consistent_network_device_naming)。
+現代 Linux 散佈版本的網路介面命名規則具體請看 [Consistent Network Device Naming]( https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/ch-consistent_network_device_naming)。
 
 這個規則是為了應對多樣化的乙太網路裝置，讓系統管理者可以針對不同類型的網路裝置設置不同網路存取規則。
 
@@ -78,6 +78,6 @@ $ sudo dmesg | grep eth0
 * biosdevname=0
 
 舊 RedHat 派用 biosdevname ， Debian 派用 net.ifnames 。參數值 0 表示 False 、關閉。
-為了相容不同散佈套件，兩個參數都寫上。
+為了相容不同散佈版本，兩個參數都寫上。
 
 最後執行 *update-grub* 或 *grub-mkconfig* 指令，更新 grub 設定。
