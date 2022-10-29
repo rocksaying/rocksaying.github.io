@@ -9,7 +9,7 @@ lastupdated: 2022-10-29
 
 Named pipe (具名管道) 在 .NET 上不是新玩意，早在 .NET Framework 3.5 時就已提供 [NamedPipeServerStream](https://learn.microsoft.com/zh-tw/dotnet/api/system.io.pipes.namedpipeserverstream) / [NamedPipeClientStream](https://learn.microsoft.com/zh-tw/dotnet/api/system.io.pipes.namedpipeclientstream)。
 但是自 .NET 6 起，它的底層實作技術改變了。
-如果你想讓其他程式語言開發的程式 (非 .NET 平台) 和 NamedPipeServerStream/NamedPipeClientStream 程式溝通，必須知道這件事。
+如果你想讓其他程式語言開發的程式 (非 .NET 平台) 和 NamedPipeServerStream / NamedPipeClientStream 程式溝通，必須知道這件事。
 
 我有一個用 .NET Core 3 寫的具名管道服務程式，前陣子想用 .NET 6 發佈到 Linux 跑。結果原先用 FIFO 寫的客戶端程式接不上。一番研究後，才知道 .NET 6 改了具名管道的底層實作技術。
 
@@ -20,7 +20,7 @@ BSD 家族則是從 socket 中衍生出 [Unix Domain Socket](https://en.wikipedi
 
 了解這段技術歷史後，就會知道透過具名管道通訊之前，要先搞清楚對方所說的「具名管道」到底是用哪種技術。特別是在不同程式語言的程式之間。
 
-由於 Windows 系統早先並不提供 Unix Domain Socket ，所以 .NET Framework 用 FIFO 實作 NamedPipeServerStream/NamedPipeClientStream 。但 Windwos 10 Insider Build 17063 (我記得被包含進 18H3) 開始提供 Unix Domain Socket ，所以稍後公開的 .NET 6 也隨之將 NamedPipe 底層實作技術從 FIFO 改成 Unix Domain Socket 。至於改變原因，我猜測是基於可攜性考量。由於 Linux 和 macOS (BSD family) 都提供 Unix Domain Socket ，故 .NET 6 的 NamedPipe 類別自此具備在 Linux, macOS, Windows 10 作業系統之間的可攜性。
+由於 Windows 系統早先並不提供 Unix Domain Socket ，所以 .NET Framework 用 FIFO 實作 NamedPipeServerStream / NamedPipeClientStream 。但 Windwos 10 Insider Build 17063 (我記得被包含進 18H3) 開始提供 Unix Domain Socket ，所以稍後公開的 .NET 6 也隨之將 NamedPipe 底層實作技術從 FIFO 改成 Unix Domain Socket 。至於改變原因，我猜測是基於可攜性考量。由於 Linux 和 macOS (BSD family) 都提供 Unix Domain Socket ，故 .NET 6 的 NamedPipe 類別自此具備在 Linux, macOS, Windows 10 作業系統之間的可攜性。
 
 本文一方面提供 .NET NamedPipeServerStream 的服務程式範例；另一方面，則是驗證不同程式語言的程式現在該透過何種途徑與 .NET 6 的具名管道溝通。我選擇用 PHP 寫一個使用 unix domain socket 的客戶端程式。
 
