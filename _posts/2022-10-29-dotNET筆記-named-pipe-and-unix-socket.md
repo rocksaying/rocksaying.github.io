@@ -42,13 +42,13 @@ BSD 家族則是從 socket 中衍生出 [Unix Domain Socket](https://en.wikipedi
 
 *注意! 不論是 FIFO 或是 Unix Domain Socket 都被視為一種檔案。所以使用時要注意讀寫權限。*
 
-在 Linux/macOS 平台，建立 unix domain socket 時，讀寫權限預設是 644 (srwx-r-xr-x)，
+在 Linux/macOS 平台，建立 unix domain socket 時，讀寫權限預設是 644 (srw--r--r--)，
 這表示不同 UID 的程序不能開啟這個 socket 。
 然而 .NET 對於讀寫權限的設置修改這事，目前還沒有跨平台性的方法。
 所以 .NET 沒有方法在程式中設置具名管道的讀寫權限。
 
-我目前的做法有兩種，提供各位參考。
+我目前的做法有三種，提供各位參考。
 
-1. 如果是在 Linux/macOS 上跑，用指令 chmod 修改 socket 的讀寫權限為 664 (ug+w) 或 666 (a+w)。
-2. 讓服務端和客戶端都用同一個使用者身份執行。這是通用做法。提醒 Windows 使用者，如果你想把具名管道的服務端程式設為系統服務啟動的話，那不能用預設的 SystemService 身份。
- 
+1. 讓服務端和客戶端都用同一個使用者身份執行。這是通用做法。提醒 Windows 使用者，如果你想把具名管道的服務端程式設為系統服務啟動的話，那不能用預設的 SystemService 身份。
+2. 如果是在 Linux/macOS 上跑，用指令 chmod 修改 socket 的讀寫權限為 664 (ug+w) 或 666 (a+w)。
+3. 如果是在 Linux/macOS 上跑，執行程式前，先用指令 umask 改變預設權限遮罩。例如 `umask 011` 就會改變該程式空間新建檔案的讀寫權限為 666 。這會降低安全性，如果不懂 umask 就別用。
