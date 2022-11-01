@@ -72,8 +72,8 @@ UPDATE myid SET id1 = id1 +1
 ### MS SQL Server
 
 MS SQL Server 的 T-SQL 語法不能像 PostgreSQL 那樣在 WITH 子查詢中使用 UPDATE 敘述；它的 UPDATE 語法也不提供 RETURNING 。
-T-SQL 對應 PostgreSQL RETURNING 的等義語法是 `OUTPUT` ，並且搭配前置詞 `deleted` 與 `instered` 。
-`deleted` 代表更新前的內容，`instered` 代表更新後的內容。
+T-SQL 對應 PostgreSQL RETURNING 的等義語法是 `OUTPUT` ，並且搭配前置詞 `deleted` 與 `inserted` 。
+`deleted` 代表更新前的內容，`inserted` 代表更新後的內容。
 詳情請見[T-SQL UPDATE - 擷取 UPDATE 陳述式的結果](https://docs.microsoft.com/zh-tw/sql/t-sql/queries/update-transact-sql?view=sql-server-ver15#CaptureResults)。
 
 例如 myid.id1 之值原為 1 。則下列敘述將會回傳兩個不同狀態欄位的 id1 ，第一個表示更新前，第二個表示更新後。
