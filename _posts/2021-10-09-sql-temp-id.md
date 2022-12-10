@@ -1,13 +1,17 @@
 ---
-title: SQL 與 ID 欄位的處理策略
+title: SQL 與 ID 欄位的處理策略與 Time-Sorted ID
 category: programming
-tags: [sql,php,serial,identity]
-lastupdated: 2021-10-09
+tags: [sql,php,serial,identity,tsid]
+lastupdated: 2022-12-10
 ---
 
 我們設計資料庫應用時，都會遇到新增資料後產生一個識別代號(ID)的設計需求。但遺憾的是， SQL Standard 並沒有定義任何產生識別代號的型態或函數。但這種需求實在普遍，於是各種資料庫系統都發展了自己的一套做法。
 
 我在「[SQL Datatypes 相容性整理]({% post_url 2021-07-15-sql-datatypes %})」一文中，整理了 SQL Server, PostgreSQL, MySQL, SQLite 四種資料庫各自產生識別代號的方法。這種各家不相容的狀況，使得識別代號這種普遍的設計需求，存在可攜性陷阱。
+
+<div class="note">
+2022-12-10 更新，補充 Time-Sorted Unique Identifier (TSID) 內容。
+</div>
 
 <!--more-->
 
@@ -18,6 +22,8 @@ lastupdated: 2021-10-09
 舉個例子來說，我有一張表單要儲存。表單資料會存入兩個表格， table1 和 table2。這兩個表格以 deal_id 建立關聯性。我先在 table1 新增一個資料列，而在 table2 新增的資料列要關聯到 table1 新增的這一筆資料列。
 
 ### 策略1:插入時自動產生id
+
+此策略仰賴資料庫系統的「特性」。亦即每家資料庫的用法都不一樣，兼容性低。
 
 假設我的 deal_id 定義為 serial 資料型態，採用插入資料列時自動產生 id 的作法。以 PHP 搭 PostgreSQL 為例，其操作如下:
 
@@ -46,9 +52,9 @@ $pdo->commit();
 
 你不用 `beginTransaction() ... commit()` 鎖住資料庫，那麼操作過程中查詢的 deal_id 最新序號值就可能被其他工作改變，結果不可靠。但用了 `beginTransaction()` 又會犧牲資料庫的執行效率。所以 SQL Standard 不喜歡這種作法。
 
-### 策略2:插入前先取得id
+### 策略2:插入前先取得id - SQL Standard 偏好
 
-再來看看插入之前就先算好 id 的作法。
+再來看看插入之前就先算好 id 的作法，亦即 SQL Standard 的設計偏好。
 
 假設我的 deal_id 改成 character(8) 資料型態，用的是插入資料列之前就產生 id 的作法。而產生 id 的方法來自我寫的 [TempId.php](https://github.com/shirock/rocksources/blob/master/php/lib/TempId.php) 。那麼操作方式變化如下:
 
@@ -57,6 +63,7 @@ $pdo->commit();
 require 'TempId.php';
 
 $id = TempId::make(); // 先算出 id
+// $id = tsid(); // tsid() 是 TempId::make() 的別名
 
 $stat = $pdo->prepare('INSERT INTO table1 (deal_id, name) VALUES (?, ?)');
 
@@ -69,13 +76,16 @@ if ($stat->execute([$id, 'record1'])) {
 
 瞧瞧，對資料庫系統來說，這個操作簡單多了。完全都用標準語法，而且即可靠又有效率。只是應用軟體設計者就麻煩了，因為他得要弄出一個像 TempId 的東西。但 SQL Standard 就是認為產生識別代號(id)的工作應該是應用軟體設計者自己決定，而不該由資料庫系統承擔。
 
-### 關於 TempId
+### 關於 TempId 與 TSID
 
-我的 [TempId.php](https://github.com/shirock/rocksources/blob/master/php/lib/TempId.php) ，基礎按時序產生，包含年、月、日、時、分、秒、毫秒資訊。再用60進位法把時序資訊壓縮成 8 個字元長度的字串。並用檔案鎖產生時間間隔，避免同時有兩個人取得相同的 TempId 。
+產生 id 這事，有人選擇用標準化的 UUID (universally unique identifier)。但 UUID 缺點是 128-bit 長度浪費空間，而且並不具順序性，不能排序。所以又有人設計了基於時間的 Time-Sorted Unique Identifier (TSID)。具體內容請看 [TSID – Time-Sorted Unique Identifiers](https://vladmihalcea.com/uuid-database-primary-key/) 。
 
-我刻意把 TempId 壓到 8 bytes 長度，這樣它的儲存空間就和 32 位元組 integer 一樣了。一般資料庫的自動序號型態，例如 PostgreSQL 的 serial ，所需儲存空間也是 8 bytes 。雖然字串為鍵值的索引效率不如整數鍵值，但至少不會浪費空間。
+我的 [TempId.php](https://github.com/shirock/rocksources/blob/master/php/lib/TempId.php) 就是一種 Time-Sorted Unique Identifier 。內容基礎按時序產生，包含年、月、日、時、分、秒、毫秒資訊。再用60進位法把時序資訊壓縮成 8 個字元長度的字串。並用檔案鎖產生時間間隔，避免同時有兩個人取得相同的 TempId 。
+
+我刻意把 TempId 壓到 8 bytes 長度 (32-bit)，這樣它的儲存空間就和 32 位元組 integer 一樣了。一般資料庫的自動序號型態，例如 PostgreSQL 的 serial ，所需儲存空間也是 8 bytes 。雖然字串為鍵值的索引效率不如整數鍵值，但至少不會浪費空間。
 
 ###### 相關文章
 
+* [TSID – Time-Sorted Unique Identifiers](https://vladmihalcea.com/uuid-database-primary-key/)
 * [新增資料時自動產生識別代號的一些方法]({% post_url 2008-6-24-新增資料時自動產生識別代號的一些方法 %})
 * [SQL Datatypes 相容性整理]({% post_url 2021-07-15-sql-datatypes %})
