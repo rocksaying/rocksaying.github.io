@@ -474,6 +474,8 @@ SET (MARS_NWE_PID_DIR "/var/run")
 
 修改後，再下指令 `$ cmake . ; make ` 重新編譯。
 
+或者不動 CMakeLists.txt 。則先跑 `cmake .` 產生 include/config.h 。修改 include/config.h 的內容之後再編譯。
+
 ###### 參考資料
 
 * [cml37 - mars_nwe_setup](https://github.com/cml37/dos-utils/blob/master/network/mars_nwe/mars_nwe_setup.txt)
