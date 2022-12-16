@@ -151,13 +151,13 @@ $ sfdisk -d $SOURCE | sfdisk $DEST
 為磁碟隨機設定新的 Disk UUID:
 
 ```term
-$ sfdisk --disk-id $DEST $disk-UUID
+$ sfdisk --disk-id $DEST $(uuidgen)
 ```
 
 為分割區隨機設定新的 Partition UUID:
 
 ```term
-$ sfdisk --part-UUID $DEST $partN $new-UUID
+$ sfdisk --part-uuid $DEST $partN $(uuidgen)
 ```
 
 #### 磁碟對磁碟複製
