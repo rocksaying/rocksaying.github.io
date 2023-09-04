@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # If you use Ruby 3, Jekyll requires webrick.
-gem 'webrick'
+#gem 'webrick'
 
 # Hello! This is where you manage which Jekyll version is used to run.
 # When you want to use a different version, change it below, save the
