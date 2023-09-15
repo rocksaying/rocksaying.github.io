@@ -1,5 +1,5 @@
 ---
-title: CommonGateway 第二步 - JSON 的處理與資料上傳
+title: PHP框架 - CommonGateway 第二步 - JSON 的處理與資料上傳
 category: programming
 tags: [php,restful,rest,common-gateway]
 lastupdated: 2021-08-24

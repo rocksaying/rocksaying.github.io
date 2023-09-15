@@ -1,5 +1,5 @@
 ---
-title: CommonGateway HTML公用函數與預設首頁
+title: PHP框架 - CommonGateway HTML公用函數與預設首頁
 category: programming
 tags: [php,網站設計,common-gateway]
 lastupdated: 2021-08-23

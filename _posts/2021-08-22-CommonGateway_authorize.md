@@ -1,5 +1,5 @@
 ---
-title: CommonGateway Authorize 認證註記功能教學
+title: PHP框架 - CommonGateway Authorize 認證註記功能教學
 category: programming
 tags: [php,restful,common-gateway]
 lastupdated: 2021-08-22

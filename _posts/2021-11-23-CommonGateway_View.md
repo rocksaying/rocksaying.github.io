@@ -1,5 +1,5 @@
 ---
-title: CommonGateway 的 View 類別，讓控制項指定自己要用的視圖
+title: PHP框架 - CommonGateway 的 View 類別，讓控制項指定自己要用的視圖
 category: programming
 tags: [php,restful,common-gateway]
 lastupdated: 2021-11-23

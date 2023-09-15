@@ -1,5 +1,5 @@
 ---
-title: CommonGateway 控制項動作函數回傳狀態碼的作法
+title: PHP框架 - CommonGateway 控制項動作函數回傳狀態碼的作法
 category: programming
 tags: [php,restful,common-gateway]
 permalink: /archives/44121826.html
