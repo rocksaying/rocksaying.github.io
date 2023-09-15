@@ -5,7 +5,7 @@ tags: [".net","C#",csharp,pipe,socket,ipc]
 lastupdated: 2022-10-29
 ---
 
-**本文內容以 .NET 6 或更新版本為目標平台。 .NET Framework 不適用。**
+**本文內容以 .NET 6 或更新版本為目標平台。我不用 .NET Framework ，不保證適用。**
 
 Named pipe (具名管道) 在 .NET 上不是新玩意，早在 .NET Framework 3.5 時就已提供 [NamedPipeServerStream](https://learn.microsoft.com/zh-tw/dotnet/api/system.io.pipes.namedpipeserverstream) / [NamedPipeClientStream](https://learn.microsoft.com/zh-tw/dotnet/api/system.io.pipes.namedpipeclientstream)。
 但是自 .NET 6 起，它的底層實作技術改變了。

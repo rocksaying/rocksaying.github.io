@@ -5,7 +5,7 @@ tags: [".net","C#",csharp,timer,threading]
 lastupdated: 2023-06-03
 ---
 
-**本文內容以 .NET 6 或更新版本為目標平台。 .NET Framework 不適用。**
+**本文內容以 .NET 6 或更新版本為目標平台。我不用 .NET Framework ，不保證適用。**
 
 在 .NET 平台上，有兩種主要的計時器類別(Timer)，分別是：
 
