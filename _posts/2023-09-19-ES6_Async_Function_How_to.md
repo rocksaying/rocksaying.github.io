@@ -18,7 +18,7 @@ lastupdated: 2023-09-19
 <!--more-->
 
 <div class="note">
-各家 JavaScript 引擎並不是同時實現 Promise 和 async 兩個功能。基本上是先實現 Promise ，之後才實現 async 。主流三大家引擎，最晚到 2018 年就都實現了。所以 2019 年之前寫的程式碼，可能還停留在 Promisc 而沒用 async 。當然現在用 async 不太需要擔心瀏覽器不支援的事了。
+各家 JavaScript 引擎並不是同時實現 Promise 和 async 兩個功能。基本上是先實現 Promise ，之後才實現 async 。主流三大家引擎，最晚到 2018 年就都實現了。所以 2019 年之前寫的程式碼，可能還停留在 Promise 而沒用 async 。當然現在用 async 不太需要擔心瀏覽器不支援的事了。
 </div>
 
 ### 第一問，如何設計與使用 async function (非同步函式)？
@@ -26,7 +26,7 @@ lastupdated: 2023-09-19
 答：你要會用 *Promise* 。
 
 答案很精簡。因為可將 *async function* (非同步函式) 視為 *Promise* 的語法糖衣。
-你懂 Promisc 就會用非同步函式。關於 Promise 可參考我的 [Promise 學習六步]({% post_url 2021-07-29-ES6_Promise %})。
+你懂 Promise 就會用非同步函式。關於 Promise 可參考我的 [Promise 學習六步]({% post_url 2021-07-29-ES6_Promise %})。
 
 ### 第二問，我已經有使用 Promise 設計的函式了，如何改為非同步函式？
 
