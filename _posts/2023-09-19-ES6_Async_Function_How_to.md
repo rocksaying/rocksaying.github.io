@@ -85,7 +85,7 @@ Until(_ => true, 3)
 3. 幫助 IDE 工具提醒使用者(你)正在呼叫非同步函式。
 
 傳統上使用 Promise 設計的非同步工作若要同步化，會用 `then()` 串接起來。
-具體內容請看 [Promise 學習六步第四步：串接實現非同步工作的同步化]({% post_url 2021-07-29-ES6_Promise %})。
+具體內容請看 [Promise 學習六步第四步：串接實現非同步工作的同步化]({% post_url 2021-07-29-ES6_Promise %})。但加上 *async* 宣告後，函式內部就可以用 *await* 簡化為易讀的形式。
 
 例如:
 
@@ -98,7 +98,7 @@ async function AFunc1a(i)
             .then(y => Promise3(y));
 }
 
-// 改用 await 就可以簡化成下列易讀的形式:
+// 可用 await 簡化成下列易讀的形式:
 async function AFunc1b(i)
 {
     let x = await Promise1(i);
@@ -171,7 +171,7 @@ AFunc3b(2).then().catch(v => console.log('afunc3b throw:', v));
 
 [color of function](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/) 指的是在程式碼中使用 *async* ，會染色你的程式碼。
 
-以我在 C# 語言中使用 *async* 的經驗，我的 A 函式要呼叫第三方類別的 B 函式，但 B 函式已經宣告 async 了。那麼我的 A 函式也要宣告 async 。接著任何呼叫 A 函式的函式，也要跟著宣告 async 。一層層回溯，最後連代表程式起點的 `main()` 也要宣告 async 。這還只是剛開始。在你的傳統程式碼中添加一個 async ，結果就像是朝一碗清水倒入一滴墨水。當然不想染黑也有解法，就是用 Task/Result 變成同步工作。我在 [.NET/C# 設計 MQTT 用戶端程式]({% post_url 2021-09-05-MQTT-5-C#-clients %}) 就這麼做了。
+以我在 C# 語言中使用 *async* 的經驗，我的 A 函式要呼叫第三方類別的 B 函式，但 B 函式已經宣告 async 了。那麼我的 A 函式也要宣告 async 。接著任何呼叫 A 函式的函式，也要跟著宣告 async 。一層層回溯，最後連代表程式起點的 `main()` 也要宣告 async 。這還只是剛開始。在你的傳統程式碼中添加一個 async ，結果就像是朝一碗清水倒入一滴墨水。當然不想染色也有解法，就是用 Task/Result 變成同步工作。我在 [.NET/C# 設計 MQTT 用戶端程式]({% post_url 2021-09-05-MQTT-5-C#-clients %}) 就這麼做了。
 
 這個現象不只出現在 C# ，Java 也有。事實上，每個程式語言在加入 async 語法時，都不能避免染色現象。 JavaScript 在這方面的影響算是比較輕的吧。當然你要真不想用 async ，你依然可以用 Promise 。
 
