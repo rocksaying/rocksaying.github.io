@@ -1,5 +1,5 @@
 ---
-title: 學習 ECMAScript/JavaScript 6 - Async Function 問答指引
+title: 學習 ECMAScript/JavaScript 6 - Async Function 問答指南
 category: programming
 tags: [javascript,ecmascript,es6,promise,async,await]
 lastupdated: 2023-09-19
@@ -7,13 +7,13 @@ lastupdated: 2023-09-19
 
 注意，本文說的 *async function* 專指 JavaScript 的定義。
 
-關於 *async function* (非同步函式)的使用方法，我想只需要回答三個問題就足夠了。
+關於 *async function* (非同步函式)的使用入門，我想只需要回答三個問題就足夠了。
 
-1. 如何設計與使用 async function (非同步函式)？
-2. 我已經有使用 Promise 設計的函式了，如何改為非同步函式？
-3. 隱性的非同步函式改成顯性宣告(加上 async)有什麼好處？
+1. [如何設計與使用 async function (非同步函式)？]({{page.url}}#第一問如何設計與使用-async-function-非同步函式)
+2. [我已經有使用 Promise 設計的函式了，如何改為非同步函式？]({{page.url}}#第二問我已經有使用-promise-設計的函式了如何改為非同步函式)
+3. [隱性的非同步函式改成顯性宣告(加上 async)有什麼好處？]({{page.url}}#第三問隱性的非同步函式改成顯性宣告加上-async有什麼好處)
 
-最後補充關於 async 帶來的 [color of function](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/) 的影響。
+最後補充關於 async 帶來的 [color of function]({{page.url}}#color-of-function) 的影響。
 
 <!--more-->
 
@@ -85,7 +85,7 @@ Until(_ => true, 3)
 3. 幫助 IDE 工具提醒使用者(你)正在呼叫非同步函式。
 
 傳統上使用 Promise 設計的非同步工作若要同步化，會用 `then()` 串接起來。
-具體內容請看 [Promise 學習六步第四步：串接實現非同步工作的同步化]({% post_url 2021-07-29-ES6_Promise %})。但加上 *async* 宣告後，函式內部就可以用 *await* 簡化為易讀的形式。
+具體內容請看 [Promise 學習六步第四步：串接實現非同步工作的同步化]({% post_url 2021-07-29-ES6_Promise %}#4-串接實現非同步工作的同步化)。但加上 *async* 宣告後，函式內部就可以用 *await* 簡化為易讀的形式。
 
 例如:
 
