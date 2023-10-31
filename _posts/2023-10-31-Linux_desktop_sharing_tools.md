@@ -43,7 +43,7 @@ X 視窗協定的設計原本就可登入遠端主機使用。
 
 當時常見用法是 X server 裝在本機，X client (GUI軟體) 裝在遠端主機。
 使用者先登入遠端，然後執行遠端的 X client ，透 X 視窗協定把 GUI 畫面顯示在自己的電腦螢幕。
-我最後一次做這種事，大概是 1999 年，用自己的 Linux PC 登入機房 SunOS/Solaris SPARC 工作站。
+我最後一次做這種事，大概是 1999 年，用自己的 Linux PC 登入計算機中心機房的 SunOS/Solaris SPARC 工作站。
 
 不過 X 視窗協定的實作軟體基本不跨平台，而 VNC 軟體可以。
 後來就變成 X server 和 X client 都裝在同一台 Linux/BSD 主機上跑。
