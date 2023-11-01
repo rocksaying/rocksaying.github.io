@@ -1,5 +1,5 @@
 ---
-title: Linux 桌面共用工具說明
+title: Linux 桌面共用 VNC 工具說明
 category: computer
 tags: [linux,vnc,ssh]
 cover: https://github.com/shirock/images/raw/main/2023/10-31-Linux-krfb-setting.png
@@ -35,8 +35,8 @@ lastupdated: 2023-10-31
 而 Linux 上的顯示管理者種類繁多，如 xdm, gdm, sddm, lightdm 等。
 使得此類 VNC 工具設定相當麻煩。
 
-講古 X 視窗協定
----------------
+X 視窗協定講古
+------------
 
 X 視窗協定的設計原本就可登入遠端主機使用。
 並且允許一台主機同時登入多位用戶，各自有自己的工作空間 (桌面會期)。
