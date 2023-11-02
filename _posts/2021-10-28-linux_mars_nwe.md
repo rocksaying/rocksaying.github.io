@@ -287,6 +287,18 @@ NetWare 檔案服務建立在 IPX 網路協定之上，它有一套和 IP 網路
 如果你的 LAN 只打算跑一台 NetWare 服務主機，這三個數值都用 auto 就好。
 但若像我一樣，在 LAN 中有一台真實 NetWare 服務主機，正要安裝一台 mars_nwe 主機轉移資料，那麼就必須分別設定它們。
 
+```text
+
+# Section 3: Number of the internal network (required)
+#  <internal net>  <node>
+3  auto            1
+
+# Section 4: IPX-devices (strongly recommended)
+#  <net number> <device>  <frame> <ticks>
+4  0x1          eth0      802.2   1
+
+```
+
 Internal network 和 Node 是 nwserv.conf 的第 3 節項目。
 Internal network 相當於 IPv4 的前 3 節號碼，而 Node 就是第 4 節號碼。
 從 IP 設定的經驗，我們可知這兩個組合在不同主機之間不能相同。
