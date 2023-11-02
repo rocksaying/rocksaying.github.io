@@ -8,9 +8,10 @@ lastupdated: 2023-10-31
 
 各版本 Linux 散佈套件中，基本都有三款只提供「桌面共用」功能的 VNC 工具。
 
-* x11vnc - 最基本UI，不綁定任何桌面環境。
-* krfb - 基本綁定 KDE/QT 桌面。
-* vino - 基本綁定 GNOME/Gtk 桌面。
+* [x11vnc]({{page.url}}#x11vnc) - 最基本UI，不綁定任何桌面環境。
+* [krfb]({{page.url}}#krfb) - 基本綁定 KDE/QT 桌面。
+* [vino]({{page.url}}#vino) - 基本綁定 GNOME/Gtk 桌面。
+* [走 ssh 通道連接 VNC]({{page.url}}#走-ssh-通道連接-vnc)
 
 它們不提供「遠端登入」功能。
 
