@@ -1,5 +1,5 @@
 ---
-title: MDADM 軟體磁碟陣列 RAID 1 使用心得
+title: MDADM 軟體磁碟陣列 RAID 1 使用經驗與心得
 category: computer
 tags: [linux,raid,mdadm]
 lastupdated: 2023-11-03
