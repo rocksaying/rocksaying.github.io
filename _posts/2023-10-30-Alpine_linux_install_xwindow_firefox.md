@@ -1,5 +1,5 @@
 ---
-title: 舊電腦安裝 Alpine Linux、X 視窗與 Firefox
+title: 舊電腦安裝 Alpine Linux、X 視窗、桌面與 Firefox
 category: computer
 tags: [alpine,linux]
 lastupdated: 2023-10-30
