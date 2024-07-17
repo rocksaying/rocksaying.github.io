@@ -117,7 +117,7 @@ class Program
 
 ```
 
-Publisher 類別不連續發佈訊息，也不訂閱主題。它適用於偶爾發佈一次訊息的情境，例如使用電池的 IoT 裝置發佈狀態。
+Publisher 類別不連續發佈訊息，也不訂閱主題。它適用於偶爾發佈一次訊息的情境。例如使用電池的 IoT 裝置，通常就用此方法發佈裝置狀態。
 完整內容在 github 上：[mqtt-publish](https://github.com/shirock/rocksources/tree/master/dotnet-core-example/mqtt-publish)。
 
 ## 同步方法 Connect 
@@ -176,14 +176,14 @@ public class SimpleMqttClient
 
 除了同步方法 `Connect()` 之外， SimpleMqttClient 也改良了產生隨機 clientId 的方式。當參數省略 clientId 時，其內部方法 `GetAnonymousClientId()` 使用 Guid 作為隨機 clientId 的基底內容。
 
-## 分別主題處理方法
+## 區分不同主題的處理方法
 
 System.Net.Mqtt 採用 observer 設計模式處理訊息接收工作。先用 client 的 `SubscribeAsync()` 方法訂閱主題。再用 client 的 `MessageStream.Subscribe()` 指派訊息處理方法。我們可以在 client 串好幾個方法負責處理收到的訊息。
 
 *注意，`SubscribeAsync()` 的 qos 參數必須小於或等於 MqttConfiguration 的 `MaximumQualityOfService`*。
 詳情請看 [.NET MQTT 用戶端訂閱方法使用時的陷阱，關於 MaximumQualityOfService]({% post_url 2022-08-24-MQTT-dotNET-subscribe-trap %})。
 
-但 MQTT 客戶端有時會同時訂閱好幾個主題，而附加訊息處理方法的 `Subscribe()` 方法並沒有指定主題的參數。那麼我們的訊息處理方法要如何分別訊息的主題呢？要知道實務上，訊息處理方法會按照主題切割成好幾個小方法。每個方法各自處理自己感興趣的主題的訊息。
+但 MQTT 客戶端有時會同時訂閱好幾個主題，而附加訊息處理方法的 `Subscribe()` 方法並沒有指定主題的參數。那麼我們的訊息處理方法要如何區分訊息主題呢？實務上，訊息處理方法會按照主題切割成好幾個小方法。每個方法各自處理自己感興趣的主題的訊息。
 
 第一個直接做法，就是在處理方法中判斷訊息的 <var>Topic</var> 屬性。如下：
 

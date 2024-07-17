@@ -59,7 +59,7 @@ def NTP_get_seconds(host="pool.ntp.org", port=123):
 
 ```
 
-其實 NTP 客戶端的查詢指令很簡單，就是一個 48 bytes 的資料封包，第一個 bytes 是 0x1B ，接著 47 個 bytes 都填 0 。然後建立用 UDP 協定把封包送到 NTP 伺服器。
+其實 NTP 客戶端的查詢指令很簡單，就是一個 48 bytes 的資料封包，第一個 bytes 是 0x1B ，接著 47 個 bytes 都填 0 。然後用 UDP 協定把封包送到 NTP 伺服器。
 
 回傳的資料格式， Python 可以用 `unpack()` 方法解析。它會得到一個基於西元元年的時間秒數。這和 Python 時間函數慣用的 unix 紀元時間不一樣。所以我寫的這個函數最後會減去 unix 紀元起始秒數，把它變成基於 unix 紀元的時間秒數。
 
