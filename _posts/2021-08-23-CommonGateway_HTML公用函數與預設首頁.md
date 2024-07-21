@@ -2,7 +2,7 @@
 title: PHP框架 - CommonGateway HTML公用函數與預設首頁
 category: programming
 tags: [php,網站設計,common-gateway]
-lastupdated: 2021-08-23
+lastupdated: 2024-07-21
 ---
 
 [CommonGateway]({% post_url 2013-1-29-CommonGateway 介紹 %}) 是我多年前設計的迷你框架。我最初用它實作 RESTful API 項目，並沒有放太多用於網頁設計的內容。最近兩年用它設計一些網站專案。為了方便工作，增加了兩項關於網頁設計的功能:
@@ -16,16 +16,29 @@ lastupdated: 2021-08-23
 
 CommonGateway 這一年重構了一些程式碼，導入名稱空間 (namespace) 。規劃 cg\html 這一塊名稱空間作為網站設計公用函數的空間。這些函數主要用在 HTML 視圖 (.phtml)，目的是提供正確的資源 URL 。
 
-* request_url($controller_path = false)
+這些函數都能接受多個參數，可選擇用變動長度參數清單或者放入陣列。
+
+* request_url($controller_path = null, ...$args)
   取得基於 index.php 的控制項 URL 字串。
+  * request_url() = "//HOST/index.php"
+  * request_url('control') = "//HOST/index.php/control"
+  * request_url('control', 123, 'abc') = "//HOST/index.php/control/123/abc"
+  * request_url('control', [123, 'abc']) = "//HOST/index.php/control/123/abc"
 * home_url()
   取得首頁的URL。
-* resource_url($path = false)
+* redirect($controller_path = false, ...$args)
+  導向到指定的控制項。若省略控制項就是回到首頁(index.php)。
+  實際上就是執行 *header('Location: ' . request_url($controller_path));* 。
+* resource_url(...$path_segments)
   取得網站指定資源的 URL (URL中不會包含 index.php)。
-* stylesheet($srcs)
-  CSS 文件的 HTML 載入代碼。可接受多個 css 檔案路徑。
-* script($srcs)
-  JavaScript 文件的 HTML 載入代碼。可接受多個 js 檔案路徑。
+* stylesheet(...$srcs)
+  顯示 CSS 文件的 HTML 載入代碼。可接受多個 css 檔案路徑。
+  * stylesheet('style1.css', 'style2.css')
+  * stylesheet(['style1.css', 'style2.css'])
+* script(...$srcs)
+  顯示 JavaScript 文件的 HTML 載入代碼。可接受多個 js 檔案路徑。
+* refresh($seconds)
+  指示 HTML 網頁的定期更新週期。內容是 `<meta http-equiv="refresh" content="$seconds">`。
 
 完整列表請看 CommonGateway 功能文件: [HTML 公用函數](https://github.com/shirock/common-gateway-framework/blob/main/doc/cg-html-functions.md)。
 
