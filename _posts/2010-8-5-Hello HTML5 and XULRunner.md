@@ -6,7 +6,7 @@ tags: [web,html5,xulrunner]
 permalink: /archives/13354357.html
 ---
 
-對一位 Web 軟體開發者來說， <a href="http://en.wikipedia.org/wiki/XULRunner">XULRunner</a> 是一個很奇妙的東西，因為它可以讓我們開發出來的 Web 軟體變成一個桌面軟體。當 HTML5 試圖將我們的 Web 軟體開發經驗延伸到桌面軟體開發領域時， XULRunner 將會是承載我們的夢想之引擎。對了，GtkWebKit/QtWebKit 也具有相同的能力。這件事，我已經等了10年了(<a href="{{ site.baseurl }}/archives/2628393.html">Web programming</a>)。
+對一位 Web 軟體開發者來說， <a href="http://en.wikipedia.org/wiki/XULRunner">XULRunner</a> 是一個很奇妙的東西，因為它可以讓我們開發出來的 Web 軟體變成一個桌面軟體。當 HTML5 試圖將我們的 Web 軟體開發經驗延伸到桌面軟體開發領域時， XULRunner 將會是承載我們的夢想之引擎。對了，GtkWebKit/QtWebKit 也具有相同的能力。這件事，我已經等了10年了(<a href="{{ site.permalink_base }}/archives/2628393.html">Web programming</a>)。
 
 <!--more-->
 
@@ -195,11 +195,11 @@ firefox -app ~/hello_xulrunner/application.ini
 
 Linux平台執行畫面如下:
 
-<img src="{{ site.baseurl }}/images/8ffbd788.png" alt="Hello XULRunner on Linux"/>
+<img src="{{ site.imgbaseurl }}/old/2010-8-5_f894b535.png" alt="Hello XULRunner on Linux"/>
 
 Windows平台執行畫面如下:
 
-<img src="{{ site.baseurl }}/images/f894b535.png" alt="Hello XULRunner on Windows"/>
+<img src="{{ site.imgbaseurl }}/old/2010-8-5_f894b535.png" alt="Hello XULRunner on Windows"/>
 
 #### 參考文件
 
@@ -213,7 +213,7 @@ Windows平台執行畫面如下:
 
 ###### 相關文章
 
-* <a href="{{ site.baseurl }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a>
+* <a href="{{ site.permalink_base }}/archives/14282187.html">JavaScript 與 Desktop - WebKit</a>
 * <a href="http://blog.roodo.com/rocksaying/archives/28212965.html">Kiosk Designing 續篇 - 在 x86 PC 上，以 mplayer 替代 omxplayer</a>
 
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/13354357.html</div>

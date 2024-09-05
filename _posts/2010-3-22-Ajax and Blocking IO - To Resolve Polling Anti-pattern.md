@@ -88,7 +88,7 @@ nonblocking_get();
 
 客戶端使用 <dfn>XMLHttpRequest</dfn> 以非同步方式向伺服端輪詢資料。這種做法的最大問題就在於它絕大多數時候索取到的內容是空資料，於是它不停地產生新的 XMLHttpRequest 探詢資料，又繼續得到空資料。整個行程的執行週期都浪費在產生 XMLHttpRequest 與探詢資料上了。我們可以監看 CPU 的使用率觀察這點。如下圖所示，儘管什麼資料都沒拿到，瀏覽器仍然佔用了 70% 的 CPU 使用率。它全用在輪詢動作。
 
-<img src="{{ site.baseurl }}/images/91b9b054.png" alt="輪迴模式下的 CPU 使用狀態" />
+<img src="{{ site.imgbaseurl }}/old/2010-3-22_d4b46c19.png" alt="輪迴模式下的 CPU 使用狀態" />
 
 在這個反模式下，稍微聰明的做法是設定時間間隔，例如用 <code>setTimeout()</code> ，令程式每隔一段時間才執行下一次探詢動作。但它仍然沒有徹底地消除不必要的輪詢行為與其資源耗費。
 
@@ -96,7 +96,7 @@ nonblocking_get();
 
 讓我們暫時放下 Web 程式，回到最基礎的終端機(文字模式)程式上。當我們的文字模式程式需要讀取使用者或另一端輸入的資料時，我們往往直覺地使用 read 方法，而且結果通常都如我們所願。編程初學者甚至不會注意到當程式執行到 read 方法，而資料來源尚無資料可讀取時，系統會發生什麼事？我們能夠用如此簡單的模式設計資料輸入動作的原因，在於作業系統預設的資料輸出入模式是 Blocking IO ，一種基本的同步輸出入模式。
 
-在 Blocking IO 模式下，當設備內容中沒有資料可供讀取時，所有對此設備的資料讀取動作都會被作業系統擱置。直到有資料被寫入設備中時，作業系統才會主動喚醒被擱置的行程，讓它繼續執行資料讀取動作。這種處理策略在多工模式下更顯重要，作業系統介入輸出入過程中的行程等待行為，主動擱置與喚醒行程，有效地避免行程執行多餘地輪詢動作。對程序員而言，它也簡化許多設計工作。可閱讀《<a href="{{ site.baseurl }}/archives/2333878.html">select() - I/O Multiplexer</a> 》了解更多內容。
+在 Blocking IO 模式下，當設備內容中沒有資料可供讀取時，所有對此設備的資料讀取動作都會被作業系統擱置。直到有資料被寫入設備中時，作業系統才會主動喚醒被擱置的行程，讓它繼續執行資料讀取動作。這種處理策略在多工模式下更顯重要，作業系統介入輸出入過程中的行程等待行為，主動擱置與喚醒行程，有效地避免行程執行多餘地輪詢動作。對程序員而言，它也簡化許多設計工作。可閱讀《<a href="{{ site.permalink_base }}/archives/2333878.html">select() - I/O Multiplexer</a> 》了解更多內容。
 
 接下來我將以 POSIX Named Pipe (具名管線)為例，示範如何在伺服端運用 Blocking IO 機制，解決 Ajax 的輪詢反模式。
 
@@ -175,7 +175,7 @@ blocking_get();
 </html>
 {% endhighlight %}
 
-<img src="{{ site.baseurl }}/images/f9a14ea4.png" alt="blocking_io_get.html 的執行過程畫面" />
+<img src="{{ site.imgbaseurl }}/old/2010-3-22_d4b46c19.png" alt="blocking_io_get.html 的執行過程畫面" />
 
 ### Working with Pipe
 
@@ -321,16 +321,16 @@ if ( !file_exists(PIPE)) {
 ?>
 {% endhighlight %}
 
-<img src="{{ site.baseurl }}/images/d4b46c19.png" alt="模擬聊天室的執行畫面" />
+<img src="{{ site.imgbaseurl }}/old/2010-3-22_d4b46c19.png" alt="模擬聊天室的執行畫面" />
 
 ###### 結語
 
 上列程式以精簡的方式展現了 Blocking IO 在 Ajax 設計上的應用，解決了輪詢反模式(Polling anti-pattern)問題。不過在實際應用上， Pipe 是有所不足的，我們通常要規劃另一種行程間通訊機制。以本文的模擬聊天室為例，它之所以是「模擬」的，就在於 Pipe 中的每一筆資料，只能被一個行程讀取一次而己，它不能把一筆訊息送給每一個等待中的行程。如果你開啟兩個訊息顯示頁面視窗，那麼你將發現 poster 送出的訊息，只會在其中一個顯示頁面中出現。
 
-在我眼中，PHP 是最方便用於示範與驗證 Web 設計概念的工具。所以本文的伺服端程式，我選擇用 PHP 實作。但在應用上，我將用 Ruby on Rails 配合 Ruby-dbus 實作。用 Ruby 撰寫一個 D-Bus service 取代 Pipe 。 getter 將會是此 D-Bus service 的 signal recipient ， poster 則負責發送此 D-Bus service signal 。有興趣了解 Ruby-dbus 的讀者，可閱讀《<a href="{{ site.baseurl }}/archives/11949071.html">Write a D-Bus service by Ruby  </a> 》。
+在我眼中，PHP 是最方便用於示範與驗證 Web 設計概念的工具。所以本文的伺服端程式，我選擇用 PHP 實作。但在應用上，我將用 Ruby on Rails 配合 Ruby-dbus 實作。用 Ruby 撰寫一個 D-Bus service 取代 Pipe 。 getter 將會是此 D-Bus service 的 signal recipient ， poster 則負責發送此 D-Bus service signal 。有興趣了解 Ruby-dbus 的讀者，可閱讀《<a href="{{ site.permalink_base }}/archives/11949071.html">Write a D-Bus service by Ruby  </a> 》。
 
 ###### 相關文章
 
-* <a href="{{ site.baseurl }}/archives/12063807.html">Ajax and Blocking IO - Server side performance tuning memo</a>
+* <a href="{{ site.permalink_base }}/archives/12063807.html">Ajax and Blocking IO - Server side performance tuning memo</a>
 
 <div class="note">樂多舊網址: http://blog.roodo.com/rocksaying/archives/12010463.html</div>
