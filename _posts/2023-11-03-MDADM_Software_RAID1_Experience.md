@@ -2,7 +2,7 @@
 title: MDADM 軟體磁碟陣列 RAID 1 使用經驗與心得
 category: computer
 tags: [linux,raid,mdadm]
-lastupdated: 2023-11-03
+lastupdated: 2024-12-04
 ---
 
 用 Software RAID (MDADM) 做 RAID 1 磁碟陣列。
@@ -15,6 +15,10 @@ lastupdated: 2023-11-03
 3. [系統安裝時就建立 RAID 1]({{page.url}}#系統安裝時就建立-raid-1)
 4. [把工作中的分割區轉移到 RAID 1]({{page.url}}#把工作中的分割區轉移到-raid-1)
 5. [陣列中的磁碟單獨拿到另一台電腦]({{page.url}}#陣列中的磁碟單獨拿到另一台電腦)
+
+<div class="note">
+2024-12-04: 更新關於 UEFI 啟動系統的重建方式，以及 swap 處理。
+</div>
 
 <!--more-->
 
@@ -68,17 +72,41 @@ Boot 和 Root 各組一個 RAID 1 陣列。
 可以直接複製目前分割區狀態到新磁碟
 
 ```term
-; MBR分割表用 sfdisk 
+; MBR分割表用 sfdisk 複製
 # sfdisk -d /dev/sda | sfdisk /dev/sdb
 
-; GPT分割表用 sgdisk
+; GPT分割表用 sgdisk 複製
 # sgdisk /dev/sda --replicate=/dev/sdb
+; 隨機設定新的 Partition UUID
+# sgdisk -G /dev/sdb
 
-; 手動重建 ESP。這塊不歸 MDADM 管
+; 格式化新磁碟的置換空間 (/dev/sdb3)
+# mkswap /dev/sdb3
+```
+
+手動重建 ESP 與更新 EFI 啟動紀錄。我未將這塊納入 MDADM 管理。
+
+```term
 # mkfs.fat -F 32 /dev/sdb1
 # mount /dev/sdb1 /mnt
-# rsync -a /boot/efi /mnt
+# rsync -a /boot/efi/EFI /mnt
 # umount /mnt
+
+; 或者直接用 dd 寫入 ESP
+# dd if=/dev/sda1 of=/dev/sdb1
+
+; 查看目前 EFI 紀錄
+# efibootmgr -v
+
+Boot0004* EFI Internal Shell
+Boot0005* debian        HD(1,GPT,db0ae29a-...)/File(\EFI\debian\shimx64.efi)
+Boot0006* debian2       HD(1,GPT,c334bd11-...)/File(\EFI\debian\shimx64.efi)
+
+; 移除損壞磁碟(此例是第2個)的 EFI 紀錄 Boot0006
+# efibootmgr -B -b 0006
+
+; 將替換磁碟加入 EFI 紀錄
+# efibootmgr --create --disk /dev/sdb --part 1 --label "debian2" --loader "\EFI\debian\shimx64.efi"
 ```
 
 新磁碟建好分割區加入陣列:
@@ -111,8 +139,6 @@ Boot 和 Root 各組一個 RAID 1 陣列。
 
 但在生產環境，一般使用者只會覺得卡住開不了機，而想重覆 reboot，悲劇。
 如果一直放置不理，開機程序最後就會提示等候逾時，切換到緊急模式。
-
-也就是說 RAID 1 不能讓主機在只剩一個磁碟的狀態下完成開機程序。
 總之這時就先關機，通知管理者來處理。
 
 <div class="note">
@@ -130,7 +156,9 @@ VirtualBox 可以模擬這個動作。
 手動切分割區，然後組合陣列。這過程都有安裝程式引導，不必打指令，就不多說。
 
 安裝最後一步，會問要在哪個磁碟上安裝 GRUB。先裝 sda。
-等安裝結束啟動系統後，再下指令 grub-install 安裝一份到 sdb。
+
+如果你的電腦是經由 UEFI 啟動，請看上節的 efibootmgr 操作在 sdb 上建立啟動程式。
+電腦經由 BIOS 啟動的話，則等啟動系統後，再下指令 grub-install 安裝一份到 sdb。
 但這不是為了 sdb 也能獨立開機。而是為了 sda 故障消失時，可以從 sdb 進入啟動程序，等管理者換上新磁碟。
 
 ```term
@@ -138,11 +166,22 @@ VirtualBox 可以模擬這個動作。
 # update-grub
 ```
 
-fstab 中不歸 RAID 管理的項目 (例如 ESP 和 swap)，建議不用 UUID，改成實際設備名稱 (/dev/sda1)。
+fstab 中不歸 RAID 管理的項目 (例如 ESP 和 swap)，建議不用 UUID，改成實際設備名稱 (/dev/sda1, /dev/sda3)。
 假設故障情境是第一個磁碟 (原 sda) 損壞。
 當主機找不到第一個磁碟時，第二個磁碟 (原 sdb) 的設備名稱就會頂替成為 /dev/sda。
 原 /dev/sdb1 就會變成 /dev/sda1。 fstab 就能找到繼續用。
 如果用 UUID (指向原 sda1)，那 fstab 就找不到了。
+
+此外，安裝時在兩個磁碟中各切一個 swap 分割區，你的 fstab 通常會有兩個 swap 項目。
+若是你在更換磁碟之後忘了修改 fstab 更新 swap 項目的 UUID，那麼開機會因為找不到 UUID 指定的 swap 而卡住幾分鐘。
+改用實際設備名稱，例如本文的 /dev/sda3, /dev/sdb3，就比較省事。
+
+fstab swap 紀錄的建議寫法:
+
+```term
+/dev/sda3    none    swap    sw,nofail    0    0
+/dev/sdb3    none    swap    sw,nofail    0    0
+```
 
 把工作中的分割區轉移到 RAID 1
 ---------------------------
