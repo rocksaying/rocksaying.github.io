@@ -9,20 +9,20 @@ lastupdated: 2025-02-23
 
 ![範例圖](https://github.com/shirock/images/raw/main/2025/02-23-number-input-element-1.png)
 
-NumberInputElement 元件具備以下特性：
+*NumberInputElement* 元件具備以下特性：
 
-1. 只綁定型態為 number 的 input 控制項 (input type="number")。
+1. 只綁定型態為 *number* 的 *input* 控制項 (input type="number")。
 2. 加入使用滑鼠滾輪改變數值的行為。上滾增值，下滾減值。
-3. 擴充 label 控制項的行為，使其具備對關聯控制項的增值行為或減值行為。
-  使用 type 屬性定義點擊 label 時的行為， inc 表示增值，dec 表示減值。
-4. 若不想用 label 改變 input 控制項的值 ，則可用 labelSelector 自行定義控制項的選擇器。
-  例如用 button 控制項處理增值或減值。
-5. 增值與減值行為都會參考 input 控制項的 max, min, step 三項標準屬性。
+3. 擴充 *label* 控制項的行為，使其具備對關聯控制項的增值行為或減值行為。
+  使用 *type* 屬性定義點擊 *label* 時的行為， *inc* 表示增值，*dec* 表示減值。
+4. 若不想用 *label* 改變 *input* 控制項的值 ，也可自行定義控制項的選擇器。
+  例如用 *button* 控制項處理增值或減值。
+5. 增值與減值行為都會參考 *input* 控制項的 *max*, *min*, *step* 三項標準屬性。
 
 這個元件不會主動在 input 控制項旁邊增加控制按鈕，而是交給設計師決定。
 如果設計師沒有放上代表增值或減值的按鈕／控制項，將只有滑鼠滾輪的擴充行為生效。
 
-NumberInputElement 儲放在我的 [non-jquery-ui 源碼庫](https://github.com/shirock/non-jquery-ui): 「[取得 NumberInputElement](https://github.com/shirock/non-jquery-ui/blob/master/ui/number-input-element.js)」。
+*NumberInputElement* 儲放在我的 [non-jquery-ui 源碼庫](https://github.com/shirock/non-jquery-ui): 「[取得 NumberInputElement](https://github.com/shirock/non-jquery-ui/blob/master/ui/number-input-element.js)」。
 
 <!--more-->
 
@@ -36,26 +36,26 @@ NumberInputElement 儲放在我的 [non-jquery-ui 源碼庫](https://github.com/
 
 NumberInputElement 元件就要滿足上述兩項需求。
 
-首先對應觸控式操作環境使用上下滑動調整數值的操作習慣，必須加上滾動滑鼠滾輪調整數值的操作行為。這一點只需要傾聴代表滑鼠滾輪滾動的 wheel 事件，然後根據 deltaY 判斷滾輪是上滾或下滾調整數值。上滾增值，下滾減值。
+首先對應觸控式操作環境使用上下滑動調整數值的操作習慣，必須加上滾動滑鼠滾輪調整數值的操作行為。這一點只需要傾聴代表滑鼠滾輪滾動的 wheel 事件，然後根據 deltaY 判斷滾輪是上滾或下滾調整數值。上滾增值，下滾減值。程式碼實作內容摘錄於下：
 
 ```javascript
-document.querySelectorAll('input[type="number"]').forEach(elm => {
-    elm.addEventListener('wheel', NumberInputElement.wheelHandler);
-});
-
-static wheelHandler(ev)
-{
-    ev.preventDefault();
-    const input = ev.target;
-    const delta = ev.deltaY;
-    if (delta > 0) {
-        // console.log('wheel down');
-        NumberInputElement.change(input, 'dec');
-    } else {
-        // console.log('wheel up');
-        NumberInputElement.change(input, 'inc');
+    document.querySelectorAll('input[type="number"]').forEach(elm => {
+        elm.addEventListener('wheel', NumberInputElement.wheelHandler);
+    });
+    
+    static wheelHandler(ev)
+    {
+        ev.preventDefault();
+        const input = ev.target;
+        const delta = ev.deltaY;
+        if (delta > 0) {
+            // console.log('wheel down');
+            NumberInputElement.change(input, 'dec');
+        } else {
+            // console.log('wheel up');
+            NumberInputElement.change(input, 'inc');
+        }
     }
-}
 
 ```
 
@@ -82,10 +82,41 @@ Label 的 for 標準屬性可以指定關聯控制項。我再另外添加 type 
 第一個 label 沒有添加 type 屬性，所以它只觸發原本的行為，亦即改變輸入焦點到輸入框。
 
 第二個 label 添加了 type="inc" 屬性，點擊時除了改變輸入焦點，還會增加數值一步。第三個 label 添加了 type="dec" 屬性，所以點擊就減少數值一步。一步的量由 input 的標準屬性 step 決定，預設一步為 1 。
+程式碼實作內容摘錄於下：
+
+```javascript
+    document.querySelectorAll('input[type="number"]').forEach(elm => {
+        const labels = document.querySelectorAll(`label[for="${elm.id}"]`);
+
+        // 擴展 label 控制項的行為(若其具有 type 屬性)
+        labels.forEach(elm => {
+            if (!elm.getAttribute('type')) {
+                return;
+            }
+            // label 的 click 事件觸發兩次 (在 mousedown 與 mouseup 後各一次)
+            // 所以看 mouseup ，不看 click
+            elm.addEventListener('mouseup', NumberInputElement.labelHandler);
+        });
+    });
+    
+    static labelHandler(ev)
+    {
+        const label = ev.target;
+        const labelType = label.getAttribute('type');
+        const input = label.control; // 只有 label 控制項有此屬性
+        if (!input || !labelType) {
+            return;
+        }
+
+        NumberInputElement.change(input, labelType);
+        input.focus();
+    }
+
+```
 
 不論是 label 的 for 還是 input 的 step, min, max 等屬性，都是 HTML 規範的標準屬性。我的設計思路都是按照 HTML 規範原則擴充操作行為，從而保持 UI 行為一致。
 
-當設計師完成 HTML 碼之後，再呼叫 `NumberInputElement.initial()`，就可以讓他設計的增值按鈕或減值按鈕如預期般生效。
+上述實作內容都已整合在 [NumberInputElement](https://github.com/shirock/non-jquery-ui/blob/master/ui/number-input-element.js)。當設計師寫好 HTML 碼之後，只需載入 number-input-element.js ，然後呼叫 `NumberInputElement.initial();` 就可生效。
 
 ```html
 <script src="number-input-element.js"></script>
@@ -94,10 +125,11 @@ Label 的 for 標準屬性可以指定關聯控制項。我再另外添加 type 
 window.addEventListener('load', function(){
     NumberInputElement.initial();
 }, false);
+</script>
 
 ```
 
-NumberInputElement 在 Firefox 和 MS Edge 瀏覽器電腦版測試相容。
+NumberInputElement 在 Firefox 和 MS Edge 瀏覽器電腦版內完成開發及測試工作。
 本文範例沒有套用任何 CSS，所以 label, input 或 button 控制項都是預設外觀。設計師應自己套用 bootstrap 這些 CSS 工具，美化外觀。
 
 基本上，我的設計目標到此就實現了。不過說到自訂點擊行為，大家通常都是用 button。所以我又為 `NumberInputElement.initial()` 加入 labelSelector 函數參數，讓設計師自己決定綁定增值行為與減值行為的控制項。
@@ -130,11 +162,12 @@ window.addEventListener('load', function(){
         return document.querySelectorAll(`[for="${id}"]`);
     });
 }, false);
+</script>
 
 ```
 
-如果設計師不想用 for 屬性指定關聯控制項，而想用別的屬性也行。
-下例就是用 `NumberInputElement.relatedAttribute` 屬性指定用 target 屬性名稱。
+如果設計師不想用 *for* 屬性指定關聯控制項，而想用別的屬性也行。
+下例就是用 `NumberInputElement.relatedAttribute` 屬性指定用 *target* 屬性名稱。
 
 ```html
 <div>
@@ -152,12 +185,13 @@ window.addEventListener('load', function(){
         return document.querySelectorAll(`button[target="${id}"]`);
     });
 }, false);
+</script>
 
 ```
 
 #### 整合前端框架
 
-目前前端框架的主流設計方式，不是分別在控制項上綁處理函數，而是直接在 document 綁定處理函數，然後在處理函數內根據事件主體判斷分流。
+目前前端框架的主流設計方式，不是分別在控制項上綁處理函數，而是直接在 *document* 綁定處理函數，然後在處理函數內根據事件主體判斷分流。
 
 如果設計師要把 NumberInputElement 整合到採用這種設計原則的框架內，則不要呼叫 `NumberInputElement.initial()`，而須分別使用 `NumberInputElement.wheelHandler()` 和 `NumberInputElement.labelHandler()`。
 
