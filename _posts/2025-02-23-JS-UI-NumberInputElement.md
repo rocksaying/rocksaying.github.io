@@ -2,7 +2,7 @@
 title: 網頁UI元件 - NumberInputElement，自訂增減值按鈕，以及用滑鼠滾輪修改數字
 category: programming
 tags: [網頁UI,javascript,html]
-lastupdated: 2025-02-23
+lastupdated: 2025-02-26
 ---
 
 當設計師碰到限定輸入數值的輸入欄位時，可以用 *NumberInputElement* 網頁 UI 元件讓輸入框呈現更美觀的增加數值按鈕與減少數值按鈕。這是目前流行的數值輸入形式。
@@ -26,7 +26,7 @@ lastupdated: 2025-02-23
 
 <!--more-->
 
-沒想到事至今日還有機會寫這種網頁 UI 。我本來以為是我目前用的前端框架太輕量簡化，所以沒有這種 UI。但網路上搜了一遍，才發現功能更複雜的前端框架也經常忽視這種 UI 的使用需求。設計師往往要自己額外去找 UI 元件拼湊。
+沒想到時至今日還有機會寫這種網頁 UI 。我本來以為是我目前用的前端框架太輕量簡化，所以沒有這種 UI。但網路上搜了一遍，才發現功能更複雜的前端框架也經常忽視這種 UI 的使用需求。設計師往往要自己額外去找 UI 元件拼湊。
 
 先說明一點，在手機或平板等觸控式操作環境中，瀏覽器已經針對數值型態的 input 控制項提供明顯特化的輸入介面，讓使用者輕鬆輸入數字。所以在這類環境下，不需要使用這個 UI 元件。但這個元件的擴充內容也不會干涉內建行為。
 
@@ -35,6 +35,8 @@ lastupdated: 2025-02-23
 喔，對了。針對鍵盤使用者，瀏覽器電腦版還為數值型態 input 控制項加了按上下方向鍵調整數值的操作行為。既然可以按方向鍵調整數值，那是不是也該讓滑鼠滾輪這麼做？
 
 NumberInputElement 元件就要滿足上述兩項需求。
+
+#### 滑鼠滾輪調整輸入數值
 
 首先對應觸控式操作環境使用上下滑動調整數值的操作習慣，必須加上滾動滑鼠滾輪調整數值的操作行為。這一點只需要傾聴代表滑鼠滾輪滾動的 wheel 事件，然後根據 deltaY 判斷滾輪是上滾或下滾調整數值。上滾增值，下滾減值。程式碼實作內容摘錄於下：
 
@@ -58,6 +60,8 @@ NumberInputElement 元件就要滿足上述兩項需求。
     }
 
 ```
+
+#### 增加數值按鈕與減少數值按鈕
 
 至於增加兩個大按鈕分別負責增值與減值的部份，我的設計考量是讓設計師決定按鈕外觀和位置，而不是 NumberInputElement 自己生成按鈕。設計師只要讓 NumberInputElement 知道是哪些按鈕，然後 NumberInputElement 負責綁定增值和減值的擴充行為。
 
@@ -116,9 +120,39 @@ Label 的 for 標準屬性可以指定關聯控制項。我再另外添加 type 
 
 不論是 label 的 for 還是 input 的 step, min, max 等屬性，都是 HTML 規範的標準屬性。我的設計思路都是按照 HTML 規範原則擴充操作行為，從而保持 UI 行為一致。
 
+#### 控制項的事件傳遞
+
+在瀏覽器的原始環境下，操作者手動點擊輸入控制項旁的小箭頭改變數值的動作，將會觸發控制項的 *input* 事件。
+前端設計師經常會傾聴這個事件，以便處理使用者的輸入內容。
+
+然而透過程式手段改變數值的動作，亦即用 JavaScript 程式碼設置控制項的 value 屬性，則不會觸發控制項的 input 事件。
+這使前端設計師佈置的 input 事件處理方法不起作用。
+從擴展元件行為並保持行為一致性的設計原則來看，這算是 BUG 。
+所以當 NumberInputElement 擴展的操作行為改變控制項的 value 屬性時，也應擲出該控制項的 input 事件，讓其他傾聽此控制項事件的人可以接著處理數值改變的事。
+
+要做到這件事，首先需要產生一個 *Event* 實例，其事件值為 'input'。
+然後將它交給控制項的 `dispatchEvent()` 方法，即可派出 input 事件，讓其他處理函數接著做事。
+程式碼實作內容摘錄於下：
+
+```javascript
+    static change(input, act)
+    {
+
+        input.value = computedValue;
+        input.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+
+```
+
+#### 開始使用
+
 上述實作內容都已整合在 [NumberInputElement](https://github.com/shirock/non-jquery-ui/blob/master/ui/number-input-element.js)。當設計師寫好 HTML 碼之後，只需載入 number-input-element.js ，然後呼叫 `NumberInputElement.initial();` 就可生效。
 
 ```html
+<label for="input1" type="inc">➕</label>
+<input id="input1"  type="number" max="10" min="-15">
+<label for="input1" type="Dec">➖</label>
+
 <script src="number-input-element.js"></script>
 
 <script>
