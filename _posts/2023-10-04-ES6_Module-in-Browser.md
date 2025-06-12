@@ -3,11 +3,11 @@ title: 學習 ECMAScript/JavaScript 6 - Module 在瀏覽器環境的使用說明
 category: programming
 tags: [javascript,ecmascript,es6,module,import,export]
 cover: https://github.com/shirock/rocksources/raw/master/web/javascript-module-example/meme.png
-lastupdated: 2023-10-04
+lastupdated: 2025-06-12
 ---
 
 JavaScript 的 *module (模組)* 概念，整體上與其他程式語言沒有差別。
-但是 JavaScript 的主流用途是作為瀏覽器的嵌入式語言，在瀏覽器的環境中使用 module 就帶來一些特殊的問題。
+但是 JavaScript 主流用途是作為瀏覽器的嵌入式語言，在瀏覽器環境使用 module 就帶來一些特殊的問題。
 此為本文重點。
 
 1. [module 特性]({{page.url}}#module-特性)
@@ -25,22 +25,22 @@ JavaScript 的 *module (模組)* 概念，整體上與其他程式語言沒有�
 JavaScript 的模組空間具有下列特性:
 
 1. 每一個 js 檔案都視為獨立的模組空間。
-2. 在 HTML 的 *script type="module"*，每個標籤區塊也是獨立的模組空間。
+2. 在 HTML 內的每一段 *script type="module"* 標籤區塊，也視為獨立的模組空間。
 3. 模組空間的內容預設不公開 (private)。
 4. 變數、函式、類別、迭代器等內容，都可以用 [export][] 敘述宣告公開給外界使用 (public)。
 5. 要使用其他模組空間的公開內容，必須先用 [import][] 敘述匯入。
-6. export/import 只能在模組空間內使用，且必須寫在空間頂層，不能寫在函式與類別內。
+6. export/import 兩語法只能用於模組空間，且必須寫在空間頂層，不能寫在函式與類別內。
 7. 模組空間可以存取全域空間的內容，但全域空間不能存取模組空間內容。
 
 第 2 點是瀏覽器環境才有的特性。
 
-我寫了幾組 html 試驗我上面說的特性。請看「[rocksources: javascript-module-example](https://github.com/shirock/rocksources/tree/master/web/javascript-module-example)」。
+我寫了幾組 html 試驗我上面說的特性，並作為本文的程式範例。完整源碼請看「[rocksources: javascript-module-example](https://github.com/shirock/rocksources/tree/master/web/javascript-module-example)」。
 
 ### script type 的影響
 
 ![import語法錯誤啊](https://github.com/shirock/rocksources/raw/master/web/javascript-module-example/meme.png)
 
-初學 module (模組) 功能會撞牆的點，就是不知道 script type 影響你能不能用 import/export 敘述。
+初學 module (模組) 功能會撞牆的點，就是不知道 script 標籤的 type 屬性值決定你能否用 import/export 敘述。
 明明都照語法寫 import/export 啊，為什麼瀏覽器會說語法錯誤？
 *因為外面沒宣告 type="module"*。早說啊，為什麼不早說？
 
@@ -48,8 +48,8 @@ JavaScript 的模組空間具有下列特性:
 一但知道這件事後， JavaScript 的模組功能用起來就和其他程式語言的模組化功能差不多，毋需多言。
 
 在瀏覽器內，我們透過 HTML 的 *script* 標籤執行 JavaScript。可以直接在 *script* 標籤區塊內寫程式碼，也可以透過 *src* 屬性載入 js 檔案。
-在過去很長一段時間裡，由於 *script* 標籤使用的型態內容只有一種，就是 *text/javascript* ，所以我們通常都省略不寫 *type* 屬性。然而瀏覽器加入模組功能時，它要求 *script* 標籤的 *type* 屬性指定 *module* 的才視為模組空間。
-至於不在模組空間的內容，也就是 *script type="text/javascript"* 的內容，本文接下來都會說它們位在全域空間。這樣稱呼比較方便。
+在過去很長一段時間裡，由於 *script* 標籤使用的型態內容只有一種，就是 *text/javascript* ，所以我們通常都省略不寫 *type* 屬性。然而瀏覽器加入模組功能時，它便要求 *script* 標籤的 *type* 屬性指定為 *module* 的內容才視為模組空間。
+至於 *script type="text/javascript"* 的內容則不屬於任何模組空間。本文為了方便稱呼，這些不在模組空間的內容，都會說它們位在全域空間。
 
 在說明模組空間和全域空間的區分後，接著談實務上有什麼影響。
 
@@ -60,7 +60,7 @@ JavaScript 的模組功能有兩個關鍵字，即 [export][] 和 [import][]。[
 那為每個 *script* 標籤加上 *type="module"* 就行了嗎？
 
 否。每個 *script* 標籤的模組空間也是各自獨立，所以想把 script type 從 "text/javascript" 直接改成 "module" 也不行。
-原有的程式如果想要導入模組功能，那一定要大改程式碼的撰寫結構。不是在每一個 script 加個 `import xxx` 敘述就行了。
+原有的程式如果想要導入模組功能，那一定要大改程式碼的撰寫結構。並非在每一個 script 加個 `import xxx` 敘述就行了。
 想在原有的 Web 應用導入模組功能的話，通常第一件事就是在原來的 index.html 內，加一個 *script type="module"* 的進入點。
 
 <div class="note">
@@ -98,14 +98,14 @@ console.log("abc module loaded");
 ```
 
 <div class="note">
-直接在 script 標籤區塊內寫 export 其實沒有意義。
+上例直接在 script 標籤區塊內寫 export ，但這其實沒有意義。
 因為這個區塊沒有名字，其他模組不知道怎麼 import 它的內容。
 </div>
 
 只看 JavaScript 內容的話，這兩個檔案基本沒有差異。但一個不能寫 `export` ，另一個可以。
-差一行 `export` 的原因是外部宣告的 *type* 不同。
+差一行 `export` 的原因便是外部宣告的 *type* 不同。
 
-我們可以把直接寫在 *script* 標籤內的程式碼分離放在單獨的 js 檔案，再用 *src* 屬性讓瀏覽器載入。
+我們可以把寫在 *script* 標籤內的程式碼分離出來，另外儲放在單獨的 js 檔案，再用 *src* 屬性讓瀏覽器載入。
 但是 *script* 標籤的 *type* 屬性依然影響 js 檔案的對待方式。
 宣告 *module* 的才能用 `export` 敘述；未宣告的不行。
 
@@ -138,7 +138,7 @@ window.addEventListener('load', _=>{
 ```
 
 傳統方式，所有程式碼定義的內容都在全域空間。
-載入 abc-script-type-javascript.js 後，我們可以在任何地方呼叫 `abc()`。但因為瀏覽器的載入工作並非同步進行，所以會等 window.load 事件後才呼叫。
+故載入 abc-script-type-javascript.js 後，我們可以在任何地方呼叫 `abc()`。但因為瀏覽器的載入工作並非同步進行，所以會等 window.load 事件後才呼叫。
 
 範例: [index-without-module.html](https://github.com/shirock/rocksources/blob/master/web/javascript-module-example/index-without-module.html)。
 
@@ -160,8 +160,8 @@ console.log("abc module loaded");
 ```
 
 導入模組後， HTML 中每個 *script type="module"* 標籤的內容都是分別獨立的模組空間。
-所以這些 *script* 區塊或 js 檔案內，要呼叫 `abc()` 之前都得先寫上 `import {abc} from './modules/abc-script-type-module.js'`。敘述相對路徑時，要加前綴 `./`。
-所下所示：
+所以這些 *script* 區塊或 js 檔案內，在呼叫 `abc()` 之前都得先寫上 `import {abc} from './modules/abc-script-type-module.js'`。敘述相對路徑時，要加前綴 `./`。
+如下所示：
 
 ```html
 <script type="module">
@@ -176,7 +176,7 @@ abc();
 
 ![執行圖例](https://github.com/shirock/rocksources/raw/master/web/javascript-module-example/index-with-module.png)
 
-從上圖的網路資源載入狀態中，可以看出 `import` 敘述就會讓瀏覽器從伺服器取回 js 檔案。我們不必像傳統方式，為所有需要的 js 檔案都寫一行 script src 。控制其他 js 檔案下傳行為的點在模組內部，而不是模組外部的 HTML 。傳統方式使用第三方函式庫時，我們必須先查清楚它需要載入哪些 js ，並在每個 HTML 檔案中寫上一排 script src 。函式庫用得愈多，依賴維護工作就愈麻煩。 JavaScript 的模組功能可以減少依賴維護工作的成本。
+從上圖的網路資源載入狀態中，可以看出 `import` 敘述也會促使瀏覽器從伺服器取回 js 檔案。此時我們不必像傳統方式為所有需要的 js 檔案都寫一行 script src 。控制其他 js 檔案下傳行為的點在模組內部，而不是模組外部的 HTML 。傳統方式使用第三方函式庫時，我們必須先查清楚它需要載入哪些 js ，並在每個 HTML 檔案中寫上一排 script src 。函式庫用得愈多，依賴維護工作就愈麻煩。 JavaScript 的模組功能則不必如此，減少依賴維護工作的成本。
 
 #### 主程式進入點
 
