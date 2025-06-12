@@ -31,7 +31,7 @@ lastupdated: 2023-09-19
 ### 第二問，我已經有使用 Promise 設計的函式了，如何改為非同步函式？
 
 答：*async function* (非同步函式)的基本要求是回傳 *Promise* 個體。
-反過來說，任何函式只要會回傳 Promise 個體，直接在函式定義加上 *async* 修飾詞，就可宣告它為非同步函式。
+反過來說，任何函式只要是回傳 Promise 個體，那麼直接在函式定義加上 *async* 修飾詞，就可宣告為非同步函式。
 
 一個回傳 Promise 的函式，其涵義就是「我不能現在告訴你結果，但我承諾待會給你」。
 這就是一個隱性的非同步函式，當然可以加上 *async* 修飾詞變成顯性的非同步函式。
@@ -80,8 +80,8 @@ Until(_ => true, 3)
 
 答：
 
-1. 函式內部可以用 *await* 表達式簡化非同步工作同步化需求的程式碼。
-2. 非同步函式默認回傳值是 *Promise* 實體。如果回傳值不是 Promise 實體，那會自動擴展成一個 Promise 。
+1. 函式內部可以用 *await* 表達式簡化「非同步工作」同步化的程式碼。
+2. 非同步函式默認回傳值是 *Promise* 實體。如果回傳值不是 Promise 實體，解譯器將自動擴展成一個 Promise 。
 3. 幫助 IDE 工具提醒使用者(你)正在呼叫非同步函式。
 
 傳統上使用 Promise 設計的非同步工作若要同步化，會用 `then()` 串接起來。
@@ -171,7 +171,7 @@ AFunc3b(2).then().catch(v => console.log('afunc3b throw:', v));
 
 [color of function](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/) 指的是在程式碼中使用 *async* ，會染色你的程式碼。
 
-以我在 C# 語言中使用 *async* 的經驗，我的 A 函式要呼叫第三方類別的 B 函式，但 B 函式已經宣告 async 了。那麼我的 A 函式也要宣告 async 。接著任何呼叫 A 函式的函式，也要跟著宣告 async 。一層層回溯，最後連代表程式起點的 `main()` 也要宣告 async 。這還只是剛開始。在你的傳統程式碼中添加一個 async ，結果就像是朝一碗清水倒入一滴墨水。當然不想染色也有解法，就是用 Task/Result 變成同步工作。我在 [.NET/C# 設計 MQTT 用戶端程式]({% post_url 2021-09-05-MQTT-5-C#-clients %}) 就這麼做了。
+以我在 C# 語言中使用 *async* 的經驗，例如我的 A 函式要呼叫第三方類別的 B 函式，但 B 函式已經宣告 async 了。那麼我的 A 函式也要宣告 async 。接著任何呼叫 A 函式的函式，也要跟著宣告 async 。一層層回溯，最後連代表程式起點的 `main()` 也要宣告 async 。這還只是剛開始。在你的傳統程式碼中添加一個 async ，結果就像是朝一碗清水倒入一滴墨水。當然不想染色也有解法，就是用 Task/Result 變成同步工作。我在 [.NET/C# 設計 MQTT 用戶端程式]({% post_url 2021-09-05-MQTT-5-C#-clients %}) 就這麼做了。
 
 這個現象不只出現在 C# ，Java 也有。事實上，每個程式語言在加入 async 語法時，都不能避免染色現象。 JavaScript 在這方面的影響算是比較輕的吧。當然你要真不想用 async ，你依然可以用 Promise 。
 
