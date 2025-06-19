@@ -1,5 +1,5 @@
 ---
-title: 如何使用新式網頁UI元件 Dialog
+title: 網頁UI元件 - 如何使用新式UI Dialog 和 Modal
 category: programming
 tags: [網頁UI,html,dialog]
 cover: https://github.com/shirock/images/raw/main/2025/06-14-HTML_Dialog-2.png
@@ -8,9 +8,9 @@ lastupdated: 2025-06-14
 
 [Dialog] 是 WHATWG 規範的 HTML 對話框元件。只要各家瀏覽器按照規範內容實作，就可以保證在不同瀏覽器與前端工具之間仍有相同的行為。
 按 Mozilla MDN 文件所述，在 2022 年 3 月之後的瀏覽器皆已實作此元件。
-在此之前，這類 UI 元件是由前端工具 - 如 bootstrap - 利用 CSS 和 JavaScript 自行設計。但不同前端工具之間定義的對話框行為並不相同。
+在此之前，這類 UI 元件是由前端工具 - 如 bootstrap - 利用 CSS 和 JavaScript 自行設計。但不同前端工具定義的對話框行為並不相同。
 
-注意，本文使用「對話框」一詞時，是一般概念。使用 [Dialog] 一詞時，專指 HTML5 規範的對話框元件。
+注意，本文使用「對話框」一詞時，是一般概念。使用 [Dialog] 一詞時，專指 HTML 規範的對話框元件。
 
 專案開發者手上的舊專案仍可繼續使用前端工具自定的對話框元件。
 但新建專案，則建議使用 Dialog 元件。因為它有標準化的好處。
@@ -25,15 +25,15 @@ A 前端工具的對話框元件和 B 前端工具的對話框元件一定不同
   事件: `close`。
   屬性: `open`、`returnValue`。
 * 預設不顯現，即屬性 `open` 為 `false`。
-* 有兩種行為型態: 一般型態和互動型態 (modal)。
+* 有兩種行為型態: 一般型態和互動型態 (Modal)。
   這兩種行為區別是由顯現方法決定。呼叫 `show()` 方法顯現時，為一般型態；呼叫 `showModal()` 方法則為互動型態。
 * 一般型態只會浮現在畫面上層，但不阻礙使用者和其他元件互動，使用者可以忽視它。
-* 互動型態則強制使用者必須與其互動，不能忽視它。
+* 互動型態 (Modal) 則強制使用者必須與其互動，不能忽視它。
   互動型態 Dialog 顯現時會阻擋使用者和其他元件互動，使用者必須優先處理 Dialog 內容並關閉它。
-* 一般型態 Dialog 顯現時只會水平置中於可視區域。而互動型態的 Dialog 則是水平與垂直置中。
+* 一般型態 Dialog 顯現時只會水平置中於可視區域。而互動型態 Dialog 則是水平與垂直置中。
 * Dialog 可透過其內部表單 (Form) 關閉。
   透過表單關閉時，觸發 `close` 事件，並改變 `returnValue` 屬性之值。
-* 有標準的鍵盤互動方式。互動型態的 Dialog 可以按鍵盤的 Esc 鍵關閉它。
+* 有標準的鍵盤互動方式。互動型態 Dialog 可以按鍵盤的 Esc 鍵關閉它。
   但按下 Esc 鍵關閉時，不會觸發 `close` 事件、不會改變 `returnValue` 屬性。
 
 #### 基本設計組合
@@ -71,9 +71,11 @@ Dialog 的 HTML 基本內容通常搭配一個觸發其顯現的按鈕。
 
 #### Dialog 外觀
 
-設計者可用 CSS 宣告 Dialog 外觀。主要設計 Dialog 的視窗寬度和邊框樣式。瀏覽器會按 HTML 規範將 Dialog 置中，所以不必宣告 Dialog 位置。
+設計者可用 CSS 宣告 Dialog 外觀。主要設計 Dialog 的視窗寬度和邊框樣式。
+瀏覽器會按 HTML 規範將 Dialog 置中，所以不必宣告 Dialog 位置。
 
-對於互動型態 Dialog，則有虛擬元素 *backdrop* 可設計背景外觀 (被其阻擋的畫面區域)。通常我們會宣告背景色和透明度。
+對於互動型態 Dialog，則有虛擬元素 *backdrop* 可設計背景外觀 (被其阻擋的畫面區域)。
+通常我們會宣告背景色和透明度。
 
 CSS 範例如下:
 
@@ -106,8 +108,8 @@ dialog::backdrop {
 * rock-dialog: 對應 Dialog 的 id。點擊有此屬性的元件便呼叫 `show()` 顯現指定的 Dialog。
 * rock-dialog-modal: 若有此屬性，則呼叫 `showModal()` 顯現互動型態 Dialog。
 * rock-dialog-message: 此值將傳給 Dialog，為其顯示的訊息內容。
-* rock-dialog-label: 如果 Dialog 內部有一個連結元件 (anchor, a)，此屬性將是此連結的顯示文字。
-* rock-dialog-action: 如果 Dialog 內部有一個連結元件 (anchor, a)，此屬性將是此連結的跳轉 URL。
+* rock-dialog-label: 如果 Dialog 內部有一個連結元件 (anchor/a)，此屬性將是該連結的顯示文字。
+* rock-dialog-action: 如果 Dialog 內部有一個連結元件 (anchor/a)，此屬性將是該連結的跳轉 URL。
 
 自定類別:
 
