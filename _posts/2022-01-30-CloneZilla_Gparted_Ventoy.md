@@ -2,7 +2,7 @@
 title: 用 Ventoy 將 CloneZilla 和 GParted 放在同一隻 USB 開機碟
 category: computer
 tags: [clonezilla,gparted,ventoy,MultiBoot,LiveCD]
-lastupdated: 2022-01-30
+lastupdated: 2025-07-05
 cover: https://rocksaying.github.io/images/2022-01-30-CloneZilla_Gparted_Ventoy.png
 ---
 
@@ -32,6 +32,8 @@ cover: https://rocksaying.github.io/images/2022-01-30-CloneZilla_Gparted_Ventoy.
 我再把 CloneZilla 和 GParted 的 .iso 檔案複製到 F: 上就完成了。
 
 以 Ventoy 製作的 USB 開機碟在系統開機時，它會自動在那個大分割區尋找 .iso 檔案，然後列在開機選單中，讓你選取接下來要啟動哪一個 LiveCD 系統。
+
+此外，如果你不想把整個 USB 碟的空間都分給 Ventoy 的話，可透過 Ventoy2Disk 的功能選單「選項」->「設定分割區」，勾取「在磁區最後保留一部份空間」，並填入你想保留的容量。如此一來，Ventoy 安裝後就會留下一塊未配置區域。你再使用磁碟管理程式，如 fdisk, gpartd ，在未配置區域上增加分割區並格式化。就有地方放置你需要的工具或檔案文件。
 
 說下個人使用經驗。從 Ventoy 載入 CloneZilla 或 GParted 之後的 grub 選單，最好選擇 To RAM 的項目。像我的某些電腦，若啟動 GParted 時不選 To RAM 的項目，就會失敗。
 
