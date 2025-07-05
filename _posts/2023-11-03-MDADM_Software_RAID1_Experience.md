@@ -2,7 +2,7 @@
 title: MDADM 軟體磁碟陣列 RAID 1 使用經驗與心得
 category: computer
 tags: [linux,raid,mdadm]
-lastupdated: 2024-12-04
+lastupdated: 2025-07-05
 ---
 
 用 Software RAID (MDADM) 做 RAID 1 磁碟陣列。
@@ -179,9 +179,14 @@ fstab 中不歸 RAID 管理的項目 (例如 ESP 和 swap)，建議不用 UUID�
 fstab swap 紀錄的建議寫法:
 
 ```term
-/dev/sda3    none    swap    sw,nofail    0    0
-/dev/sdb3    none    swap    sw,nofail    0    0
+/dev/sda3    none    swap    sw,nofail,x-systemd.device-timeout=1    0    0
+/dev/sdb3    none    swap    sw,nofail,x-systemd.device-timeout=1    0    0
 ```
+
+Debian 使用 systemd 管理啟動工作。當其中一個磁碟故障不存在時，systemd 不會直接略過該 swap 項目，而是等待一段時間(預設90秒)。
+因為它認為此時應該等待使用者插入磁碟。
+可用 systemd 專用參數 *x-systemd.device-timeout* 調整等待逾時的秒數。
+最小逾時秒數是 1。注意，0 表示一直等待不逾時。
 
 把工作中的分割區轉移到 RAID 1
 ---------------------------
