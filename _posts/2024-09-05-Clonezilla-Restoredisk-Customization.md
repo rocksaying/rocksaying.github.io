@@ -2,13 +2,13 @@
 title: CloneZilla 再生龍客製化，還原後自動擴大指定分割區的容量
 category: computer
 tags: [clonezilla,gparted]
-lastupdated: 2024-09-05
+lastupdated: 2025-07-31
 ---
 
-「CloneZilla 再生龍」有個功能叫「[recovery-iso-zip 產生回復專用的再生龍](https://clonezilla.nchc.org.tw/clonezilla-live/doc/fine-print.php?path=04_Create_Recovery_Clonezilla) 」。它可以將磁碟印象檔打包成一份還原光碟或 USB 碟。
-用這份還原光碟或 USB 碟開機後，就會自動進行磁碟還原工作。使用者不需要搞懂什麼是印象檔或磁碟代號。
+「CloneZilla 再生龍」有個功能叫「[recovery-iso-zip 產生回復專用的再生龍](https://clonezilla.nchc.org.tw/clonezilla-live/doc/fine-print.php?path=04_Create_Recovery_Clonezilla) 」。它可以將磁碟映像檔打包成一份還原光碟或 USB 碟。
+用這份還原光碟或 USB 碟開機後，就會自動進行磁碟還原工作。使用者不需要搞懂什麼是映像檔或磁碟代號。
 
-這個自動化功能很方便，但還可以更聰明。本文將說明如何客製一份 CloneZilla 再生龍還原光碟。客製化項目是將磁碟印象檔還原到更大容量的磁碟後，只擴大指定分割區的容量。
+這個自動化功能很方便，但還可以更聰明。本文將說明如何客製一份 CloneZilla 再生龍還原光碟。客製化項目是將磁碟映像檔還原到更大容量的磁碟後，只擴大指定分割區的容量。
 
 <!--more-->
 
@@ -47,17 +47,17 @@ CloneZilla 目前的分割區還原處理方式有三種:
 
 ### 客製化步驟
 
-#### 第一步，先做一份磁碟印象檔
+#### 第一步，先做一份磁碟映像檔
 
-假設這份印象檔的儲存資料夾是 /home/nas/backup/vm-2024-08-img 。
+假設這份映像檔的儲存資料夾是 /home/nas/backup/vm-2024-08-img 。
 在這份資料夾內，有 Info-OS-prober.txt, clonezilla-img 等檔案。
 
 #### 第二步，撰寫客製化工作指令稿
 
-在第一步的印象檔資料夾內，建立一個 shell script 指令稿，撰寫客製化工作。
+在第一步的映像檔資料夾內，建立一個 shell script 指令稿，撰寫客製化工作。
 
 本文的客製化工作是還原磁碟之後再擴大分割區容量，故將 shell script 指令稿取名為 restore_postrun.sh 。
-存在第一步建立的印象檔資料夾內: /home/nas/backup/vm-2024-08-img/restore_postrun.sh。
+存在第一步建立的映像檔資料夾內: /home/nas/backup/vm-2024-08-img/restore_postrun.sh。
 
 restore_postrun.sh 內容如下：
 
@@ -82,7 +82,7 @@ fsck 和 resize2fs 這兩行也可換成 `ocs-resize-part /dev/sda4`。
 
 客製化工作需要我們自己用命令列工具指定工作參數。
 
-進入命令列後，請先執行 `prep-ocsroot` 命令，掛載印象檔資料夾到 */home/partimag*。
+進入命令列後，請先執行 `prep-ocsroot` 命令，掛載映像檔資料夾到 */home/partimag*。
 
 ```term
 # sudo su
@@ -90,10 +90,10 @@ fsck 和 resize2fs 這兩行也可換成 `ocs-resize-part /dev/sda4`。
 # cd /home/partimag
 ```
 
-我是把印象檔存在 NAS 的 /home/nas/backup 資料夾。需要透過這個方式設定 ssh server，把 NAS 的 /home/nas/backup 資料夾掛載起來。
+我是把映像檔存在 NAS 的 /home/nas/backup 資料夾。需要透過這個方式設定 ssh server，把 NAS 的 /home/nas/backup 資料夾掛載起來。
 掛載的路徑是 */home/partimag*。
 
-CloneZilla 掛載後，本文第一步建立的印象檔資料夾將會是 /home/partimag/vm-2024-08-img。
+CloneZilla 掛載後，本文第一步建立的映像檔資料夾將會是 /home/partimag/vm-2024-08-img。
 而第二步準備的 restore_postrun.sh，在 CloneZilla 系統中的完整路徑現在是 /home/partimag/vm-2024-08-img/restore_postrun.sh。
 
 #### 第四步，產生還原光碟檔
@@ -105,16 +105,16 @@ CloneZilla 掛載後，本文第一步建立的印象檔資料夾將會是 /home
 ```shell
 ocs-iso -g zh_TW.UTF-8 -t -k NONE -a vm-restore \
  -x "ocs_restoredisk_postrun=/home/partimag/vm-2024-08-img/restore_postrun.sh" \
- -e "-g auto -e1 auto -e2 -r -j2 -c -k0 -scr -p poweroff restoredisk vm-2024-08-img sda" \
+ -e "-g auto -e1 auto -e2 -r -icds -j2 -c -k0 -scr -p poweroff restoredisk vm-2024-08-img sda" \
  vm-2024-08-img
 ```
 
 注意:
 
-1. ocs-iso 認定的工作資料夾是 /home/partimag 。你必須在這個位置執行指令，否則就會發生找不到印象檔的錯誤。
+1. ocs-iso 認定的工作資料夾是 /home/partimag 。你必須在這個位置執行指令，否則就會發生找不到映像檔的錯誤。
 2. 參數 *-a* 指定光碟 ISO 檔名為 vm-restore.iso。副檔名 .iso 會自動加上，不用寫。
 3. ocs_restoredisk_postrun 指定還原磁碟後要執行的客製工作。也就是第二步準備的命令稿 restore_postrun.sh。
-4. 指令中的 *vm-2024-08-img* 是本文案例的印象檔資料夾名稱。請按你的實際情形，替換成你的印象檔資料夾名稱。
+4. 指令中的 *vm-2024-08-img* 是本文案例的映像檔資料夾名稱。請按你的實際情形，替換成你的映像檔資料夾名稱。
 5. sda 是還原目標的磁碟代號。也請按你的實際情形替換。
 
 指令很長，我會另外寫在 shell script 指令稿，也放在 NAS 上。
@@ -141,12 +141,12 @@ CloneZilla 掛載後就是 /home/partimag/create-iso.sh。
 #### shell script 要放哪？
 
 CloneZilla 的使用手冊並沒有說明。
-根據我的使用經驗，最好的位置是放在印象檔的資料夾內。
+根據我的使用經驗，最好的位置是放在映像檔的資料夾內。
 在本文案例就是放在 /home/nas/backup/vm-2024-08-img 內。
 並設定執行權限 (chmod 0755)。
 
-放在印象檔資料夾的每個檔案，都會被包進我們建立的還原光碟 ISO 或 ZIP。
-放進 ISO 或 ZIP 中的資料夾路徑將會是 /home/partimag/印象檔資料夾名稱。
+放在映像檔資料夾的每個檔案，都會被包進我們建立的還原光碟 ISO 或 ZIP。
+放進 ISO 或 ZIP 中的資料夾路徑將會是 /home/partimag/映像檔資料夾名稱。
 
 如此一來，我就可以明確地指示 ocs_restoredisk_postrun 該去哪找到要執行的 shell script 指令稿。
 
@@ -156,18 +156,18 @@ CloneZilla 的使用手冊並沒有說明。
 再把指令歷程整理寫成 shell script。
 
 * 執行身份是 root。
-* 工作資料夾是 /home/partimag 。
+* 工作資料夾通常是 /home/partimag ，但也可能是 / 。隨 CloneZilla 版本而不同。
 * 建議使用絕對路徑。
 
 #### CloneZilla 官方文件說的客製化方式
 
 CloneZilla 官方文件介紹的客製化方式是先建立還原 USB 碟，然後要你去修改 USB 碟的 grub.cfg 開機參數。
 
-缺點很明顯。你每次備份新的印象檔和還原碟後，都需要動手修改一次 USB 碟的 grub.cfg。
+缺點很明顯。你每次備份新的映像檔和還原碟後，都需要動手修改一次 USB 碟的 grub.cfg。
 而且 grub.cfg 的內容很長，很難閱讀與編輯。
 本文的作法就是自動化操作。每次建立還原碟時，就順便將參數寫入 grub.cfg 。
 
-另外，如果你要建立還原光碟(ISO檔)，這個方法也不適用。
+另外，如果你要建立還原光碟(ISO檔)，也不適用修改 grub.cfg 的方法。
 
 ##### 參考文件
 
@@ -176,4 +176,4 @@ CloneZilla 官方文件介紹的客製化方式是先建立還原 USB 碟，然�
 * CloneZilla 還原光碟建立工具: [ocs-iso](https://github.com/stevenshiau/clonezilla/blob/master/sbin/ocs-iso)
 * 分割區修改工具 parted: [How to manage partitions with GNU Parted on Linux](https://linuxconfig.org/how-to-manage-partitions-with-gnu-parted-on-linux)
 * 調整檔案系統容量 [resize2fs manpage](https://www.man7.org/linux/man-pages/man8/resize2fs.8.html)
-* [將印象檔ZIP寫入隨身碟](https://clonezilla.nchc.org.tw/clonezilla-live/liveusb.php)
+* [將映像檔ZIP寫入隨身碟](https://clonezilla.nchc.org.tw/clonezilla-live/liveusb.php)
