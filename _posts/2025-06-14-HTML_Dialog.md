@@ -3,7 +3,7 @@ title: 網頁UI元件 - 如何使用新式UI Dialog 和 Modal
 category: programming
 tags: [網頁UI,html,dialog]
 cover: https://github.com/shirock/images/raw/main/2025/06-14-HTML_Dialog-2.png
-lastupdated: 2025-06-14
+lastupdated: 2025-12-21
 ---
 
 [Dialog] 是 WHATWG 規範的 HTML 對話框元件。只要各家瀏覽器按照規範內容實作，就可以保證在不同瀏覽器與前端工具之間仍有相同的行為。
@@ -34,7 +34,6 @@ A 前端工具的對話框元件和 B 前端工具的對話框元件一定不同
 * Dialog 可透過其內部表單 (Form) 關閉。
   透過表單關閉時，觸發 `close` 事件，並改變 `returnValue` 屬性之值。
 * 有標準的鍵盤互動方式。互動型態 Dialog 可以按鍵盤的 Esc 鍵關閉它。
-  但按下 Esc 鍵關閉時，不會觸發 `close` 事件、不會改變 `returnValue` 屬性。
 
 #### 基本設計組合
 
