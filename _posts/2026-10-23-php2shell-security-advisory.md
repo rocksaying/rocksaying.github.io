@@ -8,7 +8,7 @@ lastupdated: 2026-10-23
 兩條 PHP 的 CVE 警示 (CVE-2026-109618 和 CVE-2026-109619) 在 2026 年 10 月 21 日這天揭起一波網站資安風暴。風波大到日本首相發佈新聞呼籲網站管理者儘快處理，無數網站暫停運作。
 目前，我們將之稱為「 [PHP2Shell](https://zh.wikipedia.org/wiki/PHP2Shell) 」事件。
 
-我當天也發了推文，建議舊版 PHP 使用者如何 *暫時* 逃課，以免長時間關站。[推文連結](https://x.com/tw_rocksaying/status/2112893701584548162?s=20)。
+我當天也發了推文，建議舊版 PHP 使用者如何 *暫時* 逃課，以免長時間關站。[推文連結](https://x.com/tw_rocksaying/status/2112893701584548162?s=20) 。
 
 <!--more-->
 
@@ -35,7 +35,7 @@ PHP2Shell 利用 PHP 解譯器在第 4 步處理 *multipart/form-data* 資料封
 #### PHP 8.1 及舊版本的因應措施
 
 PHP 官方只針對目前仍在維護的 8.2 與新版本 PHP 釋出補丁更新。
-至於 PHP 8.1 及舊版本的使用者，我的建議是請檢查你的 PHP 程式是否有任何 *multipart/form-data* 的敘述? 就是你的程式是否提供上傳檔案的功能 (POST method uploads)?
+至於 PHP 8.1 及舊版本的使用者，我的建議是請檢查你的 PHP 程式是否有任何 *multipart/form-data* 的敘述? 就是你的程式是否提供上傳檔案的功能 (POST method uploads)？
 *若有，建議立刻關站維護!!!*
 若無，暫時可用修改防火牆配置等外部方法逃課，並且不影響你的網站服務程式運作。
 
