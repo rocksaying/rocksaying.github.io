@@ -31,3 +31,30 @@ PHP2Shell 利用 PHP 解譯器在第 4 步處理 *multipart/form-data* 資料封
 
 除了更新 PHP 版本，目前最可靠的堵漏措施，就是從上列第 2 步的防火牆與第 3 步的 Web server 設置著手，直接過濾掉有危險的資料封包，不讓它轉發給 PHP 解譯器。
 於是壓力轉到了防火牆與 Web server 管理者身上。
+
+#### PHP 8.1 及舊版本的因應措施
+
+PHP 官方只針對目前仍在維護的 8.2 與新版本 PHP 釋出補丁更新。
+至於 PHP 8.1 及舊版本的使用者，我的建議是請檢查你的 PHP 程式是否有任何 *multipart/form-data* 的敘述？ 就是你的程式是否提供上傳檔案的功能？
+*若有，建議立刻關站維護！！ *
+若無，暫時可用修改防火牆配置等外部方法逃課，並且不影響你的網站服務程式運作。
+
+PHP2Shell 漏洞利用 PHP 解釋器核心的 multipart 模塊做為缺口攻擊底層系統。這正是 PHP 檔案上傳功能的必要模塊。
+你可以修改防火牆規則，過濾掉標頭帶有 multipart 的 HTTP 請求，不將它交給 PHP 解譯。但這麼做會讓 PHP 的檔案上傳功能失效。
+所以我才說務必檢查你的網站程式是否真的需要提供檔案上傳功能。
+
+就我所知，有些 PHP 的網站程式，只有服務管理後台需要檔案上傳功能，而一般使用者操作的前台不需要上傳檔案。這種情形可以設置防火牆禁用網頁上傳，改用 sftp/scp 等其他方法讓管理者上傳檔案，暫時維持網站運作。
+
+我的做法比較激進，直接封禁網頁上傳檔案的功能。
+如果你的網站程式實在拿不掉網頁上傳檔案的功能，那麼可以參考 PHP2Shell 作者和一些資安業者提出的建議，關閉 php.ini 的 *session.upload_progress.enabled* 設置，即 `session.upload_progress.enabled = 0` 。
+
+關掉此設置後，仍然保有檔案上傳功能，僅追踪檔案上傳進度的功能失效。
+
+參考:
+
+* [Security Advisory 2026-018 @ CERT-EU](https://cert.europa.eu/publications/security-advisories/2026-018/)
+* [php2shell-protection](https://github.com/syhunt/php2shell-protection)
+
+注意，參考方法強調這僅是封了一條可行性最高的攻擊途徑，並不是完全封堵。
+
+總而言之，躲得了一時躲不了一世。趕快找個 REA 等 AI 工具，想辦法升級你的舊網站服務程式才是正理。
