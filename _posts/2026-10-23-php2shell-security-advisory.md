@@ -14,8 +14,7 @@ lastupdated: 2026-10-23
 
 #### 資料處理流程
 
-為了說明 PHP2Shell 的影響範圍，先了解
-用戶的 HTTP 請求送到 PHP 網站程式的流程。基本如下:
+為了說明 PHP2Shell 的影響範圍，先了解用戶的 HTTP 請求送到 PHP 網站程式的流程。基本如下:
 
 + 第 1 步: HTTP Client (瀏覽器, wget, curl, 駭客工具等等) 送出資料封包到網站。
 + 第 2 步: 網站防火牆過濾封包。現在應該沒有公開網站在網路上裸奔了吧？
@@ -36,11 +35,11 @@ PHP2Shell 利用 PHP 解譯器在第 4 步處理 *multipart/form-data* 資料封
 
 PHP 官方只針對目前仍在維護的 8.2 與新版本 PHP 釋出補丁更新。
 至於 PHP 8.1 及舊版本的使用者，我的建議是請檢查你的 PHP 程式是否有任何 *multipart/form-data* 的敘述？ 就是你的程式是否提供上傳檔案的功能？
-*若有，建議立刻關站維護！！ *
+*若有，建議立刻關站維護！！*
 若無，暫時可用修改防火牆配置等外部方法逃課，並且不影響你的網站服務程式運作。
 
 PHP2Shell 漏洞利用 PHP 解釋器核心的 multipart 模塊做為缺口攻擊底層系統。這正是 PHP 檔案上傳功能的必要模塊。
-你可以修改防火牆規則，過濾掉標頭帶有 multipart 的 HTTP 請求，不將它交給 PHP 解譯。但這麼做會讓 PHP 的檔案上傳功能失效。
+你可以修改防火牆規則，過濾掉標頭帶有 multipart 的 HTTP 請求，不將它交給 PHP 處理。但這麼做會讓 PHP 的檔案上傳功能失效。
 所以我才說務必檢查你的網站程式是否真的需要提供檔案上傳功能。
 
 就我所知，有些 PHP 的網站程式，只有服務管理後台需要檔案上傳功能，而一般使用者操作的前台不需要上傳檔案。這種情形可以設置防火牆禁用網頁上傳，改用 sftp/scp 等其他方法讓管理者上傳檔案，暫時維持網站運作。
@@ -54,6 +53,7 @@ PHP2Shell 漏洞利用 PHP 解釋器核心的 multipart 模塊做為缺口攻擊
 
 * [Security Advisory 2026-018 @ CERT-EU](https://cert.europa.eu/publications/security-advisories/2026-018/)
 * [php2shell-protection](https://github.com/syhunt/php2shell-protection)
+* [Critical remote code execution vulnerabilities @ php.net](https://www.php.net/archive/2026.php#2026-10-21-5)
 
 注意，參考方法強調這僅是封了一條可行性最高的攻擊途徑，並不是完全封堵。
 
